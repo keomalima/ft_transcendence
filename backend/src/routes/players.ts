@@ -4,7 +4,7 @@ const routes = async (
     fastify: FastifyInstance,
     options: FastifyPluginOptions
 ) => {
-    fastify.get('/tournaments', async (
+    fastify.get('/players', async (
         request: FastifyRequest,
         reply: FastifyReply
     ) => {

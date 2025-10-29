@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node backend/dist/server.js"
+    "start": "npm run build && node dist/server.js"
   },
   "dependencies": {
     "fastify": "^5.6.1"
