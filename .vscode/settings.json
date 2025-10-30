@@ -1,5 +1,21 @@
 {
     "github.copilot.enable": {
         "*": false
-    }
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/*.json": false,
+        "**/*.md": true,
+        "**/*.yml": true,
+        "Dockerfile": false,
+        "**/Dockerfile": false,
+        "*.json": true,
+        "**/Makefile": false,
+        "Makefile": false
+    },
+    "explorerExclude.backup": {}
 }

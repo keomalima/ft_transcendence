@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Your custom styles here */
+body {
+	margin: 0;
+	padding: 0;
+	background-color: rgb(177, 131, 102);
+}

@@ -10,9 +10,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "typescript": "^5.9.3",
-    "http-server": "^14.1.1"
-  }
+  "type": "module",
+	"devDependencies": {
+		"@tailwindcss/postcss": "^4.1.16",
+		"tailwindcss": "^4.1.16",
+		"typescript": "^5.9.3"
+	}
 }
