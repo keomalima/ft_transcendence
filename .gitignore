@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+
+# Build output
+backend/dist/
+
+# Logs
+*.log
+
+# Dependency lock files (optional, but usually keep package-lock.json)
+# package-lock.json
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment variables
+.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
