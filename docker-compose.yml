@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    networks:
+      - transcendence
+    volumes:
+      - ./backend:/app
+
+  frontend:
+      build: ./frontend
+      ports:
+        - "8000:8000"
+      networks:
+        - transcendence
+      depends_on:
+        - backend
+
+networks:
+  transcendence:
+    driver: bridge

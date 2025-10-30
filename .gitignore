@@ -1,0 +1,43 @@
+# Node modules
+node_modules/
+
+# Build output
+backend/dist/
+frontend/dist/
+frontend/node_modules/
+
+# Logs
+*.log
+
+# Dependency lock files (optional, but usually keep package-lock.json)
+# package-lock.json
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.*
+
+# Subject
+en.subject.pdf
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Coverage
+coverage/
+
+# IDEs
+.idea/
+
+# Swap files
+*.swp
+*.swo
+
+# Docker
+*.local
