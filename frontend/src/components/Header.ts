@@ -1,6 +1,6 @@
 export function createHeader(): HTMLElement {
     const header = document.createElement('header');
-    header.className = 'test-white p-8 text-center';
+    header.className = 'text-white p-8 text-center';
 
     const h1 = document.createElement('h1');
     h1.className = 'text-4xl font-bold';

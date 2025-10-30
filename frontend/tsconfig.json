@@ -9,7 +9,7 @@
     "target": "ES2020",
     "lib": ["ES2020", "DOM"],  // Added DOM for browser APIs
     "moduleResolution": "bundler",
-    "types": [],
+    "types": ["vite/client"],
 
     // Other Outputs
     "sourceMap": true,
