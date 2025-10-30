@@ -1,5 +1,5 @@
 {
-  "name": "backend_2",
+  "name": "backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@fastify/cors": "^11.1.0",
     "fastify": "^5.6.1"
   },
   "devDependencies": {

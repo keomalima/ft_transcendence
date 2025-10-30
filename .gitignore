@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 backend/dist/
+frontend/dist/
+frontend/node_modules/
 
 # Logs
 *.log
@@ -15,7 +17,27 @@ backend/dist/
 
 # Environment variables
 .env
+.env.*
+
+# Subject
+en.subject.pdf
 
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# VSCode
+.vscode/
+
+# Coverage
+coverage/
+
+# IDEs
+.idea/
+
+# Swap files
+*.swp
+*.swo
+
+# Docker
+*.local
