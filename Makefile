@@ -20,4 +20,13 @@ down:
 clean:
 	$(COMPOSE) down -v
 
-.PHONY: clean build
+studio:
+	$(COMPOSE) exec backend npx prisma studio
+
+migrate:
+	$(COMPOSE) exec backend npx prisma migrate dev
+
+logs:
+	$(COMPOSE) logs -f backend
+
+.PHONY: clean build start stop down studio migrate logs

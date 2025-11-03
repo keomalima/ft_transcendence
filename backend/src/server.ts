@@ -1,18 +1,27 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors';
+import { 
+  serializerCompiler, 
+  validatorCompiler, 
+  type ZodTypeProvider 
+} from "fastify-type-provider-zod";
+import { userRoutes } from './routes/user/user.route.js'
+import prismaPlugin from './plugins/prisma.plugin.js';
 
 const fastify = Fastify({
   logger: true
-})
+}).withTypeProvider<ZodTypeProvider>();
 
-await fastify.register(cors, { 
-  origin: true // or specify allowed origins
+// Set up Zod validators and serializers
+fastify.setValidatorCompiler(validatorCompiler);
+fastify.setSerializerCompiler(serializerCompiler);
+
+await fastify.register(cors, {
+  origin: true
 });
 
-// Declare a route
-fastify.get('/', async function handler (request, reply) {
-  return { helloo: 'world' }
-})
+fastify.register(prismaPlugin);
+fastify.register(userRoutes, { prefix: "/api/users" });
 
 // Run the server!
 try {
