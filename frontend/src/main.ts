@@ -1,53 +1,38 @@
 import './style.css';
 
-import { createHeader } from './components/Header';
-import { createAbout } from './components/About';
-import { createProjects } from './components/Projects';
-import { showGithub } from './components/GithubRepo';
-import { renderBackendStatus } from './pages/backendStatus';
-// import { loadAndRenderGithub } from './components/GithubRepo';
+import { learnMore } from './pages/learnMore';
+import { Profile } from './pages/Profile';
+import { home } from './pages/home';
+import { notFound } from './pages/404';
 
-// Get the root element
-const app = document.getElementById('app');
+const routes: Record<string, () => void> = {
+	'/': home,
+	'/learnmore': learnMore,
+	'/profile': Profile
+};
 
-if (app) {
-	// Clear the app
-	app.innerHTML = '';
-
-	const nav = document.createElement('nav');
-	nav.className = 'flex gap-4 p-4 bg-stone-800 text-white';
-
-	const homeLink = document.createElement('button');
-	homeLink.className = 'hover:underline';
-	homeLink.textContent = 'Home';
-
-	const backendLink = document.createElement('button');
-	backendLink.className = 'hover:underline';
-	backendLink.textContent = 'Backend status';
-
-	const content = document.createElement('main');
-	content.className = 'min-h-screen bg-stone-100 text-stone-900';
-
-	function renderHome() {
-		content.innerHTML = '';
-		content.appendChild(createHeader());
-		content.appendChild(createAbout());
-		content.appendChild(createProjects());
-		content.appendChild(showGithub('lyshathan'));
-	}
-
-	function renderBackend() {
-		renderBackendStatus(content);
-	}
-
-	homeLink.addEventListener('click', renderHome);
-	backendLink.addEventListener('click', renderBackend);
-
-	nav.appendChild(homeLink);
-	nav.appendChild(backendLink);
-	app.appendChild(nav);
-	app.appendChild(content);
-
-	renderHome();
-
+function router() {
+	const path = window.location.pathname;
+	const renderFunction = routes[path] || notFound ;
+	renderFunction();
 }
+
+document.addEventListener('click', (e) => {
+	const target = e.target as HTMLElement;
+
+	if (target.matches('[data-link]')) {
+		e.preventDefault();
+
+		const href = target.getAttribute('href');
+
+		history.pushState(null, '', href);
+
+		router();
+	}
+})
+
+window.addEventListener('popstate', router);
+
+
+router();
+
