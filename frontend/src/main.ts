@@ -4,9 +4,11 @@ import { learnMore } from './pages/learnMore';
 import { Profile } from './pages/Profile';
 import { home } from './pages/home';
 import { notFound } from './pages/404';
+import { register } from './pages/register';
 
 const routes: Record<string, () => void> = {
 	'/': home,
+	'/register': register,
 	'/learnmore': learnMore,
 	'/profile': Profile
 };
