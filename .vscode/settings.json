@@ -1,5 +1,36 @@
 {
     "github.copilot.enable": {
         "*": false
-    }
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "frontend": true,
+        ".vscode": true,
+        "**/*.json": true,
+        "**/*.yml": true,
+        "**/*.md": true,
+        ".gitignore": true,
+        "Makefile": true,
+        "node_modules": true,
+        "prisma": true,
+        "**/*.ts": false,
+        "**/node_modules": true,
+        "**/prisma": true,
+        "**/.dockerignore": false,
+        "**/.env": true,
+        "**/.gitignore": true,
+        "**/Dockerfile": true,
+        "backend/src/*.*": true,
+        "**/generated": true,
+        "*.pdf": true,
+        "en.subject.pdf": true,
+        "prisma.config.ts": true,
+        "**/prisma.config.ts": true
+    },
+    "explorerExclude.backup": {},
+    "files.autoSave": "afterDelay"
 }
