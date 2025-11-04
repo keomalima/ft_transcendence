@@ -19,10 +19,15 @@
 			focus-visible:outline-2 focus-visible:outline-offset-2;
 	}
 	.input-style {
-		@apply block w-full rounded-full bg-white px-3 py-1.5 text-base text-gray-900 outline-1
-			-outline-offset-1 outline-medium placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2
-			focus:outline-medium sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10
-			dark:placeholder:text-gray-500 dark:focus:outline-medium;
+		@apply block w-full rounded-full bg-white px-3 py-1.5 text-base text-gray-900
+			outline-1 -outline-offset-1 outline-medium placeholder:text-gray-400
+			focus:outline-2 focus:-outline-offset-2 focus:outline-medium sm:text-sm/6;
+	}
+	.nav-logo {
+		@apply font-['Calistoga'] text-black text-2xl;
+	}
+	.nav-elem {
+		@apply font-['Inter'] text-medium text-base text-xl font-normal;
 	}
 }
 
@@ -37,6 +42,7 @@ body {
 
 h1 {
 	font-family: 'Calistoga', serif;
+	color: black; 
 }
 
 

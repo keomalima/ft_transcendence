@@ -1,10 +1,8 @@
 
 import pongimg from '../images/pong.png';
+import { navigateTo } from '../main';
 
 export function home() {
-
-	console.log('🏠 HOME FUNCTION CALLED');
-
 	const app = document.getElementById('app');
 	if (app) {
 		app.innerHTML = /*html*/`
@@ -13,13 +11,13 @@ export function home() {
 				<div class="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-8 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
 					<h1 class="max-w-2xl text-xl font-semibold tracking-tight text-balance sm:text-7xl lg:col-span-2 xl:col-auto dark:text-white">Let's Pong</h1>
 					<div class="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
-						<p class="text-lg text-pretty sm:text-xl/8 dark:text-gray-400">Welcome to our transcendance project</p>
+						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
 							<a href="#" class="styled-link rounded-full" id="get-started-btn">Get started</a>
 							<a href="/learnmore" class="styled-link" id="learn-more-btn">Learn more <span aria-hidden="true">→</span></a>
 						</div>
-						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" >
-							<form action="#" method="POST" class="space-y-6" id="signin-form" style="display: none;">
+						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
+							<form action="#" method="POST" class="space-y-6" id="signin-form" >
 								<div>
 									<label for="email" >Email address</label>
 									<div class="mt-2">
@@ -59,40 +57,36 @@ export function home() {
 	const startedBtn = document.getElementById('get-started-btn');
 	const learnBtn = document.getElementById('learn-more-btn');
 	const form = document.getElementById('signin-form') as HTMLFormElement;
+	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 
-	console.log('Started button:', startedBtn);
-	console.log('Learn button:', learnBtn);
-	console.log('Form:', form);
+	// Click handler : show form
+	startedBtn?.addEventListener('click', (e) => {
+		e.preventDefault();
+		hidenForm!.style.display = 'block';
+		startedBtn.style.display = 'none';
+		if (learnBtn)
+			learnBtn.style.display = 'none';
+	});
 
-	// Add submit listener - this should catch the form submission
-	form?.addEventListener('submit', (e) => {
-		console.log('🎯 SUBMIT EVENT FIRED!');
-		e.preventDefault(); // Prevent reload
-		e.stopPropagation(); // Stop event bubbling
+	// Submit listener : get input
+	form.addEventListener('submit', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
 
 		const emailInput = document.getElementById('email') as HTMLInputElement;
 		const passwordInput = document.getElementById('password') as HTMLInputElement;
-
-		console.log('Email input:', emailInput);
-		console.log('Password input:', passwordInput);
 
 		const email = emailInput?.value;
 		const password = passwordInput?.value;
 
 		console.log('email:', email);
 		console.log('password:', password);
+
+		if (email && password) // need to check here for correct user/password
+		{
+			navigateTo('/profile');
+		}
 	});
-
-	// Click handler just shows the form
-	startedBtn?.addEventListener('click', (e) => {
-		e.preventDefault();
-		form!.style.display = 'block';
-		startedBtn.style.display = 'none';
-		if (learnBtn)
-			learnBtn.style.display = 'none';
-	});
-
-
 
 	}
 }

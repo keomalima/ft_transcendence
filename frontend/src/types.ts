@@ -26,3 +26,11 @@ export interface githubRepo {
 	fork: boolean;
 	updated_at: string;
 }
+
+export interface userInfo {
+	username: string;
+	firstname: string;
+	surname: string;
+	city: string;
+	age: string;
+}
