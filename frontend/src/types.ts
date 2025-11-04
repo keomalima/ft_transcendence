@@ -34,3 +34,14 @@ export interface userInfo {
 	city: string;
 	age: string;
 }
+
+export interface matchInfo {
+	id: number;
+	opponentName: string;
+	scoreUser: number;
+	scoreOpponent: number;
+	winner: boolean;
+	duration: number;
+	date: string;
+	mode: string;
+}

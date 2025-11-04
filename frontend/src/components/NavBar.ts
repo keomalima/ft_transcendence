@@ -16,7 +16,7 @@ export function NavBar() {
 				</button>
 				</div>
 					<div class="hidden lg:flex lg:gap-x-12">
-					<a href="" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
+					<a href="/profile" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
 					<a href="/game" class="nav-elem ${window.location.pathname === '/game' ? 'text-black' : ''}" >game</a>
 					<a href="/tournament" class="nav-elem ${window.location.pathname === '/tournament' ? 'text-black' : ''}" >tournament</a>
 
