@@ -5,9 +5,6 @@ all: build
 build:
 	$(COMPOSE) up --build
 
-build-terminal: 
-	$(COMPOSE) up --build
-
 start:
 	$(COMPOSE) start
 
