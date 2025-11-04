@@ -12,14 +12,10 @@ const fastify = Fastify({
   logger: true
 }).withTypeProvider<ZodTypeProvider>();
 
-// Set up Zod validators and serializers
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
 
-await fastify.register(cors, {
-  origin: true
-});
-
+await fastify.register(cors, { origin: true });
 fastify.register(prismaPlugin);
 fastify.register(userRoutes, { prefix: "/api/users" });
 

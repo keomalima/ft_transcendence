@@ -9,7 +9,8 @@ export async function userRoutes(fastify: FastifyInstance) {
 				200: usersResponseSchema 
 			}
 		}
-	}, listUsersHandler
+	}, 
+	listUsersHandler
 	);
 
 	fastify.post('/', { 
