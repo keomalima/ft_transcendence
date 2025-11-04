@@ -14,7 +14,7 @@ export function home() {
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
 							<a href="#" class="styled-link rounded-full" id="get-started-btn">Get started</a>
-							<a href="/learnmore" class="styled-link" id="learn-more-btn">Learn more <span aria-hidden="true">→</span></a>
+							<a href="/LearnMore" class="styled-link" id="learn-more-btn">Learn more <span aria-hidden="true">→</span></a>
 						</div>
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
 							<form action="#" method="POST" class="space-y-6" id="signin-form" >

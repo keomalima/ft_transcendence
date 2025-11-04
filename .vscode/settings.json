@@ -1,21 +1,31 @@
 {
-    "github.copilot.enable": {
-        "*": false
-    },
-    "files.exclude": {
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/.DS_Store": true,
-        "**/Thumbs.db": true,
-        "**/*.json": false,
-        "**/*.md": false,
-        "**/*.yml": false,
-        "Dockerfile": false,
-        "**/Dockerfile": false,
-        "*.json": true,
-        "**/Makefile": false,
-        "Makefile": false
-    },
-    "explorerExclude.backup": {}
+	"github.copilot.enable": {
+		"*": false
+	},
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/.DS_Store": true,
+		"**/Thumbs.db": true,
+		"**/*.json": false,
+		"**/*.md": true,
+		"**/*.yml": true,
+		"Dockerfile": true,
+		"**/Dockerfile": true,
+		"*.json": true,
+		"**/Makefile": true,
+		"Makefile": true,
+		"**/backend": true
+	},
+	"explorerExclude.backup": {},
+	"editor.insertSpaces": false,
+	"editor.tabSize": 4,
+	"editor.detectIndentation": true,
+	"editor.autoIndent": "full",
+	"[markdown][plaintext]": {
+		"editor.insertSpaces": true
+}
+
+
 }

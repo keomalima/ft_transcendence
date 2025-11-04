@@ -1,21 +1,23 @@
 import './style.css';
 
-import { learnMore } from './pages/learnMore';
+import { LearnMore } from './pages/learnMore';
 import { Profile } from './pages/profile';
+import { EditProfile } from './pages/editProfile';
 import { home } from './pages/home';
-import { notFound } from './pages/404';
+import { NotFound } from './pages/404';
 import { register } from './pages/register';
 
 const routes: Record<string, () => void> = {
 	'/': home,
 	'/register': register,
-	'/learnmore': learnMore,
-	'/profile': Profile
+	'/LearnMore': LearnMore,
+	'/profile': Profile,
+	'/edit-profile': EditProfile
 };
 
 function router() {
 	const path = window.location.pathname;
-	const renderFunction = routes[path] || notFound ;
+	const renderFunction = routes[path] || NotFound ;
 	renderFunction();
 }
 

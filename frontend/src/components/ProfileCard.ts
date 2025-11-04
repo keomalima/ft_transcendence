@@ -1,5 +1,6 @@
-import profilePicture from '../images/profilePicture.webp';
+import profilePicture from '../images/ProfilePictureSquared.png';
 import { userData } from '../data/userData';
+import { navigateTo } from "../main";
 
 
 export function ProfileCard () : HTMLElement | null {
@@ -9,19 +10,18 @@ export function ProfileCard () : HTMLElement | null {
 	if (profileCard)
 	{
 		profileCard.innerHTML = /*html*/`
-			<div class="bg-white shadow rounded-lg p-6">
+			<div class="bg-white rounded-lg p-6">
 				<div class="flex flex-col items-center">
-					<img src="${profilePicture}" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0">
-
-					</img>
-					<h1 class="text-xl font-bold">John Doe</h1>
-					<p class="text-gray-700">Software Developer</p>
+					<img src="${profilePicture}" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0"></img>
+					<h1 class="text-xl font-bold">${user.username}</h1>
+					<p>${user.firstname} ${user.surname}</p>
+					<p>${user.age} years old</p>
+					<p>From ${user.city}</p>
 					<div class="mt-6 flex flex-wrap gap-4 justify-center">
-						<a href="#" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Contact</a>
-						<a href="#" class="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded">Resume</a>
+						<a href="/edit-profile" id='edit-btn' class="btn-primary bg-white hover:bg-black">Edit profile</a>
 					</div>
 				</div>
-				<hr class="my-6 border-t border-gray-300">
+				<!-- <hr class="my-6 border-t border-gray-300">
 				<div class="flex flex-col">
 					<span class="text-gray-700 uppercase font-bold tracking-wider mb-2">Skills</span>
 					<ul>
@@ -31,10 +31,18 @@ export function ProfileCard () : HTMLElement | null {
 						<li class="mb-2">HTML/CSS</li>
 						<li class="mb-2">Tailwind Css</li>
 					</ul>
-				</div>
+				</div> -->
 			</div>
 
 		`
 	}
+
+	// Click handler : edit ptofile
+	const startedBtn = document.getElementById('edit-btn');
+	startedBtn?.addEventListener('click', (e) => {
+		e.preventDefault();
+		navigateTo('/edit-profile');
+	});
+
 	return profileCard;
 }

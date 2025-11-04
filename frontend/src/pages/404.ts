@@ -1,4 +1,4 @@
-export function notFound() {
+export function NotFound() {
 	const app = document.getElementById('app');
 	if (app)
 	{

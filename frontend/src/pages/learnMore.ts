@@ -1,4 +1,4 @@
-export function learnMore() {
+export function LearnMore() {
 	const app = document.getElementById('app');
 	if (app)
 	{
