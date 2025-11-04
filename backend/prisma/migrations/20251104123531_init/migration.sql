@@ -2,6 +2,7 @@
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
+    "salt" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT,
     "password" TEXT NOT NULL,

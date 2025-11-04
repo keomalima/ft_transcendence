@@ -1,19 +1,23 @@
 import { PrismaClient } from "@prisma/client";
-import type { CreateUserInput } from './user.schema.js';
+import type { CreateUserInput, LoginInput } from './user.schema.js';
+import { hashPassowrd } from '../../utils/hash.js';
 
-export async function listUsers(prisma: PrismaClient) {
-  return prisma.user.findMany();
+export async function findUser(prisma: PrismaClient, data: LoginInput) {
+
+  return prisma.user.findUnique({
+    where: {
+      email: data.email,
+    }
+  });
 }
 
-export async function createUser(prisma: PrismaClient, data: CreateUserInput) {
-
-  const existingUser = await prisma.user.findUnique({ 
-    where: { email: data.email },
-  });
-  if (existingUser)
-    throw new Error("User with this email already exists")
+export async function createUser(prisma: PrismaClient, data: CreateUserInput, salt: string, password: string) {
   return prisma.user.create({
-    data,
+    data: {
+      ...data,
+      salt,
+      password
+    },
   });
 }
 
