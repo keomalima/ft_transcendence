@@ -1,3 +1,7 @@
+import { MatchData } from "../data/matchData";
+import { matchInfo } from "../types";
+import profilePicture from '../images/ProfilePictureSquared.png';
+
 export function  MatchHistory() : HTMLElement | null {
 	const history = document.getElementById('match-history');
 	if (history)
@@ -12,145 +16,16 @@ export function  MatchHistory() : HTMLElement | null {
 					<table class="min-w-full border-separate border-spacing-0">
 					<thead>
 						<tr>
-						<th scope="col" class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter sm:pl-6 lg:pl-8">opponent</th>
-						<th scope="col" class="sticky top-0 z-10 hidden border-b border-gray-300 bg-white/75 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
-						<th scope="col" class="sticky top-0 z-10 hidden border-b border-gray-300 bg-white/75 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter lg:table-cell">duration</th>
-						<th scope="col" class="sticky top-0 z-10 hidden border-b border-gray-300 bg-white/75 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter lg:table-cell">date</th>
-						<th scope="col" class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">mode</th>
-						<!-- <th scope="col" class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pr-4 pl-3 backdrop-blur-sm backdrop-filter sm:pr-6 lg:pr-8">mode</th> -->
+						<th scope="col" class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pr-3 pl-4 text-center text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter sm:pl-6 lg:pl-8">opponent</th>
+						<th scope="col" class="sticky top-0 z-10 hidden border-b border-gray-300 bg-white/75 px-3 py-3.5 text-center text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
+						<th scope="col" class="sticky top-0 z-10 hidden border-b border-gray-300 bg-white/75 px-3 py-3.5 text-center text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter lg:table-cell">duration</th>
+						<th scope="col" class="sticky top-0 z-10 hidden border-b border-gray-300 bg-white/75 px-3 py-3.5 text-center text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter lg:table-cell">date</th>
+						<th scope="col" class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 px-3 py-3.5 text-center text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">mode</th>
+						<!-- <th scope="col" class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pl-3 backdrop-blur-sm backdrop-filter sm:pr-6 lg:pr-8">mode</th> -->
 						</tr>
 					</thead>
-					<tbody>
+					<tbody id='match-data'>
 
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Courtney Henry</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Designer</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">courtney.henry@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Admin</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Courtney Henry</span></a>
-						</td>
-						</tr>
-
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Tom Cook</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Director of Product</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">tom.cook@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Tom Cook</span></a>
-						</td>
-						</tr>
-
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Whitney Francis</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Copywriter</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">whitney.francis@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Admin</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Whitney Francis</span></a>
-						</td>
-						</tr>
-
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Leonard Krasner</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Senior Designer</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">leonard.krasner@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Owner</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Leonard Krasner</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Floyd Miles</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Principal Designer</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">floyd.miles@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Floyd Miles</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Emily Selman</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">VP, User Experience</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">emily.selman@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Emily Selman</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Kristin Watson</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">VP, Human Resources</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">kristin.watson@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Admin</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Kristin Watson</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Emma Dorsey</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Senior Developer</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">emma.dorsey@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Emma Dorsey</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Alicia Bell</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Junior Copywriter</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">alicia.bell@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Admin</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Alicia Bell</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Jenny Wilson</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Studio Artist</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">jenny.wilson@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Owner</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Jenny Wilson</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Anna Roberts</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Partner, Creative</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">anna.roberts@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Anna Roberts</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Benjamin Russel</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Director, Print Operations</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">benjamin.russel@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Benjamin Russel</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Jeffrey Webb</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Senior Art Director</td>
-						<td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">jeffrey.webb@example.com</td>
-						<td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Admin</td>
-						<td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Jeffrey Webb</span></a>
-						</td>
-						</tr>
-						<tr>
-						<td class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Kathryn Murphy</td>
-						<td class="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Associate Creative Director</td>
-						<td class="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">kathryn.murphy@example.com</td>
-						<td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">Member</td>
-						<td class="py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
-							<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Kathryn Murphy</span></a>
-						</td>
-						</tr>
 					</tbody>
 					</table>
 				</div>
@@ -162,5 +37,65 @@ export function  MatchHistory() : HTMLElement | null {
 
 		`
 	}
+
+	const scores = document.getElementById('match-data');
+	MatchData.forEach((s) => {
+		scores?.appendChild(createMatchElem(s));
+	})
+
 	return history;
 }
+
+
+function createMatchElem(match: matchInfo) : HTMLElement {
+
+    const elem = document.createElement('tr');
+
+    const profile = document.createElement('td');
+    profile.className = 'border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8 flex flex-col justify-center items-center gap-2';
+
+    const img = document.createElement('img');
+    img.className = 'w-10 h-10 bg-gray-300 rounded-full shrink-0';
+    img.src = profilePicture;
+
+    const opponent = document.createElement('p');
+    opponent.className = 'my-0';
+    opponent.innerHTML = `${match.opponentName}`;
+
+    profile.appendChild(img);
+    profile.appendChild(opponent);
+
+    const score = document.createElement('td');
+    score.className = 'hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell text-center';
+    score.innerHTML = `${match.scoreUser.toString()} - ${match.scoreOpponent.toString()}`;
+
+    const duration = document.createElement('td');
+    duration.className = 'hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell text-center';
+    duration.innerHTML = `${match.duration}`;
+
+    const date = document.createElement('td');
+    date.className = 'border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 text-center';
+    date.innerHTML = `${match.date}`;
+
+    const mode = document.createElement('td');
+    mode.className = 'border-b border-gray-200 py-4 pr-4 pl-3 text-sm whitespace-nowrap sm:pr-8 lg:pr-8 text-center';
+    mode.innerHTML = `${match.mode}`;
+
+    elem.appendChild(profile);
+    elem.appendChild(score);
+    elem.appendChild(duration);
+    elem.appendChild(date);
+    elem.appendChild(mode);
+
+    return elem;
+}
+
+	// <tr>
+	// <td class="border-b border-gray-200 py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6 lg:pl-8">Courtney Henry</td>
+	// <td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">Designer</td>
+	// <td class="hidden border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">courtney.henry@example.com</td>
+	// <td class="border-b border-gray-200 px-3 py-4 text-sm whitespace-nowrap text-gray-500">Admin</td>
+	// <td class="border-b border-gray-200 py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-8 lg:pr-8">
+	// 	<a href="#" class="text-indigo-600 hover:text-indigo-900">Edit<span class="sr-only">, Courtney Henry</span></a>
+	// </td>
+	// </tr>

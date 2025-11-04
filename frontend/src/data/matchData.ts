@@ -13,7 +13,7 @@ export const MatchData: matchInfo[] = [
 	},
 	{
 		id: 2,
-		opponentName: 'keo',
+		opponentName: 'ppppppppppppppppppppppp',
 		scoreUser: 2,
 		scoreOpponent: 8,
 		winner: false,
