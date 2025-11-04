@@ -13,12 +13,17 @@
   "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.1.0",
-    "fastify": "^5.6.1"
+    "@prisma/client": "^6.18.0",
+    "fastify": "^5.6.1",
+    "fastify-type-provider-zod": "^6.1.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/node": "^24.9.2",
     "nodemon": "^3.1.7",
+    "prisma": "^6.18.0",
     "ts-node": "^10.7.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
