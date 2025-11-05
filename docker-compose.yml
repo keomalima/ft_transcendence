@@ -10,16 +10,21 @@ services:
     networks:
       - transcendence
     volumes:
-      - prisma-data:/app/data
+       - prisma-data:/app/data
+       - ./backend/src:/app/src
+       - ./backend/prisma:/app/prisma
 
   frontend:
       build: ./frontend
       ports:
-        - "4173:4173"
+        - "5173:5173"
       networks:
         - transcendence
       depends_on:
         - backend
+      volumes:
+        - ./frontend/src:/app/src
+        - ./frontend/index.html:/app/index.html
 
 networks:
   transcendence:

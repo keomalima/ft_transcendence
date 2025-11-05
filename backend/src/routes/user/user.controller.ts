@@ -1,62 +1,66 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { CreateUserInput, LoginInput } from './user.schema.js';
-import { createUser, findUser } from './user.service.js'
-import { hashPassowrd, verifyPassword } from '../../utils/hash.js';
+import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
+import { authenticateUser, createSession, createUser, editUser, findUserById, findUserBySession } from './user.service.js'
 
-export async function loginUserHandler (
-	request: FastifyRequest<{ Body: LoginInput }>, 
-	reply: FastifyReply
-) {
+export async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
 	const data = request.body;
-	
-	const user = await findUser(request.server.prisma, data);
-	if (!user) {
-		return reply.code(401).send({
-			message: "Invalid email or password",
-		})
-	}
-	const correctPassword = verifyPassword(
-		data.password,
-		user.password,
-		user.salt,
-	)
 
-	if (correctPassword) {
-		const { password, salt, ...rest} = user;
-		return { 
-			message: "user logged in with success",
-			accessToken: "token",
-			...rest
-		};
-	}
-	return reply.code(401).send({
-		message: "Invalid email or password",
-	})
+	const user = await authenticateUser(request.server.prisma, data);
+	if (!user)
+    	return reply.code(401).send({ message: "Invalid email or password" });
+	
+	const session = await createSession(request.server.prisma, user.id);
+
+	return { 
+		accessToken: session.id, 
+    	...user
+  };
 }
 
-export async function createUserHandler (
-	request: FastifyRequest<{ Body: CreateUserInput }>, 
-	reply: FastifyReply
-) {
+export async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
 	const data = request.body;
-
-	const user = await findUser(request.server.prisma, data);
-	if (user) {
-		return reply.code(401).send({
-			message: "User with this email already exists"
-		})
-	}
 	
 	try {
-		const { hash, salt } = hashPassowrd(data.password);
+		const newUser = await createUser(request.server.prisma, data);
+		reply.code(201);
+		return (newUser);
+	} catch (error: any) {
+		if (error.code == 'P2002')
+    		reply.status(409).send({ message: 'User already exists' });
+		reply.code(500).send({ message: "Failed to create user"});
+	}
+}
 
-		const newUser = await createUser(request.server.prisma, data, salt, hash);
-		return reply.code(201).send({message: "User created", ...newUser});
-	} catch (error) {
-		request.log.error(error);
-		return reply.code(400).send({ 
-			error: 'Failed to create user',
-			message: error instanceof Error ? error.message : 'Unknown error'
+export async function getUserHandler( request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+	if (request.params.id === request.user?.id)
+		return request.user;
+	
+	const user = await findUserById(request.server.prisma, request.params.id);
+
+	if (!user) {
+		return reply.code(404).send({
+			message: "User not found"
 		});
+	}
+	return user;
+}
+
+export async function editUserHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply){
+	const data = request.body;
+
+	const user = await findUserBySession(request.server.prisma, request.headers.authorization);
+	
+	if (user?.id != request.params.id)
+		return reply.code(403).send({ message: "Unauthorized" });
+
+	const updateData = Object.fromEntries
+    	Object.entries(request.body).filter(([_, v]) => v !== undefined)
+		
+	try {
+		return await editUser(request.server.prisma, request.params.id, request.body);
+	} catch (error: unknown) {
+		if (error instanceof Error)
+			return reply.code(401).send({ message: error.message });
+		return reply.code(401).send({ message: 'Unauthorized' });
 	}
 }
