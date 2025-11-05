@@ -1,11 +1,12 @@
 import profilePicture from '../images/ProfilePictureSquared.png';
 import { userData } from '../data/userData';
 import { NavBar } from '../components/NavBar';
+import { navigateTo } from '../main';
 
 export function EditProfile () : HTMLElement | null {
 
 	const user = userData;
-	const editProfile = document.getElementById('app');
+	const editProfile = document.getElementById('root');
 	if (editProfile)
 	{
 		editProfile.innerHTML = /*html*/`
@@ -29,31 +30,23 @@ export function EditProfile () : HTMLElement | null {
 						</div>
 
 						<div class="sm:col-span-3">
-							<label for="first-name" class="block text-sm/6 font-medium text-black">First name</label>
-							<div class="mt-2">
-							<input id="first-name" type="text" name="first-name" autocomplete="given-name" class="input-style outline-creamgrey" />
-							</div>
+							<my-label labelFor="first-name">First name</my-label>
+							<my-input inputId="first-name" inputType="text" inputName="first_name" inputAutoComplete="given-name"/>
 						</div>
 
 						<div class="sm:col-span-3">
-							<label for="last-name" class="block text-sm/6 font-medium text-black">Last name</label>
-							<div class="mt-2">
-							<input id="last-name" type="text" name="last-name" autocomplete="family-name" class="input-style  outline-creamgrey" />
-							</div>
+							<my-label labelFor="last-name">Last name</my-label>
+							<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name"/>
 						</div>
 
 						<div class="col-span-full">
-							<label for="email" class="block text-sm/6 font-medium text-black">Email address</label>
-							<div class="mt-2">
-							<input id="email" type="email" name="email" autocomplete="email" class="input-style outline-creamgrey" />
-							</div>
+							<my-label labelFor="email">Email</my-label>
+							<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
 						</div>
 
 						<div class="col-span-full">
-							<label for="username" class="block text-sm/6 font-medium text-black">Username</label>
-							<div class="mt-2">
-							<input id="email" type="email" name="email" autocomplete="email" class="input-style outline-creamgrey" />
-							</div>
+							<my-label labelFor="username">Username</my-label>
+							<my-input inputId="username" inputType="text" inputName="username" inputAutoComplete="username"/>
 						</div>
 					</div>
 					<div class="mt-8 flex">
@@ -72,24 +65,18 @@ export function EditProfile () : HTMLElement | null {
 			<form class="md:col-span-2">
 				<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
 				<div class="col-span-full">
-					<label for="current-password" class="block text-sm/6 font-medium text-black">Current password</label>
-					<div class="mt-2">
-					<input id="current-password" type="password" name="current_password" autocomplete="current-password" class="input-style outline-creamgrey" />
-					</div>
+					<my-label labelFor="current-password">Current password</my-label>
+					<my-input inputId="current-password" inputType="password" inputName="current_password" inputAutoComplete="current-password"/>
 				</div>
 
 				<div class="col-span-full">
-					<label for="new-password" class="block text-sm/6 font-medium text-black">New password</label>
-					<div class="mt-2">
-					<input id="new-password" type="password" name="new_password" autocomplete="new-password" class="input-style outline-creamgrey" />
-					</div>
+					<my-label labelFor="new-password">New password</my-label>
+					<my-input inputId="new-password" inputType="password" inputName="new_password" inputAutoComplete="new-password"/>
 				</div>
 
 				<div class="col-span-full">
-					<label for="confirm-password" class="block text-sm/6 font-medium text-black">Confirm password</label>
-					<div class="mt-2">
-					<input id="confirm-password" type="password" name="confirm_password" autocomplete="new-password" class="input-style outline-creamgrey" />
-					</div>
+					<my-label labelFor="confirm-password">Confirm password</my-label>
+					<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="new-password"/>
 				</div>
 				</div>
 
@@ -108,12 +95,26 @@ export function EditProfile () : HTMLElement | null {
 			</div>
 
 			<form class="flex items-start md:col-span-2">
-				<button type="submit" class="btn-primary bg-black text-white hover:shadow-xl hover:font-semibold">Yes, delete my account</button>
+				<button id="delete" type="click" class="btn-primary bg-black text-white hover:shadow-xl hover:font-semibold">Yes, delete my account</button>
 			</form>
 			</div>
 		</div>
 		`
 		NavBar();
 	}
+
+	const deleteProfile = document.getElementById('delete') as HTMLElement;
+	console.log('delete', deleteProfile);
+
+	deleteProfile.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		console.log('Delete profile');
+
+		navigateTo('/profile');
+	});
+
+
 	return editProfile;
 }

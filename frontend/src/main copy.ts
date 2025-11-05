@@ -8,13 +8,13 @@ import { renderBackendStatus } from './pages/backendStatus';
 import { createHome } from './pages/home';
 
 // Get the root element
-const app = document.getElementById('app');
+const root = document.getElementById('root');
 
-if (app) {
-	// Clear the app
-	app.innerHTML = '';
+if (root) {
+	// Clear the root
+	root.innerHTML = '';
 
-	app.appendChild(createHome());
+	root.appendChild(createHome());
 
 	// const nav = document.createElement('nav');
 	// nav.className = 'flex gap-4 p-4 bg-stone-800 text-white';
@@ -47,8 +47,8 @@ if (app) {
 
 	// nav.appendChild(homeLink);
 	// nav.appendChild(backendLink);
-	// app.appendChild(nav);
-	// app.appendChild(content);
+	// root.appendChild(nav);
+	// root.appendChild(content);
 
 	// renderHome();
 

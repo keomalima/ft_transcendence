@@ -16,6 +16,7 @@ down:
 
 clean:
 	$(COMPOSE) down -v
+	docker rmi ft_transcendence-backend:latest ft_transcendence-frontend:latest
 
 studio:
 	$(COMPOSE) exec backend npx prisma studio

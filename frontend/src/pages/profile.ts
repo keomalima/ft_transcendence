@@ -5,10 +5,10 @@ import { BigStat } from "../components/BigStats";
 import { MatchHistory } from "../components/MatchHistory";
 
 export function Profile() {
-	const app = document.getElementById('app');
-	if (app)
+	const root = document.getElementById('root');
+	if (root)
 	{
-		app.innerHTML = /*html*/`
+		root.innerHTML = /*html*/`
 
 
 		<header id='navigation-bar'></header>
