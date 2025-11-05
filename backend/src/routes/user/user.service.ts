@@ -90,7 +90,7 @@ export async function logoutUser(prisma: PrismaClient, id: string) {
   });
 }
 
-export async function authenticateUser( prisma: PrismaClient, data: LoginInput) {
+export async function authenticateUser(prisma: PrismaClient, data: LoginInput) {
   const user = await findUserByEmail(prisma, data);
   if (!user)
     return null;
@@ -105,6 +105,19 @@ export async function authenticateUser( prisma: PrismaClient, data: LoginInput) 
     data: { isOnline: true, lastSeenAt: new Date()}
   });
   return safeUser;
+}
+
+export async function deleteUser(prisma: PrismaClient, id: string | undefined) {
+  if (!id)
+    return
+
+  await prisma.session.deleteMany({
+    where: { userId: id }
+  });
+
+  await prisma.user.delete({
+    where: { id },
+  });
 }
 
 export async function validateToken ( prisma: PrismaClient, token: string | undefined) {

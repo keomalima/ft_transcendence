@@ -5,7 +5,7 @@ Authorization: Bearer 58819363-b20f-494d-bef5-e8855aadf3a6
 
 ### LOGOUT AN USER 
 POST http://localhost:3000/api/users/logout HTTP/1.1
-Authorization: Bearer 58819363-b20f-494d-bef5-e8855aadf3a6
+Authorization: Bearer cb60fd9d-3eb9-4189-8e53-6d01670e1e09
 
 ### UPDATE AN USER
 PUT http://localhost:3000/api/users/17ee4d12-9dea-4ff5-849d-4f169c90fb19 HTTP/1.1
@@ -44,3 +44,7 @@ Content-Type: application/json
    "email": "keomalima@icloud.com",
    "password": "123456"
 }
+
+### DELETES AN USER
+DELETE http://localhost:3000/api/users HTTP/1.1
+Authorization: Bearer 7db89ffe-7d68-42fd-ba86-546be971eda8

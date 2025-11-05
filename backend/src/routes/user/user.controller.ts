@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
-import { authenticateUser, createSession, createUser, editUser, findUserById, findUserBySession, logoutUser } from './user.service.js'
+import { authenticateUser, createSession, createUser, deleteUser, editUser, findUserById, findUserBySession, logoutUser } from './user.service.js'
 
 export async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
 	const data = request.body;
@@ -65,6 +65,17 @@ export async function editUserHandler(request: FastifyRequest<{Body: EditInput, 
 	}
 }
 
+export async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
+	try {
+		await deleteUser(request.server.prisma, request.user?.id);
+		reply.code(204)
+	} catch (error: unknown) {
+		if (error instanceof Error)
+			return reply.code(401).send({ message: error.message });
+		return reply.code(401).send({ message: 'Unauthorized' });
+	}
+}
+
 export async function logoutHandler(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
 	const user = await findUserBySession(request.server.prisma, request.headers.authorization);
 
@@ -72,7 +83,8 @@ export async function logoutHandler(request: FastifyRequest<{ Params: { id: stri
 		return reply.code(401).send({ message: "Unauthorized" });
 
 	try {
-		return await logoutUser(request.server.prisma, user.id);
+		await logoutUser(request.server.prisma, user.id);
+		reply.code(204)
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
