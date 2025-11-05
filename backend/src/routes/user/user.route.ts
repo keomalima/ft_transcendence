@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { createUserHandler, editUserHandler, getUserHandler, loginUserHandler } from './user.controller.js'
+import { createUserHandler, editUserHandler, getUserHandler, loginUserHandler, logoutHandler } from './user.controller.js'
 import { createUserSchema, createUserResponseSchema, loginResponseSchema, loginSchema, getUserResponseSchema, editUserResponseSchema, editUserSchema } from "./user.schema.js";
 import type { User } from '@prisma/client';
 import { validateToken } from './user.service.js';
@@ -37,5 +37,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 
 		protectedRoutes.put('/:id', { schema: { body: editUserSchema, response: { 200: editUserResponseSchema }}},
 		editUserHandler);
+
+		protectedRoutes.post('/logout', logoutHandler)
 	})
 }

@@ -78,6 +78,18 @@ export async function createUser(prisma: PrismaClient, data: CreateUserInput) {
   });
 }
 
+export async function logoutUser(prisma: PrismaClient, id: string) {
+
+  const user = await prisma.user.update({
+    where: { id },
+    data: { isOnline: false }
+  });
+
+  await prisma.session.deleteMany({
+    where: { userId: id }
+  });
+}
+
 export async function authenticateUser( prisma: PrismaClient, data: LoginInput) {
   const user = await findUserByEmail(prisma, data);
   if (!user)

@@ -1,6 +1,11 @@
 ### GET AN USER (requires authentication)
-GET http://localhost:3000/api/users/9c812020-f982-4a52-b6e0-18b28b10659e HTTP/1.1
-Authorization: Bearer 88290cf4-7ffd-4ff9-9793-de39f381b328
+GET http://localhost:3000/api/users/17ee4d12-9dea-4ff5-849d-4f169c90fb19 HTTP/1.1
+Authorization: Bearer 58819363-b20f-494d-bef5-e8855aadf3a6
+
+
+### LOGOUT AN USER 
+POST http://localhost:3000/api/users/logout HTTP/1.1
+Authorization: Bearer 58819363-b20f-494d-bef5-e8855aadf3a6
 
 ### UPDATE AN USER
 PUT http://localhost:3000/api/users/17ee4d12-9dea-4ff5-849d-4f169c90fb19 HTTP/1.1
