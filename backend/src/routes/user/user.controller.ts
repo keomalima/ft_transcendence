@@ -1,15 +1,19 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
-import { authenticateUser, createSession, createUser, deleteUser, editUser, findUserById, logoutUser } from './user.service.js'
+import { userService } from './user.service.js'
 
-export async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
+// =====================
+// Authentication Handlers
+// =====================
+
+async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
 	const data = request.body;
 
-	const user = await authenticateUser(request.server.prisma, data);
+	const user = await userService.authenticateUser(request.server.prisma, data);
 	if (!user)
     	return reply.code(401).send({ message: "Invalid email or password" });
 	
-	const session = await createSession(request.server.prisma, user.id);
+	const session = await userService.createSession(request.server.prisma, user.id);
 
 	return { 
 		accessToken: session.id, 
@@ -17,25 +21,54 @@ export async function loginUserHandler ( request: FastifyRequest<{ Body: LoginIn
   };
 }
 
-export async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
+async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
+	if (!request.user?.id)
+		return reply.code(401).send({ message: "Unauthorized" });
+
+	try {
+		await userService.logoutUser(request.server.prisma, request.user.id);
+		reply.code(204).send()
+	} catch (error: unknown) {
+		if (error instanceof Error)
+			return reply.code(401).send({ message: error.message });
+		return reply.code(401).send({ message: 'Unauthorized' });
+	}
+}
+
+async function protectedRouteHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const session = await userService.validateToken(request.server.prisma, request.headers.authorization)
+		request.user = session.user;
+	} catch (error: unknown) {
+		if (error instanceof Error)
+			return reply.code(401).send({ message: error.message });
+		return reply.code(401).send({ message: 'Unauthorized' });
+	}
+}
+
+// =====================
+// User CRUD Handlers
+// =====================
+
+async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
 	const data = request.body;
 	
 	try {
-		const newUser = await createUser(request.server.prisma, data);
+		const newUser = await userService.createUser(request.server.prisma, data);
 		reply.code(201);
 		return (newUser);
 	} catch (error: any) {
 		if (error.code == 'P2002')
-    		reply.status(409).send({ message: 'User already exists' });
+    		return reply.status(409).send({ message: 'User already exists' });
 		reply.code(500).send({ message: "Failed to create user"});
 	}
 }
 
-export async function getUserHandler( request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+async function getUserHandler( request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
 	if (request.params.id === request.user?.id)
 		return request.user;
 	
-	const user = await findUserById(request.server.prisma, request.params.id);
+	const user = await userService.findUserById(request.server.prisma, request.params.id);
 
 	if (!user) {
 		return reply.code(404).send({
@@ -45,11 +78,11 @@ export async function getUserHandler( request: FastifyRequest<{ Params: { id: st
 	return user;
 }
 
-export async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply: FastifyReply){
+async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply: FastifyReply){
 	if (!request.user?.id)
 		return;
 	try {
-		return await editUser(request.server.prisma, request.user.id, request.body);
+		return await userService.editUser(request.server.prisma, request.user.id, request.body);
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
@@ -57,10 +90,10 @@ export async function editUserHandler(request: FastifyRequest<{Body: EditInput}>
 	}
 }
 
-export async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
+async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
 	try {
-		await deleteUser(request.server.prisma, request.user?.id);
-		reply.code(204)
+		await userService.deleteUser(request.server.prisma, request.user?.id);
+		reply.code(204).send()
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
@@ -68,16 +101,19 @@ export async function deleteHandler(request: FastifyRequest<{Body: EditInput, Pa
 	}
 }
 
-export async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
-	if (!request.user?.id)
-		return reply.code(401).send({ message: "Unauthorized" });
+// =====================
+// Export Controller Object
+// =====================
 
-	try {
-		await logoutUser(request.server.prisma, request.user.id);
-		reply.code(204)
-	} catch (error: unknown) {
-		if (error instanceof Error)
-			return reply.code(401).send({ message: error.message });
-		return reply.code(401).send({ message: 'Unauthorized' });
-	}
-}
+export const userController = {
+	// Authentication
+	loginUserHandler,
+	logoutHandler,
+	protectedRouteHandler,
+	
+	// User CRUD
+	createUserHandler,
+	getUserHandler,
+	editUserHandler,
+	deleteHandler,
+};
