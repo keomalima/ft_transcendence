@@ -1,5 +1,5 @@
 import { NavBar } from "./NavBar";
-import { renderBackendStatus } from "../pages/backendStatus";
+import { testBackend } from "../pages/testBackend";
 
 
 export function test() {
@@ -12,7 +12,7 @@ export function test() {
 
         `;
     }
-	renderBackendStatus('create-user');
+	testBackend('create-user');
 	NavBar();
 
     return root;

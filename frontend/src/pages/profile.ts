@@ -36,7 +36,7 @@ export function Profile() {
 		</div>
 
 		<!-- Statistics -->
-		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
+		<div class="mx-auto mb-10 max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="bg-white p-10 shadow-sm rounded-lg">
 				<h1>Statistics</h1>
 			</div>

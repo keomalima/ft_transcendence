@@ -89,7 +89,7 @@ export function RegisterPopUp() {
 
 	// Show sign in
 	const signIn = document.getElementById('sign-in-btn') as HTMLElement;
-	signIn.addEventListener('click', (e) => {
+	signIn?.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 

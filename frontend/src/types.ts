@@ -27,12 +27,27 @@ export interface githubRepo {
 	updated_at: string;
 }
 
-export interface userInfo {
-	username: string;
-	firstname: string;
+export interface CreateUserDto {
+	email: string;
+	name: string;
 	surname: string;
-	city: string;
-	age: string;
+	password: string;
+	displayName: string;
+	city: string | null;
+	avatarUrl: string | null;
+}
+
+export interface User {
+	id: string;
+	name: string;
+	email: string;
+}
+
+export interface LogedUser {
+	accessToken: string;
+	email: string;
+	name: string;
+	isOnline: boolean;
 }
 
 export interface matchInfo {

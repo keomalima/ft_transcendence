@@ -2,7 +2,7 @@
 import pongimg from '../images/pong.png';
 import { navigateTo } from '../main';
 import { RegisterPopUp } from '../components/RegisterPopUp';
-import { renderBackendStatus } from './backendStatus';
+import { testBackend } from './testBackend';
 
 export function home() {
 	const root = document.getElementById('root');
@@ -46,7 +46,7 @@ export function home() {
 							<p class="mt-10 text-center text-sm/6 text-medium">
 								Not a member?
 								<a class="underline" onclick="document.getElementById('pop-up-register').showModal()">Create a new account</a>
-							</p>		
+							</p>
 						</div>
 					</div>
 					<img src="${pongimg}" alt="" class="mt-10 aspect-5/5 w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36" />
@@ -54,7 +54,7 @@ export function home() {
 			</div>
 
 			<!-- Dialog for pop up -->
-			<dialog id="pop-up-register" class="place-self-center"></dialog>	
+			<dialog id="pop-up-register" class="place-self-center"></dialog>
 
 
 		</div>
@@ -96,7 +96,7 @@ export function home() {
 
 	RegisterPopUp();
 
-	// renderBackendStatus('test-backend');
+	// testBackend('test-backend');
 	}
 }
 

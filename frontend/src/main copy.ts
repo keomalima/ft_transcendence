@@ -4,7 +4,7 @@ import { createHeader } from './components/Header';
 import { createAbout } from './components/About';
 import { createProjects } from './components/Projects';
 import { showGithub } from './components/GithubRepo';
-import { renderBackendStatus } from './pages/backendStatus';
+import { testBackend } from './pages/testBackend';
 import { createHome } from './pages/home';
 
 // Get the root element
@@ -39,7 +39,7 @@ if (root) {
 	// }
 
 	// function renderBackend() {
-	// 	renderBackendStatus(content);
+	// 	testBackend(content);
 	// }
 
 	// homeLink.addEventListener('click', renderHome);
