@@ -3,25 +3,11 @@ import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
 import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
 
 export async function findUserByEmail(prisma: PrismaClient, data: LoginInput) {
-
   return prisma.user.findUnique({
     where: {
       email: data.email,
     }
   })
-}
-
-export async function findUserBySession(prisma: PrismaClient, token: string | undefined) {
-  const [scheme, credentials] = (token ?? '').split(' ');
-  if (!credentials)
-    return
-
-  const session = await prisma.session.findUnique({
-    where: {id: credentials},
-    include: { user: true }
-  })
-
-  return session?.user;
 }
 
 export async function editUser(prisma: PrismaClient, id: string, data: EditInput) {
@@ -32,8 +18,9 @@ export async function editUser(prisma: PrismaClient, id: string, data: EditInput
     }
   } 
 
-  const updateData = Object.fromEntries
+  const updateData = Object.fromEntries(
     Object.entries(data).filter(([_, v]) => v !== undefined)
+  );
 
   return prisma.user.update({
     where: { id: id },

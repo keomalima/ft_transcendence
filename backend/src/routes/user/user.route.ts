@@ -12,10 +12,26 @@ declare module 'fastify' {
 
 export async function userRoutes(fastify: FastifyInstance) {
 	// Public routes (no authentication)
-	fastify.post('/login', { schema: { body: loginSchema, response: { 200: loginResponseSchema}}}, 
+	fastify.post('/login', { 
+		schema: { 
+			body: loginSchema, 
+			response: { 200: loginResponseSchema },
+			tags: ['Authentication'],
+			description: 'Login user and get access token',
+			summary: 'User login'
+		}
+	}, 
 	loginUserHandler);
 
-	fastify.post('/', { schema: { body: createUserSchema, response: { 201: createUserResponseSchema }}}, 
+	fastify.post('/', { 
+		schema: { 
+			body: createUserSchema, 
+			response: { 201: createUserResponseSchema },
+			tags: ['Users'],
+			description: 'Create a new user account',
+			summary: 'Create user'
+		}
+	}, 
 	createUserHandler);
 
 	// Protected routes
@@ -32,14 +48,47 @@ export async function userRoutes(fastify: FastifyInstance) {
 			}
 		})
 
-		protectedRoutes.get('/:id', { schema: { response : { 200: getUserResponseSchema }}}, 
+		protectedRoutes.get('/:id', { 
+			schema: { 
+				response : { 200: getUserResponseSchema },
+				tags: ['Users'],
+				description: 'Get user details by ID',
+				summary: 'Get user by ID',
+				security: [{ bearerAuth: [] }]
+			}
+		}, 
 		getUserHandler);
 
-		protectedRoutes.put('/:id', { schema: { body: editUserSchema, response: { 200: editUserResponseSchema }}},
+		protectedRoutes.put('/me', { 
+			schema: { 
+				body: editUserSchema, 
+				response: { 200: editUserResponseSchema },
+				tags: ['Users'],
+				description: 'Update current user profile',
+				summary: 'Update user profile',
+				security: [{ bearerAuth: [] }]
+			}
+		},
 		editUserHandler);
 
-		protectedRoutes.post('/logout', logoutHandler)
+		protectedRoutes.post('/logout', {
+			schema: {
+				tags: ['Authentication'],
+				description: 'Logout current user',
+				summary: 'User logout',
+				security: [{ bearerAuth: [] }]
+			}
+		},
+		logoutHandler)
 
-		protectedRoutes.delete('/', deleteHandler)
+		protectedRoutes.delete('/', {
+			schema: {
+				tags: ['Users'],
+				description: 'Delete current user account',
+				summary: 'Delete user',
+				security: [{ bearerAuth: [] }]
+			}
+		},
+		deleteHandler)
 	})
 }

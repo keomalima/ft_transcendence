@@ -16,10 +16,10 @@
         ".gitignore": true,
         "Makefile": true,
         "node_modules": true,
-        "prisma": false,
+        "prisma": true,
         "**/*.ts": false,
         "**/node_modules": true,
-        "**/prisma": false,
+        "**/prisma": true,
         "**/.dockerignore": true,
         "**/.env": true,
         "**/.gitignore": true,
@@ -29,7 +29,8 @@
         "*.pdf": true,
         "en.subject.pdf": true,
         "prisma.config.ts": true,
-        "**/prisma.config.ts": true
+        "**/prisma.config.ts": true,
+        "**/dist": true
     },
     "explorerExclude.backup": {},
     "files.autoSave": "afterDelay"

@@ -1,22 +1,21 @@
 ### GET AN USER (requires authentication)
-GET http://localhost:3000/api/users/17ee4d12-9dea-4ff5-849d-4f169c90fb19 HTTP/1.1
-Authorization: Bearer 58819363-b20f-494d-bef5-e8855aadf3a6
-
+GET http://localhost:3000/api/users/4d8cc8ae-2d96-4856-aecf-677be6ccdcd5 HTTP/1.1
+Authorization: Bearer e54ce53c-ba84-4812-aa16-3ef29baf88c5
 
 ### LOGOUT AN USER 
 POST http://localhost:3000/api/users/logout HTTP/1.1
 Authorization: Bearer cb60fd9d-3eb9-4189-8e53-6d01670e1e09
 
 ### UPDATE AN USER
-PUT http://localhost:3000/api/users/17ee4d12-9dea-4ff5-849d-4f169c90fb19 HTTP/1.1
-Authorization: Bearer 58819363-b20f-494d-bef5-e8855aadf3a6
+PUT http://localhost:3000/api/users/me HTTP/1.1
+Authorization: Bearer e54ce53c-ba84-4812-aa16-3ef29baf88c5
 Content-Type: application/json
 
 {
    "email": "betsy@icloud.com",
    "name": "Betsy",
    "surname": "Lima",
-   "displayName": "KeoLimaa",
+   "displayName": "KeoLima",
    "password": "123456",
    "city": "Lyon",
    "avatarUrl": null

@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
-import { authenticateUser, createSession, createUser, deleteUser, editUser, findUserById, findUserBySession, logoutUser } from './user.service.js'
+import { authenticateUser, createSession, createUser, deleteUser, editUser, findUserById, logoutUser } from './user.service.js'
 
 export async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
 	const data = request.body;
@@ -45,19 +45,11 @@ export async function getUserHandler( request: FastifyRequest<{ Params: { id: st
 	return user;
 }
 
-export async function editUserHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply){
-	const data = request.body;
-
-	const user = await findUserBySession(request.server.prisma, request.headers.authorization);
-	
-	if (user?.id != request.params.id)
-		return reply.code(403).send({ message: "Unauthorized" });
-
-	const updateData = Object.fromEntries
-    	Object.entries(request.body).filter(([_, v]) => v !== undefined)
-		
+export async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply: FastifyReply){
+	if (!request.user?.id)
+		return;
 	try {
-		return await editUser(request.server.prisma, request.params.id, request.body);
+		return await editUser(request.server.prisma, request.user.id, request.body);
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
@@ -76,14 +68,12 @@ export async function deleteHandler(request: FastifyRequest<{Body: EditInput, Pa
 	}
 }
 
-export async function logoutHandler(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-	const user = await findUserBySession(request.server.prisma, request.headers.authorization);
-
-	if (!user?.id)
+export async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
+	if (!request.user?.id)
 		return reply.code(401).send({ message: "Unauthorized" });
 
 	try {
-		await logoutUser(request.server.prisma, user.id);
+		await logoutUser(request.server.prisma, request.user.id);
 		reply.code(204)
 	} catch (error: unknown) {
 		if (error instanceof Error)
