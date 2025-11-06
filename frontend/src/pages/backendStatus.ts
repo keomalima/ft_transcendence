@@ -1,7 +1,7 @@
 export function renderBackendStatus(id: string) {
 	if (id)
 	{
-		const root : HTMLElement = document.getElementById(id);
+		const root : HTMLElement | null = document.getElementById(id);
 		if (root)
 		{
 			root.innerHTML = /*html*/`
@@ -20,46 +20,80 @@ export function renderBackendStatus(id: string) {
 			if (createUserBtn)
 			{
 				createUserBtn.addEventListener('click', async () => {
-					try {
-						const response = await fetch ('http://localhost:3000/api/users', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							},
-							body: JSON.stringify({
-								email: "lysha.than@gmail.com",
-								name: "LySha",
-								surname: "Than",
-								password: "987654321",
-								displayName: "lthan",
-								city: "Paris",
-								avatarUrl: null
-							})
-						});
+					AddUserToDb();
+					// try {
+					// 	const response = await fetch ('http://localhost:3000/api/users', {
+					// 		method: 'POST',
+					// 		headers: {
+					// 			'Content-Type': 'application/json'
+					// 		},
+					// 		body: JSON.stringify({
+					// 			email: "lysha.than@gmail.com",
+					// 			name: "LySha",
+					// 			surname: "Than",
+					// 			password: "987654321",
+					// 			displayName: "lthan",
+					// 			city: "Paris",
+					// 			avatarUrl: null
+					// 		})
+					// 	});
 
-						const data = await response.json();
+					// 	const data = await response.json();
 
-						if (response.ok) {
-							responseDiv!.innerHTML = /*html*/`
-								<p class="text-green-600">✅ User created successfully!</p>
-                   		    	<pre>${JSON.stringify(data, null, 2)}</pre>
-							`;
-						}
-						else {
-							responseDiv!.innerHTML = /*html*/`
-								<p class="text-red-600">❌ Error: ${data.message || 'Failed to create user'}</p>
-								<pre>${JSON.stringify(data, null, 2)}</pre>
-							`;
-						}
-					}
-					catch (error) {
-						responseDiv!.innerHTML = /*html*/`
-							<p class="text-red-600">❌ Network Error: ${error.message}</p>
-						`;
-					}
+					// 	if (response.ok) {
+					// 		responseDiv!.innerHTML = /*html*/`
+					// 			<p class="text-green-600">✅ User created successfully!</p>
+                   	// 	    	<pre>${JSON.stringify(data, null, 2)}</pre>
+					// 		`;
+					// 	}
+					// 	else {
+					// 		responseDiv!.innerHTML = /*html*/`
+					// 			<p class="text-red-600">❌ Error: ${data.message || 'Failed to create user'}</p>
+					// 			<pre>${JSON.stringify(data, null, 2)}</pre>
+					// 		`;
+					// 	}
+					// }
+					// catch (error) {
+					// 	responseDiv!.innerHTML = /*html*/`
+					// 		<p class="text-red-600">❌ Network Error: ${error.message}</p>
+					// 	`;
+					// }
 				});
 			}
 		}
 	}
 
+}
+
+async function AddUserToDb() {
+
+	try {
+		const response = await fetch ('http://localhost:3000/api/users', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				email: "lysha.than@gmail.com",
+				name: "LySha",
+				surname: "Than",
+				password: "987654321",
+				displayName: "lthan",
+				city: "Paris",
+				avatarUrl: null
+			})
+		});
+
+		const data = await response.json();
+
+		if (response.ok) {
+			console.log(JSON.stringify(data, null, 2));
+		}
+		else {
+			console.log('Failed to create user');
+		}
+	}
+	catch (error) {
+		console.log('Failed to create user', error.message);
+	}
 }

@@ -14,7 +14,7 @@
 		"**/*.yml": false,
 		"**/*.md": true,
 		".gitignore": true,
-		"Makefile": true,
+		"Makefile": false,
 		"node_modules": true,
 		"prisma": true,
 		"**/*.ts": false,
@@ -23,7 +23,7 @@
 		"**/.dockerignore": true,
 		"**/.env": true,
 		"**/.gitignore": true,
-		"**/Dockerfile": true,
+		"**/Dockerfile": false,
 		"backend/src/*.*": true,
 		"**/generated": true,
 		"*.pdf": true,
@@ -33,7 +33,7 @@
 	},
     "explorerExclude.backup": {},
     "files.autoSave": "afterDelay",
-	
+
 	"editor.insertSpaces": false,
 	"editor.tabSize": 4,
 	"editor.detectIndentation": false,

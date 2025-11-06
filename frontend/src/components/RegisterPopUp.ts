@@ -1,4 +1,5 @@
 import { navigateTo } from "../main";
+import defaultProfilePicture from '../images/defaultProfile.webp'
 
 export function RegisterPopUp() {
     const popUp = document.getElementById('pop-up-register');
@@ -10,28 +11,52 @@ export function RegisterPopUp() {
 		</div>
 		<div class="px-6 py-12 sm:rounded-lg sm:px-12">
 			<h1 class="mb-10 text-xl">Create a new account</h1>
-			<form action="#" method="POST" class="space-y-6">
+			<form id='crate-new-account-form' class="md:col-span-2">
+					<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
+						<div class="col-span-full flex items-center gap-x-8">
+							<img src="${defaultProfilePicture}" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0" />
+							<div>
+							<button type="button" class="btn-primary bg-white hover:bg-black">Add avatar</button>
+							<p class="mt-2 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
+							</div>
+						</div>
 
-				<div>
-					<my-label labelFor="email">Email address</my-label>
-					<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
-				</div>
-				<div>
-					<my-label labelFor="password">Password</my-label>
-					<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
-				</div>
+						<div class="sm:col-span-3">
+							<my-label labelFor="first-name">First name</my-label>
+							<my-input inputId="first-name" inputType="text" inputName="first_name" inputAutoComplete="given-name"/>
+						</div>
 
-				<div>
-					<my-label labelFor="confirm-password">Confirm password</my-label>
-					<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="new-password"/>
-				</div>
+						<div class="sm:col-span-3">
+							<my-label labelFor="last-name">Last name</my-label>
+							<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name"/>
+						</div>
 
-				<div>
-					<button id="sign-in-btn" type="submit" class="btn-primary bg-white hover:bg-black">Sign in</button>
-				</div>
-			</form>
+						<div class="col-span-full">
+							<my-label labelFor="email">Email</my-label>
+							<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
+						</div>
 
-			<div>
+						<div class="col-span-full">
+							<my-label labelFor="username">Username</my-label>
+							<my-input inputId="username" inputType="text" inputName="username" inputAutoComplete="username"/>
+						</div>
+
+						<div class="col-span-full">
+							<my-label labelFor="password">Password</my-label>
+							<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
+						</div>
+
+						<div class="col-span-full">
+							<my-label labelFor="confirm-password">Confirm password</my-label>
+							<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="current-password"/>
+						</div>
+					</div>
+					<div class="mt-8 flex">
+						<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save</button>
+					</div>
+				</form>
+
+			<!-- <div>
 				<div class="mt-10 flex items-center gap-x-6">
 				<div class="w-full flex-1 border-t border-gray-200"></div>
 				<p class="text-sm/6 font-medium text-nowrap text-gray-900">Or continue with</p>
@@ -56,16 +81,14 @@ export function RegisterPopUp() {
 					<span class="text-sm/6 font-semibold">GitHub</span>
 				</a>
 				</div>
-			</div>
+			</div> -->
 		</div>
 
         `;
     }
 
-
+	// Show sign in
 	const signIn = document.getElementById('sign-in-btn') as HTMLElement;
-	console.log('sign in button', signIn);
-
 	signIn.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -74,6 +97,56 @@ export function RegisterPopUp() {
 
 		navigateTo('/profile');
 	});
-	
+
+	// Create new account
+	const saveBtn = document.getElementById('save-btn') as HTMLElement;
+	const createAccountForm = document.getElementById('crate-new-account-form') as HTMLFormElement;
+	saveBtn?.addEventListener('submit', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		console.log('Save new account');
+
+
+	});
+
     return popUp;
 }
+
+// async function AddUserToDb () {
+// 	try {
+// 		const response = await fetch ('http://localhost:3000/api/users', {
+// 			method: 'POST',
+// 			headers: {
+// 				'Content-Type': 'application/json'
+// 			},
+// 			body: JSON.stringify({
+// 				email: "lysha.than@gmail.com",
+// 				name: "LySha",
+// 				surname: "Than",
+// 				password: "987654321",
+// 				displayName: "lthan",
+// 				city: "Paris",
+// 				avatarUrl: null
+// 			})
+// 		});
+
+// 		const data = await response.json();
+
+// 		if (response.ok) {
+// 			responseDiv!.innerHTML = /*html*/`
+// 				<p class="text-green-600">✅ User created successfully!</p>
+// 				<pre>${JSON.stringify(data, null, 2)}</pre>
+// 			`;
+// 		}
+// 		else {
+// 			responseDiv!.innerHTML = /*html*/`
+// 				<p class="text-red-600">❌ Error: ${data.message || 'Failed to create user'}</p>
+// 				<pre>${JSON.stringify(data, null, 2)}</pre>
+// 			`;
+// 		}
+// 	}
+// 	catch (error) {
+// 		console.log(error.message);
+// 	}
+// }

@@ -8,14 +8,13 @@ export function test() {
         root.innerHTML = /*html*/`
 
 		<header id='navigation-bar'></header>
-
 		<div id="create-user"></div>
 
         `;
     }
 	renderBackendStatus('create-user');
 	NavBar();
-	
+
     return root;
 }
 
