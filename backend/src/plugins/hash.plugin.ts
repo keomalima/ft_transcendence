@@ -4,7 +4,7 @@ const ITERATIONS = 210_000;
 const KEY_LENGTH = 64;
 const DIGEST = 'sha512';
 
-export function hashPassowrd(password: string) : {
+export function hashPassword(password: string) : {
     hash: string; salt: string
 } {
     const salt = crypto.randomBytes(16).toString('hex');
