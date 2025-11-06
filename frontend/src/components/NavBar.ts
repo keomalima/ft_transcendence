@@ -4,7 +4,7 @@ export function NavBar() {
 	{
 		navBar.innerHTML = /*html*/`
 			<nav aria-label="Global" class=" flex items-center justify-between p-6 lg:px-20">
-				<a href="#" class="nav-logo">
+				<a data-link href="/profile" class="nav-logo">
 					<span class=''>Let's Pong !</span>
 				</a>
 				<div class="flex lg:hidden">
@@ -16,11 +16,11 @@ export function NavBar() {
 				</button>
 				</div>
 					<div class="hidden lg:flex lg:gap-x-12">
-					<a href="/profile" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
-					<a href="/game" class="nav-elem ${window.location.pathname === '/game' ? 'text-black' : ''}" >game</a>
-					<a href="/tournament" class="nav-elem ${window.location.pathname === '/tournament' ? 'text-black' : ''}" >tournament</a>
+					<a data-link href="/profile" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
+					<a data-link href="/game" class="nav-elem ${window.location.pathname === '/game' ? 'text-black' : ''}" >game</a>
+					<a data-link href="/tournament" class="nav-elem ${window.location.pathname === '/tournament' ? 'text-black' : ''}" >tournament</a>
 
-					<a href="/home" class="nav-elem">Log out</a>
+					<a data-link href="/home" class="nav-elem">Log out</a>
 				</div>
 			</nav>
 			<el-dialog>
@@ -28,7 +28,7 @@ export function NavBar() {
 				<div tabindex="0" class="fixed inset-0 focus:outline-none">
 					<el-dialog-panel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm ">
 					<div class="flex items-center justify-between">
-						<a href="#" class="-m-1.5 p-1.5">
+						<a data-link href="#" class="-m-1.5 p-1.5">
 							<span class="font-['Calistoga'] text-black text-2xl">Let's Pong !</span>
 						</a>
 						<button type="button" command="close" commandfor="mobile-menu" class="-m-2.5 rounded-md p-2.5 text-gray-700">
@@ -41,12 +41,12 @@ export function NavBar() {
 					<div class="mt-6 flow-root">
 						<div class="-my-6 divide-y divide-gray-500/10">
 						<div class="space-y-2 py-6">
-							<a href="" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
-							<a href="/game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
-							<a href="/tournament" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">tournament</a>
+							<a data-link href="" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
+							<a data-link href="/game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
+							<a data-link href="/tournament" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">tournament</a>
 						</div>
 						<div class="py-6">
-							<a href="/" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">Log out</a>
+							<a data-link href="/" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">Log out</a>
 						</div>
 						</div>
 					</div>

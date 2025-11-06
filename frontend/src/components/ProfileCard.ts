@@ -18,7 +18,7 @@ export function ProfileCard () : HTMLElement | null {
 					<p>${user.age} years old</p>
 					<p>From ${user.city}</p>
 					<div class="mt-6 flex flex-wrap gap-4 justify-center">
-						<a href="/edit-profile" id='edit-btn' class="btn-primary bg-white hover:bg-black">Edit profile</a>
+						<a data-link href="/edit-profile" id='edit-btn' class="btn-primary bg-white hover:bg-black">Edit profile</a>
 					</div>
 				</div>
 				<!-- <hr class="my-6 border-t border-gray-300">
@@ -36,13 +36,6 @@ export function ProfileCard () : HTMLElement | null {
 
 		`
 	}
-
-	// Click handler : edit ptofile
-	const startedBtn = document.getElementById('edit-btn');
-	startedBtn?.addEventListener('click', (e) => {
-		e.preventDefault();
-		navigateTo('/edit-profile');
-	});
 
 	return profileCard;
 }

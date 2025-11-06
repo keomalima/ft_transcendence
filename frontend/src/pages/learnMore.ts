@@ -1,9 +1,9 @@
 export function LearnMore() {
-	const app = document.getElementById('app');
-	if (app)
+	const root = document.getElementById('root');
+	if (root)
 	{
-		app.innerHTML = '';
-		app.innerHTML = /*html*/
+		root.innerHTML = '';
+		root.innerHTML = /*html*/
 		`
 			<h1>This is the learn more page</h1>
 			<p>learn more page</p>

@@ -28,6 +28,8 @@ Thumbs.db
 
 # VSCode
 .vscode/
+settings.json
+.vscode/settings.json
 
 # Coverage
 coverage/

@@ -1,38 +1,99 @@
-export function renderBackendStatus(root: HTMLElement) {
-	root.innerHTML = '';
+export function renderBackendStatus(id: string) {
+	if (id)
+	{
+		const root : HTMLElement | null = document.getElementById(id);
+		if (root)
+		{
+			root.innerHTML = /*html*/`
+				<div class='grid h-screen'>
+					<div class='place-self-center place-content-center'>
+						<h1 class='text-3xl'>Backend test</h1>
+						<button id="create-user-btn" class="btn-primary">Create User</button>
+						<div id="response" class="rounded-xl bg-white"></div>
+					</div>
+				</div>
+			`;
 
-	const section = document.createElement('section');
-	section.className = 'p-8 space-y-4';
+			const createUserBtn = document.getElementById('create-user-btn');
+			const responseDiv = document.getElementById('response');
 
-	const title = document.createElement('h2');
-	title.className = 'text-2xl font-bold';
-	title.textContent = 'Backend Status';
+			if (createUserBtn)
+			{
+				createUserBtn.addEventListener('click', async () => {
+					AddUserToDb();
+					// try {
+					// 	const response = await fetch ('http://localhost:3000/api/users', {
+					// 		method: 'POST',
+					// 		headers: {
+					// 			'Content-Type': 'application/json'
+					// 		},
+					// 		body: JSON.stringify({
+					// 			email: "lysha.than@gmail.com",
+					// 			name: "LySha",
+					// 			surname: "Than",
+					// 			password: "987654321",
+					// 			displayName: "lthan",
+					// 			city: "Paris",
+					// 			avatarUrl: null
+					// 		})
+					// 	});
 
-	const button = document.createElement('button');
-	button.className = 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition';
-	button.textContent = 'Fetch status';
+					// 	const data = await response.json();
 
-	const output = document.createElement('pre');
-	output.className = 'bg-stone-900 text-stone-100 p-4 rounded min-h-[6rem] whitespace-pre-wrap';
-	output.textContent = 'Click the button to fetch data from the backend.';
-
-	button.addEventListener('click', async () => {
-		output.textContent = 'Loading…';
-		try {
-			const response = await fetch('http://localhost:3000');
-			if (!response.ok) {
-				throw new Error(`Request failed with ${response.status}`);
+					// 	if (response.ok) {
+					// 		responseDiv!.innerHTML = /*html*/`
+					// 			<p class="text-green-600">✅ User created successfully!</p>
+                   	// 	    	<pre>${JSON.stringify(data, null, 2)}</pre>
+					// 		`;
+					// 	}
+					// 	else {
+					// 		responseDiv!.innerHTML = /*html*/`
+					// 			<p class="text-red-600">❌ Error: ${data.message || 'Failed to create user'}</p>
+					// 			<pre>${JSON.stringify(data, null, 2)}</pre>
+					// 		`;
+					// 	}
+					// }
+					// catch (error) {
+					// 	responseDiv!.innerHTML = /*html*/`
+					// 		<p class="text-red-600">❌ Network Error: ${error.message}</p>
+					// 	`;
+					// }
+				});
 			}
-			const data = await response.json();
-			output.textContent = JSON.stringify(data, null, 2);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : String(err);
-			output.textContent = `Error: ${message}`;
 		}
-	});
+	}
 
-	section.appendChild(title);
-	section.appendChild(button);
-	section.appendChild(output);
-	root.appendChild(section);
+}
+
+async function AddUserToDb() {
+
+	try {
+		const response = await fetch ('http://localhost:3000/api/users', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				email: "lysha.than@gmail.com",
+				name: "LySha",
+				surname: "Than",
+				password: "987654321",
+				displayName: "lthan",
+				city: "Paris",
+				avatarUrl: null
+			})
+		});
+
+		const data = await response.json();
+
+		if (response.ok) {
+			console.log(JSON.stringify(data, null, 2));
+		}
+		else {
+			console.log('Failed to create user');
+		}
+	}
+	catch (error) {
+		console.log('Failed to create user', error.message);
+	}
 }

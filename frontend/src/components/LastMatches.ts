@@ -8,9 +8,13 @@ export function LastMatches() : HTMLElement | null {
 		lastMatches.innerHTML = /*html*/`
 		<div class="col-span-4 sm:col-span-9">
 			<div class="bg-white rounded-lg p-6">
-				<h1>Last Matches</h1>
-				<div id='last-match-scores' class='mt-10'>
-
+				<h1>Latest match scores</h1>
+				<div id='last-match-scores' class='mt-3 overflow-x-auto whitespace-nowrap p-5'>
+					<span class='inline-grid grid-cols-1 grid-rows-3 mx-2 text-center'>
+						<span class='p-5 text-white'>.</span>
+						<span class='p-5 pl-0'>you</span>
+						<span class='p-5 pl-0'>opponent</span>
+					</span>
 				</div>
 			</div>
 		</div>
@@ -19,32 +23,34 @@ export function LastMatches() : HTMLElement | null {
 	const scores = document.getElementById('last-match-scores');
 
 	MatchData.forEach((s) => {
-		scores?.appendChild(displayScoreCard(s));
+		scores?.appendChild(createScoreCard(s));
 	})
 	
 	return lastMatches;
 }
 
-function displayScoreCard(score: matchInfo) : HTMLElement {
+function createScoreCard(match: matchInfo) : HTMLElement {
 
-
-	console.log('user score', score.scoreUser);
-	console.log('opponent score', score.scoreOpponent);
+	const textColor : string = match.scoreUser >= match.scoreOpponent ? 'bg-black text-white font-semibold' : 'bg-white';
+	const bgColor : string = match.scoreUser === match.scoreOpponent ? 'bg-gray-400' : '';
 
 	const card = document.createElement('span');
-	card.className = `inline-grid grid-cols-1 grid-rows-2 mx-2 outline-2 outline-black rounded-xl text-center
-		${score.scoreUser >= score.scoreOpponent ? 'bg-black text-white' : 'bg-white'}
-		${score.scoreUser === score.scoreOpponent ? 'bg-gray-400 text-red-500' : ''}`;
+	card.className = 'inline-grid grid-cols-1 grid-rows-3 mx-2 rounded-xl text-center';
+
+	const winState = document.createElement('span');
+	winState.innerHTML = `${match.scoreUser > match.scoreOpponent ? '⭐' : '-'}`;
+	winState.className = `py-5 px-2`;
 
 	const user = document.createElement('span');
-	user.innerHTML = score.scoreUser.toString();
-	user.className = 'p-5';
+	user.innerHTML = match.scoreUser.toString();
+	user.className = `p-5 border-t border-x rounded-t-xl ${textColor} ${bgColor}`;
 
 	const opponent = document.createElement('span');
-	opponent.innerHTML = score.scoreOpponent.toString();
-	opponent.className = 'p-5';
+	opponent.innerHTML = match.scoreOpponent.toString();
+	opponent.className = `p-5 border-b border-x rounded-b-xl  ${textColor} ${bgColor}`;
 
 
+	card.appendChild(winState);
 	card.appendChild(user);
 	card.appendChild(opponent);
 

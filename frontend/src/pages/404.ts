@@ -1,11 +1,11 @@
 import { navigateTo } from "../main";
 
 export function NotFound() {
-	const app = document.getElementById('app');
-	if (app)
+	const root = document.getElementById('root');
+	if (root)
 	{
-		app.innerHTML = '';
-		app.innerHTML = /*html*/`
+		root.innerHTML = '';
+		root.innerHTML = /*html*/`
 			<main class="grid min-h-full place-items-center px-6 py-24 sm:py-32 lg:px-8">
 			<div class="text-center">
 				<p class="font-bold">404</p>
@@ -31,5 +31,5 @@ export function NotFound() {
 		}
 	});
 
-	return app;
+	return root;
 }
