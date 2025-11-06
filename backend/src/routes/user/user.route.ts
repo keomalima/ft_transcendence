@@ -1,17 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { userController } from './user.controller.js'
 import { userSchemas } from "./user.schema.js";
-import type { User } from '@prisma/client';
-
-// =====================
-// Type Declarations
-// =====================
-
-declare module 'fastify' {
-  interface FastifyRequest {
-    user?: User;
-  }
-}
 
 // =====================
 // Public Routes (No Authentication)

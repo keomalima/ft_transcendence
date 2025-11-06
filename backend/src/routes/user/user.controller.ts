@@ -1,6 +1,17 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
 import { userService } from './user.service.js'
+import type { User } from '@prisma/client';
+
+// =====================
+// Type Declarations
+// =====================
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: User;
+  }
+}
 
 // =====================
 // Authentication Handlers
@@ -22,11 +33,8 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 }
 
 async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
-	if (!request.user?.id)
-		return reply.code(401).send({ message: "Unauthorized" });
-
 	try {
-		await userService.logoutUser(request.server.prisma, request.user.id);
+		await userService.logoutUser(request.server.prisma, request.user!.id);
 		reply.code(204).send()
 	} catch (error: unknown) {
 		if (error instanceof Error)
@@ -65,7 +73,7 @@ async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInpu
 }
 
 async function getUserHandler( request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-	if (request.params.id === request.user?.id)
+	if (request.params.id === request.user!.id)
 		return request.user;
 	
 	const user = await userService.findUserById(request.server.prisma, request.params.id);
@@ -79,10 +87,8 @@ async function getUserHandler( request: FastifyRequest<{ Params: { id: string } 
 }
 
 async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply: FastifyReply){
-	if (!request.user?.id)
-		return;
 	try {
-		return await userService.editUser(request.server.prisma, request.user.id, request.body);
+		return await userService.editUser(request.server.prisma, request.user!.id, request.body);
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
@@ -92,7 +98,7 @@ async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply
 
 async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
 	try {
-		await userService.deleteUser(request.server.prisma, request.user?.id);
+		await userService.deleteUser(request.server.prisma, request.user!.id);
 		reply.code(204).send()
 	} catch (error: unknown) {
 		if (error instanceof Error)

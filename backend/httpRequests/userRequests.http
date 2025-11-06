@@ -1,0 +1,49 @@
+### CREATE AN USER
+POST http://localhost:3000/api/users HTTP/1.1
+Content-Type: application/json
+
+{
+   "email": "keomalima@icloud.com",
+   "name": "Keoma",
+   "surname": "Lima",
+   "password": "123456",
+   "displayName": "KeoLimaa",
+   "city": "Lyon",
+   "avatarUrl": null
+}
+
+### LOGIN AN USER
+POST http://localhost:3000/api/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+   "email": "keomalima@icloud.com",
+   "password": "123456"
+}
+
+### GET AN USER (requires authentication)
+GET http://localhost:3000/api/users/12c51269-a077-4657-bcef-d5dc0654ce31 HTTP/1.1
+Authorization: Bearer 858508ce-6050-4def-b8dd-df39981a6bb7
+
+### LOGOUT AN USER 
+POST http://localhost:3000/api/users/logout HTTP/1.1
+Authorization: Bearer 858508ce-6050-4def-b8dd-df39981a6bb7
+
+### UPDATE AN USER
+PUT http://localhost:3000/api/users/me HTTP/1.1
+Authorization: Bearer 858508ce-6050-4def-b8dd-df39981a6bb7
+Content-Type: application/json
+
+{
+   "email": "betsy@icloud.com",
+   "name": "Betsy",
+   "surname": "Lima",
+   "displayName": "KeoLima",
+   "password": "123456",
+   "city": "Lyon",
+   "avatarUrl": null
+}
+
+### DELETES AN USER
+DELETE http://localhost:3000/api/users HTTP/1.1
+Authorization: Bearer 3722c621-5e86-4ad8-8357-03a421243537
