@@ -2,9 +2,9 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
-import { 
-  serializerCompiler, 
-  validatorCompiler, 
+import {
+  serializerCompiler,
+  validatorCompiler,
   type ZodTypeProvider,
   jsonSchemaTransform
 } from "fastify-type-provider-zod";
@@ -18,7 +18,12 @@ const fastify = Fastify({
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
 
-await fastify.register(cors, { origin: true });
+await fastify.register(cors, {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+});
 
 // Register Swagger
 await fastify.register(swagger, {

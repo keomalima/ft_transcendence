@@ -1,4 +1,5 @@
 import { userService } from "../services/UserService";
+import { userStore } from "../store/userStorage";
 
 export function testBackend(id: string) {
 	if (id)
@@ -14,6 +15,10 @@ export function testBackend(id: string) {
 						<div id="createResponse" class="rounded-xl bg-white"></div>
 						<button id="login-btn" class="btn-primary">Login</button>
 						<div id="loginResponse" class="rounded-xl bg-white"></div>
+						<button id="logout-btn" class="btn-primary">Logout</button>
+						<div id="logoutResponse" class="rounded-xl bg-white"></div>
+						<button id="delete-btn" class="btn-primary">delete</button>
+						<div id="deleteResponse" class="rounded-xl bg-white"></div>
 					</div>
 				</div>
 			`;
@@ -34,7 +39,7 @@ export function testBackend(id: string) {
 							avatarUrl: null
 						});
 						const createResponse = document.getElementById('createResponse');
-						createResponse!.innerHTML = `user as been created : ${user.name} id = ${user.id}`;
+						createResponse!.innerHTML = `user as been created : ${userStore.getUserInfo().name} id = ${userStore.getUserId()}`;
 					} catch (error) {
 						console.log(error);
 						const createResponse = document.getElementById('createResponse');
@@ -49,13 +54,48 @@ export function testBackend(id: string) {
 			{
 				loginBtn.addEventListener('click', async () => {
 					try {
-						const user = await userService.logUser("lthan@example.com","987654321");
+						const user = await userService.loginUser("bye@example.com","987654321");
 						const loginResponse = document.getElementById('loginResponse');
-						loginResponse!.innerHTML = `user as been created : ${user.name}`;
+						loginResponse!.innerHTML = `successful login with : ${user.name} in session id : ${user.accessToken}`;
+						console.log(`successful login with : ${user.name} in session id : ${user.accessToken}`);
 					} catch (error) {
 						console.log(error);
 						const loginResponse = document.getElementById('loginResponse');
 						loginResponse!.innerHTML = `${error}`;
+					}
+				});
+			}
+
+			// logout user
+			const logoutBtn = document.getElementById('logout-btn');
+			if (logoutBtn)
+			{
+				logoutBtn.addEventListener('click', async () => {
+					try {
+						await userService.logoutUser();
+						const logoutResponse = document.getElementById('logoutResponse');
+						logoutResponse!.innerHTML = `successfull logout`;
+					} catch (error) {
+						console.log(error);
+						const logoutResponse = document.getElementById('logoutResponse');
+						logoutResponse!.innerHTML = `${error}`;
+					}
+				});
+			}
+
+			// delete user
+			const deleteBtn = document.getElementById('delete-btn');
+			if (deleteBtn)
+			{
+				deleteBtn.addEventListener('click', async () => {
+					try {
+						await userService.deleteUser();
+						const deleteResponse = document.getElementById('deleteResponse');
+						deleteResponse!.innerHTML = `successful deleted`;
+					} catch (error) {
+						console.log(error);
+						const deleteResponse = document.getElementById('deleteResponse');
+						deleteResponse!.innerHTML = `${error}`;
 					}
 				});
 			}
