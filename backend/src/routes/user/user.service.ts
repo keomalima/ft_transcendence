@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
+import type { CreateUserData, CreateUserInput, EditInput, LoginInput } from './user.schema.js';
 import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
 
 // =====================
@@ -20,7 +20,7 @@ async function findUserById(prisma: PrismaClient, id: string) {
   });
 }
 
-async function createUser(prisma: PrismaClient, data: CreateUserInput) {
+async function createUser(prisma: PrismaClient, data: CreateUserData) {
   const { hash, salt } = hashPassword(data.password);
 
   return prisma.user.create({

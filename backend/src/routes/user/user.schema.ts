@@ -5,14 +5,27 @@ import type { MultipartFile } from '@fastify/multipart'
 // Request Schemas
 // =====================
 
+const multipartField = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((val: any) => val?.value || val, schema);
+
 const createUserSchema = z.object({
-	email: z.email(),
-	name: z.string().min(3), 
-	password: z.string(),
-	surname: z.string().nullable(),
-	displayName: z.string().min(3),
-	avatarUrl: z.url().nullable(),
-	city: z.string().min(3).nullable(),
+	email: multipartField(z.email()),
+	name: multipartField(z.string().min(3)),
+	password: multipartField(z.string()),
+	surname: multipartField(z.string().nullable()),
+	displayName: multipartField(z.string().min(3)),
+	city: multipartField(z.string().min(3).nullable()),
+	avatarFile: z
+	.custom<MultipartFile>()
+	.optional()
+	.refine(
+		(file) => !file || file.file?.bytesRead <= 10 * 1024 * 1024,
+		{ message: 'The image must be a maximum of 10MB.' }
+	)
+	.refine(
+		(file) => !file || file.mimetype.startsWith('image/'),
+		{ message: 'Only images are allowed to be sent.' }
+	),
 });
 
 const loginSchema = z.object({
@@ -100,6 +113,7 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type EditInput = z.infer<typeof editUserSchema>;
 export type UploadInput = z.infer<typeof uploadSchema>;
+export type CreateUserData = Omit<CreateUserInput, 'avatarFile'> & {avatarUrl: string;}
 
 // =====================
 // Schema Objects Export

@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { CreateUserInput, EditInput, LoginInput, UploadInput } from './user.schema.js';
+import type { CreateUserData, CreateUserInput, EditInput, LoginInput, UploadInput } from './user.schema.js';
 import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -63,10 +63,25 @@ async function protectedRouteHandler(request: FastifyRequest, reply: FastifyRepl
 // =====================
 
 async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
-	const data = request.body;
-	
+	const { avatarFile, ...userData } = request.body;
+
+	let avatarUrl = '/uploads/avatars/default.png';
+
+	if (avatarFile && avatarFile.file) {
+		const fileExtension = path.extname(avatarFile.filename);
+		const uniqueFilename = `${randomUUID()}${fileExtension}`;
+		const __dirname = path.dirname(fileURLToPath(import.meta.url));
+		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
+		const fileBuffer = await avatarFile.toBuffer();
+		await fs.promises.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+    	avatarUrl = `/uploads/avatars/${uniqueFilename}`;
+  	}
+
 	try {
-		const newUser = await userService.createUser(request.server.prisma, data);
+		const newUser = await userService.createUser(request.server.prisma, {
+			...userData,
+			avatarUrl
+		} as CreateUserData)
 		reply.code(201);
 		return (newUser);
 	} catch (error: any) {
