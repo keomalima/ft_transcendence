@@ -10,6 +10,7 @@ import prismaPlugin from './plugins/prisma.plugin.js';
 import { registerSwagger, registerSwaggerUi } from './registers/swagger.register.js';
 import { userController } from './routes/user/user.controller.js'
 import { gamePrivateRoutes } from './routes/game/game.route.js';
+import fastifyMultipart from '@fastify/multipart';
 
 const fastify = Fastify({
   logger: true
@@ -18,11 +19,17 @@ const fastify = Fastify({
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
 
-await fastify.register(cors, { origin: true });
+await fastify.register(cors, {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+});
 
 await registerSwagger(fastify);
 await registerSwaggerUi(fastify);
 
+fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSize: 10 * 1024 * 1024 }})
 fastify.register(prismaPlugin);
 
 fastify.register(userPublicRoutes, { prefix: "/api/users" });
@@ -31,7 +38,7 @@ fastify.register(async (protectedRoutes) => {
 	protectedRoutes.addHook('onRequest', async (request, reply) => await userController.protectedRouteHandler(request, reply));
 	protectedRoutes.register(userPrivateRoutes, { prefix: "/api/users" })
 	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
-})
+});
 
 try {
   await fastify.listen({ port: 3000, host: '0.0.0.0' })

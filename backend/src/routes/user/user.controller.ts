@@ -1,7 +1,11 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { CreateUserInput, EditInput, LoginInput } from './user.schema.js';
+import type { CreateUserInput, EditInput, LoginInput, UploadInput } from './user.schema.js';
 import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import fs from 'node:fs'
 
 // =====================
 // Type Declarations
@@ -96,6 +100,35 @@ async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply
 	}
 }
 
+async function uploadAvatarHandler(request: FastifyRequest<{Body: UploadInput}>, reply: FastifyReply){
+	try {
+		const { avatarUrl } = request.body;
+
+		if (!avatarUrl || !avatarUrl.file)
+			return reply.code(400).send({ message: 'No file uploaded' });
+
+		const fileExtension = path.extname(avatarUrl.filename);
+		const uniqueFilename = `${randomUUID()}${fileExtension}`;
+		const __dirname = path.dirname(fileURLToPath(import.meta.url));
+		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
+
+		const fileBuffer = await avatarUrl.toBuffer();
+		await fs.promises.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+
+		return reply.code(201).send({ 
+			message: 'File received successfully',
+			filename: uniqueFilename,
+			avatarUrl: `/uploads/avatars/${uniqueFilename}`,
+			mimetype: avatarUrl.mimetype 
+		});
+	} catch (error: unknown) {
+		console.error('Upload error:', error);
+		if (error instanceof Error)
+			return reply.code(500).send({ message: error.message });
+		return reply.code(500).send({ message: 'Failed to upload file' });
+	}
+}
+
 async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
 	try {
 		await userService.deleteUser(request.server.prisma, request.user!.id);
@@ -122,4 +155,5 @@ export const userController = {
 	getUserHandler,
 	editUserHandler,
 	deleteHandler,
+	uploadAvatarHandler
 };

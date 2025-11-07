@@ -1,5 +1,9 @@
+@baseUrl = http://localhost:3000/api/users
+@token = eb792354-ccd3-45da-a8ce-dd6b82f7f8cf
+@userId = 12c51269-a077-4657-bcef-d5dc0654ce31
+
 ### CREATE AN USER
-POST http://localhost:3000/api/users HTTP/1.1
+POST {{baseUrl}} HTTP/1.1
 Content-Type: application/json
 
 {
@@ -13,7 +17,8 @@ Content-Type: application/json
 }
 
 ### LOGIN AN USER
-POST http://localhost:3000/api/users/login HTTP/1.1
+# @name login
+POST {{baseUrl}}/login HTTP/1.1
 Content-Type: application/json
 
 {
@@ -22,16 +27,16 @@ Content-Type: application/json
 }
 
 ### GET AN USER (requires authentication)
-GET http://localhost:3000/api/users/12c51269-a077-4657-bcef-d5dc0654ce31 HTTP/1.1
-Authorization: Bearer 858508ce-6050-4def-b8dd-df39981a6bb7
+GET {{baseUrl}}/{{userId}} HTTP/1.1
+Authorization: Bearer {{token}}
 
 ### LOGOUT AN USER 
-POST http://localhost:3000/api/users/logout HTTP/1.1
-Authorization: Bearer 858508ce-6050-4def-b8dd-df39981a6bb7
+POST {{baseUrl}}/logout HTTP/1.1
+Authorization: Bearer {{token}}
 
 ### UPDATE AN USER
-PUT http://localhost:3000/api/users/me HTTP/1.1
-Authorization: Bearer 858508ce-6050-4def-b8dd-df39981a6bb7
+PUT {{baseUrl}}/me HTTP/1.1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -44,6 +49,18 @@ Content-Type: application/json
    "avatarUrl": null
 }
 
+### UPLOAD AVATAR
+POST {{baseUrl}}/upload HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatarUrl"; filename="ProfileCV.jpg"
+Content-Type: image/jpeg
+
+< /Users/keomalima/Documents/42/stage/ProfileCV.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
 ### DELETES AN USER
-DELETE http://localhost:3000/api/users HTTP/1.1
-Authorization: Bearer 3722c621-5e86-4ad8-8357-03a421243537
+DELETE {{baseUrl}}/users HTTP/1.1
+Authorization: Bearer {{token}}

@@ -77,4 +77,17 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 		}
 	},
 	userController.deleteHandler);
+
+	fastify.post('/upload', {
+    	schema: {
+			consumes: ['multipart/form-data'],
+			body: userSchemas.request.uploadAvatar,
+			response: { 201: userSchemas.response.uploadtAvatar },
+			tags: ['Users'],
+			description: 'Upload avatar profile',
+			summary: 'Upload Avatar',
+			security: [{ bearerAuth: [] }]
+   		},
+  	},
+	userController.uploadAvatarHandler);
 }
