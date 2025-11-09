@@ -1,5 +1,7 @@
 import { navigateTo } from "../main";
 import defaultProfilePicture from '../images/defaultProfile.webp'
+import { userService } from "../services/UserService";
+import { userStore } from "../store/UserStorage";
 
 export function RegisterPopUp() {
     const popUp = document.getElementById('pop-up-register');
@@ -11,50 +13,53 @@ export function RegisterPopUp() {
 		</div>
 		<div class="px-6 py-12 sm:rounded-lg sm:px-12">
 			<h1 class="mb-10 text-xl">Create a new account</h1>
-			<form id='crate-new-account-form' class="md:col-span-2">
-					<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
-						<div class="col-span-full flex items-center gap-x-8">
-							<img src="${defaultProfilePicture}" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0" />
-							<div>
-							<button type="button" class="btn-primary bg-white hover:bg-black">Add avatar</button>
-							<p class="mt-2 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
-							</div>
-						</div>
-
-						<div class="sm:col-span-3">
-							<my-label labelFor="first-name">First name</my-label>
-							<my-input inputId="first-name" inputType="text" inputName="first_name" inputAutoComplete="given-name"/>
-						</div>
-
-						<div class="sm:col-span-3">
-							<my-label labelFor="last-name">Last name</my-label>
-							<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name"/>
-						</div>
-
-						<div class="col-span-full">
-							<my-label labelFor="email">Email</my-label>
-							<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
-						</div>
-
-						<div class="col-span-full">
-							<my-label labelFor="username">Username</my-label>
-							<my-input inputId="username" inputType="text" inputName="username" inputAutoComplete="username"/>
-						</div>
-
-						<div class="col-span-full">
-							<my-label labelFor="password">Password</my-label>
-							<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
-						</div>
-
-						<div class="col-span-full">
-							<my-label labelFor="confirm-password">Confirm password</my-label>
-							<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="current-password"/>
+			<form action="#" method="POST" class="space-y-6" id='form-test'>
+				<button id='test' type='submit' href='/profile'>button</button>
+			</form>
+			<form action="/" method="POST" id='create-new-account-form' class="md:col-span-2">
+				<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
+					<div class="col-span-full flex items-center gap-x-8">
+						<img src="${defaultProfilePicture}" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0" />
+						<div>
+						<button type="button" class="btn-primary bg-white hover:bg-black">Add avatar</button>
+						<p class="mt-2 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
 						</div>
 					</div>
-					<div class="mt-8 flex">
-						<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save</button>
+
+					<div class="sm:col-span-3">
+						<my-label labelFor="first-name">First name</my-label>
+						<my-input inputId="first-name" inputType="text" inputName="first_name" inputAutoComplete="given-name"/>
 					</div>
-				</form>
+
+					<div class="sm:col-span-3">
+						<my-label labelFor="last-name">Last name</my-label>
+						<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name"/>
+					</div>
+
+					<div class="col-span-full">
+						<my-label labelFor="email">Email</my-label>
+						<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
+					</div>
+
+					<div class="col-span-full">
+						<my-label labelFor="username">Username</my-label>
+						<my-input inputId="username" inputType="text" inputName="username" inputAutoComplete="username"/>
+					</div>
+
+					<div class="col-span-full">
+						<my-label labelFor="password">Password</my-label>
+						<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
+					</div>
+
+					<div class="col-span-full">
+						<my-label labelFor="confirm-password">Confirm password</my-label>
+						<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="current-password"/>
+					</div>
+				</div>
+				<div class="mt-8 flex">
+					<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save !!!</button>
+				</div>
+			</form>
 
 			<!-- <div>
 				<div class="mt-10 flex items-center gap-x-6">
@@ -87,66 +92,46 @@ export function RegisterPopUp() {
         `;
     }
 
-	// Show sign in
-	const signIn = document.getElementById('sign-in-btn') as HTMLElement;
-	signIn?.addEventListener('click', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-
-		console.log('Sign In');
-
-		navigateTo('/profile');
-	});
 
 	// Create new account
-	const saveBtn = document.getElementById('save-btn') as HTMLElement;
-	const createAccountForm = document.getElementById('crate-new-account-form') as HTMLFormElement;
-	saveBtn?.addEventListener('submit', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const createAccountForm = document.getElementById('create-new-account-form') as HTMLFormElement;
+	if (createAccountForm)
+	{
+		console.log('Begin');
+		createAccountForm.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			console.log('Bonjour');
+			try {
+				const formData = new FormData(createAccountForm);
+				console.log(`${formData.get('email')}`);
+				const user = await userService.createUser({
+					email: formData.get('email') as string,
+					name: formData.get('first_name') as string,
+					surname: formData.get('last_name') as string,
+					password: formData.get('password') as string,
+					displayName: formData.get('username') as string,
+					city: null,
+					avatarUrl: null
+				});
+				console.log(`user as been created : ${userStore.getUserInfo().name} id = ${userStore.getUserId()}`);
 
-		console.log('Save new account');
+				try {
+					const formData = new FormData(createAccountForm);
+					const user = await userService.loginUser(formData.get('email') as string, formData.get('password') as string,);
+					console.log('login after create account');
+				}
+				catch (error) {
+					console.log(error);
+				}
 
-
-	});
+				navigateTo('/profile');
+			} catch (error) {
+				console.log(error);
+			}
+		});
+		console.log('End');
+	}
 
     return popUp;
 }
-
-// async function AddUserToDb () {
-// 	try {
-// 		const response = await fetch ('http://localhost:3000/api/users', {
-// 			method: 'POST',
-// 			headers: {
-// 				'Content-Type': 'application/json'
-// 			},
-// 			body: JSON.stringify({
-// 				email: "lysha.than@gmail.com",
-// 				name: "LySha",
-// 				surname: "Than",
-// 				password: "987654321",
-// 				displayName: "lthan",
-// 				city: "Paris",
-// 				avatarUrl: null
-// 			})
-// 		});
-
-// 		const data = await response.json();
-
-// 		if (response.ok) {
-// 			responseDiv!.innerHTML = /*html*/`
-// 				<p class="text-green-600">✅ User created successfully!</p>
-// 				<pre>${JSON.stringify(data, null, 2)}</pre>
-// 			`;
-// 		}
-// 		else {
-// 			responseDiv!.innerHTML = /*html*/`
-// 				<p class="text-red-600">❌ Error: ${data.message || 'Failed to create user'}</p>
-// 				<pre>${JSON.stringify(data, null, 2)}</pre>
-// 			`;
-// 		}
-// 	}
-// 	catch (error) {
-// 		console.log(error.message);
-// 	}
-// }

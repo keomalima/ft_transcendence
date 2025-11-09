@@ -2,14 +2,12 @@
 import pongimg from '../images/pong.png';
 import { navigateTo } from '../main';
 import { RegisterPopUp } from '../components/RegisterPopUp';
-import { testBackend } from './testBackend';
+import { userService } from '../services/UserService';
 
 export function home() {
 	const root = document.getElementById('root');
 	if (root) {
 		root.innerHTML = /*html*/`
-		<!-- <div id="test-backend"></div> -->
-
 		<div>
 			<div class="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
 				<div class="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-8 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
@@ -60,12 +58,12 @@ export function home() {
 		</div>
 		`
 
-	const startedBtn = document.getElementById('get-started-btn');
-	const learnBtn = document.getElementById('learn-more-btn');
-	const form = document.getElementById('signin-form') as HTMLFormElement;
-	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
+
 
 	// Click handler : show form
+	const startedBtn = document.getElementById('get-started-btn');
+	const learnBtn = document.getElementById('learn-more-btn');
+	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 	startedBtn?.addEventListener('click', (e) => {
 		e.preventDefault();
 		hidenForm!.style.display = 'block';
@@ -74,8 +72,9 @@ export function home() {
 			learnBtn.style.display = 'none';
 	});
 
-	// Submit listener : get input
-	form.addEventListener('submit', (e) => {
+	// Sign-in submit form listener
+	const form = document.getElementById('signin-form') as HTMLFormElement;
+	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -88,15 +87,17 @@ export function home() {
 		console.log('email:', email);
 		console.log('password:', password);
 
-		if (email && password) // need to check here for correct user/password
-		{
+		try {
+			const user = await userService.loginUser(email, password);
 			navigateTo('/profile');
+			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
+		} catch (error) {
+			console.log(error);
 		}
 	});
 
 	RegisterPopUp();
 
-	// testBackend('test-backend');
 	}
 }
 

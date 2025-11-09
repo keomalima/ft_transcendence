@@ -12,6 +12,10 @@ import './components/MyLink';
 import './components/MyLabel'
 import './components/MyInput'
 
+import { userStore } from './store/UserStorage';
+
+userStore.loadFromLocalStorage();
+
 // let ctx
 // Define map between path and render function
 const routes: Record<string, () => void> = {

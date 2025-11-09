@@ -1,5 +1,4 @@
-import { userData } from "../data/userData";
-import { userStore } from "../store/userStorage";
+import { userStore } from "../store/UserStorage";
 import { UserState } from "../types";
 
 
@@ -19,7 +18,16 @@ import { UserState } from "../types";
 
 
 // sending data to create a new user
-type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarUrl' | 'city'>
+interface CreateUserDto {
+	email: string | null;
+	name: string | null;
+	surname: string | null;
+	displayName: string | null;
+	avatarUrl: string | null;
+	city: string | null;
+	password: string | null;
+}
+// type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarUrl' | 'city'>
 
 // response when creating a new user
 type CreateUserResp = Pick<UserState, 'id' | 'name' | 'email'>
@@ -30,6 +38,9 @@ type LoginUserResp = Pick<UserState, 'accessToken' | 'email' | 'name' | 'isOnlin
 // response when get user
 type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
 
+// response update user
+type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarUrl' | 'city'>
+
 const url = 'http://localhost:3000/api/users';
 
 async function parseResponse(response: Response): Promise<any> {
@@ -39,10 +50,9 @@ async function parseResponse(response: Response): Promise<any> {
 
 class UserService {
 
-
 	// create user
 	async createUser(data: CreateUserDto): Promise<CreateUserResp>{
-
+		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}`, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
@@ -62,12 +72,16 @@ class UserService {
 		userStore.setUserMail(result.mail);
 		userStore.setUserLogStatus(result.isLoggedIn);
 
+		// save to locat storage
+		userStore.saveToLocalStorage();
+
 		return result;
 	}
 
 	// login
 	async loginUser(email:string, password:string): Promise<LoginUserResp>
 	{
+		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}/login`, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
@@ -87,12 +101,16 @@ class UserService {
 		userStore.setUserAccessToken(result.accessToken);
 		userStore.setUserLogStatus(result.isLoggedIn);
 
+		// save to locat storage
+		userStore.saveToLocalStorage();
+
 		return result;
 	}
 
 	// logout
 	async logoutUser(): Promise<void>
 	{
+		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}/logout`, {
 			method: 'POST',
 			headers: {'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
@@ -107,10 +125,14 @@ class UserService {
 		// update user state
 		userStore.clearUserState();
 
+		// save to locat storage
+		userStore.saveToLocalStorage();
+
 	}
 
 	// get user
 	async getUserState(): Promise<getUserResp | null> {
+		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}/${userStore.getUserId()}`, {
 			method: 'GET',
 			headers: {'Content-Type': 'application/json'}
@@ -125,11 +147,15 @@ class UserService {
 		// store data in user storage
 		userStore.setUserInfo(result);
 
+		// save to locat storage
+		userStore.saveToLocalStorage();
+
 		return result;
 	}
 
 	// delete user
 	async deleteUser(): Promise<void> {
+		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}`, {
 			method: 'DELETE',
 			headers: {'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
@@ -143,10 +169,41 @@ class UserService {
 
 		// delete user data from storage
 		userStore.clearUserState();
+
+		// save to locat storage
+		userStore.saveToLocalStorage();
 	}
-	// deleteUser()
 
 	// update user
+	async updateUser(data: Partial<UserState>): Promise<updateUserResp> {
+		userStore.loadFromLocalStorage();
+		const response = await fetch (`${url}/me`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${userStore.getUserAccessToken()}`
+			},
+			body: JSON.stringify(data)
+		})
+		if (!response.ok)
+			throw new Error(`Failed to update user: ${response.statusText}`);
+
+		const result = await response.json();
+		if (result)
+			console.log('user successfully updated', result);
+
+		// change user data in UserStore
+		userStore.setUserName(result.name);
+		userStore.setUserDisplayname(result.displayName);
+		userStore.setSurname(result.surname);
+		userStore.setUserAvatar(result.avatarUrl);
+		userStore.setUserCity(result.city);
+
+		// save to locat storage
+		userStore.saveToLocalStorage();
+
+		return result;
+	}
 }
 
 export const userService = new UserService();

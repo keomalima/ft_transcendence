@@ -1,7 +1,7 @@
 import { userService } from "../services/UserService";
-import { userStore } from "../store/userStorage";
+import { userStore } from "../store/UserStorage";
 
-export function testBackend(id: string) {
+export function testBackend(id: string): void {
 	if (id)
 	{
 		const root : HTMLElement | null = document.getElementById(id);
@@ -19,6 +19,8 @@ export function testBackend(id: string) {
 						<div id="logoutResponse" class="rounded-xl bg-white"></div>
 						<button id="delete-btn" class="btn-primary">delete</button>
 						<div id="deleteResponse" class="rounded-xl bg-white"></div>
+						<button id="update-btn" class="btn-primary">update</button>
+						<div id="updateResponse" class="rounded-xl bg-white"></div>
 					</div>
 				</div>
 			`;
@@ -30,10 +32,10 @@ export function testBackend(id: string) {
 				createUserBtn.addEventListener('click', async () => {
 					try {
 						const user = await userService.createUser({
-							email: "bye@example.com",
+							email: "ok@ok.com",
 							name: "Ly-Sha",
 							surname: "Than",
-							password: "987654321",
+							password: "1234",
 							displayName: "bye",
 							city: "Paris",
 							avatarUrl: null
@@ -54,7 +56,7 @@ export function testBackend(id: string) {
 			{
 				loginBtn.addEventListener('click', async () => {
 					try {
-						const user = await userService.loginUser("bye@example.com","987654321");
+						const user = await userService.loginUser("ok@ok.com","1234");
 						const loginResponse = document.getElementById('loginResponse');
 						loginResponse!.innerHTML = `successful login with : ${user.name} in session id : ${user.accessToken}`;
 						console.log(`successful login with : ${user.name} in session id : ${user.accessToken}`);
@@ -96,6 +98,29 @@ export function testBackend(id: string) {
 						console.log(error);
 						const deleteResponse = document.getElementById('deleteResponse');
 						deleteResponse!.innerHTML = `${error}`;
+					}
+				});
+			}
+
+			// Update user
+			const updateUserBtn = document.getElementById('update-btn');
+			if (updateUserBtn)
+			{
+				updateUserBtn.addEventListener('click', async () => {
+					try {
+						const user = await userService.updateUser({
+							name: "ooo",
+							surname: "ooo",
+							displayName: "ooo",
+							city: "ooo",
+							avatarUrl: null
+						});
+						const updateResponse = document.getElementById('updateResponse');
+						updateResponse!.innerHTML = `user as been updated sucessfully : ${userStore.getUserInfo().name} id = ${userStore.getUserId()}`;
+					} catch (error) {
+						console.log(error);
+						const updateResponse = document.getElementById('updateResponse');
+						updateResponse!.innerHTML = `${error}`;
 					}
 				});
 			}

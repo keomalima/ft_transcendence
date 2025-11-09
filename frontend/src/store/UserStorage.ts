@@ -8,7 +8,12 @@ class UserStore {
 		surname: null,
 		displayName: null,
 		isLoggedIn: false,
-		accessToken: null
+		accessToken: null,
+		isOnline: false,
+		createdAt: null,
+		updatedAt: null,
+		avatarUrl: null,
+		city: null
 	}
 
 	// setters
@@ -22,6 +27,22 @@ class UserStore {
 
 	setUserName(name: string): void  {
 		this.state.name = name;
+	}
+
+	setSurname(name: string): void  {
+		this.state.surname = name;
+	}
+
+	setUserDisplayname(name: string): void  {
+		this.state.displayName = name;
+	}
+
+	setUserAvatar(avatarUrl: string): void  {
+		this.state.avatarUrl = avatarUrl;
+	}
+
+	setUserCity(city: string): void  {
+		this.state.city = city;
 	}
 
 	setUserAccessToken(accessToken: string): void  {
