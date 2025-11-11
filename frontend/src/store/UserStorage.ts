@@ -93,6 +93,22 @@ class UserStore {
 		return this.state.name;
 	}
 
+	getUserSurname(): string | null {
+		return this.state.surname;
+	}
+
+	getUserUsername(): string | null {
+		return this.state.displayName;
+	}
+
+	getUserUserMail(): string | null {
+		return this.state.email;
+	}
+
+	getUserUserCity(): string | null {
+		return this.state.city;
+	}
+
 	getUserInfo(): UserState {
 		return this.state;
 	}

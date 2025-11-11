@@ -13,10 +13,17 @@ import './components/MyLabel'
 import './components/MyInput'
 
 import { userStore } from './store/UserStorage';
+console.log('first access token : ', userStore.getUserAccessToken());
 
 userStore.loadFromLocalStorage();
+console.log('after load from local storage access token : ', userStore.getUserAccessToken());
 
-// let ctx
+if (userStore.getUserAccessToken() == null)
+{
+	console.log('clear localstorage : ', userStore.getUserAccessToken());
+	localStorage.clear();
+}
+
 // Define map between path and render function
 const routes: Record<string, () => void> = {
 	'/': home,

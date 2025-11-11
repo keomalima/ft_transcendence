@@ -52,6 +52,7 @@ class UserService {
 
 	// create user
 	async createUser(data: CreateUserDto): Promise<CreateUserResp>{
+		console.log('create user dto : ', data);
 		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}`, {
 			method: 'POST',
@@ -68,8 +69,7 @@ class UserService {
 
 		// store user data in UserStore
 		userStore.setUserId(result.id);
-		userStore.setUserName(result.name);
-		userStore.setUserMail(result.mail);
+		userStore.setUserInfo(data);
 		userStore.setUserLogStatus(result.isLoggedIn);
 
 		// save to locat storage
@@ -135,7 +135,9 @@ class UserService {
 		userStore.loadFromLocalStorage();
 		const response = await fetch (`${url}/${userStore.getUserId()}`, {
 			method: 'GET',
-			headers: {'Content-Type': 'application/json'}
+			headers:{
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
 			}
 		);
 		if (!response.ok)
@@ -176,14 +178,29 @@ class UserService {
 
 	// update user
 	async updateUser(data: Partial<UserState>): Promise<updateUserResp> {
-		userStore.loadFromLocalStorage();
+		// userStore.loadFromLocalStorage();
+
+		// Filter out null, undefined, and empty strings
+		const cleanData = Object.fromEntries(
+			Object.entries(data).filter(([_, value]) =>
+				value !== null &&
+				value !== undefined &&
+				value !== ''
+			)
+		);
+
+		// Don't send request if no data to update
+		if (Object.keys(cleanData).length === 0) {
+			throw new Error('No fields to update');
+		}
+
 		const response = await fetch (`${url}/me`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
 				'Authorization': `Bearer ${userStore.getUserAccessToken()}`
 			},
-			body: JSON.stringify(data)
+			body: JSON.stringify(cleanData)
 		})
 		if (!response.ok)
 			throw new Error(`Failed to update user: ${response.statusText}`);
@@ -193,11 +210,7 @@ class UserService {
 			console.log('user successfully updated', result);
 
 		// change user data in UserStore
-		userStore.setUserName(result.name);
-		userStore.setUserDisplayname(result.displayName);
-		userStore.setSurname(result.surname);
-		userStore.setUserAvatar(result.avatarUrl);
-		userStore.setUserCity(result.city);
+		userStore.setUserInfo(data);
 
 		// save to locat storage
 		userStore.saveToLocalStorage();

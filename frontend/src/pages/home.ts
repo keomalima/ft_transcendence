@@ -3,8 +3,11 @@ import pongimg from '../images/pong.png';
 import { navigateTo } from '../main';
 import { RegisterPopUp } from '../components/RegisterPopUp';
 import { userService } from '../services/UserService';
+import { userStore } from '../store/UserStorage';
 
 export function home() {
+	// console.log('start access token : ', userStore.getUserAccessToken());
+
 	const root = document.getElementById('root');
 	if (root) {
 		root.innerHTML = /*html*/`
@@ -60,11 +63,17 @@ export function home() {
 
 
 
-	// Click handler : show form
+	// Start event
 	const startedBtn = document.getElementById('get-started-btn');
 	const learnBtn = document.getElementById('learn-more-btn');
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 	startedBtn?.addEventListener('click', (e) => {
+		console.log('access token : ', userStore.getUserAccessToken());
+		if (userStore.getUserAccessToken())
+		{
+			navigateTo('/profile');
+			return;
+		}
 		e.preventDefault();
 		hidenForm!.style.display = 'block';
 		startedBtn.style.display = 'none';

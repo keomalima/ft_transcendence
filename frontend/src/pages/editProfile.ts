@@ -3,6 +3,7 @@ import { userData } from '../data/userData';
 import { NavBar } from '../components/NavBar';
 import { navigateTo } from '../main';
 import { userService } from '../services/UserService';
+import { userStore } from '../store/UserStorage';
 
 export function EditProfile () : HTMLElement | null {
 
@@ -30,25 +31,27 @@ export function EditProfile () : HTMLElement | null {
 							</div>
 						</div>
 
+						<div class="col-span-full">
+							<my-label labelFor="username">Username</my-label>
+							<my-input inputId="username" inputType="text" inputName="username" inputAutoComplete="username" inputPlaceholder=${userStore.getUserUsername()}>
+						</div>
+
 						<div class="sm:col-span-3">
 							<my-label labelFor="first-name">First name</my-label>
-							<my-input inputId="first-name" inputType="text" inputName="first_name" inputAutoComplete="given-name"/>
+							<my-input inputId="first-name" inputType="text" inputName="first_name" inputAutoComplete="given-name" inputPlaceholder=${userStore.getUserSurname()}>
 						</div>
 
 						<div class="sm:col-span-3">
 							<my-label labelFor="last-name">Last name</my-label>
-							<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name"/>
+							<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name" inputPlaceholder=${userStore.getUserSurname()}>
 						</div>
 
 						<div class="col-span-full">
-							<my-label labelFor="email">Email</my-label>
-							<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
+							<my-label labelFor="city">City</my-label>
+							<my-input inputId="city" inputType="city" inputName="city" inputAutoComplete="city" inputPlaceholder=${userStore.getUserUserCity()}>
 						</div>
 
-						<div class="col-span-full">
-							<my-label labelFor="username">Username</my-label>
-							<my-input inputId="username" inputType="text" inputName="username" inputAutoComplete="username"/>
-						</div>
+
 					</div>
 					<div class="mt-8 flex">
 						<button type="submit" class="btn-primary">Save</button>
@@ -115,10 +118,10 @@ export function EditProfile () : HTMLElement | null {
 		try {
 			const formData = new FormData(updatePersonnalInfo);
 			const user = await userService.updateUser({
-				name: formData.get('first_name') as string,
-				surname: formData.get('last_name') as string,
-				email: formData.get('email')as string,
-				displayName: formData.get('username') as string
+				surname: formData.get('last_name') ? formData.get('last_name') as string : null,				// surname: formData.get('last_name') === '' ? null : formData.get('last_name') as string,
+				city: formData.get('city') ? formData.get('city') as string : null,
+				displayName: formData.get('username') ? formData.get('username') as string : null,
+				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			});
 			console.log('updated successfully');
 			navigateTo('/profile');

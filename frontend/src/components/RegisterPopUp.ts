@@ -119,13 +119,13 @@ export function RegisterPopUp() {
 				try {
 					const formData = new FormData(createAccountForm);
 					const user = await userService.loginUser(formData.get('email') as string, formData.get('password') as string,);
-					console.log('login after create account');
+					console.log('login after create account -> acessToken in localstorage ', userStore.getUserAccessToken());
 				}
 				catch (error) {
 					console.log(error);
 				}
-
 				navigateTo('/profile');
+
 			} catch (error) {
 				console.log(error);
 			}
