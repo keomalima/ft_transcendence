@@ -32,7 +32,8 @@
 		"**/prisma.config.ts": true,
 		"**/dist": true,
 		"backend/data": true,
-		"**/types": true
+		"**/types": true,
+		"**/registers": true
 	},
     "explorerExclude.backup": {},
     "files.autoSave": "afterDelay",

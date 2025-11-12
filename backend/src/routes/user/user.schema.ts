@@ -66,6 +66,7 @@ const createUserResponseSchema = z.object({
 });
 
 const loginResponseSchema = z.object({
+	id: z.string(),
 	accessToken: z.string(),
 	email: z.email(),
 	name: z.string().min(3),
