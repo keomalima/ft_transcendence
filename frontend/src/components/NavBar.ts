@@ -64,12 +64,10 @@ export function NavBar() {
 	logoutBtn.addEventListener('click', async (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		console.log('logout nav bar');
 
 		try {
 			const user = await userService.logoutUser();
 			navigateTo('/');
-			console.log(`successful logout`);
 		} catch (error) {
 			console.log(error);
 		}
@@ -79,12 +77,10 @@ export function NavBar() {
 	logoutBtn2.addEventListener('click', async (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		console.log('logout nav bar');
 
 		try {
 			const user = await userService.logoutUser();
 			navigateTo('/');
-			console.log(`successful logout`);
 		} catch (error) {
 			console.log(error);
 		}

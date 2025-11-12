@@ -65,7 +65,7 @@ class UserService {
 
 		const result = await response.json();
 		if (result)
-			console.log('user successfully created', result);
+			console.log('>> createUser success <<', result);
 
 		// store user data in UserStore
 		userStore.setUserId(result.id);
@@ -95,7 +95,7 @@ class UserService {
 
 		const result = await response.json();
 		if (result)
-			console.log('successful login', result);
+			console.log('>> loginUser success <<', result);
 
 		// store user data in UserStore
 		userStore.setUserAccessToken(result.accessToken);
@@ -120,7 +120,7 @@ class UserService {
 
 		const result = parseResponse(response);
 		if (result)
-			console.log('successful logout', result);
+			console.log('>> logoutUser success <<', result);
 
 		// update user state
 		userStore.clearUserState();
@@ -132,7 +132,8 @@ class UserService {
 
 	// get user
 	async getUserState(): Promise<getUserResp | null> {
-		userStore.loadFromLocalStorage();
+		// userStore.loadFromLocalStorage();
+		console.log('getUserState with access token : ', userStore.getUserAccessToken(), ' and user id : ', userStore.getUserId());
 		const response = await fetch (`${url}/${userStore.getUserId()}`, {
 			method: 'GET',
 			headers:{
@@ -144,7 +145,7 @@ class UserService {
 			throw new Error(`Failed to get user info: ${response.statusText}`);
 
 		const result: getUserResp = await response.json();
-		console.log('User informations successfully get', result);
+		console.log('>> getUser success <<', result);
 
 		// store data in user storage
 		userStore.setUserInfo(result);
@@ -167,7 +168,7 @@ class UserService {
 
 		const result = parseResponse(response);
 		if (result)
-			console.log('User successfully deleted', result);
+			console.log('>> deleteUser success <<', result);
 
 		// delete user data from storage
 		userStore.clearUserState();
@@ -207,7 +208,7 @@ class UserService {
 
 		const result = await response.json();
 		if (result)
-			console.log('user successfully updated', result);
+			console.log('>> updateUser success <<', result);
 
 		// change user data in UserStore
 		userStore.setUserInfo(data);

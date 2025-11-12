@@ -13,9 +13,6 @@ export function RegisterPopUp() {
 		</div>
 		<div class="px-6 py-12 sm:rounded-lg sm:px-12">
 			<h1 class="mb-10 text-xl">Create a new account</h1>
-			<form action="#" method="POST" class="space-y-6" id='form-test'>
-				<button id='test' type='submit' href='/profile'>button</button>
-			</form>
 			<form action="/" method="POST" id='create-new-account-form' class="md:col-span-2">
 				<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
 					<div class="col-span-full flex items-center gap-x-8">
@@ -38,7 +35,7 @@ export function RegisterPopUp() {
 
 					<div class="col-span-full">
 						<my-label labelFor="email">Email</my-label>
-						<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email"/>
+						<my-input inputId="sign-in-email" inputType="email" inputName="email" inputAutoComplete="email"/>
 					</div>
 
 					<div class="col-span-full">
@@ -48,7 +45,7 @@ export function RegisterPopUp() {
 
 					<div class="col-span-full">
 						<my-label labelFor="password">Password</my-label>
-						<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
+						<my-input inputId="sign-in-password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
 					</div>
 
 					<div class="col-span-full">
@@ -57,7 +54,7 @@ export function RegisterPopUp() {
 					</div>
 				</div>
 				<div class="mt-8 flex">
-					<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save !!!</button>
+					<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save</button>
 				</div>
 			</form>
 
@@ -97,11 +94,9 @@ export function RegisterPopUp() {
 	const createAccountForm = document.getElementById('create-new-account-form') as HTMLFormElement;
 	if (createAccountForm)
 	{
-		console.log('Begin');
 		createAccountForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			console.log('Bonjour');
 			try {
 				const formData = new FormData(createAccountForm);
 				console.log(`${formData.get('email')}`);
@@ -130,7 +125,6 @@ export function RegisterPopUp() {
 				console.log(error);
 			}
 		});
-		console.log('End');
 	}
 
     return popUp;

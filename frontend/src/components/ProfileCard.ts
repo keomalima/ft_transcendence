@@ -13,7 +13,7 @@ export async function ProfileCard () : Promise<HTMLElement | null> {
 	const profileCard = document.getElementById('profile-card');
 	if (profileCard)
 	{
-		console.log(userStore.getUserInfo());
+		// console.log('profile card | before get user state = ', userStore.getUserInfo());
 		try {
 			await userService.getUserState();
 		}
@@ -21,7 +21,7 @@ export async function ProfileCard () : Promise<HTMLElement | null> {
 			console.log(error);
 		}
 		const userInfo = userStore.getUserInfo();
-		console.log('user ifno ', userInfo);
+		// console.log('profile card | after get user state = ', userInfo);
 		profileCard.innerHTML = /*html*/`
 			<div class="bg-white rounded-lg p-6">
 				<div class="flex flex-col items-center">

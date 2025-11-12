@@ -13,14 +13,13 @@ import './components/MyLabel'
 import './components/MyInput'
 
 import { userStore } from './store/UserStorage';
-console.log('first access token : ', userStore.getUserAccessToken());
+
+// localStorage.clear();
 
 userStore.loadFromLocalStorage();
-console.log('after load from local storage access token : ', userStore.getUserAccessToken());
 
 if (userStore.getUserAccessToken() == null)
 {
-	console.log('clear localstorage : ', userStore.getUserAccessToken());
 	localStorage.clear();
 }
 

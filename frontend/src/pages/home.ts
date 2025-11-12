@@ -4,6 +4,7 @@ import { navigateTo } from '../main';
 import { RegisterPopUp } from '../components/RegisterPopUp';
 import { userService } from '../services/UserService';
 import { userStore } from '../store/UserStorage';
+import { FailedLoginPopUp } from '../components/FailedLoginPopUp';
 
 export function home() {
 	// console.log('start access token : ', userStore.getUserAccessToken());
@@ -57,6 +58,9 @@ export function home() {
 			<!-- Dialog for pop up -->
 			<dialog id="pop-up-register" class="place-self-center"></dialog>
 
+			<!-- Dialog for failed login -->
+			<dialog id="pop-up-failed-login" class="place-self-center"></dialog>
+
 
 		</div>
 		`
@@ -68,7 +72,6 @@ export function home() {
 	const learnBtn = document.getElementById('learn-more-btn');
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 	startedBtn?.addEventListener('click', (e) => {
-		console.log('access token : ', userStore.getUserAccessToken());
 		if (userStore.getUserAccessToken())
 		{
 			navigateTo('/profile');
@@ -92,16 +95,13 @@ export function home() {
 
 		const email = emailInput?.value;
 		const password = passwordInput?.value;
-
-		console.log('email:', email);
-		console.log('password:', password);
-
 		try {
 			const user = await userService.loginUser(email, password);
 			navigateTo('/profile');
 			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
 		} catch (error) {
 			console.log(error);
+			FailedLoginPopUp();
 		}
 	});
 

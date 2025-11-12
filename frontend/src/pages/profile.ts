@@ -3,13 +3,21 @@ import { ProfileCard } from "../components/ProfileCard";
 import { LastMatches } from "../components/LastMatches";
 import { BigStat } from "../components/BigStats";
 import { MatchHistory } from "../components/MatchHistory";
+import { userStore } from "../store/UserStorage";
+import { userService } from "../services/UserService";
+import { navigateTo } from "../main";
 
 export function Profile() {
+	if (!userStore.getUserAccessToken())
+	{
+		console.log('no session when access /login')
+		navigateTo('/');
+		return;
+	}
 	const root = document.getElementById('root');
 	if (root)
 	{
 		root.innerHTML = /*html*/`
-
 
 		<header id='navigation-bar'></header>
 

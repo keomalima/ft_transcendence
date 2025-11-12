@@ -78,6 +78,8 @@ class UserStore {
 			this.state.createdAt = user.createdAt;
 		if (user.updatedAt)
 			this.state.updatedAt = user.updatedAt;
+		if (user.city)
+			this.state.city = user.city;
 	}
 
 	// getters
@@ -115,6 +117,7 @@ class UserStore {
 
 	// clear all
 	clearUserState(): void {
+		console.log('===== cleaning of local storage =====')
 		this.state.id = null;
 		this.state.email = null;
 		this.state.name = null;
