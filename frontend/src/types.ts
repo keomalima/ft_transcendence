@@ -30,6 +30,7 @@ export interface UserState {
 	isOnline: boolean;
 	createdAt: string | null;
 	updatedAt: string | null;
+	avatarFile: File | null;
 	avatarUrl: string | null;
 	city: string | null;
 }

@@ -12,6 +12,7 @@ class UserStore {
 		isOnline: false,
 		createdAt: null,
 		updatedAt: null,
+		avatarFile: null,
 		avatarUrl: null,
 		city: null
 	}
@@ -80,6 +81,10 @@ class UserStore {
 			this.state.updatedAt = user.updatedAt;
 		if (user.city)
 			this.state.city = user.city;
+		if (user.avatarFile)
+			this.state.avatarFile = user.avatarFile;
+		if (user.avatarUrl)
+			this.state.avatarUrl = user.avatarUrl;
 	}
 
 	// getters
@@ -111,6 +116,10 @@ class UserStore {
 		return this.state.city;
 	}
 
+	getUserUserAvatar(): string | null {
+		return this.state.avatarUrl;
+	}
+
 	getUserInfo(): UserState {
 		return this.state;
 	}
@@ -126,6 +135,8 @@ class UserStore {
 		this.state.isLoggedIn = false;
 		this.state.accessToken = null;
 		this.state.isOnline = false;
+		this.state.avatarUrl = null;
+		this.state.avatarFile = null;
 	}
 
 	// save in local storage

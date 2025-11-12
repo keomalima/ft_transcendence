@@ -4,7 +4,6 @@ import { navigateTo } from '../main';
 import { RegisterPopUp } from '../components/RegisterPopUp';
 import { userService } from '../services/UserService';
 import { userStore } from '../store/UserStorage';
-import { FailedLoginPopUp } from '../components/FailedLoginPopUp';
 
 export function home() {
 	// console.log('start access token : ', userStore.getUserAccessToken());
@@ -39,6 +38,7 @@ export function home() {
 									</div>
 									<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password" required/>
 								</div>
+								<p id='login-error' class='text-red-500'></p>
 
 								<div>
 									<my-button btnType='submit'>Sign in</my-button>
@@ -57,10 +57,6 @@ export function home() {
 
 			<!-- Dialog for pop up -->
 			<dialog id="pop-up-register" class="place-self-center"></dialog>
-
-			<!-- Dialog for failed login -->
-			<dialog id="pop-up-failed-login" class="place-self-center"></dialog>
-
 
 		</div>
 		`
@@ -101,7 +97,8 @@ export function home() {
 			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
 		} catch (error) {
 			console.log(error);
-			FailedLoginPopUp();
+			const popUpLogin = document.getElementById('login-error');
+			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
 	});
 

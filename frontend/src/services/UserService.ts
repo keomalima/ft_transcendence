@@ -23,11 +23,11 @@ interface CreateUserDto {
 	name: string | null;
 	surname: string | null;
 	displayName: string | null;
-	avatarUrl: string | null;
+	avatarFile: File | null;
 	city: string | null;
 	password: string | null;
 }
-// type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarUrl' | 'city'>
+// type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarFile' | 'city'>
 
 // response when creating a new user
 type CreateUserResp = Pick<UserState, 'id' | 'name' | 'email'>
@@ -39,7 +39,7 @@ type LoginUserResp = Pick<UserState, 'accessToken' | 'email' | 'name' | 'isOnlin
 type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
 
 // response update user
-type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarUrl' | 'city'>
+type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarFile' | 'city'>
 
 const url = 'http://localhost:3000/api/users';
 
@@ -53,17 +53,39 @@ class UserService {
 	// create user
 	async createUser(data: CreateUserDto): Promise<CreateUserResp>{
 		console.log('create user dto : ', data);
+
+		const formData = new FormData();
+		formData.append('email', data.email || '');
+		formData.append('name', data.name || '');
+		formData.append('surname', data.surname || '');
+		formData.append('displayName', data.displayName || '');
+		formData.append('city', data.city || '');
+		formData.append('password', data.password || '');
+		if (data.avatarFile) {
+			formData.append('avatarFile', data.avatarFile);
+		}
+
 		userStore.loadFromLocalStorage();
+
 		const response = await fetch (`${url}`, {
 			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify(data)
+			body: formData
 		});
-		if (!response.ok)
-			throw new Error(`Failed to create user: ${response.statusText}`);
-
+		if (!response.ok) {
+			const errorBody = await response.text();
+			console.error('Backend error response:', errorBody);
+			
+			try {
+				const errorJson = JSON.parse(errorBody);
+				console.error('Error details:', errorJson);
+				throw new Error(`Failed to create user: ${errorJson.message || response.statusText}`);
+			} catch (parseError) {
+				throw new Error(`Failed to create user: ${response.statusText} - ${errorBody}`);
+			}
+		}
 
 		const result = await response.json();
+			
 		if (result)
 			console.log('>> createUser success <<', result);
 
@@ -77,6 +99,7 @@ class UserService {
 
 		return result;
 	}
+
 
 	// login
 	async loginUser(email:string, password:string): Promise<LoginUserResp>
@@ -100,6 +123,7 @@ class UserService {
 		// store user data in UserStore
 		userStore.setUserAccessToken(result.accessToken);
 		userStore.setUserLogStatus(result.isLoggedIn);
+		userStore.setUserId(result.id);
 
 		// save to locat storage
 		userStore.saveToLocalStorage();

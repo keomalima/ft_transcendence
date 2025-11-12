@@ -4,6 +4,7 @@ import { NavBar } from '../components/NavBar';
 import { navigateTo } from '../main';
 import { userService } from '../services/UserService';
 import { userStore } from '../store/UserStorage';
+import { fileToBase64 } from '../utils/fileToBase64';
 
 export function EditProfile () : HTMLElement | null {
 
@@ -24,10 +25,11 @@ export function EditProfile () : HTMLElement | null {
 				<form id='personnal-info-form' class="md:col-span-2">
 					<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
 						<div class="col-span-full flex items-center gap-x-8">
-							<img src="${profilePicture}" alt="" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0" />
+							<img id="avatar-preview" src="${profilePicture}" alt="profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
 							<div>
-							<button type="button" class="btn-primary">Change avatar</button>
-							<p class="mt-2 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
+								<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
+								<label for="avatar-input" class="btn-primary">Change avatar</label>
+								<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
 							</div>
 						</div>
 
@@ -107,6 +109,26 @@ export function EditProfile () : HTMLElement | null {
 		NavBar();
 	}
 
+
+
+	let selectedAvatarFile: File | null;
+
+	// Get the avatar image
+	const avatarInput = document.getElementById('avatar-input');
+	avatarInput?.addEventListener('change', async (e) =>  {
+		const file = (e.target as HTMLInputElement).files?.[0];
+		if (!file)
+			return;
+		console.log('uploaded file : ', file);
+		selectedAvatarFile = file;
+
+		// convert to Base64 and store
+		const imgBase64: string = await fileToBase64(file);
+		const img = document.getElementById('avatar-preview') as HTMLImageElement;
+		if (img)
+			img.src = imgBase64;
+	})
+
 	// update user data
 	const updatePersonnalInfo = document.getElementById('personnal-info-form') as HTMLFormElement;
 	updatePersonnalInfo.addEventListener('submit', async(e) => {
@@ -118,10 +140,11 @@ export function EditProfile () : HTMLElement | null {
 		try {
 			const formData = new FormData(updatePersonnalInfo);
 			const user = await userService.updateUser({
-				surname: formData.get('last_name') ? formData.get('last_name') as string : null,				// surname: formData.get('last_name') === '' ? null : formData.get('last_name') as string,
+				surname: formData.get('last_name') ? formData.get('last_name') as string : null,
 				city: formData.get('city') ? formData.get('city') as string : null,
 				displayName: formData.get('username') ? formData.get('username') as string : null,
-				name: formData.get('first_name') ? formData.get('first_name') as string : null
+				name: formData.get('first_name') ? formData.get('first_name') as string : null,
+				avatarFile: formData.get('file') ? formData.get('file') as File : null
 			});
 			console.log('updated successfully');
 			navigateTo('/profile');
@@ -150,3 +173,4 @@ export function EditProfile () : HTMLElement | null {
 
 	return editProfile;
 }
+
