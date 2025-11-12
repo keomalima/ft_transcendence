@@ -2,36 +2,77 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
-  //output   = "../src/generated/prisma"
+	provider = "prisma-client-js"
+	//output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+	provider = "sqlite"
+	url      = env("DATABASE_URL")
+}
+
+enum GameStatus {
+	PENDING
+	IN_PROGRESS
+	COMPLETED
+	ABANDONED
+}
+
+enum GameMode {
+	LOCAL
+	ONLINE
+	TOURNAMENT
 }
 
 model User {
-  id String @id @default(uuid())
-  email String @unique
-  salt String
-  name String
-  surname String?
-  password String
-  displayName String @unique
-  avatarUrl String?
-  city String?
-  isOnline Boolean @default(false)
-  lastSeenAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  sessions Session[]
+	id String @id @default(uuid())
+	email String @unique
+	salt String
+	name String
+	surname String?
+	password String
+	displayName String @unique
+	avatarUrl String?
+	city String?
+	isOnline Boolean @default(false)
+	lastSeenAt DateTime?
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	sessions Session[]
+	games Game[]
+	gameUsers GamePlayer[]
 }
 
 model Session {
-  id String @id @default(uuid())
-  userId String
-  user User @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+	id String @id @default(uuid())
+	userId String
+	user User @relation(fields: [userId], references: [id])
+	expiresAt DateTime
+	createdAt DateTime @default(now())
+}
+
+model Game {
+	id String @id @default(uuid())
+	createdBy String
+	user User @relation(fields: [createdBy], references: [id])
+	status GameStatus @default(PENDING)
+	type GameMode @default(ONLINE)
+	startedAt DateTime @default(now())
+	completedAt DateTime?
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	gameUsers GamePlayer[]
+	guestScore Int?
+}
+
+model GamePlayer {
+	id String @id @default(uuid())
+	gameId String
+	game Game @relation(fields: [gameId], references: [id])
+	userId String
+	user User @relation(fields: [userId], references: [id])
+	score Int @default(0)
+	isWinner Boolean @default(false)
+	
+	@@unique([gameId, userId])
 }

@@ -1,94 +1,93 @@
 import type { FastifyInstance } from 'fastify'
-import { createUserHandler, deleteHandler, editUserHandler, getUserHandler, loginUserHandler, logoutHandler } from './user.controller.js'
-import { createUserSchema, createUserResponseSchema, loginResponseSchema, loginSchema, getUserResponseSchema, editUserResponseSchema, editUserSchema } from "./user.schema.js";
-import type { User } from '@prisma/client';
-import { validateToken } from './user.service.js';
+import { userController } from './user.controller.js'
+import { userSchemas } from "./user.schema.js";
 
-declare module 'fastify' {
-  interface FastifyRequest {
-    user?: User;
-  }
-}
+// =====================
+// Public Routes (No Authentication)
+// =====================
 
-export async function userRoutes(fastify: FastifyInstance) {
-	// Public routes (no authentication)
+export async function userPublicRoutes(fastify: FastifyInstance){
 	fastify.post('/login', { 
 		schema: { 
-			body: loginSchema, 
-			response: { 200: loginResponseSchema },
+			body: userSchemas.request.login, 
+			response: { 200: userSchemas.response.login },
 			tags: ['Authentication'],
 			description: 'Login user and get access token',
 			summary: 'User login'
 		}
 	}, 
-	loginUserHandler);
+	userController.loginUserHandler);
 
 	fastify.post('/', { 
 		schema: { 
-			body: createUserSchema, 
-			response: { 201: createUserResponseSchema },
+			body: userSchemas.request.createUser, 
+			response: { 201: userSchemas.response.createUser },
 			tags: ['Users'],
 			description: 'Create a new user account',
 			summary: 'Create user'
 		}
 	}, 
-	createUserHandler);
+	userController.createUserHandler);
+}
 
-	// Protected routes
-	fastify.register(async (protectedRoutes) => {
-		protectedRoutes.addHook('onRequest', async (request, reply) => {
-			try {
-				const session = await validateToken(request.server.prisma, request.headers.authorization)
-				request.user = session.user;
-				
-			} catch (error: unknown) {
-				if (error instanceof Error)
-			    	return reply.code(401).send({ message: error.message });
-			  return reply.code(401).send({ message: 'Unauthorized' });
-			}
-		})
+// =====================
+// Private Routes (Authentication Required)
+// =====================
 
-		protectedRoutes.get('/:id', { 
-			schema: { 
-				response : { 200: getUserResponseSchema },
-				tags: ['Users'],
-				description: 'Get user details by ID',
-				summary: 'Get user by ID',
-				security: [{ bearerAuth: [] }]
-			}
-		}, 
-		getUserHandler);
+export async function userPrivateRoutes(fastify: FastifyInstance) {
+	fastify.get('/:id', { 
+		schema: { 
+			response : { 200: userSchemas.response.getUser },
+			tags: ['Users'],
+			description: 'Get user details by ID',
+			summary: 'Get user by ID',
+			security: [{ bearerAuth: [] }]
+		}
+	}, 
+	userController.getUserHandler);
 
-		protectedRoutes.put('/me', { 
-			schema: { 
-				body: editUserSchema, 
-				response: { 200: editUserResponseSchema },
-				tags: ['Users'],
-				description: 'Update current user profile',
-				summary: 'Update user profile',
-				security: [{ bearerAuth: [] }]
-			}
-		},
-		editUserHandler);
+	fastify.put('/me', { 
+		schema: { 
+			body: userSchemas.request.editUser, 
+			response: { 200: userSchemas.response.editUser },
+			tags: ['Users'],
+			description: 'Update current user profile',
+			summary: 'Update user profile',
+			security: [{ bearerAuth: [] }]
+		}
+	},
+	userController.editUserHandler);
 
-		protectedRoutes.post('/logout', {
-			schema: {
-				tags: ['Authentication'],
-				description: 'Logout current user',
-				summary: 'User logout',
-				security: [{ bearerAuth: [] }]
-			}
-		},
-		logoutHandler)
+	fastify.post('/logout', {
+		schema: {
+			tags: ['Authentication'],
+			description: 'Logout current user',
+			summary: 'User logout',
+			security: [{ bearerAuth: [] }]
+		}
+	},
+	userController.logoutHandler);
 
-		protectedRoutes.delete('/', {
-			schema: {
-				tags: ['Users'],
-				description: 'Delete current user account',
-				summary: 'Delete user',
-				security: [{ bearerAuth: [] }]
-			}
-		},
-		deleteHandler)
-	})
+	fastify.delete('/', {
+		schema: {
+			tags: ['Users'],
+			description: 'Delete current user account',
+			summary: 'Delete user',
+			security: [{ bearerAuth: [] }]
+		}
+	},
+	userController.deleteHandler);
+
+	fastify.post('/upload', {
+    	schema: {
+			consumes: ['multipart/form-data'],
+			body: userSchemas.request.uploadAvatar,
+			response: { 201: userSchemas.response.uploadtAvatar },
+			tags: ['Users'],
+			description: 'Upload avatar profile',
+			summary: 'Upload Avatar',
+			security: [{ bearerAuth: [] }]
+   		},
+  	},
+	userController.uploadAvatarHandler);
 }
