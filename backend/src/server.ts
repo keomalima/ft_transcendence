@@ -1,15 +1,16 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors';
-import swagger from '@fastify/swagger';
-import swaggerUI from '@fastify/swagger-ui';
 import { 
   serializerCompiler, 
   validatorCompiler, 
   type ZodTypeProvider,
-  jsonSchemaTransform
 } from "fastify-type-provider-zod";
-import { userRoutes } from './routes/user/user.route.js'
+import { userPrivateRoutes, userPublicRoutes } from './routes/user/user.route.js'
 import prismaPlugin from './plugins/prisma.plugin.js';
+import { registerSwagger, registerSwaggerUi } from './registers/swagger.register.js';
+import { userController } from './routes/user/user.controller.js'
+import { gamePrivateRoutes } from './routes/game/game.route.js';
+import fastifyMultipart from '@fastify/multipart';
 
 const fastify = Fastify({
   logger: true
@@ -23,33 +24,6 @@ await fastify.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-});
-
-// Register Swagger
-await fastify.register(swagger, {
-  openapi: {
-    info: {
-      title: 'ft_transcendence API',
-      description: 'API documentation for ft_transcendence project',
-      version: '1.0.0'
-    },
-    servers: [
-      {
-        url: 'http://localhost:3000',
-        description: 'Development server'
-      }
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
-  },
-  transform: jsonSchemaTransform,
 });
 
 await registerSwagger(fastify);
