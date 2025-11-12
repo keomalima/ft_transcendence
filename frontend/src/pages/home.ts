@@ -2,14 +2,16 @@
 import pongimg from '../images/pong.png';
 import { navigateTo } from '../main';
 import { RegisterPopUp } from '../components/RegisterPopUp';
-import { renderBackendStatus } from './backendStatus';
+import { userService } from '../services/UserService';
+import { userStore } from '../store/UserStorage';
+import { FailedLoginPopUp } from '../components/FailedLoginPopUp';
 
 export function home() {
+	// console.log('start access token : ', userStore.getUserAccessToken());
+
 	const root = document.getElementById('root');
 	if (root) {
 		root.innerHTML = /*html*/`
-		<!-- <div id="test-backend"></div> -->
-
 		<div>
 			<div class="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
 				<div class="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-8 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
@@ -46,7 +48,7 @@ export function home() {
 							<p class="mt-10 text-center text-sm/6 text-medium">
 								Not a member?
 								<a class="underline" onclick="document.getElementById('pop-up-register').showModal()">Create a new account</a>
-							</p>		
+							</p>
 						</div>
 					</div>
 					<img src="${pongimg}" alt="" class="mt-10 aspect-5/5 w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36" />
@@ -54,19 +56,27 @@ export function home() {
 			</div>
 
 			<!-- Dialog for pop up -->
-			<dialog id="pop-up-register" class="place-self-center"></dialog>	
+			<dialog id="pop-up-register" class="place-self-center"></dialog>
+
+			<!-- Dialog for failed login -->
+			<dialog id="pop-up-failed-login" class="place-self-center"></dialog>
 
 
 		</div>
 		`
 
+
+
+	// Start event
 	const startedBtn = document.getElementById('get-started-btn');
 	const learnBtn = document.getElementById('learn-more-btn');
-	const form = document.getElementById('signin-form') as HTMLFormElement;
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
-
-	// Click handler : show form
 	startedBtn?.addEventListener('click', (e) => {
+		if (userStore.getUserAccessToken())
+		{
+			navigateTo('/profile');
+			return;
+		}
 		e.preventDefault();
 		hidenForm!.style.display = 'block';
 		startedBtn.style.display = 'none';
@@ -74,8 +84,9 @@ export function home() {
 			learnBtn.style.display = 'none';
 	});
 
-	// Submit listener : get input
-	form.addEventListener('submit', (e) => {
+	// Sign-in submit form listener
+	const form = document.getElementById('signin-form') as HTMLFormElement;
+	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -84,19 +95,18 @@ export function home() {
 
 		const email = emailInput?.value;
 		const password = passwordInput?.value;
-
-		console.log('email:', email);
-		console.log('password:', password);
-
-		if (email && password) // need to check here for correct user/password
-		{
+		try {
+			const user = await userService.loginUser(email, password);
 			navigateTo('/profile');
+			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
+		} catch (error) {
+			console.log(error);
+			FailedLoginPopUp();
 		}
 	});
 
 	RegisterPopUp();
 
-	// renderBackendStatus('test-backend');
 	}
 }
 

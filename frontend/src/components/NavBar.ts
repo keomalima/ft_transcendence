@@ -1,3 +1,6 @@
+import { userService } from "../services/UserService";
+import { navigateTo } from "../main";
+
 export function NavBar() {
 	const navBar = document.getElementById('navigation-bar');
 	if (navBar)
@@ -19,8 +22,7 @@ export function NavBar() {
 					<a data-link href="/profile" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
 					<a data-link href="/game" class="nav-elem ${window.location.pathname === '/game' ? 'text-black' : ''}" >game</a>
 					<a data-link href="/tournament" class="nav-elem ${window.location.pathname === '/tournament' ? 'text-black' : ''}" >tournament</a>
-
-					<a data-link href="/home" class="nav-elem">Log out</a>
+					<a id='logout-btn' href='/' class="nav-elem">Log out</a>
 				</div>
 			</nav>
 			<el-dialog>
@@ -41,12 +43,12 @@ export function NavBar() {
 					<div class="mt-6 flow-root">
 						<div class="-my-6 divide-y divide-gray-500/10">
 						<div class="space-y-2 py-6">
-							<a data-link href="" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
+							<a data-link href="/profile" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
 							<a data-link href="/game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
 							<a data-link href="/tournament" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">tournament</a>
 						</div>
 						<div class="py-6">
-							<a data-link href="/" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">Log out</a>
+							<a id='logout-btn-2' href='/'class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">Log out</a>
 						</div>
 						</div>
 					</div>
@@ -56,5 +58,33 @@ export function NavBar() {
 			</el-dialog>
 		`
 	}
+
+	// Logout listener
+	const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
+	logoutBtn.addEventListener('click', async (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		try {
+			const user = await userService.logoutUser();
+			navigateTo('/');
+		} catch (error) {
+			console.log(error);
+		}
+	});
+
+	const logoutBtn2 = document.getElementById('logout-btn-2') as HTMLElement;
+	logoutBtn2.addEventListener('click', async (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		try {
+			const user = await userService.logoutUser();
+			navigateTo('/');
+		} catch (error) {
+			console.log(error);
+		}
+	});
+
 	return navBar;
 }

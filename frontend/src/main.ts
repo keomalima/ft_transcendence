@@ -12,6 +12,17 @@ import './components/MyLink';
 import './components/MyLabel'
 import './components/MyInput'
 
+import { userStore } from './store/UserStorage';
+
+// localStorage.clear();
+
+userStore.loadFromLocalStorage();
+
+if (userStore.getUserAccessToken() == null)
+{
+	localStorage.clear();
+}
+
 // Define map between path and render function
 const routes: Record<string, () => void> = {
 	'/': home,
@@ -26,6 +37,7 @@ const routes: Record<string, () => void> = {
 function router() {
 	const path = window.location.pathname;
 	const renderFunction = routes[path] || NotFound ;
+	// const ctx = user()
 	renderFunction();
 }
 

@@ -8,6 +8,7 @@ class MyInput extends HTMLElement {
 		const inputAutoComplete = this.getAttribute('inputAutoComplete');
 		const inputId = this.getAttribute('inputId');
 		const isRequired = this.hasAttribute('required');
+		const inputPlaceholder: string | null = this.getAttribute('inputPlaceholder') as string;
 
 		const elem = document.createElement('div');
 		elem.className = 'mt-2';
@@ -26,6 +27,9 @@ class MyInput extends HTMLElement {
 		if (isRequired) {
             input.required = true;
         }
+		if (inputPlaceholder) {
+			input.placeholder = inputPlaceholder;
+		}
 
 		elem.appendChild(input);
 		this.appendChild(elem);

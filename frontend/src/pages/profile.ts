@@ -3,13 +3,21 @@ import { ProfileCard } from "../components/ProfileCard";
 import { LastMatches } from "../components/LastMatches";
 import { BigStat } from "../components/BigStats";
 import { MatchHistory } from "../components/MatchHistory";
+import { userStore } from "../store/UserStorage";
+import { userService } from "../services/UserService";
+import { navigateTo } from "../main";
 
 export function Profile() {
+	if (!userStore.getUserAccessToken())
+	{
+		console.log('no session when access /login')
+		navigateTo('/');
+		return;
+	}
 	const root = document.getElementById('root');
 	if (root)
 	{
 		root.innerHTML = /*html*/`
-
 
 		<header id='navigation-bar'></header>
 
@@ -36,7 +44,7 @@ export function Profile() {
 		</div>
 
 		<!-- Statistics -->
-		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
+		<div class="mx-auto mb-10 max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="bg-white p-10 shadow-sm rounded-lg">
 				<h1>Statistics</h1>
 			</div>
