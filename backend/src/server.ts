@@ -1,15 +1,16 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors';
-import swagger from '@fastify/swagger';
-import swaggerUI from '@fastify/swagger-ui';
 import { 
   serializerCompiler, 
   validatorCompiler, 
   type ZodTypeProvider,
-  jsonSchemaTransform
 } from "fastify-type-provider-zod";
-import { userRoutes } from './routes/user/user.route.js'
+import { userPrivateRoutes, userPublicRoutes } from './routes/user/user.route.js'
 import prismaPlugin from './plugins/prisma.plugin.js';
+import { registerSwagger, registerSwaggerUi } from './registers/swagger.register.js';
+import { userController } from './routes/user/user.controller.js'
+import { gamePrivateRoutes } from './routes/game/game.route.js';
+import fastifyMultipart from '@fastify/multipart';
 
 const fastify = Fastify({
   logger: true
@@ -18,49 +19,27 @@ const fastify = Fastify({
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
 
-await fastify.register(cors, { origin: true });
-
-// Register Swagger
-await fastify.register(swagger, {
-  openapi: {
-    info: {
-      title: 'ft_transcendence API',
-      description: 'API documentation for ft_transcendence project',
-      version: '1.0.0'
-    },
-    servers: [
-      {
-        url: 'http://localhost:3000',
-        description: 'Development server'
-      }
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
-  },
-  transform: jsonSchemaTransform,
+await fastify.register(cors, {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 });
 
-// Register Swagger UI
-await fastify.register(swaggerUI, {
-  routePrefix: '/documentation',
-  uiConfig: {
-    docExpansion: 'list',
-    deepLinking: true
-  },
-  staticCSP: true,
-});
+await registerSwagger(fastify);
+await registerSwaggerUi(fastify);
 
+fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSize: 10 * 1024 * 1024 }})
 fastify.register(prismaPlugin);
-fastify.register(userRoutes, { prefix: "/api/users" });
 
-// Run the server!
+fastify.register(userPublicRoutes, { prefix: "/api/users" });
+
+fastify.register(async (protectedRoutes) => {
+	protectedRoutes.addHook('onRequest', async (request, reply) => await userController.protectedRouteHandler(request, reply));
+	protectedRoutes.register(userPrivateRoutes, { prefix: "/api/users" })
+	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
+});
+
 try {
   await fastify.listen({ port: 3000, host: '0.0.0.0' })
 } catch (err) {
