@@ -58,10 +58,6 @@ async function editUser(prisma: PrismaClient, id: string, data: EditInput) {
 }
 
 async function deleteUser(prisma: PrismaClient, id: string) {
-  await prisma.session.deleteMany({
-    where: { userId: id }
-  });
-
   await prisma.user.delete({
     where: { id },
   });

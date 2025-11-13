@@ -28,7 +28,7 @@ teste
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="email"
 
-keomalima2@icloud.com
+keomalima@icloud.com
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="name"
 
@@ -40,7 +40,7 @@ Lima
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="password"
 
-123456
+1234
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="displayName"
 
@@ -62,8 +62,8 @@ POST {{baseUrl}}/login HTTP/1.1
 Content-Type: application/json
 
 {
-   "email": "betsy@icloud.com",
-   "password": "123456"
+   "email": "keomalima@icloud.com",
+   "password": "1234"
 }
 
 ### GET AN USER (requires authentication)

@@ -1,0 +1,12 @@
+@baseUrl = http://localhost:3000/api/friends
+@token = 178acb1b-7bac-4885-9284-a09f6ea716db
+@userId = d909794d-45c0-4dfb-bcc4-573bec8dedd1
+
+### SENDS A FRIENDSHIP REQUEST
+POST {{baseUrl}}/ HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+	"addresseeDisplayName": "Betsy"
+}

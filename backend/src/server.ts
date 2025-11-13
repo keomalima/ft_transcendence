@@ -11,6 +11,9 @@ import { registerSwagger, registerSwaggerUi } from './registers/swagger.register
 import { userController } from './routes/user/user.controller.js'
 import { gamePrivateRoutes } from './routes/game/game.route.js';
 import fastifyMultipart from '@fastify/multipart';
+import fastifyWebsocket from '@fastify/websocket';
+import { webSocketController } from './websockets/test.js';
+import { friendsPrivateRoutes } from './routes/friends/friends.route.js';
 
 const fastify = Fastify({
   logger: true
@@ -29,6 +32,7 @@ await fastify.register(cors, {
 await registerSwagger(fastify);
 await registerSwaggerUi(fastify);
 
+fastify.register(fastifyWebsocket)
 fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSize: 10 * 1024 * 1024 }})
 fastify.register(prismaPlugin);
 
@@ -38,6 +42,11 @@ fastify.register(async (protectedRoutes) => {
 	protectedRoutes.addHook('onRequest', async (request, reply) => await userController.protectedRouteHandler(request, reply));
 	protectedRoutes.register(userPrivateRoutes, { prefix: "/api/users" })
 	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
+	protectedRoutes.register(friendsPrivateRoutes, { prefix: "/api/friends" })
+});
+
+fastify.register(async (fastify) => {
+    fastify.get('/ws', { websocket: true }, webSocketController.testHandler)
 });
 
 try {

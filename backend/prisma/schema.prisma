@@ -24,6 +24,13 @@ enum GameMode {
 	TOURNAMENT
 }
 
+enum FriendshipStatus {
+	PENDING
+	ACCEPTED
+	BLOCKED
+	DECLINED
+}
+
 model User {
 	id String @id @default(uuid())
 	email String @unique
@@ -38,6 +45,8 @@ model User {
 	lastSeenAt DateTime?
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
+	sentFriendRequests     Friendship[] @relation("FriendshipRequester")
+  	receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
 	sessions Session[]
 	games Game[]
 	gameUsers GamePlayer[]
@@ -46,7 +55,7 @@ model User {
 model Session {
 	id String @id @default(uuid())
 	userId String
-	user User @relation(fields: [userId], references: [id])
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 	expiresAt DateTime
 	createdAt DateTime @default(now())
 }
@@ -75,4 +84,18 @@ model GamePlayer {
 	isWinner Boolean @default(false)
 	
 	@@unique([gameId, userId])
+}
+
+model Friendship {
+	id String @id @default(uuid())
+	requesterId String
+  	requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  	addresseeId String
+  	addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  	status FriendshipStatus @default(PENDING)
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	deletedAt DateTime?
+
+	@@unique([requesterId, addresseeId])
 }
