@@ -4,8 +4,8 @@ import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
+import { writeFile } from 'fs/promises';
 import path from 'path';
-import fs from 'node:fs'
 
 // =====================
 // Type Declarations
@@ -73,7 +73,7 @@ async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInpu
 		const __dirname = path.dirname(fileURLToPath(import.meta.url));
 		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
 		const fileBuffer = await avatarFile.toBuffer();
-		await fs.promises.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+		await writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
     	avatarUrl = `/uploads/avatars/${uniqueFilename}`;
   	}
 
@@ -128,7 +128,7 @@ async function uploadAvatarHandler(request: FastifyRequest<{Body: UploadInput}>,
 		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
 
 		const fileBuffer = await avatarUrl.toBuffer();
-		await fs.promises.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+		await writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
 
 		return reply.code(201).send({ 
 			message: 'File received successfully',
