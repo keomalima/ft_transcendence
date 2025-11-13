@@ -31,7 +31,6 @@ export async function ProfileCard () : Promise<HTMLElement | null> {
 					<img src=${avatarImg} class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0"></img>
 					<h1 class="text-xl font-bold">${userInfo.displayName}</h1>
 					<p>${userInfo.name} ${userInfo.surname}</p>
-					${userInfo.city ? `<p>From ${userInfo.city}</p>` : ''}
 					<div class="mt-6 flex flex-wrap gap-4 justify-center">
 						<a data-link href="/edit-profile" id='edit-btn' class="btn-primary bg-white hover:bg-black">Edit profile</a>
 					</div>

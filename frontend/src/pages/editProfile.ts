@@ -1,5 +1,4 @@
 import profilePicture from '../images/ProfilePictureSquared.png';
-import { userData } from '../data/userData';
 import { NavBar } from '../components/NavBar';
 import { navigateTo } from '../main';
 import { userService } from '../services/UserService';
@@ -8,7 +7,6 @@ import { fileToBase64 } from '../utils/fileToBase64';
 
 export function EditProfile () : HTMLElement | null {
 
-	const user = userData;
 	const editProfile = document.getElementById('root');
 	if (editProfile)
 	{
@@ -47,12 +45,6 @@ export function EditProfile () : HTMLElement | null {
 							<my-label labelFor="last-name">Last name</my-label>
 							<my-input inputId="last-name" inputType="text" inputName="last_name" inputAutoComplete="family-name" inputPlaceholder=${userStore.getUserSurname()}>
 						</div>
-
-						<div class="col-span-full">
-							<my-label labelFor="city">City</my-label>
-							<my-input inputId="city" inputType="city" inputName="city" inputAutoComplete="city" inputPlaceholder=${userStore.getUserUserCity()}>
-						</div>
-
 
 					</div>
 					<div class="mt-8 flex">
@@ -141,7 +133,6 @@ export function EditProfile () : HTMLElement | null {
 			const formData = new FormData(updatePersonnalInfo);
 			const user = await userService.updateUser({
 				surname: formData.get('last_name') ? formData.get('last_name') as string : null,
-				city: formData.get('city') ? formData.get('city') as string : null,
 				displayName: formData.get('username') ? formData.get('username') as string : null,
 				name: formData.get('first_name') ? formData.get('first_name') as string : null,
 				avatarFile: formData.get('file') ? formData.get('file') as File : null

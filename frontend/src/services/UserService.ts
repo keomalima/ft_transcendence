@@ -24,10 +24,10 @@ interface CreateUserDto {
 	surname: string | null;
 	displayName: string | null;
 	avatarFile: File | null;
-	city: string | null;
+
 	password: string | null;
 }
-// type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarFile' | 'city'>
+// type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarFile' >
 
 // response when creating a new user
 type CreateUserResp = Pick<UserState, 'id' | 'name' | 'email'>
@@ -39,7 +39,7 @@ type LoginUserResp = Pick<UserState, 'accessToken' | 'email' | 'name' | 'isOnlin
 type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
 
 // response update user
-type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarFile' | 'city'>
+type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarFile'>
 
 const url = 'http://localhost:3000/api/users';
 
@@ -59,7 +59,6 @@ class UserService {
 		formData.append('name', data.name || '');
 		formData.append('surname', data.surname || '');
 		formData.append('displayName', data.displayName || '');
-		formData.append('city', data.city || '');
 		formData.append('password', data.password || '');
 		if (data.avatarFile) {
 			formData.append('avatarFile', data.avatarFile);

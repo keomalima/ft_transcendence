@@ -36,8 +36,6 @@ export function testBackend(id: string): void {
 							name: "Ly-Sha",
 							surname: "Than",
 							password: "1234",
-							displayName: "bye",
-							city: "Paris",
 							avatarFile: null
 						});
 						const createResponse = document.getElementById('createResponse');
@@ -112,7 +110,6 @@ export function testBackend(id: string): void {
 							name: "ooo",
 							surname: "ooo",
 							displayName: "ooo",
-							city: "ooo",
 							avatarFile: null
 						});
 						const updateResponse = document.getElementById('updateResponse');
@@ -142,7 +139,6 @@ export function testBackend(id: string): void {
 // 				surname: "Than",
 // 				password: "987654321",
 // 				displayName: "lthan",
-// 				city: "Paris",
 // 				avatarFile: null
 // 			})
 // 		});

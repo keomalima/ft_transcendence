@@ -46,11 +46,6 @@ export function RegisterPopUp() {
 					</div>
 
 					<div class="col-span-full">
-						<my-label labelFor="city">City</my-label>
-						<my-input inputId="city" inputType="text" inputName="city" inputAutoComplete="city"/>
-					</div>
-
-					<div class="col-span-full">
 						<my-label labelFor="password">Password</my-label>
 						<my-input inputId="sign-in-password" inputType="password" inputName="password" inputAutoComplete="current-password"/>
 					</div>
@@ -59,6 +54,7 @@ export function RegisterPopUp() {
 						<my-label labelFor="confirm-password">Confirm password</my-label>
 						<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="current-password"/>
 					</div>
+					<p id='register-error' class='text-red-500'></p>
 				</div>
 				<div class="mt-8 flex">
 					<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save</button>
@@ -95,6 +91,10 @@ export function RegisterPopUp() {
 		createAccountForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
+			const errorMsg = document.getElementById('register-error');
+			if (errorMsg) {
+				errorMsg.textContent = 'error';
+			}
 			try {
 				const formData = new FormData(createAccountForm);
 				console.log(`${formData.get('email')}`);
@@ -105,7 +105,6 @@ export function RegisterPopUp() {
 					surname: formData.get('last_name') as string,
 					password: formData.get('password') as string,
 					displayName: formData.get('username') as string,
-					city: formData.get('city') as string,
 					// avatarFile: null
 					avatarFile: selectedAvatarFile
 				});

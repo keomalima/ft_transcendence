@@ -19,8 +19,9 @@ export function home() {
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
 							<a href="#" class="styled-link" id="get-started-btn">Get started</a>
-							<a data-link href="/test" class="styled-link" id="get-started-btn">Test create user</a>
-							<my-link lHref="/LearnMore" lId="learn-more-btn">Learn more <span aria-hidden="true">→</span></my-link>
+							<a data-link href="/test" class="styled-link" id="test-btn">Test user</a>
+							<a class="styled-link" id="clear-local-storage">Clear local storage</a>
+							<my-link lHref="/LearnMore" lId="learn-more-btn">Learn more →</my-link>
 						</div>
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
 							<form action="#" method="POST" class="space-y-6" id="signin-form" >
@@ -100,6 +101,16 @@ export function home() {
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
+	});
+
+
+	// Clear local storage
+	const clearBtn = document.getElementById('clear-local-storage') as HTMLElement;
+	clearBtn.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		localStorage.clear();
 	});
 
 	RegisterPopUp();

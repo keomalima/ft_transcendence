@@ -32,7 +32,6 @@ export interface UserState {
 	updatedAt: string | null;
 	avatarFile: File | null;
 	avatarUrl: string | null;
-	city: string | null;
 }
 
 
