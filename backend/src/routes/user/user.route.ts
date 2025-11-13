@@ -20,6 +20,7 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 
 	fastify.post('/', { 
 		schema: { 
+			consumes: ['multipart/form-data'],
 			body: userSchemas.request.createUser, 
 			response: { 201: userSchemas.response.createUser },
 			tags: ['Users'],

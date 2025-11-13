@@ -10,7 +10,10 @@ import prismaPlugin from './plugins/prisma.plugin.js';
 import { registerSwagger, registerSwaggerUi } from './registers/swagger.register.js';
 import { userController } from './routes/user/user.controller.js'
 import { gamePrivateRoutes } from './routes/game/game.route.js';
+import fastifyStatic from '@fastify/static';
 import fastifyMultipart from '@fastify/multipart';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
 const fastify = Fastify({
   logger: true
@@ -29,6 +32,13 @@ await fastify.register(cors, {
 await registerSwagger(fastify);
 await registerSwaggerUi(fastify);
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+fastify.register(fastifyStatic, {
+	root: path.join(__dirname, '../uploads'),
+	prefix: '/uploads/',
+})
+
 fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSize: 10 * 1024 * 1024 }})
 fastify.register(prismaPlugin);
 
@@ -41,8 +51,9 @@ fastify.register(async (protectedRoutes) => {
 });
 
 try {
-  await fastify.listen({ port: 3000, host: '0.0.0.0' })
+	await fastify.listen({ port: 3000, host: '0.0.0.0' })
 } catch (err) {
-  fastify.log.error(err)
-  process.exit(1)
+	console.error(err);
+	fastify.log.error(err)
+	process.exit(1)
 }

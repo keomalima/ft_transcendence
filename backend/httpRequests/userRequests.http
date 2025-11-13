@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api/users
-@token = 5a00e0c6-fddf-4d46-8dab-a1bf7fc52bf3
-@userId = 9ee1ce19-68f6-469d-8e59-5a5e2a793732
+@token = d4d0780c-9976-453f-8784-980f9c690b58
+@userId = 2cc84db1-efd6-404c-b4f0-2b4929f3a933
 
 ### CREATE AN USER (AS JSON)
 POST {{baseUrl}}/ HTTP/1.1
@@ -13,7 +13,6 @@ Content-Type: application/json
 	"surname": "Lima",
 	"displayName": "Betsy",
 	"password": "123456",
-	"city": "Lyon",
 	"avatarUrl": null
 }
 
@@ -21,14 +20,7 @@ Content-Type: application/json
 POST {{baseUrl}} HTTP/1.1
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="my"
 
-teste
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="email"
-
-keomalima2@icloud.com
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="name"
 
@@ -46,14 +38,10 @@ Content-Disposition: form-data; name="displayName"
 
 KeoLima
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="city"
-
-Lyon
-------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="avatarFile"; filename="ProfileCV.jpg"
 Content-Type: image/jpeg
 
-< /Users/keomalima/Documents/42/stage/ProfileCV.jpg
+< /home/kricci-d/Downloads/cat.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### LOGIN AN USER
@@ -85,7 +73,6 @@ Content-Type: application/json
    "surname": "Lima",
    "displayName": "KeoLima",
    "password": "123456",
-   "city": "Lyon",
    "avatarUrl": null
 }
 
@@ -95,11 +82,14 @@ Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="avatarUrl"; filename="ProfileCV.jpg"
+Content-Disposition: form-data; name="avatarFile"; filename="ProfileCV.jpg"
 Content-Type: image/jpeg
 
-< /Users/keomalima/Documents/42/stage/ProfileCV.jpg
+< /home/kricci-d/Downloads/cat.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### GET USER PROFILE PICTURE
+GET http://localhost:3000/uploads/avatars/64b36ef8-d31a-435e-906d-c331d5f8588f.jpg HTTP/1.1
 
 ### DELETES AN USER
 DELETE {{baseUrl}} HTTP/1.1
