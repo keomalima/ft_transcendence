@@ -36,8 +36,7 @@ const routes: Record<string, () => void> = {
 // Select the right path and execute the linked function
 function router() {
 	const path = window.location.pathname;
-	const renderFunction = routes[path] || NotFound ;
-	// const ctx = user()
+	const renderFunction = routes[path] || NotFound;
 	renderFunction();
 }
 

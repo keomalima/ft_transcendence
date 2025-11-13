@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api/users
-@token = d4d0780c-9976-453f-8784-980f9c690b58
-@userId = 2cc84db1-efd6-404c-b4f0-2b4929f3a933
+@token = b2589998-852f-4753-b9d2-0b34fc55366f
+@userId = d8c4ce0e-ecf2-4411-a297-d6386ab8db07
 
 ### CREATE AN USER (AS JSON)
 POST {{baseUrl}}/ HTTP/1.1
@@ -50,7 +50,7 @@ POST {{baseUrl}}/login HTTP/1.1
 Content-Type: application/json
 
 {
-   "email": "betsy@icloud.com",
+   "email": "keomalima2@icloud.com",
    "password": "123456"
 }
 

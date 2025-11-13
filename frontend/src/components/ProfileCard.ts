@@ -1,4 +1,4 @@
-import profilePicture from '../images/ProfilePictureSquared.png';
+import profilePicture from '../images/defaultProfile.webp';
 // import { userData } from '../data/userData';
 import { navigateTo } from "../main";
 import { userStore } from '../store/UserStorage';
@@ -21,14 +21,16 @@ export async function ProfileCard () : Promise<HTMLElement | null> {
 			console.log(error);
 		}
 		const userInfo = userStore.getUserInfo();
-		// console.log('profile card | after get user state = ', userInfo);
+		console.log('user info ', userInfo);
+
+		const avatarImg: string | null = userStore.getUserUserAvatar() ?? profilePicture;
+		console.log('user avatar = ', userStore.getUserUserAvatar());
 		profileCard.innerHTML = /*html*/`
 			<div class="bg-white rounded-lg p-6">
 				<div class="flex flex-col items-center">
-					<img src="${profilePicture}" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0"></img>
+					<img src=${avatarImg} class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0"></img>
 					<h1 class="text-xl font-bold">${userInfo.displayName}</h1>
 					<p>${userInfo.name} ${userInfo.surname}</p>
-					${userInfo.city ? `<p>From ${userInfo.city}</p>` : ''}
 					<div class="mt-6 flex flex-wrap gap-4 justify-center">
 						<a data-link href="/edit-profile" id='edit-btn' class="btn-primary bg-white hover:bg-black">Edit profile</a>
 					</div>

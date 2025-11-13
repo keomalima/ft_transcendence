@@ -33,7 +33,8 @@
 		"**/dist": false,
 		"backend/data": false,
 		"**/types": false,
-		"**/registers": false
+		"**/registers": false,
+		"backend": false
 	},
     "explorerExclude.backup": {},
     "files.autoSave": "afterDelay",

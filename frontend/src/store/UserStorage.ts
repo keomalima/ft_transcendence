@@ -12,8 +12,8 @@ class UserStore {
 		isOnline: false,
 		createdAt: null,
 		updatedAt: null,
+		avatarFile: null,
 		avatarUrl: null,
-		city: null
 	}
 
 	// setters
@@ -39,10 +39,6 @@ class UserStore {
 
 	setUserAvatar(avatarUrl: string): void  {
 		this.state.avatarUrl = avatarUrl;
-	}
-
-	setUserCity(city: string): void  {
-		this.state.city = city;
 	}
 
 	setUserAccessToken(accessToken: string): void  {
@@ -78,8 +74,10 @@ class UserStore {
 			this.state.createdAt = user.createdAt;
 		if (user.updatedAt)
 			this.state.updatedAt = user.updatedAt;
-		if (user.city)
-			this.state.city = user.city;
+		if (user.avatarFile)
+			this.state.avatarFile = user.avatarFile;
+		if (user.avatarUrl)
+			this.state.avatarUrl = user.avatarUrl;
 	}
 
 	// getters
@@ -107,8 +105,8 @@ class UserStore {
 		return this.state.email;
 	}
 
-	getUserUserCity(): string | null {
-		return this.state.city;
+	getUserUserAvatar(): string | null {
+		return this.state.avatarUrl;
 	}
 
 	getUserInfo(): UserState {
@@ -126,6 +124,8 @@ class UserStore {
 		this.state.isLoggedIn = false;
 		this.state.accessToken = null;
 		this.state.isOnline = false;
+		this.state.avatarUrl = null;
+		this.state.avatarFile = null;
 	}
 
 	// save in local storage
