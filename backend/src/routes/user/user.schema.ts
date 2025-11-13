@@ -14,7 +14,6 @@ const createUserSchema = z.object({
 	password: multipartField(z.string()),
 	surname: multipartField(z.string().nullable()),
 	displayName: multipartField(z.string().min(3)),
-	city: multipartField(z.string().min(3).nullable()),
 	avatarFile: z
 	.custom<MultipartFile>()
 	.optional()
@@ -38,11 +37,10 @@ const editUserSchema = z.object({
 	displayName: z.string().optional(),
 	surname: z.string().nullable().optional(),
 	avatarUrl: z.string().nullable().optional(),
-	city: z.string().nullable().optional()
 });
 
 const uploadSchema = z.object({
-	avatarUrl: z
+	avatarFile: z
 		.custom<MultipartFile>()
 		.refine((file) => file?.file, {
 			message: 'The image is required.',
@@ -80,7 +78,6 @@ const getUserResponseSchema = z.object({
 	displayName: z.string(),
 	surname: z.string().nullable(),
 	avatarUrl: z.string().nullable(),
-	city: z.string().nullable(),
 	isOnline: z.boolean(),
 	createdAt: z.date(),
 	updatedAt: z.date(),
@@ -93,7 +90,6 @@ const editUserResponseSchema = z.object({
 	displayName: z.string(),
 	surname: z.string().nullable(),
 	avatarUrl: z.string().nullable(),
-	city: z.string().nullable(),
 	isOnline: z.boolean(),
 	createdAt: z.date(),
 	updatedAt: z.date(),
