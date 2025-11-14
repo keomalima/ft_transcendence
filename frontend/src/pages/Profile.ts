@@ -1,6 +1,6 @@
 import { NavBar } from "../components/NavBar";
 import { ProfileCard } from "../components/ProfileCard";
-import { LastMatches } from "../components/LastMatches";
+import { LatestMatch } from "../components/LatestMatch";
 import { BigStat } from "../components/BigStats";
 import { MatchHistory } from "../components/MatchHistory";
 import { userStore } from "../store/UserStorage";
@@ -39,7 +39,6 @@ export function Profile() {
 		<!-- Match history -->
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8 mb-10">
 			<div id='match-history' class="bg-white p-10 shadow-sm rounded-lg">
-				<h1>Match history</h1>
 			</div>
 		</div>
 
@@ -53,7 +52,7 @@ export function Profile() {
 	}
 	NavBar();
 	ProfileCard();
-	LastMatches();
+	LatestMatch();
 	BigStat();
 	MatchHistory();
 }

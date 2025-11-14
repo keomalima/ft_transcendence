@@ -1,4 +1,4 @@
-export function  BigStat() : HTMLElement | null {
+export function  BigStat(): void{
 	const stats = document.getElementById('big-stats');
 	if (stats)
 	{
@@ -25,5 +25,4 @@ export function  BigStat() : HTMLElement | null {
 		</div>
 		`
 	}
-	return stats;
 }

@@ -241,6 +241,37 @@ class UserService {
 
 		return result;
 	}
+
+	// update Avatar
+	async updateAvatar(file: File): Promise<Response>{
+		userStore.loadFromLocalStorage();
+		const formData = new FormData();
+		if (file) {
+			formData.append('avatarFile', file);
+		}
+		const response = await fetch (`${url}/upload`, {
+			method: 'POST',
+			headers: {
+				'Authorization': `Bearer ${userStore.getUserAccessToken()}`
+			},
+			body: formData
+		});
+		if (!response.ok)
+			throw new Error(`Failed to update avatar: ${response.statusText}`);
+
+
+		const result = await response.json();
+		if (result)
+			console.log('>> updateAvatar success <<', result);
+
+		// store new avatar url in UserStore
+		userStore.setUserAvatar(result.avatarUrl);
+
+		// save to locat storage
+		userStore.saveToLocalStorage();
+
+		return result;
+	}
 }
 
 export const userService = new UserService();

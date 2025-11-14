@@ -23,8 +23,8 @@ export async function ProfileCard () : Promise<HTMLElement | null> {
 		const userInfo = userStore.getUserInfo();
 		console.log('user info ', userInfo);
 
-		const avatarImg: string | null = userStore.getUserUserAvatar() ?? profilePicture;
-		console.log('user avatar = ', userStore.getUserUserAvatar());
+		const avatarImg: string | null = 'http://localhost:3000' + userStore.getUserUserAvatar();
+		// console.log('user avatar = ', userStore.getUserUserAvatar());
 		profileCard.innerHTML = /*html*/`
 			<div class="bg-white rounded-lg p-6">
 				<div class="flex flex-col items-center">

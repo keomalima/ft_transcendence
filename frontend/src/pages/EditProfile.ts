@@ -7,12 +7,29 @@ import { fileToBase64 } from '../utils/fileToBase64';
 
 export function EditProfile () : HTMLElement | null {
 
+	console.log('avatar url : ', userStore.getUserUserAvatar());
+	const avatarImg: string | null = 'http://localhost:3000' + userStore.getUserUserAvatar();
 	const editProfile = document.getElementById('root');
 	if (editProfile)
 	{
 		editProfile.innerHTML = /*html*/`
 		<header id='navigation-bar'></header>
 		<div class="divide-y divide-gray-200 md:ml-20">
+
+			<!-- Avatar -->
+			<div class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
+				<div></div>
+				<div class='md:col-span-2'>
+					<div class="col-span-full flex items-center gap-x-8">
+						<img id="avatar-preview" src="${avatarImg}" alt="profile picture" class="w-40 h-40 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
+						<div>
+							<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
+							<label id='change-avatar-label' for="avatar-input" class="btn-primary">Change avatar</label>
+							<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
+						</div>
+					</div>
+				</div>
+			</div>
 
 			<!-- personnal information -->
 			<div class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
@@ -22,14 +39,7 @@ export function EditProfile () : HTMLElement | null {
 				</div>
 				<form id='personnal-info-form' class="md:col-span-2">
 					<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
-						<div class="col-span-full flex items-center gap-x-8">
-							<img id="avatar-preview" src="${profilePicture}" alt="profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
-							<div>
-								<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
-								<label for="avatar-input" class="btn-primary">Change avatar</label>
-								<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
-							</div>
-						</div>
+
 
 						<div class="col-span-full">
 							<my-label labelFor="username">Username</my-label>
@@ -106,19 +116,39 @@ export function EditProfile () : HTMLElement | null {
 	let selectedAvatarFile: File | null;
 
 	// Get the avatar image
-	const avatarInput = document.getElementById('avatar-input');
+	const avatarInput = document.getElementById('avatar-input') as HTMLInputElement;
+	const avatarLabel = document.getElementById('change-avatar-label') as HTMLLabelElement;
 	avatarInput?.addEventListener('change', async (e) =>  {
+		// get file
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file)
 			return;
 		console.log('uploaded file : ', file);
+
+		// store selected avatar
 		selectedAvatarFile = file;
 
-		// convert to Base64 and store
-		const imgBase64: string = await fileToBase64(file);
-		const img = document.getElementById('avatar-preview') as HTMLImageElement;
-		if (img)
-			img.src = imgBase64;
+		try {
+			if (avatarLabel) {
+				avatarLabel.textContent = 'Loading ...';
+				avatarLabel.className = 'btn-disable';
+			}
+			// update avatar method
+			userService.updateAvatar(file);
+			// convert to Base64
+			const imgBase64: string = await fileToBase64(file);
+			const img = document.getElementById('avatar-preview') as HTMLImageElement;
+			if (img)
+				img.src = imgBase64;
+		} catch(error) {
+			console.log(error);
+		} finally {
+			if (avatarLabel) {
+				avatarLabel.textContent = 'Change avatar';
+				avatarLabel.className = 'btn-primary';
+			}
+		}
+
 	})
 
 	// update user data
@@ -134,8 +164,7 @@ export function EditProfile () : HTMLElement | null {
 			const user = await userService.updateUser({
 				surname: formData.get('last_name') ? formData.get('last_name') as string : null,
 				displayName: formData.get('username') ? formData.get('username') as string : null,
-				name: formData.get('first_name') ? formData.get('first_name') as string : null,
-				avatarFile: formData.get('file') ? formData.get('file') as File : null
+				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			});
 			console.log('updated successfully');
 			navigateTo('/profile');

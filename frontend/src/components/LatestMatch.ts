@@ -1,11 +1,11 @@
 import { MatchData } from "../data/matchData";
 import { matchInfo } from "../types";
 
-export function LastMatches() : HTMLElement | null {
-	const lastMatches = document.getElementById('last-matches');
-	if (lastMatches)
+export function LatestMatch() : HTMLElement | null {
+	const latestMatch = document.getElementById('last-matches');
+	if (latestMatch)
 	{
-		lastMatches.innerHTML = /*html*/`
+		latestMatch.innerHTML = /*html*/`
 		<div class="col-span-4 sm:col-span-9">
 			<div class="bg-white rounded-lg p-6">
 				<h1>Latest match scores</h1>
@@ -26,7 +26,7 @@ export function LastMatches() : HTMLElement | null {
 		scores?.appendChild(createScoreCard(s));
 	})
 	
-	return lastMatches;
+	return latestMatch;
 }
 
 function createScoreCard(match: matchInfo) : HTMLElement {
