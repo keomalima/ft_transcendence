@@ -29,6 +29,31 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 		}
 	}, 
 	userController.createUserHandler);
+
+	// DELETE AFTER, ONLY FOR DEV
+	fastify.get('/', {
+		schema: { 
+			response : { 200: userSchemas.response.getUserDev },
+			tags: ['Dev'],
+			description: 'Get all users details ONLY FOR DEV',
+			summary: 'Get all users ONLY FOR DEV',
+			security: [{ bearerAuth: [] }]
+		}
+	}, 
+	userController.getUserHandlerDev)
+
+	// DEV ONLY: Clean all tables
+    fastify.delete('/clean', {
+        schema: {
+            tags: ['Dev'],
+            description: 'Delete all data in the database (DEV ONLY)',
+            summary: 'Clean database (DEV ONLY)'
+        }
+    }, async (req, reply) => {
+        const prisma = req.server.prisma
+        await prisma.user.deleteMany();
+        return reply.send({ message: "Database cleaned" });
+    });
 }
 
 // =====================

@@ -4,8 +4,9 @@ import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
+import { writeFile } from 'fs/promises';
+import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
 import path from 'path';
-import fs from 'fs/promises';
 
 // =====================
 // Type Declarations
@@ -21,19 +22,65 @@ declare module 'fastify' {
 // Authentication Handlers
 // =====================
 
+async function protectedRouteHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const token = request.headers.authorization;
+		if (!token) {
+			return reply.code(401).send({
+                message: "Unauthorized: No token provided"
+            });
+		}
+		const [scheme, credentials] = (token ?? '').split(' ');
+		if (scheme !== 'Bearer' || !credentials) {
+			return reply.code(401).send({
+                message: "Unauthorized: Invalid token format"
+            });
+		}
+		const session = await userService.validateToken(request.server.prisma, credentials)
+		if (!session) {
+			return reply.code(401).send({
+                message: "Unauthorized: Invalid token"
+            });
+		}
+		if (session.expiresAt < new Date()) {
+			return reply.code(401).send({
+                message: "Unauthorized: Token expired"
+            });
+		}
+		request.user = session.user;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to authenticate user"});
+	}
+}
+
 async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
-	const data = request.body;
+	try {
+		const data = request.body;
+		const prisma = request.server.prisma
 
-	const user = await userService.authenticateUser(request.server.prisma, data);
-	if (!user)
-    	return reply.code(401).send({ message: "Invalid email or password" });
-	
-	const session = await userService.createSession(request.server.prisma, user.id);
-
-	return { 
-		accessToken: session.id, 
-    	...user
-  };
+		const user = await userService.findUserByEmail(prisma, data);
+		if (!user){
+			return reply.code(401).send({
+                message: "Invalid email or password"
+            });
+		}
+		
+		const isValid = verifyPassword(data.password, user.password, user.salt);
+		if (!isValid){
+			return reply.code(401).send({
+                message: "Invalid email or password"
+            });
+		}
+		
+		const { password, salt, ...safeUser } = user;
+		const session = await userService.createSession(request.server.prisma, user.id);
+		return { 
+			accessToken: session.id, 
+	    	...safeUser
+	  };	
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to login user"});
+	}
 }
 
 async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -47,14 +94,16 @@ async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 	}
 }
 
-async function protectedRouteHandler(request: FastifyRequest, reply: FastifyReply) {
+// DELETE AFTER, ONLY FOR DEV
+async function getUserHandlerDev(request: FastifyRequest, reply: FastifyReply) {
 	try {
-		const session = await userService.validateToken(request.server.prisma, request.headers.authorization)
-		request.user = session.user;
-	} catch (error: unknown) {
-		if (error instanceof Error)
-			return reply.code(401).send({ message: error.message });
-		return reply.code(401).send({ message: 'Unauthorized' });
+		const users = await userService.getUsersDev(request.server.prisma);
+		if (users.length === 0) {
+    		return reply.code(404).send({ message: 'No users found' });
+		}
+		return users;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to fetch users"});
 	}
 }
 
@@ -65,25 +114,15 @@ async function protectedRouteHandler(request: FastifyRequest, reply: FastifyRepl
 async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
 	const { avatarFile, ...userData } = request.body;
 
-	const user = await userService.findUserByEmail(request.server.prisma, userData);
-	if (user) {
-		return reply.status(409).send({ message: 'User already exists' });
-	}
-
-	let avatarUrl = '/uploads/avatars/default.jpg';
+	let avatarUrl = '/uploads/avatars/default.png';
 
 	if (avatarFile && avatarFile.file) {
-		const fileBuffer = await avatarFile.toBuffer();
-		if (!fileBuffer || fileBuffer.length === 0) {
-			return reply.code(400).send({
-				message: "Uploaded file is empty",
-			});
-		}
 		const fileExtension = path.extname(avatarFile.filename);
 		const uniqueFilename = `${randomUUID()}${fileExtension}`;
 		const __dirname = path.dirname(fileURLToPath(import.meta.url));
 		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
-		await fs.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+		const fileBuffer = await avatarFile.toBuffer();
+		await writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
     	avatarUrl = `/uploads/avatars/${uniqueFilename}`;
   	}
 
@@ -95,6 +134,8 @@ async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInpu
 		reply.code(201);
 		return (newUser);
 	} catch (error: any) {
+		if (error.code == 'P2002')
+    		return reply.status(409).send({ message: 'User already exists' });
 		reply.code(500).send({ message: "Failed to create user"});
 	}
 }
@@ -125,46 +166,36 @@ async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply
 
 async function uploadAvatarHandler(request: FastifyRequest<{Body: UploadInput}>, reply: FastifyReply){
 	try {
-		const { avatarFile } = request.body;
-		let avatarUrl = '/uploads/avatars/default.jpg';
+		const { avatarUrl } = request.body;
 
-		const user = await userService.findUserById(request.server.prisma, request.user.id);
-		if (user && user.avatarUrl && user.avatarUrl !== '/uploads/avatars/default.jpg') {
-			const __dirname = path.dirname(fileURLToPath(import.meta.url));
-            const filePath = path.join(__dirname, '../../..', user.avatarUrl);
-            await fs.unlink(filePath);
-		}
-		if (avatarFile && avatarFile.file) {
-			const fileBuffer = await avatarFile.toBuffer();
-			if (!fileBuffer || fileBuffer.length === 0) {
-				return reply.code(400).send({
-					message: "Uploaded file is empty",
-				});
-			}
-			const fileExtension = path.extname(avatarFile.filename);
-			const uniqueFilename = `${randomUUID()}${fileExtension}`;
-			const __dirname = path.dirname(fileURLToPath(import.meta.url));
-			const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
-			await fs.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
-			avatarUrl = `/uploads/avatars/${uniqueFilename}`;
-		}
-		return await userService.editUser(request.server.prisma, request.user.id, { avatarUrl })
+		if (!avatarUrl || !avatarUrl.file)
+			return reply.code(400).send({ message: 'No file uploaded' });
+
+		const fileExtension = path.extname(avatarUrl.filename);
+		const uniqueFilename = `${randomUUID()}${fileExtension}`;
+		const __dirname = path.dirname(fileURLToPath(import.meta.url));
+		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
+
+		const fileBuffer = await avatarUrl.toBuffer();
+		await writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+
+		return reply.code(201).send({ 
+			message: 'File received successfully',
+			filename: uniqueFilename,
+			avatarUrl: `/uploads/avatars/${uniqueFilename}`,
+			mimetype: avatarUrl.mimetype 
+		});
 	} catch (error: unknown) {
+		console.error('Upload error:', error);
 		if (error instanceof Error)
 			return reply.code(500).send({ message: error.message });
-		return reply.code(500).send({ message: 'Unauthorized' });
+		return reply.code(500).send({ message: 'Failed to upload file' });
 	}
 }
 
 async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
 	try {
-		const user = await userService.findUserById(request.server.prisma, request.user.id);
-		await userService.deleteUser(request.server.prisma, request.user?.id);
-		if (user && user.avatarUrl && user.avatarUrl !== '/uploads/avatars/default.jpg') {
-			const __dirname = path.dirname(fileURLToPath(import.meta.url));
-            const filePath = path.join(__dirname, '../../..', user.avatarUrl);
-            await fs.unlink(filePath);
-		}
+		await userService.deleteUser(request.server.prisma, request.user!.id);
 		reply.code(204).send()
 	} catch (error: unknown) {
 		if (error instanceof Error)
@@ -182,6 +213,7 @@ export const userController = {
 	loginUserHandler,
 	logoutHandler,
 	protectedRouteHandler,
+	getUserHandlerDev,
 	
 	// User CRUD
 	createUserHandler,

@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:3000/api/friends
+@token = 9118ba1e-04cc-4ea2-b23b-e542128b9918
+@userId = abace9ff-0271-4bc3-9626-d0f08883a834
+
+### ACEPT REQUEST
+PUT {{baseUrl}}/accept/c406e87a-f145-4fd7-a527-1822c383e686 HTTP/1.1
+Authorization: Bearer {{token}}
+
+### REJECT REQUEST
+PUT {{baseUrl}}/reject/ca29aef9-cc32-496e-9e94-add05fbdc05d HTTP/1.1
+Authorization: Bearer {{token}}
+
+### DELETE REQUEST
+DELETE {{baseUrl}}/c406e87a-f145-4fd7-a527-1822c383e686 HTTP/1.1
+Authorization: Bearer {{token}}
+
+### GET ACTIVE FRIENDSHIP
+GET {{baseUrl}}/ HTTP/1.1
+Authorization: Bearer {{token}}
+
+### GET PENDING FRIENDSHIP
+GET {{baseUrl}}/requests HTTP/1.1
+Authorization: Bearer {{token}}
+
+### SENDS A FRIENDSHIP REQUEST
+POST {{baseUrl}}/ HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+	"addresseeDisplayName": "KeoLima"
+}

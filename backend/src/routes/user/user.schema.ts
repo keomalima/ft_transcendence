@@ -65,10 +65,7 @@ const createUserResponseSchema = z.object({
 
 const loginResponseSchema = z.object({
 	id: z.string(),
-	accessToken: z.string(),
-	email: z.email(),
-	name: z.string().min(3),
-	isOnline: z.boolean(),
+	accessToken: z.string()
 });
 
 const getUserResponseSchema = z.object({
@@ -82,6 +79,8 @@ const getUserResponseSchema = z.object({
 	createdAt: z.date(),
 	updatedAt: z.date(),
 });
+
+const getUserArraySchema = z.array(getUserResponseSchema);
 
 const editUserResponseSchema = z.object({
 	id: z.string(),
@@ -131,6 +130,7 @@ export const userSchemas = {
     login: loginResponseSchema,
     getUser: getUserResponseSchema,
     editUser: editUserResponseSchema,
-	uploadtAvatar: uploadAvatarResponseSchema
+	uploadtAvatar: uploadAvatarResponseSchema,
+	getUserDev: getUserArraySchema
   },
 };
