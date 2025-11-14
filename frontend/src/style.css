@@ -19,6 +19,10 @@
 			hover:bg-black hover:text-white
 			focus-visible:outline-2 focus-visible:outline-offset-2;
 	}
+	.btn-disable {
+		@apply px-3.5 py-2.5 rounded-full bg-cream text-medium outline-1 outline-solid outline-medium
+		focus-visible:outline-2 focus-visible:outline-offset-2;
+	}
 	.input-style {
 		@apply block w-full rounded-full bg-white px-3 py-1.5 text-base text-gray-900
 			outline-1 -outline-offset-1 outline-muted placeholder:text-gray-400
@@ -28,7 +32,7 @@
 		@apply font-['Calistoga'] text-black text-2xl;
 	}
 	.nav-elem {
-		@apply font-['Inter'] text-medium text-base text-xl font-normal;
+		@apply font-['Inter'] text-medium text-base md:text-base sm:text-sm font-normal;
 	}
 }
 
@@ -43,13 +47,13 @@ body {
 
 h1 {
 	font-family: 'Calistoga', serif;
-	color: black; 
+	color: black;
 }
 
 h2 {
 	font-family: 'Inter', sans-serif;
 	font-weight: 500;
-	color: black; 
+	color: black;
 }
 
 dialog::backdrop {

@@ -40,7 +40,7 @@ const editUserSchema = z.object({
 });
 
 const uploadSchema = z.object({
-	avatarUrl: z
+	avatarFile: z
 		.custom<MultipartFile>()
 		.refine((file) => file?.file, {
 			message: 'The image is required.',

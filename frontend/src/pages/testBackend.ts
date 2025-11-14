@@ -36,9 +36,7 @@ export function testBackend(id: string): void {
 							name: "Ly-Sha",
 							surname: "Than",
 							password: "1234",
-							displayName: "bye",
-							city: "Paris",
-							avatarUrl: null
+							avatarFile: null
 						});
 						const createResponse = document.getElementById('createResponse');
 						createResponse!.innerHTML = `user as been created : ${userStore.getUserInfo().name} id = ${userStore.getUserId()}`;
@@ -112,8 +110,7 @@ export function testBackend(id: string): void {
 							name: "ooo",
 							surname: "ooo",
 							displayName: "ooo",
-							city: "ooo",
-							avatarUrl: null
+							avatarFile: null
 						});
 						const updateResponse = document.getElementById('updateResponse');
 						updateResponse!.innerHTML = `user as been updated sucessfully : ${userStore.getUserInfo().name} id = ${userStore.getUserId()}`;
@@ -142,8 +139,7 @@ export function testBackend(id: string): void {
 // 				surname: "Than",
 // 				password: "987654321",
 // 				displayName: "lthan",
-// 				city: "Paris",
-// 				avatarUrl: null
+// 				avatarFile: null
 // 			})
 // 		});
 

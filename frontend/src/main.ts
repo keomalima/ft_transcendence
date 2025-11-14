@@ -1,16 +1,17 @@
 import './style.css';
 
-import { LearnMore } from './pages/learnMore';
-import { Profile } from './pages/profile';
-import { EditProfile } from './pages/editProfile';
-import { home } from './pages/home';
+import { LearnMore } from './pages/LearnMore';
+import { Profile } from './pages/Profile';
+import { EditProfile } from './pages/EditProfile';
+import { Home } from './pages/Home';
 import { NotFound } from './pages/404';
 import { test } from './components/test';
-import { game } from './pages/game';
-import './components/MyButton';
-import './components/MyLink';
-import './components/MyLabel'
-import './components/MyInput'
+import { Game } from './pages/Game';
+import { Dashboard } from './pages/Dashboard';
+import './htmlComponents/MyButton';
+import './htmlComponents/MyLink';
+import './htmlComponents/MyLabel'
+import './htmlComponents/MyInput'
 
 import { userStore } from './store/UserStorage';
 
@@ -25,19 +26,20 @@ if (userStore.getUserAccessToken() == null)
 
 // Define map between path and render function
 const routes: Record<string, () => void> = {
-	'/': home,
+	'/': Home,
 	'/LearnMore': LearnMore,
 	'/profile': Profile,
 	'/test': test,
-	'/game': game,
-	'/edit-profile': EditProfile
+	'/game': Game,
+	'/edit-profile': EditProfile,
+	'/dashboard': Dashboard
 };
 
 // Select the right path and execute the linked function
 function router() {
 	const path = window.location.pathname;
-	const renderFunction = routes[path] || NotFound ;
-	// const ctx = user()
+	userStore.loadFromLocalStorage();
+	const renderFunction = routes[path] || NotFound;
 	renderFunction();
 }
 

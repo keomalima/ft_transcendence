@@ -1,6 +1,6 @@
 import { NavBar } from "../components/NavBar";
 
-export function game() {
+export function Game() {
 	const root = document.getElementById('root');
 	if (root)
 	{

@@ -3,18 +3,18 @@
         "*": false
     },
     "files.exclude": {
-		"**/.git": false,
+		"**/.git": true,
 		"**/.svn": false,
 		"**/.hg": false,
 		"**/.DS_Store": false,
 		"**/Thumbs.db": false,
 		"frontend": false,
 		".vscode": false,
-		"**/*.json": false,
+		"**/*.json": true,
 		"**/*.yml": false,
 		"**/*.md": false,
 		".gitignore": false,
-		"Makefile": false,
+		"Makefile": true,
 		"node_modules": false,
 		"prisma": false,
 		"**/*.ts": false,
@@ -33,7 +33,8 @@
 		"**/dist": false,
 		"backend/data": false,
 		"**/types": false,
-		"**/registers": false
+		"**/registers": false,
+		"backend": true
 	},
     "explorerExclude.backup": {},
     "files.autoSave": "afterDelay",
