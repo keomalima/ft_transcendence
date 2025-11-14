@@ -33,7 +33,7 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 	fastify.get('/', {
 		schema: { 
 			response : { 200: userSchemas.response.getUserDev },
-			tags: ['Users'],
+			tags: ['Dev'],
 			description: 'Get all users details ONLY FOR DEV',
 			summary: 'Get all users ONLY FOR DEV',
 			security: [{ bearerAuth: [] }]
