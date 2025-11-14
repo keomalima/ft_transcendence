@@ -59,12 +59,35 @@ async function editUser(prisma: PrismaClient, id: string, data: EditInput) {
 
   return prisma.user.update({
     where: { id: id },
-    data: { ...updateData }
+    data: { ...updateData },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      displayName: true,
+      surname: true,
+      avatarUrl: true,
+      isOnline: true,
+      createdAt: true,
+      updatedAt: true,
+    }
+  });
+}
+
+async function editUserAvatar(prisma: PrismaClient, id: string, avatarUrl: string) {
+	return prisma.user.update({
+    where: { id: id },
+    data: { avatarUrl },
+    select: {
+      id: true,
+      avatarUrl: true,
+      updatedAt: true,
+    }
   });
 }
 
 async function deleteUser(prisma: PrismaClient, id: string) {
-  await prisma.user.delete({
+  return prisma.user.delete({
     where: { id },
   });
 }
@@ -123,6 +146,7 @@ export const userService = {
   createUser,
   editUser,
   deleteUser,
+  editUserAvatar,
   
   // Session operations
   createSession,

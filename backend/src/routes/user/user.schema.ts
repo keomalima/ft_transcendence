@@ -35,8 +35,7 @@ const loginSchema = z.object({
 const editUserSchema = z.object({
 	name: z.string().min(3).optional(),
 	displayName: z.string().optional(),
-	surname: z.string().nullable().optional(),
-	avatarUrl: z.string().nullable().optional(),
+	surname: z.string().nullable().optional()
 });
 
 const uploadSchema = z.object({
@@ -95,10 +94,9 @@ const editUserResponseSchema = z.object({
 });
 
 const uploadAvatarResponseSchema = z.object({
-	message: z.string(),
-	filename: z.string(),
-	avatarUrl: z.string(),
-	mimetype: z.string()
+	id: z.string(),
+    avatarUrl: z.string(),
+    updatedAt: z.date(),
 });
 
 // =====================

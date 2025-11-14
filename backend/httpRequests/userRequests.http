@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api/users
-@token = b2589998-852f-4753-b9d2-0b34fc55366f
-@userId = d8c4ce0e-ecf2-4411-a297-d6386ab8db07
+@userId = f5249900-7d35-41ea-abf5-ad66baeb7e51
+@token = 886fafe2-1840-47ee-8be0-159efaa9680a
 
 ### GET ALL USERS
 GET {{baseUrl}} HTTP/1.1
@@ -26,6 +26,8 @@ Content-Type: application/json
 POST {{baseUrl}} HTTP/1.1
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="email"
 
 keomalima@icloud.com
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -48,7 +50,7 @@ KeoLima
 Content-Disposition: form-data; name="avatarFile"; filename="ProfileCV.jpg"
 Content-Type: image/jpeg
 
-< /home/kricci-d/Downloads/cat.jpg
+< /Users/keomalima/Downloads/keo.jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### LOGIN AN USER
@@ -57,7 +59,7 @@ POST {{baseUrl}}/login HTTP/1.1
 Content-Type: application/json
 
 {
-   "email": "keomalima2@icloud.com",
+   "email": "betsy@icloud.com",
    "password": "123456"
 }
 
@@ -75,10 +77,10 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-   "email": "betsy@icloud.com",
-   "name": "Betsy",
+   "email": "betsy2@icloud.com",
+   "name": "Betsyy",
    "surname": "Lima",
-   "displayName": "KeoLima",
+   "displayName": "KeoLimaa",
    "password": "123456",
    "avatarUrl": null
 }
@@ -92,11 +94,11 @@ Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
 Content-Disposition: form-data; name="avatarFile"; filename="ProfileCV.jpg"
 Content-Type: image/jpeg
 
-< /home/kricci-d/Downloads/cat.jpg
+< /Users/keomalima/Downloads/keo.jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### GET USER PROFILE PICTURE
-GET http://localhost:3000/uploads/avatars/64b36ef8-d31a-435e-906d-c331d5f8588f.jpg HTTP/1.1
+GET http://localhost:3000/uploads/avatars/335029f2-cdb8-4107-9413-d6018e30a829.jpg HTTP/1.1
 
 ### DELETES AN USER
 DELETE {{baseUrl}} HTTP/1.1

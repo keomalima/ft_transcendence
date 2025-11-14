@@ -108,7 +108,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
     	schema: {
 			consumes: ['multipart/form-data'],
 			body: userSchemas.request.uploadAvatar,
-			response: { 201: userSchemas.response.uploadtAvatar },
+			response: { 200: userSchemas.response.uploadtAvatar },
 			tags: ['Users'],
 			description: 'Upload avatar profile',
 			summary: 'Upload Avatar',
