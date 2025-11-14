@@ -7,7 +7,7 @@
     // Environment Settings - CHANGED FOR BROWSER
     "module": "ES2020",
     "target": "ES2020",
-    "lib": ["ES2020", "DOM"],  // Added DOM for browser APIs
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "esnext"],  // Added DOM for browser APIs
     "moduleResolution": "bundler",
     "types": ["vite/client"],
 
@@ -28,5 +28,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+
+	"downlevelIteration": true
 }

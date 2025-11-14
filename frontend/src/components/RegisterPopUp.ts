@@ -54,7 +54,9 @@ export function RegisterPopUp() {
 						<my-label labelFor="confirm-password">Confirm password</my-label>
 						<my-input inputId="confirm-password" inputType="password" inputName="confirm_password" inputAutoComplete="current-password"/>
 					</div>
-					<p id='register-error' class='text-red-500'></p>
+					<div class="col-span-full">
+						<p id='register-error' class='text-red-500'></p>
+					</div>
 				</div>
 				<div class="mt-8 flex">
 					<button id='save-btn' type="submit" class="btn-primary bg-white hover:bg-black">Save</button>
@@ -68,19 +70,36 @@ export function RegisterPopUp() {
 	let selectedAvatarFile: File | null;
 
 	// Get the avatar image
-	const avatarInput = document.getElementById('avatar-input');
+	const avatarInput = document.getElementById('avatar-input') as HTMLElement;
+	const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+
 	avatarInput?.addEventListener('change', async (e) =>  {
+		// diable button
+		saveBtn.disabled = true;
+		saveBtn.className = 'btn-disable bg-white';
+		saveBtn.textContent = 'Loading...';
+
+		// get the file
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file)
 			return;
-		console.log('uploaded file : ', file);
+
+		// store selected file
 		selectedAvatarFile = file;
 
-		// convert to Base64 and store
-		const imgBase64: string = await fileToBase64(file);
-		const img = document.getElementById('avatar-preview') as HTMLImageElement;
-		if (img)
-			img.src = imgBase64;
+		try {
+			// convert to Base64
+			const imgBase64: string = await fileToBase64(file);
+			const img = document.getElementById('avatar-preview') as HTMLImageElement;
+			if (img)
+				img.src = imgBase64;
+		} catch (error) {
+			return;
+		} finally {
+			saveBtn.disabled = false;
+			saveBtn.className = 'btn-primary bg-white hover:bg-black';
+			saveBtn.textContent = 'Save';
+		}
 	})
 
 
@@ -91,15 +110,24 @@ export function RegisterPopUp() {
 		createAccountForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			const errorMsg = document.getElementById('register-error');
-			if (errorMsg) {
-				errorMsg.textContent = 'error';
+
+			const displayError = document.getElementById('register-error');
+			const formData = new FormData(createAccountForm);
+			if (displayError) {
+					displayError.textContent = '';
+				}
+			// check for form data
+			const errorMsg = checkFormData(formData);
+			if (errorMsg)
+			{
+				if (displayError) {
+					displayError.textContent = errorMsg;
+				}
+				return;
 			}
+			// fetch
 			try {
-				const formData = new FormData(createAccountForm);
-				console.log(`${formData.get('email')}`);
-				const avatarImg: string | null = userStore.getUserUserAvatar();
-				const user = await userService.createUser({
+					const response = await userService.createUser({
 					email: formData.get('email') as string,
 					name: formData.get('first_name') as string,
 					surname: formData.get('last_name') as string,
@@ -116,16 +144,63 @@ export function RegisterPopUp() {
 					console.log('login after create account -> acessToken in localstorage ', userStore.getUserAccessToken());
 				}
 				catch (error) {
-					console.log(error);
+					if (displayError) {
+						if (error instanceof Error) {
+							displayError.textContent = getErrorMessage(error);
+						}
+						else {
+							displayError.textContent = 'An unexpected error occurred';
+						}
+					}
 				}
 				navigateTo('/profile');
 
 			} catch (error) {
-				console.log(error);
+				if (displayError) {
+					if (error instanceof Error) {
+						displayError.textContent = getErrorMessage(error);
+					}
+					else {
+						displayError.textContent = 'An unexpected error occurred';
+					}
+				}
 			}
+			
 		});
 	}
 
     return popUp;
 }
 
+function checkFormData(data: FormData): string | null {
+	for (const element of data.entries()) {
+		if (element[1] == null || element[1] == '')
+			return `Missing input. Please enter ${element[0]}`;
+	}
+
+	const password = data.get('password');
+	const confirmPassword = data.get('confirm_password');
+	if (password != confirmPassword)
+		return 'Password confirmation failed. Please confirm password.';
+    
+	return null;
+}
+
+function getErrorMessage(error: Error): string {
+	let errorMessage = 'An unexpected error occurred';
+
+	const message = error.message;
+	// clear message
+	const jsonMatch = message.match(/\{.*\}/);
+	if (jsonMatch) {
+		try {
+			const errorData = JSON.parse(jsonMatch[0]);
+			errorMessage = errorData.message;
+		} catch {
+			errorMessage = message;
+		}
+	} else {
+		errorMessage = message;
+	}
+	return errorMessage;
+}

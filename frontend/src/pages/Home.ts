@@ -5,7 +5,7 @@ import { RegisterPopUp } from '../components/RegisterPopUp';
 import { userService } from '../services/UserService';
 import { userStore } from '../store/UserStorage';
 
-export function home() {
+export function Home() {
 	// console.log('start access token : ', userStore.getUserAccessToken());
 
 	const root = document.getElementById('root');
@@ -94,7 +94,7 @@ export function home() {
 		const password = passwordInput?.value;
 		try {
 			const user = await userService.loginUser(email, password);
-			navigateTo('/profile');
+			navigateTo('/dashboard');
 			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
 		} catch (error) {
 			console.log(error);
@@ -111,6 +111,8 @@ export function home() {
 		e.stopPropagation();
 
 		localStorage.clear();
+		userStore.clearUserState();
+		console.log('**** CLEAR LOCAL STORAGE ****');
 	});
 
 	RegisterPopUp();

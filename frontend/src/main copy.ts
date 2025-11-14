@@ -5,7 +5,7 @@ import { createAbout } from './components/About';
 import { createProjects } from './components/Projects';
 import { showGithub } from './components/GithubRepo';
 import { testBackend } from './pages/testBackend';
-import { createHome } from './pages/home';
+import { createHome } from './pages/Home';
 
 // Get the root element
 const root = document.getElementById('root');

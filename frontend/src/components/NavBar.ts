@@ -7,7 +7,7 @@ export function NavBar() {
 	{
 		navBar.innerHTML = /*html*/`
 			<nav aria-label="Global" class=" flex items-center justify-between p-6 lg:px-20">
-				<a data-link href="/profile" class="nav-logo">
+				<a data-link href="/dashboard" class="nav-logo">
 					<span class=''>Let's Pong !</span>
 				</a>
 				<div class="flex lg:hidden">
@@ -19,6 +19,7 @@ export function NavBar() {
 				</button>
 				</div>
 					<div class="hidden lg:flex lg:gap-x-12">
+					<a data-link href="/dashboard" class="nav-elem ${window.location.pathname === '/dashboard' ? 'text-black' : ''}" >home</a>
 					<a data-link href="/profile" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
 					<a data-link href="/game" class="nav-elem ${window.location.pathname === '/game' ? 'text-black' : ''}" >game</a>
 					<a data-link href="/tournament" class="nav-elem ${window.location.pathname === '/tournament' ? 'text-black' : ''}" >tournament</a>
@@ -43,6 +44,7 @@ export function NavBar() {
 					<div class="mt-6 flow-root">
 						<div class="-my-6 divide-y divide-gray-500/10">
 						<div class="space-y-2 py-6">
+							<a data-link href="/dashboard" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">home</a>
 							<a data-link href="/profile" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
 							<a data-link href="/game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
 							<a data-link href="/tournament" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">tournament</a>
