@@ -94,7 +94,7 @@ export function Home() {
 		const password = passwordInput?.value;
 		try {
 			const user = await userService.loginUser(email, password);
-			navigateTo('/profile');
+			navigateTo('/dashboard');
 			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
 		} catch (error) {
 			console.log(error);
@@ -111,6 +111,7 @@ export function Home() {
 		e.stopPropagation();
 
 		localStorage.clear();
+		userStore.clearUserState();
 		console.log('**** CLEAR LOCAL STORAGE ****');
 	});
 

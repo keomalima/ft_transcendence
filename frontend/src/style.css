@@ -32,7 +32,7 @@
 		@apply font-['Calistoga'] text-black text-2xl;
 	}
 	.nav-elem {
-		@apply font-['Inter'] text-medium text-base text-xl font-normal;
+		@apply font-['Inter'] text-medium text-base md:text-base sm:text-sm font-normal;
 	}
 }
 
@@ -47,13 +47,13 @@ body {
 
 h1 {
 	font-family: 'Calistoga', serif;
-	color: black; 
+	color: black;
 }
 
 h2 {
 	font-family: 'Inter', sans-serif;
 	font-weight: 500;
-	color: black; 
+	color: black;
 }
 
 dialog::backdrop {

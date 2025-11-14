@@ -2,31 +2,27 @@ import { MatchData } from "../data/matchData";
 import { matchInfo } from "../types";
 import profilePicture from '../images/ProfilePictureSquared.png';
 
-export function  MatchHistory() : HTMLElement | null {
-	const history = document.getElementById('match-history');
+export function  MatchHistory(root: string) {
+	const history = document.getElementById(root);
 	if (history)
 	{
 		history.innerHTML = /*html*/`
 		<h1>Match history</h1>
 
-		<div class="px-4 sm:px-6 lg:px-8 max-h-150 overflow-auto">	
-			<div class="mt-8 flow-root">
-				<div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
-				<div class="inline-block min-w-full py-2 align-middle">
-					<table class="min-w-full border-separate border-spacing-0 pr-5 pb-5">
-					<thead>
-						<tr>
-						<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
-						<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
-						<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
-						<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
-						<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
-						</tr>
-					</thead>
-					<tbody id='match-data'></tbody>
-					</table>
-				</div>
-				</div>
+		<div class="">
+			<div class="mt-8 flow-root max-h-150 overflow-auto">
+				<table class="overflow-x-auto w-full border-separate border-spacing-0 pb-5 pr-5">
+				<thead>
+					<tr>
+					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
+					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
+					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
+					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
+					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
+					</tr>
+				</thead>
+				<tbody id='match-data'></tbody>
+				</table>
 			</div>
 		</div>
 		`
@@ -37,7 +33,6 @@ export function  MatchHistory() : HTMLElement | null {
 		scores?.appendChild(createMatchElem(s));
 	})
 
-	return history;
 }
 
 

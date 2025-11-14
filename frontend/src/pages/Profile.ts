@@ -54,5 +54,5 @@ export function Profile() {
 	ProfileCard();
 	LatestMatch();
 	BigStat();
-	MatchHistory();
+	MatchHistory('match-history');
 }
