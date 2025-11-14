@@ -76,10 +76,9 @@ async function acceptRequest(prisma: PrismaClient, requestId: string) {
 	})
 }
 
-async function rejectRequest(prisma: PrismaClient, requestId: string) {
-	return prisma.friendship.update({
-		where: { id: requestId },
-   		data: { status: 'DECLINED' }
+async function deleteRequest(prisma: PrismaClient, requestId: string) {
+	return prisma.friendship.delete({
+		where: { id: requestId }
 	})
 }
 
@@ -95,5 +94,5 @@ export const friendsService = {
   acceptRequest,
   findRequestById,
   findPendingRequests,
-  rejectRequest
+  deleteRequest
 };

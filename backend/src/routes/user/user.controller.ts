@@ -26,24 +26,24 @@ async function protectedRouteHandler(request: FastifyRequest, reply: FastifyRepl
 	try {
 		const token = request.headers.authorization;
 		if (!token) {
-			return reply.code(400).send({
+			return reply.code(401).send({
                 message: "Unauthorized: No token provided"
             });
 		}
 		const [scheme, credentials] = (token ?? '').split(' ');
 		if (scheme !== 'Bearer' || !credentials) {
-			return reply.code(400).send({
+			return reply.code(401).send({
                 message: "Unauthorized: Invalid token format"
             });
 		}
 		const session = await userService.validateToken(request.server.prisma, credentials)
 		if (!session) {
-			return reply.code(400).send({
+			return reply.code(401).send({
                 message: "Unauthorized: Invalid token"
             });
 		}
 		if (session.expiresAt < new Date()) {
-			return reply.code(400).send({
+			return reply.code(401).send({
                 message: "Unauthorized: Token expired"
             });
 		}

@@ -120,7 +120,7 @@ class User:
             print(f"{RED}✗{RESET} Network error during friend request: {e}")
             return False
 
-    def accept_friend_request(self, friendship_id: int) -> bool:
+    def accept_friend_request(self, friendship_id: str) -> bool:
         """Accept a friend request. Returns True if successful."""
         if not self.token:
             print(f"{RED}✗{RESET} User {self.email} is not logged in")
@@ -128,7 +128,7 @@ class User:
         
         headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.patch(f"{FRIENDS_URL}/{friendship_id}", headers=headers, timeout=5)
+            resp = requests.put(f"{FRIENDS_URL}/accept/{friendship_id}", headers=headers, timeout=5)
             if resp.status_code == 200:
                 print(f"{GREEN}✓{RESET} Friend request accepted by {self.display_name}")
                 return True
@@ -139,8 +139,46 @@ class User:
             print(f"{RED}✗{RESET} Network error while accepting friend request: {e}")
             return False
 
-    def get_friends(self) -> Optional[dict]:
-        """Get user's friends list. Returns friends data if successful."""
+    def reject_friend_request(self, friendship_id: str) -> bool:
+        """Reject a friend request. Returns True if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.put(f"{FRIENDS_URL}/reject/{friendship_id}", headers=headers, timeout=5)
+            if resp.status_code == 204:
+                print(f"{GREEN}✓{RESET} Friend request rejected by {self.display_name}")
+                return True
+            else:
+                print(f"{RED}✗{RESET} Failed to reject friend request: {resp.status_code} - {resp.text}")
+                return False
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while rejecting friend request: {e}")
+            return False
+
+    def delete_friend(self, friendship_id: str) -> bool:
+        """Delete an active friendship. Returns True if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.delete(f"{FRIENDS_URL}/{friendship_id}", headers=headers, timeout=5)
+            if resp.status_code == 204:
+                print(f"{GREEN}✓{RESET} Friendship deleted by {self.display_name}")
+                return True
+            else:
+                print(f"{RED}✗{RESET} Failed to delete friendship: {resp.status_code} - {resp.text}")
+                return False
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while deleting friendship: {e}")
+            return False
+
+    def get_friends(self) -> Optional[List[dict]]:
+        """Get user's active friends list. Returns list of friends if successful."""
         if not self.token:
             print(f"{RED}✗{RESET} User {self.email} is not logged in")
             return None
@@ -150,11 +188,33 @@ class User:
             resp = requests.get(FRIENDS_URL, headers=headers, timeout=5)
             if resp.status_code == 200:
                 return resp.json()
+            elif resp.status_code == 404:
+                return []  # No friends found
             else:
                 print(f"{RED}✗{RESET} Failed to get friends: {resp.status_code} - {resp.text}")
                 return None
         except requests.exceptions.RequestException as e:
             print(f"{RED}✗{RESET} Network error while fetching friends: {e}")
+            return None
+
+    def get_pending_requests(self) -> Optional[List[dict]]:
+        """Get user's pending friend requests. Returns list of pending requests if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.get(f"{FRIENDS_URL}/requests", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+            elif resp.status_code == 404:
+                return []  # No pending requests
+            else:
+                print(f"{RED}✗{RESET} Failed to get pending requests: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while fetching pending requests: {e}")
             return None
 
 def generate_random_string(length: int = 8) -> str:
@@ -258,46 +318,35 @@ def display_users(users: List[User]) -> None:
     print(f"\n{DIM}{GREEN}●{RESET}{DIM} = Logged in  ○ = Logged out{RESET}\n")
 
 def display_user_friends(user: User) -> None:
-    """Display all friends of a specific user."""
-    friends_data = user.get_friends()
-    
-    if not friends_data:
-        print(f"{YELLOW}⚠{RESET} Could not retrieve friends list")
-        return
+    """Display all friends and pending requests of a specific user."""
+    friends = user.get_friends()
+    pending_requests = user.get_pending_requests()
     
     print(f"\n{BOLD}Friends of {user.display_name}{RESET}")
     print("-" * 60)
     
-    sent_requests = friends_data.get('sentRequests', [])
-    if sent_requests:
-        print(f"\n{YELLOW}Pending Sent Requests:{RESET}")
-        for req in sent_requests:
-            addressee = req.get('addressee', {})
-            display = addressee.get('displayName', 'Unknown')
-            status = req.get('status', 'Unknown')
-            req_id = req.get('id', 'N/A')
-            print(f"  • {display} [{status}] (ID: {req_id})")
-    
-    received_requests = friends_data.get('receivedRequests', [])
-    if received_requests:
-        print(f"\n{CYAN}Pending Received Requests:{RESET}")
-        for req in received_requests:
-            requester = req.get('requester', {})
-            display = requester.get('displayName', 'Unknown')
-            status = req.get('status', 'Unknown')
-            req_id = req.get('id', 'N/A')
-            print(f"  • {display} [{status}] (ID: {req_id})")
-    
-    friends = friends_data.get('friends', [])
+    # Display active friends
     if friends:
-        print(f"\n{GREEN}Accepted Friends:{RESET}")
+        print(f"\n{GREEN}Active Friends:{RESET}")
         for friend in friends:
             display = friend.get('displayName', 'Unknown')
             user_id = friend.get('id', 'N/A')
-            print(f"  • {display} (ID: {user_id})")
+            friendship_id = friend.get('friendshipId', 'N/A')
+            print(f"  • {display} (User ID: {user_id}) - Friendship ID: {friendship_id}")
+    else:
+        print(f"\n{DIM}No active friends{RESET}")
     
-    if not sent_requests and not received_requests and not friends:
-        print(f"{YELLOW}No friends or pending requests{RESET}")
+    # Display pending requests
+    if pending_requests:
+        print(f"\n{CYAN}Pending Friend Requests:{RESET}")
+        for req in pending_requests:
+            friend = req.get('friend', {})
+            display = friend.get('displayName', 'Unknown')
+            req_id = req.get('id', 'N/A')
+            created_at = req.get('createdAt', 'Unknown')
+            print(f"  • {display} - Request ID: {req_id}")
+    else:
+        print(f"\n{DIM}No pending requests{RESET}")
     
     print()
 
@@ -340,6 +389,141 @@ def get_int_input(prompt: str) -> Optional[int]:
         print(f"{RED}✗{RESET} Invalid input. Please enter a number")
         return None
 
+def create_mock_scenario(users: List[User]) -> List[User]:
+    """Create a mock data scenario with users and friendships."""
+    print(f"\n{CYAN}{BOLD}Creating Mock Data Scenario...{RESET}")
+    print(f"{DIM}This will create 10 users with various friendship relationships{RESET}\n")
+    
+    # Define mock users
+    mock_users_data = [
+        {"email": "alice@test.com", "name": "Alice", "surname": "Smith", "display": "AliceSmith"},
+        {"email": "bob@test.com", "name": "Bob", "surname": "Johnson", "display": "BobJohnson"},
+        {"email": "charlie@test.com", "name": "Charlie", "surname": "Brown", "display": "CharlieBrown"},
+        {"email": "diana@test.com", "name": "Diana", "surname": "Williams", "display": "DianaWilliams"},
+        {"email": "eve@test.com", "name": "Eve", "surname": "Davis", "display": "EveDavis"},
+        {"email": "frank@test.com", "name": "Frank", "surname": "Miller", "display": "FrankMiller"},
+        {"email": "grace@test.com", "name": "Grace", "surname": "Wilson", "display": "GraceWilson"},
+        {"email": "henry@test.com", "name": "Henry", "surname": "Moore", "display": "HenryMoore"},
+        {"email": "iris@test.com", "name": "Iris", "surname": "Taylor", "display": "IrisTaylor"},
+        {"email": "jack@test.com", "name": "Jack", "surname": "Anderson", "display": "JackAnderson"},
+    ]
+    
+    # Create users
+    print(f"{CYAN}Step 1: Creating users...{RESET}")
+    created_users = []
+    for user_data in mock_users_data:
+        # Check if user already exists
+        if any(u.email == user_data["email"] for u in users):
+            print(f"{YELLOW}⚠{RESET} User {user_data['email']} already exists, skipping...")
+            # Find and use existing user
+            existing = next(u for u in users if u.email == user_data["email"])
+            if not existing.token:
+                existing.login()
+            created_users.append(existing)
+            continue
+        
+        user = User(
+            email=user_data["email"],
+            password="password123",
+            name=user_data["name"],
+            surname=user_data["surname"],
+            display_name=user_data["display"]
+        )
+        
+        if user.register() and user.login():
+            users.append(user)
+            created_users.append(user)
+        else:
+            print(f"{RED}✗{RESET} Failed to create user {user_data['email']}")
+            return users
+    
+    print(f"{GREEN}✓{RESET} All users created and logged in\n")
+    
+    # Create friendships
+    print(f"{CYAN}Step 2: Creating friendships...{RESET}")
+    
+    # Scenario with more diverse friendships:
+    # Alice: friends with Bob, Charlie, Diana, Frank (4 friends) + pending from Grace
+    # Bob: friends with Alice, Eve, Henry (3 friends) + pending request to Iris
+    # Charlie: friends with Alice, Diana (2 friends) + pending from Jack
+    # Diana: friends with Alice, Charlie, Frank (3 friends)
+    # Eve: friends with Bob, Frank (2 friends) + pending to Henry
+    # Frank: friends with Alice, Diana, Eve, Grace (4 friends)
+    # Grace: friends with Frank (1 friend) + pending to Alice
+    # Henry: friends with Bob (1 friend) + pending from Eve
+    # Iris: no friends yet + pending from Bob
+    # Jack: no friends yet + pending to Charlie
+    
+    alice, bob, charlie, diana, eve, frank, grace, henry, iris, jack = created_users[0:10]
+    
+    import time
+    
+    def send_and_accept(sender: User, receiver: User):
+        """Helper to send and accept friend request."""
+        print(f"{DIM}  Creating friendship: {sender.display_name} ↔ {receiver.display_name}{RESET}")
+        sender.send_friend_request(receiver.display_name)
+        time.sleep(0.3)
+        pending = receiver.get_pending_requests()
+        if pending:
+            for req in pending:
+                if req.get('friend', {}).get('displayName') == sender.display_name:
+                    receiver.accept_friend_request(req.get('id'))
+                    break
+        time.sleep(0.3)
+    
+    def send_pending(sender: User, receiver: User):
+        """Helper to send pending friend request (not accepted)."""
+        print(f"{DIM}  Creating pending: {sender.display_name} → {receiver.display_name}{RESET}")
+        sender.send_friend_request(receiver.display_name)
+        time.sleep(0.3)
+    
+    # Alice's friendships
+    send_and_accept(alice, bob)
+    send_and_accept(alice, charlie)
+    send_and_accept(alice, diana)
+    send_and_accept(alice, frank)
+    
+    # Bob's friendships
+    send_and_accept(bob, eve)
+    send_and_accept(bob, henry)
+    
+    # Charlie's friendships
+    send_and_accept(charlie, diana)
+    
+    # Eve's friendships
+    send_and_accept(eve, frank)
+    
+    # Frank's friendships
+    send_and_accept(frank, grace)
+    
+    # Pending requests (not accepted)
+    send_pending(grace, alice)
+    send_pending(bob, iris)
+    send_pending(eve, henry)
+    send_pending(jack, charlie)
+    
+    print(f"\n{GREEN}✓{RESET} Mock scenario created successfully!\n")
+    
+    # Display summary
+    print(f"{CYAN}{BOLD}Mock Scenario Summary:{RESET}")
+    print(f"{GREEN}Active Friendships:{RESET}")
+    print(f"  • Alice ↔ Bob, Charlie, Diana, Frank (4 friends)")
+    print(f"  • Bob ↔ Alice, Eve, Henry (3 friends)")
+    print(f"  • Charlie ↔ Alice, Diana (2 friends)")
+    print(f"  • Diana ↔ Alice, Charlie, Frank (3 friends)")
+    print(f"  • Eve ↔ Bob, Frank (2 friends)")
+    print(f"  • Frank ↔ Alice, Diana, Eve, Grace (4 friends)")
+    print(f"  • Grace ↔ Frank (1 friend)")
+    print(f"  • Henry ↔ Bob (1 friend)")
+    print(f"\n{YELLOW}Pending Requests:{RESET}")
+    print(f"  • Grace → Alice")
+    print(f"  • Bob → Iris")
+    print(f"  • Eve → Henry")
+    print(f"  • Jack → Charlie")
+    print()
+    
+    return users
+
 def main():
     clear_terminal()
     print(ASCII_BANNER)
@@ -350,7 +534,7 @@ def main():
         print(f"{YELLOW}⚠{RESET} No users found in database")
 
     while True:
-        print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}friends{RESET}{DIM} | {YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
+        print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {GREEN}mock{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}reject{RESET}{DIM} | {CYAN}delete{RESET}{DIM} | {CYAN}friends{RESET}{DIM} | {YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
         cmd = input(f"{CYAN}>{RESET} ").strip().lower()
         
         if cmd == "exit":
@@ -366,6 +550,9 @@ def main():
                 users = create_random_users(n, users)
             else:
                 print(f"{RED}✗{RESET} Invalid number")
+                
+        elif cmd == "mock":
+            users = create_mock_scenario(users)
                 
         elif cmd == "login":
             login_all_users(users)
@@ -406,34 +593,121 @@ def main():
                 print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
                 users[idx].login()
             
-            # Show received requests
-            friends_data = users[idx].get_friends()
-            if not friends_data:
-                print(f"{YELLOW}⚠{RESET} Could not retrieve friends list")
-                continue
-            
-            received_requests = friends_data.get('receivedRequests', [])
-            if not received_requests:
+            # Show pending requests
+            pending_requests = users[idx].get_pending_requests()
+            if not pending_requests:
                 print(f"{YELLOW}⚠{RESET} No pending friend requests to accept")
                 continue
             
-            print(f"\n{CYAN}Pending Received Requests:{RESET}")
-            for i, req in enumerate(received_requests):
-                requester = req.get('requester', {})
-                display = requester.get('displayName', 'Unknown')
+            print(f"\n{CYAN}Pending Friend Requests:{RESET}")
+            for i, req in enumerate(pending_requests):
+                friend = req.get('friend', {})
+                display = friend.get('displayName', 'Unknown')
                 req_id = req.get('id', 'N/A')
                 print(f"  [{i}] {display} (Request ID: {req_id})")
             
             req_idx = get_int_input("\nSelect request to accept:")
             if req_idx is None:
                 continue
-            if not (0 <= req_idx < len(received_requests)):
+            if not (0 <= req_idx < len(pending_requests)):
                 print(f"{RED}✗{RESET} Invalid request index")
                 continue
             
-            friendship_id = received_requests[req_idx].get('id')
+            friendship_id = pending_requests[req_idx].get('id')
             if friendship_id:
                 users[idx].accept_friend_request(friendship_id)
+            else:
+                print(f"{RED}✗{RESET} Could not find friendship ID")
+            
+        elif cmd == "reject":
+            if not users:
+                print(f"{YELLOW}⚠{RESET} No users available")
+                continue
+            display_users(users)
+            idx = get_int_input("User index to reject friend request:")
+            
+            if idx is None:
+                continue
+            if not (0 <= idx < len(users)):
+                print(f"{RED}✗{RESET} Invalid user index")
+                continue
+            
+            if not users[idx].token:
+                print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+                users[idx].login()
+            
+            # Show pending requests
+            pending_requests = users[idx].get_pending_requests()
+            if not pending_requests:
+                print(f"{YELLOW}⚠{RESET} No pending friend requests to reject")
+                continue
+            
+            print(f"\n{CYAN}Pending Friend Requests:{RESET}")
+            for i, req in enumerate(pending_requests):
+                friend = req.get('friend', {})
+                display = friend.get('displayName', 'Unknown')
+                req_id = req.get('id', 'N/A')
+                print(f"  [{i}] {display} (Request ID: {req_id})")
+            
+            req_idx = get_int_input("\nSelect request to reject:")
+            if req_idx is None:
+                continue
+            if not (0 <= req_idx < len(pending_requests)):
+                print(f"{RED}✗{RESET} Invalid request index")
+                continue
+            
+            friendship_id = pending_requests[req_idx].get('id')
+            if friendship_id:
+                users[idx].reject_friend_request(friendship_id)
+            else:
+                print(f"{RED}✗{RESET} Could not find friendship ID")
+            
+        elif cmd == "delete":
+            if not users:
+                print(f"{YELLOW}⚠{RESET} No users available")
+                continue
+            display_users(users)
+            idx = get_int_input("User index to delete a friendship:")
+            
+            if idx is None:
+                continue
+            if not (0 <= idx < len(users)):
+                print(f"{RED}✗{RESET} Invalid user index")
+                continue
+            
+            if not users[idx].token:
+                print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+                users[idx].login()
+            
+            # Show active friends with friendship IDs
+            friends = users[idx].get_friends()
+            if not friends:
+                print(f"{YELLOW}⚠{RESET} No active friendships to delete")
+                continue
+            
+            print(f"\n{GREEN}Active Friendships:{RESET}")
+            for i, friend in enumerate(friends):
+                display = friend.get('displayName', 'Unknown')
+                user_id = friend.get('id', 'N/A')
+                friendship_id = friend.get('friendshipId', 'N/A')
+                print(f"  [{i}] {display} (User ID: {user_id}) - Friendship ID: {friendship_id}")
+            
+            friend_idx = get_int_input("\nSelect friendship to delete:")
+            if friend_idx is None:
+                continue
+            if not (0 <= friend_idx < len(friends)):
+                print(f"{RED}✗{RESET} Invalid friendship index")
+                continue
+            
+            friendship_id = friends[friend_idx].get('friendshipId')
+            friend_name = friends[friend_idx].get('displayName', 'Unknown')
+            
+            if friendship_id:
+                confirm = input(f"Delete friendship with {friend_name}? (yes/no): ").strip().lower()
+                if confirm == "yes":
+                    users[idx].delete_friend(friendship_id)
+                else:
+                    print(f"{CYAN}Cancelled{RESET}")
             else:
                 print(f"{RED}✗{RESET} Could not find friendship ID")
             

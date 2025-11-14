@@ -15,6 +15,7 @@ const sendRequestSchema = z.object({
 
 const getFriendsResponseSchema = z.object({
 	id: z.string(),
+	friendshipId: z.string(),
 	displayName: z.string(),
 	isOnline: z.boolean(),
 	name: z.string(),
@@ -36,14 +37,17 @@ const sendRequestResponseSchema = z.object({
 const getFriendsRequestResponseSchema = z.object({
 	id: z.string(),
 	createdAt: z.date(),
-	friend: getFriendsResponseSchema
+	friend: z.object({
+		id: z.string(),
+		displayName: z.string(),
+		isOnline: z.boolean(),
+		name: z.string(),
+		surname: z.string(),
+		avatarUrl: z.string()
+	})
 })
 
 const friendsRequestArraySchema = z.array(getFriendsRequestResponseSchema)
-
-const deleteRequestResponseSchema = z.object({
-
-})
 
 // =====================
 // Type Exports
@@ -66,8 +70,6 @@ export const friendsSchemas = {
 	getFriends: friendsArraySchema,
 	sendRequest: sendRequestResponseSchema,
 	acceptRequest: sendRequestResponseSchema,
-	pendingRquest: friendsRequestArraySchema,
-	rejectRequest: sendRequestResponseSchema,
-	deleteRequest: deleteRequestResponseSchema
+	pendingRquest: friendsRequestArraySchema
   },
 };

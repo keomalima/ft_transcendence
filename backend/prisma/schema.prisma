@@ -28,7 +28,6 @@ enum FriendshipStatus {
 	PENDING
 	ACCEPTED
 	BLOCKED
-	DECLINED
 }
 
 model User {

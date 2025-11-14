@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { friendsController } from './friends.controller.js'
 import { friendsSchemas } from "./friends.schema.js";
+import { friendsService } from './friends.service.js';
 
 // =====================
 // Private Routes (Authentication Required)
@@ -54,11 +55,19 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 
 	fastify.put('/reject/:id', {
 		schema: { 
-			response : { 200: friendsSchemas.response.rejectRequest },
 			tags: ['Friends'],
 			description: 'Rejects a friendshipt request',
 			summary: 'Rejects friendship',
 			security: [{ bearerAuth: [] }]
 		}
 	}, friendsController.rejectFriendHandler)
+
+	fastify.delete('/:id', {
+		schema: { 
+			tags: ['Friends'],
+			description: 'Deletes an existing friendship',
+			summary: 'Delete frienship',
+			security: [{ bearerAuth: [] }]
+		}
+	}, friendsController.deleteFriendHandler)
 }

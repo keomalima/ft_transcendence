@@ -22,10 +22,15 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 				message: "No active friends found"
 			});
 		}
-		const newArray = friendships.map( f =>
-			f.requesterId === requesterId ? f.addressee : f.requester
-		)
-		const friends = newArray.map(({ password, salt, email, ...safeUser }) => safeUser)
+
+		const friends = friendships.map(f => {
+		    const friend = f.requesterId === requesterId ? f.addressee : f.requester;
+		    const { password, salt, email, ...safeFriend } = friend;
+		    return {
+		        friendshipId: f.id,
+		        ...safeFriend
+		    };
+		});
 		return friends
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to find friends"});
@@ -67,7 +72,7 @@ async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequest
 
 async function acceptFriendHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
 	try {
-		const requestId = request.params!.id;
+		const requestId = request.params.id;
 		if (!requestId) {
 			return reply.code(400).send({
                 message: "Missing request id"
@@ -80,12 +85,12 @@ async function acceptFriendHandler(request: FastifyRequest<{Params: {id: string}
             });
 		}
 		if (friendship.addresseeId !== request.user!.id) {
-			return reply.code(400).send({
+			return reply.code(403).send({
                 message: "Can not accept friendship"
             });
 		}
 		if (friendship.status !== 'PENDING') {
-			return reply.code(400).send({
+			return reply.code(409).send({
                 message: "Friendship request is not pending"
             });
 		}
@@ -97,7 +102,7 @@ async function acceptFriendHandler(request: FastifyRequest<{Params: {id: string}
 
 async function rejectFriendHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
 	try {
-		const requestId = request.params!.id;
+		const requestId = request.params.id;
 		if (!requestId) {
 			return reply.code(400).send({
                 message: "Missing request id"
@@ -110,16 +115,16 @@ async function rejectFriendHandler(request: FastifyRequest<{Params: {id: string}
             });
 		}
 		if (friendship.addresseeId !== request.user!.id) {
-			return reply.code(400).send({
+			return reply.code(403).send({
                 message: "Can not reject friendship"
             });
 		}
 		if (friendship.status !== 'PENDING') {
-			return reply.code(400).send({
+			return reply.code(409).send({
                 message: "Friendship request is not pending"
             });
 		}
-		return await friendsService.rejectRequest(request.server.prisma, requestId)
+		reply.code(204).send(await friendsService.deleteRequest(request.server.prisma, requestId))
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to reject friendship request"});
 	}
@@ -154,15 +159,45 @@ async function getPendingRequestsHandler(request: FastifyRequest, reply: Fastify
 	}
 }
 
+async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const requestId = request.params.id;
+		if (!requestId) {
+			return reply.code(400).send({
+                message: "Missing request id"
+            });
+		}
+		const friendship = await friendsService.findRequestById(request.server.prisma, requestId)
+		if (!friendship) {
+			return reply.code(404).send({
+                message: "Friendship does not exist"
+            });
+		}
+		if (friendship.addresseeId !== request.user!.id && friendship.requesterId !== request.user!.id) {
+			return reply.code(403).send({
+                message: "Can not reject friendship"
+            });
+		}
+		if (friendship.status !== 'ACCEPTED') {
+			return reply.code(409).send({
+                message: "Can not delete a request that was not accepted"
+            });
+		}
+		reply.code(204).send(await friendsService.deleteRequest(request.server.prisma, requestId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to delete request"});
+	}
+}
+
 // =====================
 // Export Controller Object
 // =====================
 
 export const friendsController = {
-	// User CRUD
 	getFriendsHandler,
 	sendRequestHandler,
 	acceptFriendHandler,
 	getPendingRequestsHandler,
-	rejectFriendHandler
+	rejectFriendHandler,
+	deleteFriendHandler
 };
