@@ -7,24 +7,21 @@ export function  MatchHistory(root: string) {
 	if (history)
 	{
 		history.innerHTML = /*html*/`
-		<h1>Match history</h1>
-
-		<div class="">
-			<div class="mt-8 flow-root max-h-150 overflow-auto">
-				<table class="overflow-x-auto w-full border-separate border-spacing-0 pb-5 pr-5">
-				<thead>
-					<tr>
-					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
-					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
-					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
-					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
-					<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
-					</tr>
-				</thead>
-				<tbody id='match-data'></tbody>
-				</table>
+			<h1 class='flex-none'>Match history</h1>
+			<div class="flex-1 overflow-auto min-h-0">
+				<table class="w-full border-separate border-spacing-0">
+			<thead>
+				<tr>
+				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
+				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
+				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
+				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
+				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
+				</tr>
+			</thead>
+			<tbody id='match-data'></tbody>
+			</table>
 			</div>
-		</div>
 		`
 	}
 

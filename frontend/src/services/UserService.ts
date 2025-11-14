@@ -33,7 +33,7 @@ interface CreateUserDto {
 type CreateUserResp = Pick<UserState, 'id' | 'name' | 'email'>
 
 // response when login
-type LoginUserResp = Pick<UserState, 'accessToken' | 'email' | 'name' | 'isOnline'>
+type LoginUserResp = Pick<UserState, 'accessToken' | 'id'>
 
 // response when get user
 type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
@@ -73,20 +73,20 @@ class UserService {
 		if (!response.ok) {
 			const errorBody = await response.text();
 			console.error('Backend error response:', errorBody);
-			
+
 			try {
 				const errorJson = JSON.parse(errorBody);
 				console.error('Error details:', errorJson);
-				throw new Error(`Failed to create user: ${errorJson.message || response.statusText}`);
+				throw new Error(`❌ Failed to create user: ${errorJson.message || response.statusText}`);
 			} catch (parseError) {
-				throw new Error(`Failed to create user: ${response.statusText} - ${errorBody}`);
+				throw new Error(`❌ Failed to create user: ${response.statusText} - ${errorBody}`);
 			}
 		}
 
 		const result = await response.json();
-			
+
 		if (result)
-			console.log('>> createUser success <<', result);
+			console.log('⭐ createUser success ✅', result);
 
 		// store user data in UserStore
 		userStore.setUserId(result.id);
@@ -113,20 +113,18 @@ class UserService {
 			})
 		});
 		if (!response.ok)
-			throw new Error(`Failed to login: ${response.statusText}`);
+			throw new Error(`❌ Failed to login: ${response.statusText}`);
 
 		const result = await response.json();
 		if (result)
-			console.log('>> loginUser success <<', result);
+			console.log('⭐ loginUser success ✅', result);
 
 		// store user data in UserStore
 		userStore.setUserAccessToken(result.accessToken);
-		userStore.setUserLogStatus(result.isLoggedIn);
 		userStore.setUserId(result.id);
 
 		// save to locat storage
 		userStore.saveToLocalStorage();
-
 		return result;
 	}
 
@@ -139,11 +137,11 @@ class UserService {
 			headers: {'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
 		});
 		if (!response.ok)
-			throw new Error(`Failed to logout: ${response.statusText}`);
+			throw new Error(`❌ Failed to logout: ${response.statusText}`);
 
 		const result = parseResponse(response);
 		if (result)
-			console.log('>> logoutUser success <<', result);
+			console.log('⭐ logoutUser success ✅', result);
 
 		// update user state
 		userStore.clearUserState();
@@ -165,10 +163,10 @@ class UserService {
 			}
 		);
 		if (!response.ok)
-			throw new Error(`Failed to get user info: ${response.statusText}`);
+			throw new Error(`❌ Failed to get user info: ${response.statusText}`);
 
 		const result: getUserResp = await response.json();
-		console.log('>> getUser success <<', result);
+		console.log('⭐ getUser success ✅', result);
 
 		// store data in user storage
 		userStore.setUserInfo(result);
@@ -187,11 +185,11 @@ class UserService {
 			headers: {'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
 		})
 		if (!response.ok)
-			throw new Error(`Failed to delete user: ${response.statusText}`);
+			throw new Error(`❌ Failed to delete user: ${response.statusText}`);
 
 		const result = parseResponse(response);
 		if (result)
-			console.log('>> deleteUser success <<', result);
+			console.log('⭐ deleteUser success ✅', result);
 
 		// delete user data from storage
 		userStore.clearUserState();
@@ -227,11 +225,11 @@ class UserService {
 			body: JSON.stringify(cleanData)
 		})
 		if (!response.ok)
-			throw new Error(`Failed to update user: ${response.statusText}`);
+			throw new Error(`❌ Failed to update user: ${response.statusText}`);
 
 		const result = await response.json();
 		if (result)
-			console.log('>> updateUser success <<', result);
+			console.log('⭐ updateUser success ✅', result);
 
 		// change user data in UserStore
 		userStore.setUserInfo(data);
@@ -257,12 +255,12 @@ class UserService {
 			body: formData
 		});
 		if (!response.ok)
-			throw new Error(`Failed to update avatar: ${response.statusText}`);
+			throw new Error(`❌ Failed to update avatar: ${response.statusText}`);
 
 
 		const result = await response.json();
 		if (result)
-			console.log('>> updateAvatar success <<', result);
+			console.log('⭐ updateAvatar success ✅', result);
 
 		// store new avatar url in UserStore
 		userStore.setUserAvatar(result.avatarUrl);
