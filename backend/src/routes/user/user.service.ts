@@ -6,6 +6,12 @@ import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
 // User CRUD Operations
 // =====================
 
+// DELETE AFTERm ONLY FOR DEV
+
+async function getUsersDev(prisma: PrismaClient) {
+	return prisma.user.findMany();
+}
+
 async function findUserByEmail(prisma: PrismaClient, data: LoginInput) {
   return prisma.user.findUnique({
     where: {
@@ -68,65 +74,42 @@ async function deleteUser(prisma: PrismaClient, id: string) {
 // =====================
 
 async function createSession(prisma: PrismaClient, userId: string) {
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
+	const expiresAt = new Date();
+	expiresAt.setDate(expiresAt.getDate() + 7);
+	
+	prisma.user.update({
+		where: { id: userId },
+		data: { isOnline: true, lastSeenAt: new Date() }
+	});
 
-  return prisma.session.create({
-    data: {
-      userId,
-      expiresAt
-    }
-  });
+	return prisma.session.create({
+		data: {
+			userId,
+			expiresAt
+		}
+	});
 }
 
 // =====================
 // Authentication & Authorization
 // =====================
 
-async function authenticateUser(prisma: PrismaClient, data: LoginInput) {
-  const user = await findUserByEmail(prisma, data);
-  if (!user) return null;
-
-  const isValid = verifyPassword(data.password, user.password, user.salt);
-  if (!isValid) return null;
-
-  const { password, salt, ...safeUser } = user;
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { isOnline: true, lastSeenAt: new Date() }
-  });
-  return safeUser;
-}
-
 async function logoutUser(prisma: PrismaClient, id: string) {
-  await prisma.user.update({
-    where: { id },
-    data: { isOnline: false }
-  });
-
-  await prisma.session.deleteMany({
-    where: { userId: id }
-  });
+	await prisma.user.update({
+		where: { id },
+		data: { isOnline: false }
+	});
+	
+	await prisma.session.deleteMany({
+		where: { userId: id }
+	});
 }
 
-async function validateToken(prisma: PrismaClient, token: string | undefined) {
-  if (!token) throw new Error("Unauthorized: No token provided");
-
-  const [scheme, credentials] = (token ?? '').split(' ');
-  if (scheme !== 'Bearer' || !credentials)
-    throw new Error("Unauthorized: Invalid token format");
-
-  const session = await prisma.session.findUnique({
-    where: { id: credentials },
-    include: { user: true }
-  });
-
-  if (!session) throw new Error("Unauthorized: Invalid token");
-
-  if (session.expiresAt < new Date())
-    throw new Error("Unauthorized: Token expired");
-
-  return session;
+async function validateToken(prisma: PrismaClient, credentials: string) {
+	return  await prisma.session.findUnique({
+	    where: { id: credentials },
+	    include: { user: true }
+	});
 }
 
 // =====================
@@ -145,7 +128,7 @@ export const userService = {
   createSession,
   
   // Authentication
-  authenticateUser,
   logoutUser,
   validateToken,
+  getUsersDev
 };

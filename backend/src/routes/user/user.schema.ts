@@ -14,7 +14,6 @@ const createUserSchema = z.object({
 	password: multipartField(z.string()),
 	surname: multipartField(z.string().nullable()),
 	displayName: multipartField(z.string().min(3)),
-	city: multipartField(z.string().min(3).nullable()),
 	avatarFile: z
 	.custom<MultipartFile>()
 	.optional()
@@ -38,7 +37,6 @@ const editUserSchema = z.object({
 	displayName: z.string().optional(),
 	surname: z.string().nullable().optional(),
 	avatarUrl: z.string().nullable().optional(),
-	city: z.string().nullable().optional()
 });
 
 const uploadSchema = z.object({
@@ -67,10 +65,7 @@ const createUserResponseSchema = z.object({
 
 const loginResponseSchema = z.object({
 	id: z.string(),
-	accessToken: z.string(),
-	email: z.email(),
-	name: z.string().min(3),
-	isOnline: z.boolean(),
+	accessToken: z.string()
 });
 
 const getUserResponseSchema = z.object({
@@ -80,11 +75,12 @@ const getUserResponseSchema = z.object({
 	displayName: z.string(),
 	surname: z.string().nullable(),
 	avatarUrl: z.string().nullable(),
-	city: z.string().nullable(),
 	isOnline: z.boolean(),
 	createdAt: z.date(),
 	updatedAt: z.date(),
 });
+
+const getUserArraySchema = z.array(getUserResponseSchema);
 
 const editUserResponseSchema = z.object({
 	id: z.string(),
@@ -93,7 +89,6 @@ const editUserResponseSchema = z.object({
 	displayName: z.string(),
 	surname: z.string().nullable(),
 	avatarUrl: z.string().nullable(),
-	city: z.string().nullable(),
 	isOnline: z.boolean(),
 	createdAt: z.date(),
 	updatedAt: z.date(),
@@ -135,6 +130,7 @@ export const userSchemas = {
     login: loginResponseSchema,
     getUser: getUserResponseSchema,
     editUser: editUserResponseSchema,
-	uploadtAvatar: uploadAvatarResponseSchema
+	uploadtAvatar: uploadAvatarResponseSchema,
+	getUserDev: getUserArraySchema
   },
 };

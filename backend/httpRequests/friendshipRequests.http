@@ -1,6 +1,22 @@
 @baseUrl = http://localhost:3000/api/friends
-@token = 1beb5f74-4b83-4679-a191-c587c96b20ad
-@userId = 7068cc49-2ab8-45e8-805e-226f50678af7
+@token = 7a610867-59d0-4d5d-86c9-8e2a8a69be1f
+@userId = 60c74995-4580-4891-a6f4-47e92d6ca178
+
+### ACEPT REQUEST
+PUT {{baseUrl}}/e6b6e635-8c72-4c8f-83ab-9e43e30b77f7 HTTP/1.1
+Authorization: Bearer {{token}}
+
+### REJECT REQUEST
+PUT {{baseUrl}}/reject/b239f501-76ce-47a9-8462-b91cb5fbf0ad HTTP/1.1
+Authorization: Bearer {{token}}
+
+### GET ACTIVE FRIENDSHIP
+GET {{baseUrl}}/ HTTP/1.1
+Authorization: Bearer {{token}}
+
+### GET PENDING FRIENDSHIP
+GET {{baseUrl}}/requests HTTP/1.1
+Authorization: Bearer {{token}}
 
 ### SENDS A FRIENDSHIP REQUEST
 POST {{baseUrl}}/ HTTP/1.1

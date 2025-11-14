@@ -13,7 +13,26 @@ declare module 'fastify' {
   }
 }
 
-async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequestInput, Params: { id: string } }>, reply: FastifyReply) {
+async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const requesterId = request.user!.id;
+		const friendships = await friendsService.findActiveFriends(request.server.prisma, requesterId);
+		if (!friendships || friendships.length === 0) {
+			return reply.code(404).send({
+				message: "No active friends found"
+			});
+		}
+		const newArray = friendships.map( f =>
+			f.requesterId === requesterId ? f.addressee : f.requester
+		)
+		const friends = newArray.map(({ password, salt, email, ...safeUser }) => safeUser)
+		return friends
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to find friends"});
+	}
+}
+
+async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequestInput }>, reply: FastifyReply) {
 	try {
 		const { addresseeDisplayName } = request.body
 		const requesterId = request.user!.id;
@@ -46,11 +65,104 @@ async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequest
 	}
 }
 
+async function acceptFriendHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const requestId = request.params!.id;
+		if (!requestId) {
+			return reply.code(400).send({
+                message: "Missing request id"
+            });
+		}
+		const friendship = await friendsService.findRequestById(request.server.prisma, requestId)
+		if (!friendship) {
+			return reply.code(404).send({
+                message: "Friendship does not exist"
+            });
+		}
+		if (friendship.addresseeId !== request.user!.id) {
+			return reply.code(400).send({
+                message: "Can not accept friendship"
+            });
+		}
+		if (friendship.status !== 'PENDING') {
+			return reply.code(400).send({
+                message: "Friendship request is not pending"
+            });
+		}
+		return await friendsService.acceptRequest(request.server.prisma, requestId)
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to accept friendship request"});
+	}
+}
+
+async function rejectFriendHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const requestId = request.params!.id;
+		if (!requestId) {
+			return reply.code(400).send({
+                message: "Missing request id"
+            });
+		}
+		const friendship = await friendsService.findRequestById(request.server.prisma, requestId)
+		if (!friendship) {
+			return reply.code(404).send({
+                message: "Friendship does not exist"
+            });
+		}
+		if (friendship.addresseeId !== request.user!.id) {
+			return reply.code(400).send({
+                message: "Can not reject friendship"
+            });
+		}
+		if (friendship.status !== 'PENDING') {
+			return reply.code(400).send({
+                message: "Friendship request is not pending"
+            });
+		}
+		return await friendsService.rejectRequest(request.server.prisma, requestId)
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to reject friendship request"});
+	}
+}
+
+async function getPendingRequestsHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+
+		const pending = await friendsService.findPendingRequests(request.server.prisma, userId)
+		if (!pending || pending.length === 0) {
+			return reply.code(404).send({
+                message: "No pending requests"
+            });
+		}
+		const newArray = pending.map(f => ({
+			id: f.id,
+			createdAt: f.createdAt,
+			friend: f.requester
+		}))
+		const safeRequests = newArray.map(f => {
+			const { password, salt, email, ...safeFriend } = f.friend;
+			return {
+				id: f.id,
+				createdAt: f.createdAt,
+				friend: safeFriend
+			}
+		})
+		return safeRequests
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to fetch pending requests"});
+	}
+}
+
 // =====================
 // Export Controller Object
 // =====================
 
 export const friendsController = {
 	// User CRUD
-	sendRequestHandler
+	getFriendsHandler,
+	sendRequestHandler,
+	acceptFriendHandler,
+	getPendingRequestsHandler,
+	rejectFriendHandler
 };

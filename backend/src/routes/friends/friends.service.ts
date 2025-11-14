@@ -5,6 +5,29 @@ import type { FriendsRequestInput } from './friends.schema.js';
 // User CRUD Operations
 // =====================
 
+async function findRequestById(prisma: PrismaClient, id: string) {
+	return prisma.friendship.findUnique({
+		where: {id}
+	})
+}
+
+async function findActiveFriends(prisma: PrismaClient, id: string) {
+	return prisma.friendship.findMany({
+		where: {
+			OR: [
+				{requesterId: id},
+				{addresseeId: id}
+			],
+			deletedAt: null,
+			status: 'ACCEPTED',
+		}, 
+		include: {
+			requester: true,
+			addressee: true,
+		}
+	})
+}
+
 async function findUserByDisplayName(prisma: PrismaClient, displayName: string){
 	return prisma.user.findUnique({
 		where: { displayName }
@@ -23,6 +46,19 @@ async function findFriendshipRequest(prisma: PrismaClient, addresseeId: string, 
 	})
 }
 
+async function findPendingRequests(prisma: PrismaClient, id: string) {
+	return prisma.friendship.findMany({
+		where: {
+			addresseeId: id,
+			deletedAt: null,
+			status: 'PENDING'
+		},
+		include: {
+			requester: true
+		}
+	})
+}
+
 async function sendRequest(prisma: PrismaClient, requesterId: string, addresseeId: string) {
   return prisma.friendship.create({
 	data: {
@@ -33,6 +69,20 @@ async function sendRequest(prisma: PrismaClient, requesterId: string, addresseeI
   });
 }
 
+async function acceptRequest(prisma: PrismaClient, requestId: string) {
+	return prisma.friendship.update({
+		where: { id: requestId },
+   		data: { status: 'ACCEPTED' }
+	})
+}
+
+async function rejectRequest(prisma: PrismaClient, requestId: string) {
+	return prisma.friendship.update({
+		where: { id: requestId },
+   		data: { status: 'DECLINED' }
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -40,5 +90,10 @@ async function sendRequest(prisma: PrismaClient, requesterId: string, addresseeI
 export const friendsService = {
   sendRequest,
   findUserByDisplayName,
-  findFriendshipRequest
+  findFriendshipRequest,
+  findActiveFriends,
+  acceptRequest,
+  findRequestById,
+  findPendingRequests,
+  rejectRequest
 };

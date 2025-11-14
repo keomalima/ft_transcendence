@@ -40,7 +40,6 @@ model User {
 	password String
 	displayName String @unique
 	avatarUrl String?
-	city String?
 	isOnline Boolean @default(false)
 	lastSeenAt DateTime?
 	createdAt DateTime @default(now())
