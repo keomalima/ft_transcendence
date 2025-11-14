@@ -105,6 +105,10 @@ async function createSession(prisma: PrismaClient, userId: string) {
 		data: { isOnline: true, lastSeenAt: new Date() }
 	});
 
+	await prisma.session.deleteMany({
+		where: { userId }
+	})
+
 	return prisma.session.create({
 		data: {
 			userId,
@@ -129,10 +133,17 @@ async function logoutUser(prisma: PrismaClient, id: string) {
 }
 
 async function validateToken(prisma: PrismaClient, credentials: string) {
-	return  await prisma.session.findUnique({
+	return await prisma.session.findUnique({
 	    where: { id: credentials },
 	    include: { user: true }
 	});
+}
+
+async function updateLastSeen(prisma: PrismaClient, id: string) {
+	return prisma.user.update({
+		where : {id},
+		data : { lastSeenAt: new Date() }
+	})
 }
 
 // =====================
@@ -147,6 +158,7 @@ export const userService = {
   editUser,
   deleteUser,
   editUserAvatar,
+  updateLastSeen,
   
   // Session operations
   createSession,

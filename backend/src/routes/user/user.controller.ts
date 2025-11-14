@@ -211,6 +211,14 @@ async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: {
 // Helper Functions
 // =====================
 
+async function updateLastSeen(request: FastifyRequest<{Body: EditInput}>, reply: FastifyReply) {
+	try {
+		await userService.updateLastSeen(request.server.prisma, request.user!.id);
+	} catch (error: any) {
+		return reply.code(500).send("Error");
+	}
+}
+
 async function deleteOldAvatar(userId: string, prisma: any): Promise<void> {
     const user = await userService.findUserById(prisma, userId);
     
@@ -248,6 +256,7 @@ export const userController = {
 	logoutHandler,
 	protectedRouteHandler,
 	getUserHandlerDev,
+	updateLastSeen,
 	
 	// User CRUD
 	createUserHandler,

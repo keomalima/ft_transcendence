@@ -42,6 +42,13 @@ fastify.register(fastifyStatic, {
 	prefix: '/uploads/',
 })
 
+fastify.setNotFoundHandler((request, reply) => {
+    if (request.url.startsWith('/uploads/')) {
+		return reply.sendFile('default.jpg', path.join(__dirname, '../uploads/avatars'))
+    }
+    return reply.code(404).send({ error: 'Route not found' })
+})
+
 fastify.register(fastifyWebsocket)
 fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSize: 10 * 1024 * 1024 }})
 fastify.register(prismaPlugin);

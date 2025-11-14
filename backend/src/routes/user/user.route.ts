@@ -80,7 +80,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Update current user profile',
 			summary: 'Update user profile',
 			security: [{ bearerAuth: [] }]
-		}
+		}, preHandler: userController.updateLastSeen
 	},
 	userController.editUserHandler);
 
