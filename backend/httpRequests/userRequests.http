@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api/users
-@userId = e033191d-9a9f-46b2-a638-53f4ee82ecfe
-@token = 64d85409-85ef-48ed-b423-bfbe003732d5
+@userId = 073b578e-77ab-4d89-bc59-4b79a93ca78a
+@token = 5b2de7be-0495-4b8d-8778-41513823716c
 
 ### GET ALL USERS
 GET {{baseUrl}} HTTP/1.1

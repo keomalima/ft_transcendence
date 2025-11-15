@@ -100,9 +100,9 @@ async function createSession(prisma: PrismaClient, userId: string) {
 	const expiresAt = new Date();
 	expiresAt.setDate(expiresAt.getDate() + 7);
 	
-	prisma.user.update({
+	await prisma.user.update({
 		where: { id: userId },
-		data: { isOnline: true, lastSeenAt: new Date() }
+		data: { lastSeenAt: new Date() }
 	});
 
 	await prisma.session.deleteMany({
@@ -122,11 +122,6 @@ async function createSession(prisma: PrismaClient, userId: string) {
 // =====================
 
 async function logoutUser(prisma: PrismaClient, id: string) {
-	await prisma.user.update({
-		where: { id },
-		data: { isOnline: false }
-	});
-	
 	await prisma.session.deleteMany({
 		where: { userId: id }
 	});

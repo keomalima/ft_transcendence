@@ -25,9 +25,12 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 
 		const friends = friendships.map(f => {
 		    const friend = f.requesterId === requesterId ? f.addressee : f.requester;
-		    const { password, salt, email, ...safeFriend } = friend;
+		    const { password, salt, email, isOnline, ...safeFriend } = friend;
+			const isOnlineCheck = isFriendOnline(friend.lastSeenAt)
+
 		    return {
 		        friendshipId: f.id,
+				isOnline: isOnlineCheck,
 		        ...safeFriend
 		    };
 		});
@@ -187,6 +190,19 @@ async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete request"});
 	}
+}
+
+// =====================
+// Helper Functions
+// =====================
+
+function isFriendOnline (date: Date | null): boolean {
+	if (!date) {
+		return false;
+	}
+	const fiveMinutes = 5 * 60 * 1000;
+	const now = Date.now();
+	return now - date.getTime() < fiveMinutes;
 }
 
 // =====================

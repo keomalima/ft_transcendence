@@ -31,7 +31,7 @@ FRIENDS_URL = "http://localhost:3000/api/friends"
 class User:
     def __init__(self, email: str, password: str, name: str, surname: str, 
                  display_name: str, user_id: Optional[int] = None, 
-                 token: Optional[str] = None):
+                 token: Optional[str] = None, is_online: bool = False):
         self.email = email
         self.password = password
         self.name = name
@@ -39,6 +39,7 @@ class User:
         self.display_name = display_name
         self.token = token
         self.user_id = user_id
+        self.is_online = is_online
 
     def register(self) -> bool:
         """Register a new user. Returns True if successful."""
@@ -178,7 +179,7 @@ class User:
             return False
 
     def get_friends(self) -> Optional[List[dict]]:
-        """Get user's active friends list. Returns list of friends if successful."""
+        """Get user's active friends list with online status. Returns list of friends if successful."""
         if not self.token:
             print(f"{RED}✗{RESET} User {self.email} is not logged in")
             return None
@@ -187,7 +188,9 @@ class User:
         try:
             resp = requests.get(FRIENDS_URL, headers=headers, timeout=5)
             if resp.status_code == 200:
-                return resp.json()
+                friends = resp.json()
+                # Friends list now includes isOnline status from the backend
+                return friends
             elif resp.status_code == 404:
                 return []  # No friends found
             else:
@@ -243,7 +246,8 @@ def fetch_existing_users() -> List[User]:
                     name=u.get("name"),
                     surname=u.get("surname"),
                     display_name=u.get("displayName"),
-                    user_id=u.get("id")
+                    user_id=u.get("id"),
+                    is_online=u.get("isOnline", False)
                 )
                 users.append(user)
             print(f"{CYAN}✓{RESET} Fetched {len(users)} existing users from the database")
@@ -253,6 +257,52 @@ def fetch_existing_users() -> List[User]:
     except requests.exceptions.RequestException as e:
         print(f"{RED}✗{RESET} Network error while fetching users: {e}")
         return []
+
+def login_manual(users: List[User]) -> List[User]:
+    """Login a user with manual email and password input."""
+    print(f"\n{BOLD}Manual Login{RESET}")
+    print("-" * 40)
+    
+    email = input(f"Email: ").strip()
+    if not email or '@' not in email:
+        print(f"{RED}✗{RESET} Invalid email format")
+        return users
+    
+    password = input(f"Password: ").strip()
+    if not password:
+        print(f"{RED}✗{RESET} Password is required")
+        return users
+    
+    # Check if user already exists in our local list
+    existing_user = next((u for u in users if u.email == email), None)
+    
+    if existing_user:
+        # Update the password and try to login
+        existing_user.password = password
+        if existing_user.login():
+            print(f"{GREEN}✓{RESET} User logged in successfully!")
+        else:
+            print(f"{RED}✗{RESET} Login failed - check credentials")
+    else:
+        # Create a new user object with manual credentials (user must already exist in DB)
+        user = User(email, password, "", "", "")
+        data = {"email": email, "password": password}
+        try:
+            resp = requests.post(f"{BASE_URL}/login", json=data, timeout=5)
+            if resp.status_code in (200, 201):
+                json_data = resp.json()
+                user.token = json_data.get("accessToken") or json_data.get("token")
+                user.user_id = json_data.get("id") or json_data.get("user", {}).get("id")
+                user.name = json_data.get("name", "")
+                user.display_name = json_data.get("displayName", "")
+                users.append(user)
+                print(f"{GREEN}✓{RESET} Logged in {email}")
+            else:
+                print(f"{RED}✗{RESET} Failed to login {email}: {resp.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error during login: {e}")
+    
+    return users
 
 def create_manual_user(users: List[User]) -> List[User]:
     """Create a single user with manual input."""
@@ -323,16 +373,22 @@ def display_user_friends(user: User) -> None:
     pending_requests = user.get_pending_requests()
     
     print(f"\n{BOLD}Friends of {user.display_name}{RESET}")
-    print("-" * 60)
+    print("-" * 80)
     
-    # Display active friends
+    # Display active friends with online status
     if friends:
         print(f"\n{GREEN}Active Friends:{RESET}")
         for friend in friends:
             display = friend.get('displayName', 'Unknown')
             user_id = friend.get('id', 'N/A')
             friendship_id = friend.get('friendshipId', 'N/A')
-            print(f"  • {display} (User ID: {user_id}) - Friendship ID: {friendship_id}")
+            is_online = friend.get('isOnline', False)
+            
+            # Show online status indicator
+            status_icon = f"{GREEN}●{RESET}" if is_online else f"{DIM}○{RESET}"
+            status_text = f"{GREEN}Online{RESET}" if is_online else f"{DIM}Offline{RESET}"
+            
+            print(f"  {status_icon} {display} (User ID: {user_id}) - {status_text} - Friendship ID: {friendship_id}")
     else:
         print(f"\n{DIM}No active friends{RESET}")
     
@@ -348,7 +404,7 @@ def display_user_friends(user: User) -> None:
     else:
         print(f"\n{DIM}No pending requests{RESET}")
     
-    print()
+    print(f"\n{DIM}{GREEN}●{RESET}{DIM} = Online  ○ = Offline{RESET}\n")
 
 def clean_database() -> bool:
     """Clean the database. Returns True if successful."""
@@ -534,7 +590,7 @@ def main():
         print(f"{YELLOW}⚠{RESET} No users found in database")
 
     while True:
-        print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {GREEN}mock{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}reject{RESET}{DIM} | {CYAN}delete{RESET}{DIM} | {CYAN}friends{RESET}{DIM} | {YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
+        print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {GREEN}mock{RESET}{DIM} | {GREEN}manuallogin{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}refresh{RESET}{DIM} | {CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}reject{RESET}{DIM} | {CYAN}delete{RESET}{DIM} | {CYAN}friends{RESET}{DIM} | {YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
         cmd = input(f"{CYAN}>{RESET} ").strip().lower()
         
         if cmd == "exit":
@@ -553,9 +609,16 @@ def main():
                 
         elif cmd == "mock":
             users = create_mock_scenario(users)
+        
+        elif cmd == "manuallogin":
+            users = login_manual(users)
                 
         elif cmd == "login":
             login_all_users(users)
+        
+        elif cmd == "refresh":
+            print(f"\n{CYAN}Refreshing user list from database...{RESET}")
+            users = fetch_existing_users()
             
         elif cmd == "friend":
             if not users:

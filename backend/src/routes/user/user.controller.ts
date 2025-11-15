@@ -211,9 +211,10 @@ async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: {
 // Helper Functions
 // =====================
 
-async function updateLastSeen(request: FastifyRequest<{Body: EditInput}>, reply: FastifyReply) {
+async function updateLastSeen(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		await userService.updateLastSeen(request.server.prisma, request.user!.id);
+		return;
 	} catch (error: any) {
 		return reply.code(500).send("Error");
 	}

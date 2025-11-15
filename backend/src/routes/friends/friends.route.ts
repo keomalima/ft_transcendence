@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { friendsController } from './friends.controller.js'
 import { friendsSchemas } from "./friends.schema.js";
-import { friendsService } from './friends.service.js';
+import { userController } from '../user/user.controller.js'
 
 // =====================
 // Private Routes (Authentication Required)
@@ -15,9 +15,10 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Get the list of all active friends',
 			summary: 'Get friends list',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	friendsController.getFriendsHandler);
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.getFriendsHandler
+	});
 
 	fastify.get('/requests', {
 		schema: {
@@ -26,9 +27,10 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Get all the pending friendships requests',
 			summary: 'Get friendship requests',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	friendsController.getPendingRequestsHandler)
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.getPendingRequestsHandler
+	})
 
 	fastify.post('/', { 
 		schema: { 
@@ -38,9 +40,10 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Send a friendship request to another user',
 			summary: 'Send a friendship request',
 			security: [{ bearerAuth: [] }]
-		}
-	}, 
-	friendsController.sendRequestHandler);
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.sendRequestHandler
+	});
 
 	fastify.put('/accept/:id', {
 		schema: { 
@@ -49,9 +52,10 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Accepts a friendshipt request',
 			summary: 'Accepts friendship',
 			security: [{ bearerAuth: [] }]
-		}
-	}, 
-	friendsController.acceptFriendHandler);
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.acceptFriendHandler
+	});
 
 	fastify.put('/reject/:id', {
 		schema: { 
@@ -59,8 +63,10 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Rejects a friendshipt request',
 			summary: 'Rejects friendship',
 			security: [{ bearerAuth: [] }]
-		}
-	}, friendsController.rejectFriendHandler)
+		},
+		preHandler: userController.updateLastSeen,
+		handler:  friendsController.rejectFriendHandler
+	})
 
 	fastify.delete('/:id', {
 		schema: { 
@@ -68,6 +74,8 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Deletes an existing friendship',
 			summary: 'Delete frienship',
 			security: [{ bearerAuth: [] }]
-		}
-	}, friendsController.deleteFriendHandler)
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.deleteFriendHandler
+	})
 }

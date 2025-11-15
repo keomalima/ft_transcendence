@@ -14,9 +14,9 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 			tags: ['Authentication'],
 			description: 'Login user and get access token',
 			summary: 'User login'
-		}
-	}, 
-	userController.loginUserHandler);
+		},
+		handler: userController.loginUserHandler
+	});
 
 	fastify.post('/', { 
 		schema: { 
@@ -26,9 +26,9 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 			tags: ['Users'],
 			description: 'Create a new user account',
 			summary: 'Create user'
-		}
-	}, 
-	userController.createUserHandler);
+		},
+		handler: userController.createUserHandler
+	});
 
 	// DELETE AFTER, ONLY FOR DEV
 	fastify.get('/', {
@@ -68,9 +68,10 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Get user details by ID',
 			summary: 'Get user by ID',
 			security: [{ bearerAuth: [] }]
-		}
-	}, 
-	userController.getUserHandler);
+		},
+		preHandler: userController.updateLastSeen,
+		handler: userController.getUserHandler
+	});
 
 	fastify.put('/me', { 
 		schema: { 
@@ -80,9 +81,10 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Update current user profile',
 			summary: 'Update user profile',
 			security: [{ bearerAuth: [] }]
-		}, preHandler: userController.updateLastSeen
-	},
-	userController.editUserHandler);
+		}, 
+		preHandler: userController.updateLastSeen,
+		handler: userController.editUserHandler
+	});
 
 	fastify.post('/logout', {
 		schema: {
@@ -90,9 +92,9 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Logout current user',
 			summary: 'User logout',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	userController.logoutHandler);
+		},
+		handler: userController.logoutHandler
+	});
 
 	fastify.delete('/', {
 		schema: {
@@ -100,9 +102,9 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Delete current user account',
 			summary: 'Delete user',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	userController.deleteHandler);
+		},
+		handler: userController.deleteHandler
+	});
 
 	fastify.post('/upload', {
     	schema: {
@@ -114,6 +116,6 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			summary: 'Upload Avatar',
 			security: [{ bearerAuth: [] }]
    		},
-  	},
-	userController.uploadAvatarHandler);
+		handler: userController.uploadAvatarHandler
+  	});
 }
