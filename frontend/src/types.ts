@@ -47,6 +47,14 @@ export interface FriendshipData {
 	deletedAt: string | null;
 }
 
+// for request data
+export interface RequestData {
+	id: string | null;
+	createdAt: string | null;
+	friend: FriendData | null;
+}
+
+
 // for friend data
 export interface FriendData {
 	id: string | null;

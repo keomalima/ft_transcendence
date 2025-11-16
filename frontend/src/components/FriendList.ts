@@ -1,5 +1,5 @@
 import { friendshipService } from "../services/FriendshipService";
-import { FriendData, UserState } from "../types";
+import { FriendData } from "../types";
 import profilePicture from '../images/defaultProfile.webp';
 
 export async function FriendList(root: string): Promise<void>{
@@ -8,9 +8,8 @@ export async function FriendList(root: string): Promise<void>{
 	if (content) {
 		try {
 			list = await friendshipService.getFriendList();
-			console.log('get friend list in dashboard = ', list);
 		} catch(error) {
-			console.log('error when get friend list in dashboard');
+			console.log('error when get friend list in dashboard', error);
 			return;
 		}
 
@@ -24,7 +23,7 @@ export async function FriendList(root: string): Promise<void>{
 
 		content.innerHTML = /*html*/`
 			<div class='h-full flex flex-col'>
-				<h1 class='mb-20'>Friends</h1>
+				<h1 class='mb-5'>Friends</h1>
 				<div id='friend-cards' class='flex-1 overflow-auto'></div>
 			</div>
 		`;
@@ -40,10 +39,10 @@ export async function FriendList(root: string): Promise<void>{
 	}
 }
 
-function createFriendCard(friend: Partial<FriendData>): HTMLElement {
+export function createFriendCard(friend: Partial<FriendData>): HTMLElement {
 
 	const card = document.createElement('div');
-	card.className = 'relative flex items-center space-x-3 py-5 px-1';
+	card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
 
 	// profile picture ===========
 	const avatar = document.createElement('div');
@@ -77,14 +76,28 @@ function createFriendCard(friend: Partial<FriendData>): HTMLElement {
 	// actions ===================
 	const actions = document.createElement('div');
 	const deleteBtn = document.createElement('button');
-	deleteBtn.className = 'btn-primary px-2 py-1 outline-red-500 bg-white text-xs text-red-500 hover:bg-red-500 hover:text-white font-[Inter]';
+	deleteBtn.className = 'btn-primary px-2 py-1 outline-red-500 bg-stone-100 text-xs text-red-500 hover:bg-red-500 hover:text-white font-[Inter]';
 	deleteBtn.innerText = 'x';
+	deleteBtn.id = `delete-${friend.id}`;
+	// console.log(friend.displayName, ' id -> ', friend.friendshipId);
 	actions.appendChild(deleteBtn);
 	// ===========================
 
 	card.appendChild(avatar);
 	card.appendChild(text);
 	card.appendChild(actions);
+
+	deleteBtn.addEventListener('click', (e) => {
+		console.log('event delete friend on ', friend.name);
+		try {
+			if (friend.friendshipId)
+				friendshipService.deleteFriend(friend.friendshipId);
+			// navigateTo('/dashboard');
+			card.remove();
+		} catch (error) {
+
+		}
+	});
 
 	return card;
 }
