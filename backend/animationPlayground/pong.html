@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	<div id="arena" style = "width: 600px; height: 400px; background: lightgray; position: relative; margin: 50px auto; border: 2px solid black; border-radius: 5px;">
+		<div id="paddleLeft" style="position: absolute; width: 8px; height: 60px; background: black; top: 200px; left: 10px"></div>
+
+		<div id="paddleRight" style="position: absolute; width: 8px; height: 60px; background: black; top: 200px; right: 10px;"></div>
+	</div>
+</body>
+<script>
+
+	const mapKeys = {'s': false, 'x': false, 'ArrowUp': false, 'ArrowDown': false }
+
+	let paddleRight = document.getElementById('paddleRight');
+	let paddleLeft = document.getElementById('paddleLeft');
+
+	const gameArea = document.getElementById("arena")
+	const gameHeight = gameArea.clientHeight;
+
+	const paddleHeight = paddleLeft.clientHeight;
+	const bottomLimit = gameHeight - paddleHeight;
+
+	let paddleY2 = ( gameHeight - paddleHeight) / 2;
+	let paddleY = ( gameHeight - paddleHeight) / 2;
+	let speed = 7;
+
+	document.addEventListener('keydown', (e) => {
+		if (e.key in mapKeys) {
+			mapKeys[e.key] = true;
+		}
+	});
+
+	document.addEventListener('keyup', (e) => {
+		if (e.key in mapKeys) {
+			mapKeys[e.key] = false;
+		}
+	});
+
+	function loop() {
+		// --- LEFT PADDLE ---
+		if (mapKeys['s']) paddleY2 -= speed;
+		if (mapKeys['x']) paddleY2 += speed;
+
+		if (paddleY2 < 0) paddleY2 = 0;
+		if (paddleY2 > bottomLimit) paddleY2 = bottomLimit;
+
+		paddleLeft.style.top = paddleY2 + 'px';
+
+		// --- RIGHT PADDLE ---
+		if (mapKeys['ArrowUp'])   paddleY -= speed;
+		if (mapKeys['ArrowDown']) paddleY += speed;
+
+		if (paddleY < 0) paddleY = 0;
+		if (paddleY > bottomLimit) paddleY = bottomLimit;
+
+		paddleRight.style.top = paddleY + 'px';
+
+		requestAnimationFrame(loop);
+	}
+
+	requestAnimationFrame(loop);
+</script>
+</html>

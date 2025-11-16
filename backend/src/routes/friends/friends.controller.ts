@@ -17,11 +17,6 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const requesterId = request.user!.id;
 		const friendships = await friendsService.findActiveFriends(request.server.prisma, requesterId);
-		if (!friendships || friendships.length === 0) {
-			return reply.code(404).send({
-				message: "No active friends found"
-			});
-		}
 
 		const friends = friendships.map(f => {
 		    const friend = f.requesterId === requesterId ? f.addressee : f.requester;
@@ -138,11 +133,6 @@ async function getPendingRequestsHandler(request: FastifyRequest, reply: Fastify
 		const userId = request.user!.id;
 
 		const pending = await friendsService.findPendingRequests(request.server.prisma, userId)
-		if (!pending || pending.length === 0) {
-			return reply.code(404).send({
-                message: "No pending requests"
-            });
-		}
 		const newArray = pending.map(f => ({
 			id: f.id,
 			createdAt: f.createdAt,
