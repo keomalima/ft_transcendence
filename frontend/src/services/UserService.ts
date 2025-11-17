@@ -1,273 +1,183 @@
-import { userStore } from "../store/UserStorage";
+import { AppStores } from "../store/store";
 import { UserState } from "../types";
+import { updateAvatarResp, userApi } from "../api/userApi.js";
 
-
-// export interface UserState {
-// 	id: string | null;
-// 	email: string | null;
-// 	name: string | null;
-// 	surname: string | null;
-// 	displayName: string | null;
-// 	isLoggedIn: boolean;
-// 	accessToken: string | null;
-// 	isOnline: boolean;
-// 	createdAt: string | null;
-// 	updatedAt: string | null;
-// }
-
-
-
-// sending data to create a new user
-interface CreateUserDto {
-	email: string | null;
-	name: string | null;
-	surname: string | null;
-	displayName: string | null;
-	avatarFile: File | null;
-
-	password: string | null;
-}
-// type CreateUserDto = Omit<UserState, 'id' | 'isLoggedIn' | 'accessToken' | 'isOnline' | 'createdAt' | 'updatedAt' | 'avatarFile' >
-
-// response when creating a new user
-type CreateUserResp = Pick<UserState, 'id' | 'name' | 'email'>
-
-// response when login
-type LoginUserResp = Pick<UserState, 'accessToken' | 'id'>
-
-// response when get user
-type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
-
-// response update user
-type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarFile'>
-
-const url = 'http://localhost:3000/api/users';
-
-async function parseResponse(response: Response): Promise<any> {
-	const text = await response.text();
-	return text ? JSON.parse(text) : null;
-}
+import { CreateUserDto, CreateUserResp, LoginUserResp, getUserResp, updateUserResp } from "../api/userApi.js";
 
 class UserService {
 
 	// create user
-	async createUser(data: CreateUserDto): Promise<CreateUserResp>{
-		console.log('create user dto : ', data);
+	async createUser(data: CreateUserDto, ctx: AppStores): Promise<CreateUserResp | null>{
+		const result = await userApi.create(data);
 
-		const formData = new FormData();
-		formData.append('email', data.email || '');
-		formData.append('name', data.name || '');
-		formData.append('surname', data.surname || '');
-		formData.append('displayName', data.displayName || '');
-		formData.append('password', data.password || '');
-		if (data.avatarFile) {
-			formData.append('avatarFile', data.avatarFile);
-		}
-
-		userStore.loadFromLocalStorage();
-
-		const response = await fetch (`${url}`, {
-			method: 'POST',
-			body: formData
-		});
-		if (!response.ok) {
-			const errorBody = await response.text();
-			console.error('Backend error response:', errorBody);
-
-			try {
-				const errorJson = JSON.parse(errorBody);
-				console.error('Error details:', errorJson);
-				throw new Error(`❌ Failed to create user: ${errorJson.message || response.statusText}`);
-			} catch (parseError) {
-				throw new Error(`❌ Failed to create user: ${response.statusText} - ${errorBody}`);
+		ctx.user.update((prevState) => {
+			if (!prevState) {
+				return {
+					accessToken: null,
+					id: result?.id?? null,
+					isLoggedIn: false,
+					email: result?.email?? null,
+					name: result?.name?? null,
+					surname: null,
+					displayName: null,
+					isOnline: false,
+					createdAt: null,
+					updatedAt: null,
+					avatarFile: null,
+					avatarUrl: null
+				};
 			}
-		}
-
-		const result = await response.json();
-
-		if (result)
-			console.log('⭐ createUser success ✅', result);
-
-		// store user data in UserStore
-		userStore.setUserId(result.id);
-		userStore.setUserInfo(data);
-		userStore.setUserLogStatus(result.isLoggedIn);
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
+			return {
+				...prevState,
+				email: result?.email?? null,
+				name: result?.name?? null,
+				id: result?.id?? null,
+			};
+		});
 
 		return result;
 	}
 
 
 	// login
-	async loginUser(email:string, password:string): Promise<LoginUserResp>
+	async loginUser(email: string, password: string, ctx: AppStores): Promise<LoginUserResp>
 	{
-		userStore.loadFromLocalStorage();
-		const response = await fetch (`${url}/login`, {
-			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({
-				email: email,
-				password: password
-			})
-		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to login: ${response.statusText}`);
-
-		const result = await response.json();
-		if (result)
-			console.log('⭐ loginUser success ✅', result);
+		const result = await userApi.login(email, password);
+		
+		// Validate result
+		if (!result || !result.accessToken || !result.id) {
+			throw new Error('Login failed: Invalid response from server');
+		}
 
 		// store user data in UserStore
-		userStore.setUserAccessToken(result.accessToken);
-		userStore.setUserId(result.id);
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
+		ctx.user.update((prevState) => {
+			if (!prevState) {
+				return {
+					accessToken: result.accessToken,
+					id: result.id,
+					isLoggedIn: true,
+					email: null,
+					name: null,
+					surname: null,
+					displayName: null,
+					isOnline: true,
+					createdAt: null,
+					updatedAt: null,
+					avatarFile: null,
+					avatarUrl: null
+				};
+			}
+			return {
+				...prevState,
+				accessToken: result.accessToken,
+				id: result.id,
+				isLoggedIn: true
+			};
+		});
+		
 		return result;
 	}
 
 	// logout
-	async logoutUser(): Promise<void>
+	async logoutUser(ctx: AppStores): Promise<void>
 	{
-		userStore.loadFromLocalStorage();
-		const response = await fetch (`${url}/logout`, {
-			method: 'POST',
-			headers: {'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
-		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to logout: ${response.statusText}`);
-
-		const result = parseResponse(response);
-		if (result)
-			console.log('⭐ logoutUser success ✅', result);
-
-		// update user state
-		userStore.clearUserState();
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
-
+		const user = ctx.user.get();
+		const accessToken = user?.accessToken;
+		if (!accessToken)
+			throw new Error ('No active session for logout');
+		await userApi.logout(accessToken);
+		ctx.user.set(null);
 	}
 
 	// get user
-	async getUserState(): Promise<getUserResp | null> {
-		// userStore.loadFromLocalStorage();
-		console.log('getUserState with access token : ', userStore.getUserAccessToken(), ' and user id : ', userStore.getUserId());
-		const response = await fetch (`${url}/${userStore.getUserId()}`, {
-			method: 'GET',
-			headers:{
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
+	async getUserState(ctx: AppStores, id: string): Promise<getUserResp | null> {
+		if (!id)
+			throw new Error('Missing id to get user');
+		const currentUser = ctx.user.get();
+		const accessToken = currentUser?.accessToken;
+		if (!accessToken)
+			throw new Error('No active session for get user');
+
+		const result = await userApi.get(id, accessToken);
+		
+		// Update store only if the get concerns the current user
+		if (result) {
+			if (id === currentUser.id) {
+				ctx.user.update((prevState) => ({
+					...(prevState || {}),
+					id: result.id ?? id,
+					email: result.email ?? null,
+					name: result.name ?? null,
+					surname: result.surname ?? null,
+					displayName: result.displayName ?? null,
+					avatarUrl: result.avatarUrl ?? null,
+					isOnline: result.isOnline ?? false,
+					accessToken: prevState?.accessToken ?? accessToken,
+					isLoggedIn: true,
+					createdAt: prevState?.createdAt ?? null,
+					updatedAt: prevState?.updatedAt ?? null,
+					avatarFile: prevState?.avatarFile ?? null
+				}));
 			}
-		);
-		if (!response.ok)
-			throw new Error(`❌ Failed to get user info: ${response.statusText}`);
-
-		const result: getUserResp = await response.json();
-		console.log('⭐ getUser success ✅', result);
-
-		// store data in user storage
-		userStore.setUserInfo(result);
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
-
+		}
 		return result;
 	}
 
 	// delete user
-	async deleteUser(): Promise<void> {
-		userStore.loadFromLocalStorage();
-		const response = await fetch (`${url}`, {
-			method: 'DELETE',
-			headers: {'Authorization': `Bearer ${userStore.getUserAccessToken()}`}
-		})
-		if (!response.ok)
-			throw new Error(`❌ Failed to delete user: ${response.statusText}`);
+	async deleteUser(ctx: AppStores): Promise<void> {
+		const currentUser = ctx.user.get();
+		const accessToken = currentUser?.accessToken;
+		if (!accessToken)
+			throw new Error('No active session for delete user');
 
-		const result = parseResponse(response);
-		if (result)
-			console.log('⭐ deleteUser success ✅', result);
-
-		// delete user data from storage
-		userStore.clearUserState();
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
+		await userApi.delete(accessToken);
+		ctx.user.set(null);
 	}
 
 	// update user
-	async updateUser(data: Partial<UserState>): Promise<updateUserResp> {
-		// userStore.loadFromLocalStorage();
+	async updateUser(data: Partial<UserState>, ctx: AppStores): Promise<updateUserResp> {
+		const currentUser = ctx.user.get();
+		const accessToken = currentUser?.accessToken;
+		if (!accessToken)
+			throw new Error('No active session for update user');
 
-		// Filter out null, undefined, and empty strings
-		const cleanData = Object.fromEntries(
-			Object.entries(data).filter(([_, value]) =>
-				value !== null &&
-				value !== undefined &&
-				value !== ''
-			)
-		);
-
-		// Don't send request if no data to update
-		if (Object.keys(cleanData).length === 0) {
-			throw new Error('No fields to update');
-		}
-
-		const response = await fetch (`${url}/me`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${userStore.getUserAccessToken()}`
-			},
-			body: JSON.stringify(cleanData)
-		})
-		if (!response.ok)
-			throw new Error(`❌ Failed to update user: ${response.statusText}`);
-
-		const result = await response.json();
-		if (result)
-			console.log('⭐ updateUser success ✅', result);
-
-		// change user data in UserStore
-		userStore.setUserInfo(data);
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
-
+		const result = await userApi.update(accessToken, data);
+		
+		// Update only the fields that were returned from the API
+		ctx.user.update((prevState) => {
+			if (!prevState) {
+				throw new Error('Cannot update user: no current user state');
+			}
+			return {
+				...prevState,
+				name: result.name ?? prevState.name,
+				surname: result.surname ?? prevState.surname,
+				displayName: result.displayName ?? prevState.displayName,
+				avatarFile: result.avatarFile ?? prevState.avatarFile
+			};
+		});
 		return result;
 	}
 
 	// update Avatar
-	async updateAvatar(file: File): Promise<Response>{
-		userStore.loadFromLocalStorage();
-		const formData = new FormData();
-		if (file) {
-			formData.append('avatarFile', file);
-		}
-		const response = await fetch (`${url}/upload`, {
-			method: 'POST',
-			headers: {
-				'Authorization': `Bearer ${userStore.getUserAccessToken()}`
-			},
-			body: formData
+	async updateAvatar(file: File, ctx: AppStores): Promise<updateAvatarResp | null> {
+		const currentUser = ctx.user.get();
+		const accessToken = currentUser?.accessToken;
+		if (!accessToken)
+			throw new Error('No active session for update avatar');
+
+		const result = await userApi.updateAvatar(accessToken, file);
+
+		// Update avatar URL in store
+		ctx.user.update((prevState) => {
+			if (!prevState) {
+				throw new Error('Cannot update avatar: no current user state');
+			}
+			return {
+				...prevState,
+				avatarUrl: result?.avatarUrl ?? prevState.avatarUrl
+			};
 		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to update avatar: ${response.statusText}`);
-
-
-		const result = await response.json();
-		if (result)
-			console.log('⭐ updateAvatar success ✅', result);
-
-		// store new avatar url in UserStore
-		userStore.setUserAvatar(result.avatarUrl);
-
-		// save to locat storage
-		userStore.saveToLocalStorage();
-
 		return result;
 	}
 }

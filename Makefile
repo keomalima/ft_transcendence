@@ -10,15 +10,20 @@ dev:
 	@echo "⏳ Waiting for backend to be ready..."
 	@sleep 3
 	@echo "✨ Starting frontend locally with hot-reload..."
-	cd frontend && npm run dev
+	cd frontend && npm run serve
 
 # Production/Release mode: both services in Docker
 prod:
 	@echo "🏭 Starting PRODUCTION mode..."
-	@echo "📦 Building and starting all services..."
-	$(COMPOSE) -f docker-compose.prod.yml up --build
+	@echo "📦 Building frontend..."
+	cd frontend && npm run build
+	@echo "📦 Starting all services in Docker..."
+	$(COMPOSE) up --build -d
+	@echo "✅ Services started!"
+	@echo "   Frontend: http://localhost:4173"
+	@echo "   Backend:  http://localhost:3000"
 
-# Alternative: use existing docker-compose for production
+# Alternative: same as prod
 release:
 	@echo "🏭 Starting RELEASE mode..."
 	@echo "📦 Building frontend..."

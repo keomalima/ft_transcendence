@@ -1,72 +1,36 @@
-import './style.css';
+import "./components/hello-card.js";
+import { Router } from "./router.js";
+import { Home } from "./pages/home.js";
+import { About } from "./pages/about.js";
+import { createStores } from "./store/store.js";
 
-import { LearnMore } from './pages/LearnMore';
-import { Profile } from './pages/Profile';
-import { EditProfile } from './pages/EditProfile';
-import { Home } from './pages/Home';
-import { NotFound } from './pages/404';
-import { test } from './components/test';
-import { Game } from './pages/Game';
-import { Dashboard } from './pages/Dashboard';
-import './htmlComponents/MyButton';
-import './htmlComponents/MyLink';
-import './htmlComponents/MyLabel'
-import './htmlComponents/MyInput'
+const INPUT_CLASSES = 'block w-full rounded-full bg-blue-500 px-3 py-1.5 text-base text-gray-900 \
+	utline outline-1 outline-muted placeholder:text-gray-400 \
+	focus:outline-2 focus:outline-muted';
 
-import { userStore } from './store/UserStorage';
 
-// localStorage.clear();
+// Create stores
+const stores = createStores();
 
-userStore.loadFromLocalStorage();
+// First init of stores
+stores.user.set({
+	id: null,
+	email: null,
+	name: null,
+	surname: null,
+	displayName: null,
+	isLoggedIn: false,
+	accessToken: null,
+	isOnline: false,
+	createdAt: null,
+	updatedAt: null,
+	avatarFile: null,
+	avatarUrl: null
+});
 
-if (userStore.getUserAccessToken() == null)
-{
-	localStorage.clear();
-}
-
-// Define map between path and render function
-const routes: Record<string, () => void> = {
-	'/': Home,
-	'/LearnMore': LearnMore,
-	'/profile': Profile,
-	'/test': test,
-	'/game': Game,
-	'/edit-profile': EditProfile,
-	'/dashboard': Dashboard
-};
-
-// Select the right path and execute the linked function
-function router() {
-	const path = window.location.pathname;
-	userStore.loadFromLocalStorage();
-	const renderFunction = routes[path] || NotFound;
-	renderFunction();
-}
-
-// Route to the correct new path and add the path to history
-export function navigateTo(path: string)
-{
-	window.history.pushState(null, '', path);
-	router();
-}
-
-// Event delegation : gets every clicks.
-// If click on a data-link <a> handle the navigation respecting the SPA requirement
-document.addEventListener('click', (e) => {
-	const target = e.target as HTMLElement;
-
-	if (target.matches('[data-link]')) {
-		e.preventDefault();
-
-		const href = target.getAttribute('href');
-		if (href)
-			navigateTo(href);
-	}
-})
-
-// Handle back and forward in browser history
-window.addEventListener('popstate', router);
-
-// Hender the first page (home)
-router();
-
+// launch router with context (stores)
+export const router = new Router("#app", stores); // only one instance of router for the whole project
+router
+    .add("/", Home)
+    .add("/about", About)
+    .start();
