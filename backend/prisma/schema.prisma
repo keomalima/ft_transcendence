@@ -60,16 +60,19 @@ model Session {
 
 model Game {
 	id String @id @default(uuid())
-	createdBy String
+	token String?
+	scoreToWin Int?
+	createdBy String 
 	user User @relation(fields: [createdBy], references: [id])
+	// tournamentId String?
+	// tournament Tournament? @relation(fields: [tournamentId], references: [id])
 	status GameStatus @default(PENDING)
 	type GameMode @default(ONLINE)
-	startedAt DateTime @default(now())
+	startedAt DateTime?
 	completedAt DateTime?
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 	gameUsers GamePlayer[]
-	guestScore Int?
 }
 
 model GamePlayer {

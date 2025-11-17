@@ -1,18 +1,13 @@
+@baseUrl = http://localhost:3000/api/games
+@token = 6066414e-4823-437e-b6e1-225e283294fb
+@userId = 4e20da12-b3f9-42ab-8670-803fceecb452
+
 ### CREATE A GAME
-POST http://localhost:3000/api/games HTTP/1.1
+POST {{baseUrl}}/ HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer d61aa2de-5cfd-4610-8ddf-67cea6f507af
+Authorization: Bearer {{token}}
 
 {
-   "createdBy": "keomalima@icloud.com",
-   "type": "ONLINE"
-}
-
-### UPDATE GAME
-PUT http://localhost:3000/api/games/22d6bd7e-20b5-40ed-99ee-5267768c1fa6 HTTP/1.1
-Content-Type: application/json
-Authorization: Bearer d61aa2de-5cfd-4610-8ddf-67cea6f507af
-
-{
-  "guestScore": 3000
+   "type": "ONLINE",
+   "scoreToWin": 10
 }

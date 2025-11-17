@@ -8,9 +8,14 @@ import { gameService } from './game.service.js';
 
 async function createGameHandler (request: FastifyRequest<{ Body: CreateGameInput }>, reply: FastifyReply) {
 	try {
+		const isGameOn = await gameService.findActiveGameByUserId(request.server.prisma, request.user!.id);
+		if (isGameOn) {
+			return reply.code(400).send({
+				message: "User currently has an active game on"
+			});
+		}
 		const newGame = await gameService.createGame(request.server.prisma, request.body, request.user!.id);
-		reply.code(201);
-		return (newGame);
+		return reply.code(201).send(newGame);
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to create game"});
 	}

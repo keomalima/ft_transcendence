@@ -99,9 +99,6 @@ async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 async function getUserHandlerDev(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const users = await userService.getUsersDev(request.server.prisma);
-		if (users.length === 0) {
-    		return reply.code(404).send({ message: 'No users found' });
-		}
 		return users;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to fetch users"});

@@ -6,15 +6,9 @@ import { GameStatus, GameMode } from "@prisma/client";
 // =====================
 
 const createGameSchema = z.object({
-	type: z.enum(GameMode)
-});
-
-const createGameResponseSchema = z.object({
-	id: z.string(),
-	createdBy: z.string(),
 	type: z.enum(GameMode),
-	status: z.enum(GameStatus),
-})
+	scoreToWin: z.int().optional()
+});
 
 const updateGameSchema = z.object({
 	status: z.enum(GameStatus).optional(),
@@ -31,6 +25,17 @@ const updateGameResponseSchema = z.object({
 	startedAt: z.date(),
 	completedAt: z.date(),
 	guestScore: z.int()
+})
+
+// =====================
+// Response Schemas
+// =====================
+
+const createGameResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	type: z.enum(GameMode),
+	status: z.enum(GameStatus),
 })
 
 // =====================
