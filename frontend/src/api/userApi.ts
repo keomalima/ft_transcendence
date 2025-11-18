@@ -47,15 +47,13 @@ export const userApi = {
 	},
 
 	logout: async (accessToken: string): Promise<void> => {
-	const response = await fetch (`${BASE_URL}/logout`, {
+		const response = await fetch (`${BASE_URL}/logout`, {
 			method: 'POST',
 			headers: {'Authorization': `Bearer ${accessToken}`}
 		});
 		if (!response.ok)
 			throw new Error(`❌ Failed to logout: ${response.statusText}`);
-		const result = await response.json();
-		console.log('⭐ logoutUser success ✅', result);
-		return result;
+		console.log('⭐ logoutUser success ✅ (no response body)');
 	},
 	
 	create: async (data: CreateUserDto): Promise<CreateUserResp | null> => {
@@ -101,9 +99,7 @@ export const userApi = {
 		})
 		if (!response.ok)
 			throw new Error(`❌ Failed to delete user: ${response.statusText}`);
-		const result = await response.json();
-		console.log('⭐ deleteUser success ✅', result);
-		return result;
+		console.log('⭐ deleteUser success ✅, (no response body)');
 	},
 
 	update: async (accessToken: string, data: Partial<UserState>): Promise<updateUserResp> => {

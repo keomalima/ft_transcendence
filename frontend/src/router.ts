@@ -44,11 +44,10 @@ export class Router {
 
 	// Route to the correct new path and add the path to history
 	public navigateTo(path: string, push = true) {
-		const route = this.match(path) ?? this.match("/");
+		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;
 		
 		if (push) history.pushState({}, "", route.path); // update url except for back/forward navigation 
-		
 		this.app.innerHTML = route.view(this.ctx); // render the new path view
 		
 		// Emit a custom event so other code can react to page changes
@@ -57,7 +56,7 @@ export class Router {
 
 	// Handle browser back/forward buttons
 	private onPopState() {
-		this.navigateTo(window.location.pathname, false);
+		this.navigateTo(window.location.pathname, true);
 	}
 
 	// Intercept clicks on <a data-link> elements for SPA navigation

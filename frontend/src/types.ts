@@ -1,12 +1,3 @@
-export interface Project {
-	id: number;
-	title: string;
-	description: string;
-	technologies: string[];
-	githubUrl?: string;
-}
-
-
 export interface matchInfo {
 	id: number;
 	opponentName: string;

@@ -10,7 +10,7 @@
 		"**/Thumbs.db": false,
 		"frontend": false,
 		".vscode": true,
-		"**/*.json": false,
+		"**/*.json": true,
 		"**/*.yml": true,
 		"**/*.md": true,
 		".gitignore": true,

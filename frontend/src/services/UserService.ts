@@ -8,6 +8,7 @@ class UserService {
 
 	// create user
 	async createUser(data: CreateUserDto, ctx: AppStores): Promise<CreateUserResp | null>{
+		
 		const result = await userApi.create(data);
 
 		ctx.user.update((prevState) => {
@@ -35,6 +36,7 @@ class UserService {
 			};
 		});
 
+		this.saveToLocalStorage(ctx);
 		return result;
 	}
 
@@ -74,7 +76,8 @@ class UserService {
 				isLoggedIn: true
 			};
 		});
-		
+
+		this.saveToLocalStorage(ctx);
 		return result;
 	}
 
@@ -87,10 +90,13 @@ class UserService {
 			throw new Error ('No active session for logout');
 		await userApi.logout(accessToken);
 		ctx.user.set(null);
+		this.saveToLocalStorage(ctx);
 	}
 
 	// get user
-	async getUserState(ctx: AppStores, id: string): Promise<getUserResp | null> {
+	async getUserState(ctx: AppStores, id: string | null): Promise<getUserResp | null> {
+
+		this.loadFromLocalStorage(ctx);
 		if (!id)
 			throw new Error('Missing id to get user');
 		const currentUser = ctx.user.get();
@@ -120,6 +126,7 @@ class UserService {
 				}));
 			}
 		}
+		this.saveToLocalStorage(ctx);
 		return result;
 	}
 
@@ -132,10 +139,12 @@ class UserService {
 
 		await userApi.delete(accessToken);
 		ctx.user.set(null);
+		this.saveToLocalStorage(ctx);
 	}
 
 	// update user
 	async updateUser(data: Partial<UserState>, ctx: AppStores): Promise<updateUserResp> {
+		this.loadFromLocalStorage(ctx);
 		const currentUser = ctx.user.get();
 		const accessToken = currentUser?.accessToken;
 		if (!accessToken)
@@ -156,11 +165,13 @@ class UserService {
 				avatarFile: result.avatarFile ?? prevState.avatarFile
 			};
 		});
+		this.saveToLocalStorage(ctx);
 		return result;
 	}
 
 	// update Avatar
 	async updateAvatar(file: File, ctx: AppStores): Promise<updateAvatarResp | null> {
+		this.loadFromLocalStorage(ctx);
 		const currentUser = ctx.user.get();
 		const accessToken = currentUser?.accessToken;
 		if (!accessToken)
@@ -178,8 +189,51 @@ class UserService {
 				avatarUrl: result?.avatarUrl ?? prevState.avatarUrl
 			};
 		});
+		this.saveToLocalStorage(ctx);
 		return result;
 	}
+
+	// clean user store
+	private cleanUser(ctx: AppStores): void {
+		ctx.user.set({
+			id: null,
+			email: null,
+			name: null,
+			surname: null,
+			displayName: null,
+			isLoggedIn: false,
+			accessToken: null,
+			isOnline: false,
+			createdAt: null,
+			updatedAt: null,
+			avatarFile: null,
+			avatarUrl: null
+		});
+	}
+
+	// save, get and clean user from local storage
+	private saveToLocalStorage(ctx: AppStores):void {
+		console.log('SAVE to local storage');
+		const userState = ctx.user.get();
+		if (userState)
+			localStorage.setItem('userState', JSON.stringify(userState));
+	}
+
+	private loadFromLocalStorage(ctx: AppStores): void {
+		console.log('load from local storage');
+		const saved: string | null = localStorage.getItem('userState');
+
+		if (saved && saved.trim() !== '') {
+			try {
+				const parsed = JSON.parse(saved);
+				ctx.user.set(parsed);
+			} catch (error) {
+				console.error('Failed to parse userState from localStorage');
+				localStorage.removeItem('userState');
+			}
+		}
+	}
+
 }
 
 export const userService = new UserService();

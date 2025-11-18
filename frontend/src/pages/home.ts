@@ -1,13 +1,16 @@
 import { router } from "../main.js";
 import type { AppStores } from "../store/store.js";
 import { userService } from "../services/UserService.js";
-import { BUTTON_PRIMARY_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
+import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
+
+// import HTML components
 import "../components/RegisterPopUp.js";
+import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
 export function Home(ctx: AppStores): string {
-    const user = ctx.user.get();
 
 	setTimeout(() => {
+		passContext(ctx);
 		setupHomeEventListeners(ctx);
 	}, 0);
 
@@ -43,13 +46,13 @@ export function Home(ctx: AppStores): string {
 								<p id='login-error' class='text-red-500'></p>
 
 								<div>
-									<button type='submit' class='${BUTTON_PRIMARY_CLASSES}'>Sign in</button>
+									<button type='submit' class='${BUTTON_CREAM_CLASSES}'>Sign in</button>
 								</div>
 							</form>
 
 							<p class="mt-10 text-center text-sm/6 text-medium">
 								Not a member?
-								<a class="underline" onclick="document.getElementById('pop-up-register').showModal()">Create a new account</a>
+								<a class="underline" onclick="document.getElementById('register-dialog').showModal()">Create a new account</a>
 							</p>
 						</div>
 					</div>
@@ -58,14 +61,22 @@ export function Home(ctx: AppStores): string {
 			</div>
 
 			<!-- Dialog for pop up -->
-			<dialog id="pop-up-register" class="place-self-center">
-				<register-popup></register-popup>
+			<dialog id="register-dialog" class="place-self-center">
+				<register-popup id="register-component"></register-popup>
 			</dialog>
 
 		</div>
     `;
 
 	return content;
+}
+
+// Pass context to HTML elements
+function passContext(ctx: AppStores) {
+	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
+	if (registerComponent) {
+		registerComponent.ctx = ctx;
+	}
 }
 
 // Setup event listeners after DOM is ready
@@ -105,7 +116,7 @@ function setupHomeEventListeners(ctx: AppStores) {
 			console.log('Form submitted:', email);
 			try {
 				const user = await userService.loginUser(email, password, ctx);
-				router.navigateTo('/about');
+				router.navigateTo('/home');
 			} catch (error) {
 				console.log(error);
 				const popUpLogin = document.getElementById('login-error');
