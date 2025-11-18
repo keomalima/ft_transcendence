@@ -17,16 +17,6 @@ const updateGameSchema = z.object({
 	guestScore: z.int().optional()
 });
 
-const updateGameResponseSchema = z.object({
-	id: z.string(),
-	createdBy: z.string(),
-	type: z.enum(GameMode),
-	status: z.enum(GameStatus),
-	startedAt: z.date(),
-	completedAt: z.date(),
-	guestScore: z.int()
-})
-
 // =====================
 // Response Schemas
 // =====================
@@ -36,6 +26,23 @@ const createGameResponseSchema = z.object({
 	createdBy: z.string(),
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
+})
+
+const generateGameTokenResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	type: z.enum(GameMode),
+	token: z.string()
+})
+
+const updateGameResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	type: z.enum(GameMode),
+	status: z.enum(GameStatus),
+	startedAt: z.date(),
+	completedAt: z.date(),
+	guestScore: z.int()
 })
 
 // =====================
@@ -53,12 +60,13 @@ export const gameSchemas = {
   // Request schemas
   request: {
 	createGame: createGameSchema,
-	updateGame: updateGameSchema,
+	updateGame: updateGameSchema
   },
   
   // Response schemas
   response: {
 	createGame: createGameResponseSchema,
 	updateGame: updateGameResponseSchema,
+	generateToken: generateGameTokenResponseSchema
   },
 };

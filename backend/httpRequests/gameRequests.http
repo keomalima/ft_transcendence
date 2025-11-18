@@ -1,6 +1,7 @@
 @baseUrl = http://localhost:3000/api/games
-@token = 6066414e-4823-437e-b6e1-225e283294fb
-@userId = 4e20da12-b3f9-42ab-8670-803fceecb452
+@token = 38906ed7-bddb-4ec0-b836-c6071c0dc3bf
+@userId = b1ee6535-2f71-4edd-a3a4-67aba5e71e8d
+@gameId = ab7ea4b0-7874-4b20-9604-73c94bf2e619
 
 ### CREATE A GAME
 POST {{baseUrl}}/ HTTP/1.1
@@ -11,3 +12,7 @@ Authorization: Bearer {{token}}
    "type": "ONLINE",
    "scoreToWin": 10
 }
+
+### GENERATE A TOKEN
+POST {{baseUrl}}/{{gameId}}/token HTTP/1.1
+Authorization: Bearer {{token}}

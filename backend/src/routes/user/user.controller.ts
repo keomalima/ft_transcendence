@@ -4,7 +4,6 @@ import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
-import { writeFile } from 'fs/promises';
 import { verifyPassword } from '../../plugins/hash.plugin.js';
 import path from 'path';
 import fs from 'fs/promises';

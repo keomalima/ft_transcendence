@@ -6,6 +6,15 @@ import { includes } from "zod";
 // Game CRUD Operations
 // =====================
 
+async function findGameByUserId(prisma:PrismaClient, userId: string, gameId: string) {
+	return prisma.game.findFirst({
+		where: {
+			id: gameId,
+			createdBy: userId
+		}
+	});
+}
+
 async function findActiveGameByUserId(prisma: PrismaClient, id: string) {
 	return prisma.gamePlayer.findFirst({
 		where: {
@@ -34,6 +43,13 @@ async function updateGame(prisma: PrismaClient, id: string, data: UpdateGameInpu
   });
 }
 
+async function generateToken(prisma: PrismaClient, gameId: string, token: string) {
+	return prisma.game.update({
+		where: { id: gameId },
+		data: { token }
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -42,5 +58,7 @@ export const gameService = {
 	// Game operations
 	createGame,
 	updateGame,
-	findActiveGameByUserId
+	findActiveGameByUserId,
+	generateToken,
+	findGameByUserId
 };
