@@ -28,7 +28,7 @@ export class FriendRequests extends HTMLElement {
 		}
 	}
 
-	private async loadAndRender() {
+	public async loadAndRender() {
 		await this.getRequests();
 		this.render();
 		this.displayFriendCards();
@@ -119,19 +119,13 @@ export class FriendRequests extends HTMLElement {
 
 		acceptBtn.addEventListener('click', async (e) => {
 			console.log('event accept friend ', request.friend?.name);
-			try {
-				if (!request.id || !request.friend) {
-					console.error('Invalid request data');
-					return;
-				}
-				await friendshipApi.accept(request.id, this._accessToken!);
-				card.remove();
-				
-				// Dispatch custom event to notify other components
-				window.dispatchEvent(new CustomEvent('friend-list-updated'));
-			} catch (error) {
-				console.error('Failed to accept friend request:', error);
-			}
+			this.dispatchEvent(new CustomEvent('event-accept-friend', {
+				detail: {
+					requestId: request.id as string,
+					accessToken: this._accessToken as string
+				},
+				bubbles: true
+			}));
 		});
 
 		return card;

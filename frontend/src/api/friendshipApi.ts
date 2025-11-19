@@ -11,8 +11,11 @@ export const friendshipApi = {
 			headers:{
 				'Authorization': `Bearer ${accessToken}`}
 		});
-		if (!response.ok)
-			throw new ErrorEvent(`❌ Failed to get list of friends: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to get list of friends');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to get list of friends');
+		}
 		const result: Partial<FriendData>[] = await response.json();
 		console.log('🧑‍🤝‍🧑 getFriendList sucess ✅ ', result);
 		return result;
@@ -20,7 +23,7 @@ export const friendshipApi = {
 
 	sendRequest: async (displayName: string | null, accessToken: string): Promise<void> => {
 		if (displayName == null)
-			return;
+			throw new Error('Display name is required');
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'POST',
 			headers:{
@@ -30,8 +33,11 @@ export const friendshipApi = {
 				addresseeDisplayName: displayName
 			})
 		});
-		if (!response.ok)
-			throw new ErrorEvent(`❌ Failed to send friendship requests: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to send friendship request');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to send friendship request');
+		}
 		console.log('🧑‍🤝‍🧑 sendFriendshipRequest sucess ✅ ');
 	},
 	
@@ -41,8 +47,11 @@ export const friendshipApi = {
 			headers:{
 				'Authorization': `Bearer ${accessToken}`}
 		});
-		if (!response.ok)
-			throw new ErrorEvent(`❌ Failed to get friend requests: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to get friend requests');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to get friend requests');
+		}
 		const result: Partial<FriendData>[] = await response.json();
 		console.log('🧑‍🤝‍🧑 getFriendRequests sucess ✅ ', result);
 		return result;
@@ -50,27 +59,33 @@ export const friendshipApi = {
 
 	accept: async (id: string | null, accessToken: string): Promise<void> => {
 		if (id == null)
-			return;
+			throw new Error('Request ID is required');
 		const response = await fetch (`${BASE_URL}/accept/${id}`, {
 			method: 'PUT',
 			headers:{
 				'Authorization': `Bearer ${accessToken}`}
 		});
-		if (!response.ok)
-			throw new ErrorEvent(`❌ Failed to accept friend: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to accept friend');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to accept friend');
+		}
 		console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
 	},
 
 	delete: async (id: string | null, accessToken: string): Promise<void> => {
 		if (id == null)
-			return;
+			throw new Error('Friendship ID is required');
 		const response = await fetch (`${BASE_URL}/${id}`, {
 			method: 'DELETE',
 			headers:{
 				'Authorization': `Bearer ${accessToken}`}
 		});
-		if (!response.ok)
-			throw new ErrorEvent(`❌ Failed to delete friend: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to delete friend');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to delete friend');
+		}
 		console.log('🧑‍🤝‍🧑 deleteFriend sucess ✅ ');
 	},
 }

@@ -37,18 +37,18 @@ export function Dashboard(ctx: AppContext): string{
 
 		<!-- First part : welcome / games / notifications -->
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
-		<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
-			<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
-				<h1 class='text-4xl lg:text-4xl break-words'>Welcome,</br>${currentUser.name ?? 'User'}</h1>
-			</div>
-			<div class="relative rounded-lg bg-medium order-2 lg:order-0">
-					<h1>Create a new gane</h1>
+			<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
+				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
+					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
-				<div class="relative rounded-lg bg-medium order-3 lg:order-0 lg:col-start-2 lg:row-start-2">
-					<h1>Join a game</h1>
+				<div class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center">
+					<a data-link href='/create-game' class='font-[Calistoga] m-5 text-white text-3xl'>Create new game</a>
 				</div>
-				<div class="relative rounded-lg bg-medium order-3 lg:order-0 lg:col-start-2 lg:row-start-3">
-					<h1>Log out</h1>
+				<div class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center">
+					<a data-link href='/join-game' class='font-[Calistoga] m-5 text-white text-3xl'>Join a game</a>
+				</div>
+				<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
+					<h1>???</h1>
 				</div>
 				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white p-4 lg:p-10 order-4 lg:order-0">
 					<h1>Your achievements</h1>
@@ -105,6 +105,9 @@ function passContext(ctx: AppContext) {
 function setupHomeEventListeners(ctx: AppContext) {
 
 	const friendListComponent = document.getElementById('friend-list-component') as any;
+	const requestsComponent = document.getElementById('requests-component') as any;
+	const addFriendComponent = document.getElementById('add-friend-component') as any;
+	const errorMsg = document.getElementById('add-friend-message') as HTMLElement;
 
 	// **** DELETE FRIEND ****
 	friendListComponent?.addEventListener('event-delete-friend', async (e: Event) => {
@@ -114,22 +117,58 @@ function setupHomeEventListeners(ctx: AppContext) {
 			if (data.friendshipId && data.accessToken) {
 				await friendshipApi.delete(data.friendshipId, data.accessToken);
 				console.log('Friend deleted successfully');
+				
+				// Refresh friend list after deletion
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
 			}
 		} catch (error) {
 			console.log('Error deleting friend:', error);
 		}
 	});
+
+	// **** ACCEPT FRIEND ****
+	requestsComponent?.addEventListener('event-accept-friend', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			if (data.requestId && data.accessToken) {
+				await friendshipApi.accept(data.requestId, data.accessToken);
+				console.log('Friend accepted successfully');
+				
+				// Refresh both lists after accepting
+				if (requestsComponent.loadAndRender) {
+					await requestsComponent.loadAndRender();
+				}
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+			console.log('Error accepting friend:', error);
+		}
+	});
+
+	// **** SEND FRIEND REQUEST ****
+	addFriendComponent?.addEventListener('event-send-friendship-request', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			if (data.accessToken && data.friendName) {
+				await friendshipApi.sendRequest(data.friendName, data.accessToken);
+				console.log('Friendship request successfull');
+				if (errorMsg) {
+					errorMsg.className = 'text-green-500';
+					errorMsg.innerText = `Friend request sent successfully to ${data.friendName}!`;
+				}
+			}
+		} catch (error) {
+			if (errorMsg) {
+				errorMsg.className = 'text-red-500';
+				errorMsg.innerText = error instanceof Error ? error.message : 'Failed to send friend request';
+			}
+			console.log('Error send friendship request:', error);
+		}
+	});
 }
-
-
-
-// deleteBtn.addEventListener('click', (e) => {
-// 			console.log('event delete friend on ', friend.name);
-// 			try {
-// 				if (friend.friendshipId)
-// 					friendshipApi.delete(friend.friendshipId, this._accessToken!);
-// 				card.remove();
-// 			} catch (error) {
-
-// 			}
-// 		});

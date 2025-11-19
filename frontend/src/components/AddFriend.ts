@@ -11,24 +11,14 @@ export class AddFriend extends HTMLElement {
 	set ctx(value : AppContext)
 	{
 		this._ctx = value;
-		// Load data when ctx is set and component is connected
 		this.render();
-		// if (this.isConnected) {
-		// 	this.loadAndRender();
-		// }
+		this.sendFriendshipRequest();
 	}
 
 	async connectedCallback() {
-		// Load data if ctx is already set
 		this.render();
-		// if (this._ctx) {
-		// 	await this.loadAndRender();
-		// }
+		this.sendFriendshipRequest();
 	}
-
-	// private async loadAndRender() {
-	// 	this.render();
-	// }
 
 	private render() {
 		this.innerHTML = 
@@ -36,11 +26,31 @@ export class AddFriend extends HTMLElement {
 			<h1 class='mb-5'>Add a friend</h1>
 			<form id='add-friend-form' class='flex items-center justify-between'>
 				<div>
-					<input id="friend-name" type="text" name="friend_name" placeholder="friend username" class="block w-full rounded-md px-3 py-1.5 text-stone-900 outline outline-1 -outline-offset-1 outline-medium placeholder:text-stone-400 focus:outline-2 focus:-outline-offset-2 focus:outline-muted sm:text-sm/6" />
+					<input id="friend-name-input" type="text" name="friend_name" placeholder="friend username" class="block w-full rounded-md px-3 py-1.5 text-stone-900 outline outline-1 -outline-offset-1 outline-medium placeholder:text-stone-400 focus:outline-2 focus:-outline-offset-2 focus:outline-muted sm:text-sm/6" />
 				</div>
 				<button id='add-friend-btn' type='submit' class='${BUTTON_WHITE_CLASSES}'>Add</button>
 			</form>
+			<p id='add-friend-message'></p>
 		`;
+	}
+
+	private sendFriendshipRequest(): void {
+		const form = document.getElementById('add-friend-form') as HTMLFormElement;
+		const input = this.querySelector('#friend-name-input') as HTMLInputElement;
+		form?.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const formData = new FormData(form);
+			const friendName: string = formData.get('friend_name') as string;
+			const accessToken = this._ctx?.userStore.get()?.accessToken;
+			this.dispatchEvent(new CustomEvent('event-send-friendship-request', {
+				detail: {
+					friendName: friendName as string,
+					accessToken: accessToken as string
+				},
+				bubbles: true
+			}))
+			input.value = '';
+		})
 	}
 
 }
