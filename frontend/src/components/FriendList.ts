@@ -1,9 +1,9 @@
 import { friendshipApi } from "../api/friendshipApi.js";
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import type { FriendData } from "../types.js";
 
 export class FriendList extends HTMLElement {
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 	private _list: Partial<FriendData>[] | null = null;
 	private _accessToken: string | null = null;
 	
@@ -11,7 +11,7 @@ export class FriendList extends HTMLElement {
 		super();
 	}
 
-	set ctx(value : AppStores)
+	set ctx(value : AppContext)
 	{
 		this._ctx = value;
 		// Load data when ctx is set and component is connected
@@ -63,17 +63,14 @@ export class FriendList extends HTMLElement {
 	}
 
 	private async getFriendList(): Promise<void> {
-		const currentUser = this._ctx?.user.get();
-		console.log('current user : ', currentUser);
+		const currentUser = this._ctx?.userStore.get();
 		const token = currentUser?.accessToken;
 		if (token !== undefined)
 			this._accessToken = token;
-		console.log('token : ', token);
 		if (!this._accessToken)
 			return;
 		try {
 			this._list = await friendshipApi.getList(this._accessToken);
-			console.log('friend list ', this._list);
 		} catch(error) {
 			console.log(error);
 		}
@@ -138,16 +135,20 @@ export class FriendList extends HTMLElement {
 		card.appendChild(text);
 		card.appendChild(actions);
 
+		
+
 		deleteBtn.addEventListener('click', (e) => {
 			console.log('event delete friend on ', friend.name);
-			try {
-				if (friend.friendshipId)
-					friendshipApi.delete(friend.friendshipId, this._accessToken!);
-				card.remove();
-			} catch (error) {
-
-			}
+			this.dispatchEvent(new CustomEvent('event-delete-friend', {
+				detail: {
+					friendshipId: friend.friendshipId as string,
+					accessToken: this._accessToken as string
+				},
+				bubbles: true
+			}));
 		});
+
+		
 		return card;
 	}
 }

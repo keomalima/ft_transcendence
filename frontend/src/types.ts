@@ -56,3 +56,9 @@ export interface FriendData {
 	isOnline: boolean;
 	avatarUrl: string | null;
 }
+
+import { UserStore } from "./store/userStore";
+// Define context type
+export interface AppContext {
+	userStore: UserStore;
+}

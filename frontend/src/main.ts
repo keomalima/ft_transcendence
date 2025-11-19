@@ -1,72 +1,67 @@
-import "./components/hello-card.js";
 import { Router } from "./router.js";
+import { AppContext } from "./types.js";
 
 // Import pages
-import { Home } from "./pages/home.js";
+import { Home } from "./pages/Home.js";
 import { About } from "./pages/about.js";
-import { createStores } from "./store/store.js";
+import { createUserStore, UserStore } from "./store/userStore.js";
 import { NotFound } from "./pages/404.js";
 import { Dashboard } from "./pages/Dashboard.js";
 import { Profile } from "./pages/Profile.js";
 import { EditProfile } from "./pages/EditProfile.js";
-
-const INPUT_CLASSES = 'block w-full rounded-full bg-blue-500 px-3 py-1.5 text-base text-gray-900 \
-	utline outline-1 outline-muted placeholder:text-gray-400 \
-	focus:outline-2 focus:outline-muted';
+import { userService } from "./services/UserService.js";
 
 
-// Create stores
-const stores = createStores();
+// Create and init user store
+const userStore = createUserStore(null);
+userStore.init(null);
 
-// Load saved user state from localStorage if it exists
-const savedUserState = localStorage.getItem('userState');
-if (savedUserState && savedUserState.trim() !== '' && savedUserState !== 'null') {
-	try {
-		stores.user.set(JSON.parse(savedUserState));
-	} catch (error) {
-		console.error('Failed to load user state from localStorage:', error);
-		localStorage.removeItem('userState'); // Clean up invalid data
-		// If parsing fails, set default null state
-		stores.user.set({
-			id: null,
-			email: null,
-			name: null,
-			surname: null,
-			displayName: null,
-			isLoggedIn: false,
-			accessToken: null,
-			isOnline: false,
-			createdAt: null,
-			updatedAt: null,
-			avatarFile: null,
-			avatarUrl: null
-		});
+
+// Create context
+const context: AppContext = {
+	userStore
+};
+
+// Async initialization function
+async function initializeApp() {
+	// Load saved userId and accessToken from localStorage
+	const savedUserId = localStorage.getItem('userId');
+	const savedAccessToken = localStorage.getItem('accessToken');
+
+	// If both exist, restore the session and fetch user data
+	if (savedUserId && savedAccessToken) {
+		context.userStore.update((prevState) => ({
+			...prevState,
+			id: savedUserId,
+			accessToken: savedAccessToken,
+			isLoggedIn: true,
+		}));
+		
+		// Fetch full user data from API (wait for it to complete)
+		try {
+			await userService.getUserState(context, savedUserId);
+		} catch (error) {
+			console.error('Failed to restore session:', error);
+			// Clear invalid session
+			localStorage.removeItem('userId');
+			localStorage.removeItem('accessToken');
+			context.userStore.set(null);
+		}
 	}
-} else {
-	// No saved state, initialize with defaults
-	stores.user.set({
-		id: null,
-		email: null,
-		name: null,
-		surname: null,
-		displayName: null,
-		isLoggedIn: false,
-		accessToken: null,
-		isOnline: false,
-		createdAt: null,
-		updatedAt: null,
-		avatarFile: null,
-		avatarUrl: null
-	});
+
+	// Start router after data is loaded
+	router
+		.add("/", Home)
+		.add("/about", About)
+		.add("/404", NotFound)
+		.add("/home", Dashboard)
+		.add("/profile", Profile)
+		.add("/edit-profile", EditProfile)
+		.start();
 }
 
-// launch router with context (stores)
-export const router = new Router("#root", stores); // only one instance of router for the whole project
-router
-    .add("/", Home)
-    .add("/about", About)
-    .add("/404", NotFound)
-    .add("/home", Dashboard)
-    .add("/profile", Profile)
-    .add("/edit-profile", EditProfile)
-    .start();
+// launch router with context
+export const router = new Router("#root", context);
+
+// Initialize the app
+initializeApp();

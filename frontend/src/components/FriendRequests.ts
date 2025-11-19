@@ -1,10 +1,10 @@
 import { friendshipApi } from "../api/friendshipApi.js";
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import type { FriendData } from "../types.js";
 import type { RequestData } from "../types.js";
 
 export class FriendRequests extends HTMLElement {
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 	private _list: Partial<RequestData>[] | null = null;
 	private _accessToken: string | null = null;
 	
@@ -12,7 +12,7 @@ export class FriendRequests extends HTMLElement {
 		super();
 	}
 
-	set ctx(value : AppStores)
+	set ctx(value : AppContext)
 	{
 		this._ctx = value;
 		// Load data when ctx is set and component is connected
@@ -26,15 +26,7 @@ export class FriendRequests extends HTMLElement {
 		if (this._ctx) {
 			await this.loadAndRender();
 		}
-		
-		// Listen for friend list updates to reload requests too
-		// window.addEventListener('friend-list-updated', this.loadAndRender.bind(this));
 	}
-
-	// disconnectedCallback() {
-	// 	// Clean up event listener when component is removed
-	// 	window.removeEventListener('friend-list-updated', this.loadAndRender.bind(this));
-	// }
 
 	private async loadAndRender() {
 		await this.getRequests();
@@ -53,17 +45,14 @@ export class FriendRequests extends HTMLElement {
 	}
 
 	private async getRequests(): Promise<void> {
-		const currentUser = this._ctx?.user.get();
-		console.log('current user : ', currentUser);
+		const currentUser = this._ctx?.userStore.get();
 		const token = currentUser?.accessToken;
 		if (token !== undefined)
 			this._accessToken = token;
-		console.log('token : ', token);
 		if (!this._accessToken)
 			return;
 		try {
 			this._list = await friendshipApi.getRequests(this._accessToken);
-			console.log('friend list ', this._list);
 		} catch(error) {
 			console.log(error);
 		}

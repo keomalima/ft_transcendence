@@ -1,8 +1,8 @@
-import type { AppStores } from "./store/store.js";
+import { AppContext } from "./types";
 
 // Define a new function type to make sure that the function sent to route is well designed
-// (here the function must take an AppStores parameter and return a string e.g. a HTML content)
-type View = (ctx: AppStores) => string;
+// (here the function must take an AppContext parameter and return a string e.g. a HTML content)
+type View = (ctx: AppContext) => string;
 
 interface Route {
 	path: string;
@@ -13,9 +13,9 @@ export class Router {
 
 	private routes: Route[] = [];
 	private app: HTMLElement; // HTML element where the page is rendered
-	private ctx: AppStores; // All states/stores (user, friend, games, etc)
+	private ctx: AppContext; // Context with stores (user, friend, games, etc)
 
-	constructor(appSelector: string, ctx: AppStores) {
+	constructor(appSelector: string, ctx: AppContext) {
 		// Find the container element where pages will be rendered
 		const elem = document.querySelector(appSelector);
 		if (!elem) {

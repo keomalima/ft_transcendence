@@ -1,15 +1,15 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types";
 
 export class BigStats extends HTMLElement {
 
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 
 	constructor() {
 		super();
 		this.render();
 	}
 
-	set ctx(value : AppStores)
+	set ctx(value : AppContext)
 	{
 		this._ctx = value;
 	}

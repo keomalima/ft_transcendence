@@ -1,5 +1,5 @@
 import { router } from "../main.js";
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import { userService } from "../services/UserService.js";
 import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
 
@@ -7,7 +7,7 @@ import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES
 import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
-export function Home(ctx: AppStores): string {
+export function Home(ctx: AppContext): string {
 
 	setTimeout(() => {
 		passContext(ctx);
@@ -71,18 +71,24 @@ export function Home(ctx: AppStores): string {
 	return content;
 }
 
-// Pass context to HTML elements
-function passContext(ctx: AppStores) {
+// ======== PASS CONTEXT ========
+
+function passContext(ctx: AppContext) {
 	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
 	if (registerComponent) {
 		registerComponent.ctx = ctx;
 	}
 }
 
-// Setup event listeners after DOM is ready
-function setupHomeEventListeners(ctx: AppStores) {
 
-	// Start event : show from
+// ======== EVENT LISTENER ============
+
+function setupHomeEventListeners(ctx: AppContext) {
+
+	// Get the register component
+	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
+
+	// **** SHOW FORM ****
 	const startedBtn = document.getElementById('get-started-btn');
 	const learnBtn = document.getElementById('learn-more-btn');
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
@@ -90,7 +96,6 @@ function setupHomeEventListeners(ctx: AppStores) {
 	if (startedBtn) {
 		startedBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			console.log('click of Get started')
 			if (hidenForm) {
 				hidenForm.style.display = 'block';
 				startedBtn.style.display = 'none';
@@ -100,7 +105,7 @@ function setupHomeEventListeners(ctx: AppStores) {
 		});
 	}
 
-	// Sign-in submit form listener
+	// **** SIGN IN ****
 	const form = document.getElementById('signin-form') as HTMLFormElement;
 	if (form) {
 		form.addEventListener('submit', async (e) => {
@@ -113,7 +118,6 @@ function setupHomeEventListeners(ctx: AppStores) {
 			const email = emailInput?.value;
 			const password = passwordInput?.value;
 			
-			console.log('Form submitted:', email);
 			try {
 				const user = await userService.loginUser(email, password, ctx);
 				router.navigateTo('/home');
@@ -124,4 +128,28 @@ function setupHomeEventListeners(ctx: AppStores) {
 			}
 		});
 	}
+
+	// **** CREATE NEW ACCOUNT ****
+	registerComponent?.addEventListener('event-account-creation', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			await userService.createUser({
+				email: data.email,
+				name: data.firstName,
+				surname: data.lastName,
+				password: data.password,
+				displayName: data.username,
+				avatarFile: data.avatarFile,
+			}, ctx);
+			
+			// Login after successful creation
+			await userService.loginUser(data.email, data.password, ctx);
+			router.navigateTo('/home');
+		} catch (error) {
+			console.log(error);
+			// TODO: Show error to user
+		}
+	});
+
 }

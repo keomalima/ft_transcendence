@@ -1,16 +1,16 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import { BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 
 export class ProfileCard extends HTMLElement {
 
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
 	
 	constructor() {
 		super();
 	}
 
-	set ctx(value : AppStores)
+	set ctx(value : AppContext)
 	{
 		this._ctx = value;
 		if (this.isConnected) {
@@ -25,9 +25,8 @@ export class ProfileCard extends HTMLElement {
 	}
 
 	private render() {
-		const currentUser = this._ctx?.user.get();
+		const currentUser = this._ctx?.userStore.get();
 		const profilePicture: string = `${this._uploadsUrl}${currentUser?.avatarUrl}`;
-		console.log('profile picture ', profilePicture);
 		this.innerHTML =
 		/*html*/`
 			<div class="bg-white rounded-lg p-6">

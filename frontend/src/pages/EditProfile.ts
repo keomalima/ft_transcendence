@@ -1,4 +1,4 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
@@ -10,8 +10,8 @@ import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSE
 import "../components/NavBar.js";
 
 
-export function EditProfile(ctx: AppStores) : string {
-	let currentUser = ctx.user.get();
+export function EditProfile(ctx: AppContext) : string {
+	let currentUser = ctx.userStore.get();
 	const accessToken = currentUser?.accessToken;
 	if (!accessToken)
 	{
@@ -24,7 +24,7 @@ export function EditProfile(ctx: AppStores) : string {
 		return '';
 	const uploadsUrl: string = 'http://localhost:3000';
 	userService.getUserState(ctx, currentUser.id);
-	currentUser = ctx?.user.get();
+	currentUser = ctx?.userStore.get();
 	const profilePicture: string = `${uploadsUrl}${currentUser?.avatarUrl}`;
 
 	setTimeout(() => {
@@ -136,7 +136,7 @@ export function EditProfile(ctx: AppStores) : string {
 }
 
 
-function passContext(ctx: AppStores) {
+function passContext(ctx: AppContext) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
@@ -145,7 +145,7 @@ function passContext(ctx: AppStores) {
 
 
 // Setup event listeners after DOM is ready
-function setupEditEventListeners(ctx: AppStores) {
+function setupEditEventListeners(ctx: AppContext) {
 
 	let selectedAvatarFile: File | null;
 
@@ -157,7 +157,6 @@ function setupEditEventListeners(ctx: AppStores) {
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file)
 			return;
-		console.log('uploaded file : ', file);
 
 		// store selected avatar
 		selectedAvatarFile = file;
@@ -190,9 +189,6 @@ function setupEditEventListeners(ctx: AppStores) {
 	updatePersonnalInfo.addEventListener('submit', async(e) => {
 		e.preventDefault();
 		e.stopPropagation();
-
-		console.log('update personnal info event');
-
 		try {
 			const formData = new FormData(updatePersonnalInfo);
 			const user = await userService.updateUser({
@@ -212,13 +208,9 @@ function setupEditEventListeners(ctx: AppStores) {
 	deleteProfile.addEventListener('click', async (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-
-		console.log('delete account event');
-
 		try {
 			const user = await userService.deleteUser(ctx);
 			router.navigateTo('/');
-			console.log(`successful delete`);
 		} catch (error) {
 			console.log(error);
 		}

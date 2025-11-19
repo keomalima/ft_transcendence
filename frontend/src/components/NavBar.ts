@@ -1,4 +1,4 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 
@@ -7,14 +7,14 @@ import { NAV_ELEM_CLASSES, NAV_LOGO_CLASSES, NAV_ELEM_SELECTED_CLASSES } from ".
 
 export class NavBar extends HTMLElement {
 
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 
 	constructor() {
 		super();
 		this.render();
 	}
 
-	set ctx(value : AppStores)
+	set ctx(value : AppContext)
 	{
 		this._ctx = value;
 		this.attachEventListener(this._ctx);
@@ -77,7 +77,9 @@ export class NavBar extends HTMLElement {
 		`
 	}
 	
-	private attachEventListener(ctx: AppStores) {
+	// ======== EVENT LISTENER ============
+	
+	private attachEventListener(ctx: AppContext) {
 	
 		// Logout listener
 		const logoutBtn = document.getElementById('logout-btn') as HTMLElement;

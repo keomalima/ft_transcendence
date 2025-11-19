@@ -1,4 +1,4 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import { MatchData } from "../data/matchData.js";
 
 interface matchInfo {
@@ -14,13 +14,13 @@ interface matchInfo {
 
 export class MatchHistory extends HTMLElement {
 
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 
 	constructor() {
 		super();
 	}
 
-	set ctx(value : AppStores)
+	set ctx(value : AppContext)
 	{
 		this._ctx = value;
 	}

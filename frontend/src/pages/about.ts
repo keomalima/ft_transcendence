@@ -1,7 +1,7 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types";
 
-export function About(ctx: AppStores): string {
-    const user = ctx.user.get()    
+export function About(ctx: AppContext): string {
+    const user = ctx.userStore.get()    
     return `
         <a data-link href="/">Accueil</a>
         <a data-link href="/about">À propos</a>
@@ -12,7 +12,7 @@ export function About(ctx: AppStores): string {
             <li>Navigation: history.pushState</li>
             <li>Rendu: innerHTML sur un outlet</li>
             <li>
-            ${ctx.user.get()}
+            ${ctx.userStore.get()}
             </lI>
         </ul>
     `;

@@ -2,18 +2,18 @@ import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { INPUT_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 
 export class RegisterPopUp extends HTMLElement {
 	private selectedAvatarFile: File | null = null;
-	private _ctx: AppStores | null = null;
+	private _ctx: AppContext | null = null;
 
 	constructor() {
 		super();
 		this.render();
 	}
 
-	set ctx(value: AppStores) {
+	set ctx(value: AppContext) {
 		this._ctx = value;
 		this.attachEventListener(this._ctx);
 	}
@@ -78,7 +78,11 @@ export class RegisterPopUp extends HTMLElement {
         `;
 	}
 
-	private attachEventListener(ctx: AppStores | null) {
+	
+	
+	// ======== EVENT LISTENER ============
+
+	private attachEventListener(ctx: AppContext | null) {
 
 		if (ctx == null)
 			return;
@@ -87,8 +91,9 @@ export class RegisterPopUp extends HTMLElement {
 		const avatarInput = this.querySelector('#avatar-input') as HTMLInputElement;
 		const saveBtn = this.querySelector('#save-btn') as HTMLButtonElement;
 
+		// **** LOAD AVATAR ****
 		avatarInput?.addEventListener('change', async (e) =>  {
-			// diable button
+			// disable button
 			saveBtn.disabled = true;
 			saveBtn.className = 'btn-disable bg-white';
 			saveBtn.textContent = 'Loading...';
@@ -117,7 +122,7 @@ export class RegisterPopUp extends HTMLElement {
 		})
 
 
-		// Create new account
+		// **** CREATE NEW ACCOUNT ****
 		const createAccountForm = this.querySelector('#create-new-account-form') as HTMLFormElement;
 		if (createAccountForm)
 		{
@@ -140,28 +145,19 @@ export class RegisterPopUp extends HTMLElement {
 					}
 					return;
 				}
-				// try to create a new user
-				try {
-					const response = await userService.createUser({
+				formData.append('avatarFile', this.selectedAvatarFile!);
+				this.dispatchEvent(new CustomEvent('event-account-creation', {
+					detail: {
 						email: formData.get('email') as string,
-						name: formData.get('first_name') as string,
-						surname: formData.get('last_name') as string,
+						firstName: formData.get('first_name') as string,
+						lastName: formData.get('last_name') as string,
 						password: formData.get('password') as string,
-						displayName: formData.get('username') as string,
-						// avatarFile: null
-						avatarFile: this.selectedAvatarFile
-					}, ctx);
-					// try to login with the new created user
-					try {
-						const formData = new FormData(createAccountForm);
-						const user = await userService.loginUser(formData.get('email') as string, formData.get('password') as string, ctx);
-						router.navigateTo('/home');
-					} catch {
-
-					}
-				} catch {
-
-				}
+						username: formData.get('username') as string,
+						avatarFile: this.selectedAvatarFile  // Direct file reference
+					},
+					bubbles: true
+				}))
+				console.log('create user in register');
 			});
 		}
 	}
@@ -179,25 +175,6 @@ export class RegisterPopUp extends HTMLElement {
 			return 'Password confirmation failed. Please confirm password.';
 		
 		return null;
-	}
-
-	private getErrorMessage(error: Error): string {
-		let errorMessage = 'An unexpected error occurred';
-
-		const message = error.message;
-		// clear message
-		const jsonMatch = message.match(/\{.*\}/);
-		if (jsonMatch) {
-			try {
-				const errorData = JSON.parse(jsonMatch[0]);
-				errorMessage = errorData.message;
-			} catch {
-				errorMessage = message;
-			}
-		} else {
-			errorMessage = message;
-		}
-		return errorMessage;
 	}
 
 }

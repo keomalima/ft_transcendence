@@ -1,4 +1,4 @@
-import type { AppStores } from "../store/store.js";
+import { AppContext } from "../types.js";
 import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 
@@ -10,8 +10,8 @@ import "../components/BigStats.js";
 import "../components/MatchHistory.js";
 
 
-export function Profile(ctx: AppStores): string {
-	const currentUser = ctx.user.get();
+export function Profile(ctx: AppContext): string {
+	const currentUser = ctx.userStore.get();
 	const accessToken = currentUser?.accessToken;
 	if (!accessToken)
 	{
@@ -66,7 +66,7 @@ export function Profile(ctx: AppStores): string {
 	return content;
 }
 
-function passContext(ctx: AppStores) {
+function passContext(ctx: AppContext) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
