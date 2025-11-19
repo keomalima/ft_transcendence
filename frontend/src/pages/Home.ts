@@ -9,6 +9,11 @@ import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
 export function Home(ctx: AppContext): string {
 
+	if (ctx.userStore.get()?.accessToken) {
+		console.log('session already active, navigate to dashboard');
+		router.navigateTo('/home');
+	}
+
 	setTimeout(() => {
 		passContext(ctx);
 		setupHomeEventListeners(ctx);

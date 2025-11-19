@@ -1,7 +1,6 @@
 import { AppContext, UserState } from "../types.js";
 import { router } from "../main.js";
 import { friendshipApi } from "../api/friendshipApi.js";
-import { userService } from "../services/UserService.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -20,13 +19,13 @@ export function Dashboard(ctx: AppContext): string{
     if (!currentUser?.accessToken || !currentUser?.id)
     {
         console.log('no session when accessing /home')
-        router.navigateTo('/');
-        return '';
+        setTimeout(() => router.navigateTo('/'), 0);
+        return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
     }
 
 	setTimeout(() => {
 		passContext(ctx);
-		setupHomeEventListeners(ctx);
+		setupDashboardEventListeners(ctx);
 	}, 0);
 
 	const content = /*html*/`
@@ -102,7 +101,7 @@ function passContext(ctx: AppContext) {
 }
 
 // ======== EVENT LISTENER ============
-function setupHomeEventListeners(ctx: AppContext) {
+function setupDashboardEventListeners(ctx: AppContext) {
 
 	const friendListComponent = document.getElementById('friend-list-component') as any;
 	const requestsComponent = document.getElementById('requests-component') as any;

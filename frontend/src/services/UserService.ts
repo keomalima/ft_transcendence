@@ -46,6 +46,8 @@ class UserService {
 			localStorage.setItem('userId', result.id);
 		if (result?.accessToken)
 			localStorage.setItem('accessToken', result.accessToken);
+
+		await this.getUserState(ctx, result.id);
 		return result;
 	}
 
