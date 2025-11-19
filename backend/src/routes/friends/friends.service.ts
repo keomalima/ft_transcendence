@@ -54,10 +54,7 @@ async function findPendingRequests(prisma: PrismaClient, id: string) {
 			status: 'PENDING'
 		},
 		include: {
-			requester: true,
-			include: {
-				userId: true
-			}
+			requester: true
 		}
 	})
 }

@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:3000/api/games
-@token = 168a0b82-bb30-434b-8333-4bfb12312243
-@userId = 8dda7613-7e48-4519-9297-c386b8c4972d
-@gameId = ab7ea4b0-7874-4b20-9604-73c94bf2e619
+@token = 1be738d4-c9f7-4c76-97a9-9bcff179b6ee
+@userId = d4424ed1-c537-496f-b848-85e8fb6d7dfa
+@gameId = 59ebe32b-3e35-4f6b-8b24-efb72d31b488
 
 @gameToken = 0MXxxE3-
 

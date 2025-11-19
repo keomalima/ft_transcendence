@@ -63,7 +63,7 @@ model Game {
 	token String? @unique
 	scoreToWin Int?
 	createdBy String 
-	user User @relation(fields: [createdBy], references: [id])
+	user User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 	// tournamentId String?
 	// tournament Tournament? @relation(fields: [tournamentId], references: [id])
 	status GameStatus @default(PENDING)
@@ -78,9 +78,9 @@ model Game {
 model GamePlayer {
 	id String @id @default(uuid())
 	gameId String
-	game Game @relation(fields: [gameId], references: [id])
+	game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 	userId String
-	user User @relation(fields: [userId], references: [id])
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 	score Int @default(0)
 	isWinner Boolean @default(false)
 	
