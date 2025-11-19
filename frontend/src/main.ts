@@ -1,72 +1,67 @@
-import './style.css';
+import { Router } from "./router.js";
+import { AppContext } from "./types.js";
 
-import { LearnMore } from './pages/LearnMore';
-import { Profile } from './pages/Profile';
-import { EditProfile } from './pages/EditProfile';
-import { Home } from './pages/Home';
-import { NotFound } from './pages/404';
-import { test } from './components/test';
-import { Game } from './pages/Game';
-import { Dashboard } from './pages/Dashboard';
-import './htmlComponents/MyButton';
-import './htmlComponents/MyLink';
-import './htmlComponents/MyLabel'
-import './htmlComponents/MyInput'
+// Import pages
+import { Home } from "./pages/Home.js";
+import { About } from "./pages/about.js";
+import { createUserStore, UserStore } from "./store/userStore.js";
+import { NotFound } from "./pages/404.js";
+import { Dashboard } from "./pages/Dashboard.js";
+import { Profile } from "./pages/Profile.js";
+import { EditProfile } from "./pages/EditProfile.js";
+import { userService } from "./services/UserService.js";
 
-import { userStore } from './store/UserStorage';
 
-// localStorage.clear();
+// Create and init user store
+const userStore = createUserStore(null);
+userStore.init(null);
 
-userStore.loadFromLocalStorage();
 
-if (userStore.getUserAccessToken() == null)
-{
-	localStorage.clear();
-}
-
-// Define map between path and render function
-const routes: Record<string, () => void> = {
-	'/': Home,
-	'/LearnMore': LearnMore,
-	'/profile': Profile,
-	'/test': test,
-	'/game': Game,
-	'/edit-profile': EditProfile,
-	'/dashboard': Dashboard
+// Create context
+const context: AppContext = {
+	userStore
 };
 
-// Select the right path and execute the linked function
-function router() {
-	const path = window.location.pathname;
-	userStore.loadFromLocalStorage();
-	const renderFunction = routes[path] || NotFound;
-	renderFunction();
-}
+// Async initialization function
+async function initializeApp() {
+	// Load saved userId and accessToken from localStorage
+	const savedUserId = localStorage.getItem('userId');
+	const savedAccessToken = localStorage.getItem('accessToken');
 
-// Route to the correct new path and add the path to history
-export function navigateTo(path: string)
-{
-	window.history.pushState(null, '', path);
-	router();
-}
-
-// Event delegation : gets every clicks.
-// If click on a data-link <a> handle the navigation respecting the SPA requirement
-document.addEventListener('click', (e) => {
-	const target = e.target as HTMLElement;
-
-	if (target.matches('[data-link]')) {
-		e.preventDefault();
-
-		const href = target.getAttribute('href');
-		if (href)
-			navigateTo(href);
+	// If both exist, restore the session and fetch user data
+	if (savedUserId && savedAccessToken) {
+		context.userStore.update((prevState) => ({
+			...prevState,
+			id: savedUserId,
+			accessToken: savedAccessToken,
+			isLoggedIn: true,
+		}));
+		
+		// Fetch full user data from API (wait for it to complete)
+		try {
+			await userService.getUserState(context, savedUserId);
+		} catch (error) {
+			console.error('Failed to restore session:', error);
+			// Clear invalid session
+			localStorage.removeItem('userId');
+			localStorage.removeItem('accessToken');
+			context.userStore.set(null);
+		}
 	}
-})
 
-// Handle back and forward in browser history
-window.addEventListener('popstate', router);
+	// Start router after data is loaded
+	router
+		.add("/", Home)
+		.add("/about", About)
+		.add("/404", NotFound)
+		.add("/home", Dashboard)
+		.add("/profile", Profile)
+		.add("/edit-profile", EditProfile)
+		.start();
+}
 
-// Hender the first page (home)
-router();
+// launch router with context
+export const router = new Router("#root", context);
 
+// Initialize the app
+initializeApp();

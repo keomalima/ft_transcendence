@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api/users
-@userId = 073b578e-77ab-4d89-bc59-4b79a93ca78a
-@token = 5b2de7be-0495-4b8d-8778-41513823716c
+@token = 7ce22481-8eea-44d5-9188-6bf7be6958cc
+@userId = 2db892b5-9303-48a3-a6a1-10ab429bf762
 
 ### GET ALL USERS
 GET {{baseUrl}} HTTP/1.1
@@ -67,7 +67,7 @@ Content-Type: application/json
 GET {{baseUrl}}/{{userId}} HTTP/1.1
 Authorization: Bearer {{token}}
 
-### LOGOUT AN USER 
+### LOGOUT AN USER
 POST {{baseUrl}}/logout HTTP/1.1
 Authorization: Bearer {{token}}
 

@@ -1,13 +1,29 @@
-import { userService } from "../services/UserService";
-import { navigateTo } from "../main";
+import { AppContext } from "../types.js";
+import { router } from "../main.js";
+import { userService } from "../services/UserService.js";
 
-export function NavBar() {
-	const navBar = document.getElementById('navigation-bar');
-	if (navBar)
+// import style 
+import { NAV_ELEM_CLASSES, NAV_LOGO_CLASSES, NAV_ELEM_SELECTED_CLASSES } from "../styles/tailwindStyles.js";
+
+export class NavBar extends HTMLElement {
+
+	private _ctx: AppContext | null = null;
+
+	constructor() {
+		super();
+		this.render();
+	}
+
+	set ctx(value : AppContext)
 	{
-		navBar.innerHTML = /*html*/`
+		this._ctx = value;
+		this.attachEventListener(this._ctx);
+	}
+
+	private render() {
+		this.innerHTML = /*html*/`
 			<nav aria-label="Global" class=" flex items-center justify-between p-6 lg:px-20">
-				<a data-link href="/dashboard" class="nav-logo">
+				<a data-link href="/dashboard" class='${NAV_LOGO_CLASSES}'>
 					<span class=''>Let's Pong !</span>
 				</a>
 				<div class="flex lg:hidden">
@@ -19,11 +35,11 @@ export function NavBar() {
 				</button>
 				</div>
 					<div class="hidden lg:flex lg:gap-x-12">
-					<a data-link href="/dashboard" class="nav-elem ${window.location.pathname === '/dashboard' ? 'text-black' : ''}" >home</a>
-					<a data-link href="/profile" class="nav-elem ${window.location.pathname === '/profile' ? 'text-black' : ''}" >profile</a>
-					<a data-link href="/game" class="nav-elem ${window.location.pathname === '/game' ? 'text-black' : ''}" >game</a>
-					<a data-link href="/tournament" class="nav-elem ${window.location.pathname === '/tournament' ? 'text-black' : ''}" >tournament</a>
-					<a id='logout-btn' href='/' class="nav-elem">Log out</a>
+					<a data-link href="/home" class="${window.location.pathname === '/home' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >home</a>
+					<a data-link href="/profile" class="${window.location.pathname === '/profile' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >profile</a>
+					<a data-link href="/game" class="${window.location.pathname === '/game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
+					<a data-link href="/tournament" class="${window.location.pathname === '/tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
+					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">Log out</a>
 				</div>
 			</nav>
 			<el-dialog>
@@ -60,33 +76,39 @@ export function NavBar() {
 			</el-dialog>
 		`
 	}
+	
+	// ======== EVENT LISTENER ============
+	
+	private attachEventListener(ctx: AppContext) {
+	
+		// Logout listener
+		const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
+		logoutBtn.addEventListener('click', async (e) => {
+			e.preventDefault();
+			e.stopPropagation();
 
-	// Logout listener
-	const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
-	logoutBtn.addEventListener('click', async (e) => {
-		e.preventDefault();
-		e.stopPropagation();
+			try {
+				userService.logoutUser(ctx);
+				router.navigateTo('/');
+			} catch (error) {
+				console.log(error);
+			}
+		});
 
-		try {
-			const user = await userService.logoutUser();
-			navigateTo('/');
-		} catch (error) {
-			console.log(error);
-		}
-	});
+		const logoutBtn2 = document.getElementById('logout-btn-2') as HTMLElement;
+		logoutBtn2.addEventListener('click', async (e) => {
+			e.preventDefault();
+			e.stopPropagation();
 
-	const logoutBtn2 = document.getElementById('logout-btn-2') as HTMLElement;
-	logoutBtn2.addEventListener('click', async (e) => {
-		e.preventDefault();
-		e.stopPropagation();
+			try {
+				userService.logoutUser(ctx);
+				router.navigateTo('/');
+			} catch (error) {
+				console.log(error);
+			}
+		});
 
-		try {
-			const user = await userService.logoutUser();
-			navigateTo('/');
-		} catch (error) {
-			console.log(error);
-		}
-	});
-
-	return navBar;
+	}
 }
+
+customElements.define('nav-bar', NavBar);

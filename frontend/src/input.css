@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your custom global styles */
+body {
+	margin: 0;
+	padding: 0;
+	background-color: #EDE5D8;
+	font-family: 'Inter', sans-serif;
+	font-weight: 300;
+	color: black;
+}
+
+h1 {
+	font-family: 'Calistoga', serif;
+	color: black;
+}
+
+h2 {
+	font-family: 'Inter', sans-serif;
+	font-size: 15px;
+	color: black;
+}
+
+dialog::backdrop {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+dialog {
+	border: none;
+	border-radius: 8px;
+	padding: 2rem;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

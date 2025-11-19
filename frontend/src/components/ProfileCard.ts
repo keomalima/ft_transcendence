@@ -1,38 +1,41 @@
-import profilePicture from '../images/defaultProfile.webp';
-// import { userData } from '../data/userData';
-import { navigateTo } from "../main";
-import { userStore } from '../store/UserStorage';
-import { userService } from '../services/UserService';
-import { UserState } from '../types';
+import { AppContext } from "../types.js";
+import { BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 
-type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
+export class ProfileCard extends HTMLElement {
 
+	private _ctx: AppContext | null = null;
+	private _uploadsUrl: string = 'http://localhost:3000';
+	
+	constructor() {
+		super();
+	}
 
-export async function ProfileCard () : Promise<HTMLElement | null> {
-
-	const profileCard = document.getElementById('profile-card');
-	if (profileCard)
+	set ctx(value : AppContext)
 	{
-		// console.log('profile card | before get user state = ', userStore.getUserInfo());
-		try {
-			await userService.getUserState();
+		this._ctx = value;
+		if (this.isConnected) {
+			this.render();
 		}
-		catch (error) {
-			console.log(error);
-		}
-		const userInfo = userStore.getUserInfo();
-		console.log('user info ', userInfo);
+	}
 
-		const avatarImg: string | null = 'http://localhost:3000' + userStore.getUserUserAvatar();
-		// console.log('user avatar = ', userStore.getUserUserAvatar());
-		profileCard.innerHTML = /*html*/`
+	connectedCallback() {
+		if (this._ctx) {
+			this.render();
+		}
+	}
+
+	private render() {
+		const currentUser = this._ctx?.userStore.get();
+		const profilePicture: string = `${this._uploadsUrl}${currentUser?.avatarUrl}`;
+		this.innerHTML =
+		/*html*/`
 			<div class="bg-white rounded-lg p-6">
 				<div class="flex flex-col items-center">
-					<img src=${avatarImg} class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0"></img>
-					<h1 class="text-xl font-bold">${userInfo.displayName}</h1>
-					<p>${userInfo.name} ${userInfo.surname}</p>
+					<img src='${profilePicture}' class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0"></img>
+					<h1 class="text-xl font-bold">${currentUser?.displayName}</h1>
+					<p>${currentUser?.name} ${currentUser?.surname}</p>
 					<div class="mt-6 flex flex-wrap gap-4 justify-center">
-						<a data-link href="/edit-profile" id='edit-btn' class="btn-primary bg-white hover:bg-black">Edit profile</a>
+						<a data-link href="/edit-profile" id='edit-btn' class="${BUTTON_WHITE_CLASSES} ">Edit profile</a>
 					</div>
 				</div>
 				<!-- <hr class="my-6 border-t border-gray-300">
@@ -47,9 +50,8 @@ export async function ProfileCard () : Promise<HTMLElement | null> {
 					</ul>
 				</div> -->
 			</div>
-
 		`
 	}
-
-	return profileCard;
 }
+
+customElements.define('profile-card', ProfileCard);

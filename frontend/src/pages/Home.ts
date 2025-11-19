@@ -1,122 +1,155 @@
+import { router } from "../main.js";
+import { AppContext } from "../types.js";
+import { userService } from "../services/UserService.js";
+import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
 
-import pongimg from '../images/pong.png';
-import { navigateTo } from '../main';
-import { RegisterPopUp } from '../components/RegisterPopUp';
-import { userService } from '../services/UserService';
-import { userStore } from '../store/UserStorage';
+// import HTML components
+import "../components/RegisterPopUp.js";
+import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
-export function Home() {
-	// console.log('start access token : ', userStore.getUserAccessToken());
+export function Home(ctx: AppContext): string {
 
-	const root = document.getElementById('root');
-	if (root) {
-		root.innerHTML = /*html*/`
-		<div>
+	setTimeout(() => {
+		passContext(ctx);
+		setupHomeEventListeners(ctx);
+	}, 0);
+
+	const content:string = /*html*/`
+        <div>
 			<div class="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
 				<div class="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-8 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
-					<h1 class="max-w-2xl text-xl font-semibold tracking-tight text-balance sm:text-7xl lg:col-span-2 xl:col-auto dark:text-white">Let's Pong !</h1>
+					<h1 class="max-w-2xl text-xl font-semibold text-black tracking-tight text-balance sm:text-7xl lg:col-span-2 xl:col-auto">Let's Pong !</h1>
 					<div class="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
-							<a href="#" class="styled-link" id="get-started-btn">Get started</a>
-							<a data-link href="/test" class="styled-link" id="test-btn">Test user</a>
-							<a class="styled-link" id="clear-local-storage">Clear local storage</a>
-							<my-link lHref="/LearnMore" lId="learn-more-btn">Learn more →</my-link>
+							<a href="#" id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</a>
+							<a data-link href="/test" id="test-btn" class='${LINK_STYLED_CLASSES}'>Test user</a>
+							<a href="#" id="clear-local-storage" class='${LINK_STYLED_CLASSES}'>Clear local storage</a>
+							<a data-link href="/LearnMore" id="learn-more-btn" class='${LINK_STYLED_CLASSES}'>Learn more →</a>
 						</div>
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
 							<form action="#" method="POST" class="space-y-6" id="signin-form" >
 								<div>
-									<my-label labelFor="email">Email address</my-label>
-									<my-input inputId="email" inputType="email" inputName="email" inputAutoComplete="email" required/>
+									<label for="email" class='${LABEL_CLASSES}'>Email address</label>
+									<input class="${INPUT_CLASSES}" id="email" type="email" name="email" autoComplete="email" required/>
 								</div>
 
 								<div>
 									<div class="flex items-center justify-between">
-										<my-label labelFor="password">Password</my-label>
+										<label for="password" class='${LABEL_CLASSES}'>Password</label>
 										<div class="text-sm">
 											<a data-link href="#" class="text-medium underline">Forgot password?</a>
 										</div>
 									</div>
-									<my-input inputId="password" inputType="password" inputName="password" inputAutoComplete="current-password" required/>
+									<input id="password" type="password" name="password" autoComplete="current-password" class='${INPUT_CLASSES}' required/>
 								</div>
 								<p id='login-error' class='text-red-500'></p>
 
 								<div>
-									<my-button btnType='submit'>Sign in</my-button>
+									<button type='submit' class='${BUTTON_CREAM_CLASSES}'>Sign in</button>
 								</div>
 							</form>
 
 							<p class="mt-10 text-center text-sm/6 text-medium">
 								Not a member?
-								<a class="underline" onclick="document.getElementById('pop-up-register').showModal()">Create a new account</a>
+								<a class="underline" onclick="document.getElementById('register-dialog').showModal()">Create a new account</a>
 							</p>
 						</div>
 					</div>
-					<img src="${pongimg}" alt="" class="mt-10 aspect-5/5 w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36" />
+					<img src="/src/images/pong.png" alt="Pong game" class="mt-10 aspect-5/5 w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36" />
 				</div>
 			</div>
 
 			<!-- Dialog for pop up -->
-			<dialog id="pop-up-register" class="place-self-center"></dialog>
+			<dialog id="register-dialog" class="place-self-center">
+				<register-popup id="register-component"></register-popup>
+			</dialog>
 
 		</div>
-		`
+    `;
 
+	return content;
+}
 
+// ======== PASS CONTEXT ========
 
-	// Start event
-	const startedBtn = document.getElementById('get-started-btn');
-	const learnBtn = document.getElementById('learn-more-btn');
-	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
-	startedBtn?.addEventListener('click', (e) => {
-		if (userStore.getUserAccessToken())
-		{
-			navigateTo('/profile');
-			return;
-		}
-		e.preventDefault();
-		hidenForm!.style.display = 'block';
-		startedBtn.style.display = 'none';
-		if (learnBtn)
-			learnBtn.style.display = 'none';
-	});
-
-	// Sign-in submit form listener
-	const form = document.getElementById('signin-form') as HTMLFormElement;
-	form.addEventListener('submit', async (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-
-		const emailInput = document.getElementById('email') as HTMLInputElement;
-		const passwordInput = document.getElementById('password') as HTMLInputElement;
-
-		const email = emailInput?.value;
-		const password = passwordInput?.value;
-		try {
-			const user = await userService.loginUser(email, password);
-			navigateTo('/dashboard');
-			console.log(`successful login with : ${email} in session id : ${user.accessToken}`);
-		} catch (error) {
-			console.log(error);
-			const popUpLogin = document.getElementById('login-error');
-			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
-		}
-	});
-
-
-	// Clear local storage
-	const clearBtn = document.getElementById('clear-local-storage') as HTMLElement;
-	clearBtn.addEventListener('click', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-
-		localStorage.clear();
-		userStore.clearUserState();
-		console.log('**** CLEAR LOCAL STORAGE ****');
-	});
-
-	RegisterPopUp();
-
+function passContext(ctx: AppContext) {
+	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
+	if (registerComponent) {
+		registerComponent.ctx = ctx;
 	}
 }
 
+
+// ======== EVENT LISTENER ============
+
+function setupHomeEventListeners(ctx: AppContext) {
+
+	// Get the register component
+	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
+
+	// **** SHOW FORM ****
+	const startedBtn = document.getElementById('get-started-btn');
+	const learnBtn = document.getElementById('learn-more-btn');
+	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
+	
+	if (startedBtn) {
+		startedBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (hidenForm) {
+				hidenForm.style.display = 'block';
+				startedBtn.style.display = 'none';
+			}
+			if (learnBtn)
+				learnBtn.style.display = 'none';
+		});
+	}
+
+	// **** SIGN IN ****
+	const form = document.getElementById('signin-form') as HTMLFormElement;
+	if (form) {
+		form.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const emailInput = document.getElementById('email') as HTMLInputElement;
+			const passwordInput = document.getElementById('password') as HTMLInputElement;
+
+			const email = emailInput?.value;
+			const password = passwordInput?.value;
+			
+			try {
+				const user = await userService.loginUser(email, password, ctx);
+				router.navigateTo('/home');
+			} catch (error) {
+				console.log(error);
+				const popUpLogin = document.getElementById('login-error');
+				popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
+			}
+		});
+	}
+
+	// **** CREATE NEW ACCOUNT ****
+	registerComponent?.addEventListener('event-account-creation', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			await userService.createUser({
+				email: data.email,
+				name: data.firstName,
+				surname: data.lastName,
+				password: data.password,
+				displayName: data.username,
+				avatarFile: data.avatarFile,
+			}, ctx);
+			
+			// Login after successful creation
+			await userService.loginUser(data.email, data.password, ctx);
+			router.navigateTo('/home');
+		} catch (error) {
+			console.log(error);
+			// TODO: Show error to user
+		}
+	});
+
+}
