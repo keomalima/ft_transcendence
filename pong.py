@@ -15,7 +15,7 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
 
-ASCII_BANNER = f"""
+ASCII_BANNER = f"""pas
 {CYAN}{BOLD}
  ____  ____   __   __ _  ____   ___  ____  __ _  ____  ____  __ _   ___  ____ 
 (_  _)(  _ \ / _\ (  ( \/ ___) / __)(  __)(  ( \(    \(  __)(  ( \ / __)(  __)
@@ -27,11 +27,12 @@ ASCII_BANNER = f"""
 
 BASE_URL = "http://localhost:3000/api/users"
 FRIENDS_URL = "http://localhost:3000/api/friends"
+GAME_URL = "http://localhost:3000/api/games"
 
 class User:
     def __init__(self, email: str, password: str, name: str, surname: str, 
                  display_name: str, user_id: Optional[int] = None, 
-                 token: Optional[str] = None):
+                 token: Optional[str] = None, is_online: bool = False):
         self.email = email
         self.password = password
         self.name = name
@@ -39,6 +40,7 @@ class User:
         self.display_name = display_name
         self.token = token
         self.user_id = user_id
+        self.is_online = is_online
 
     def register(self) -> bool:
         """Register a new user. Returns True if successful."""
@@ -178,7 +180,7 @@ class User:
             return False
 
     def get_friends(self) -> Optional[List[dict]]:
-        """Get user's active friends list. Returns list of friends if successful."""
+        """Get user's active friends list with online status. Returns list of friends if successful."""
         if not self.token:
             print(f"{RED}✗{RESET} User {self.email} is not logged in")
             return None
@@ -187,7 +189,9 @@ class User:
         try:
             resp = requests.get(FRIENDS_URL, headers=headers, timeout=5)
             if resp.status_code == 200:
-                return resp.json()
+                friends = resp.json()
+                # Friends list now includes isOnline status from the backend
+                return friends
             elif resp.status_code == 404:
                 return []  # No friends found
             else:
@@ -217,6 +221,139 @@ class User:
             print(f"{RED}✗{RESET} Network error while fetching pending requests: {e}")
             return None
 
+    # =====================
+    # Game Methods
+    # =====================
+
+    def create_game(self, game_type: str = "ONLINE", score_to_win: Optional[int] = None) -> Optional[dict]:
+        """Create a new game. Returns game data if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        data = {"type": game_type}
+        if score_to_win is not None:
+            data["scoreToWin"] = score_to_win
+        
+        try:
+            resp = requests.post(GAME_URL, json=data, headers=headers, timeout=5)
+            if resp.status_code == 201:
+                game = resp.json()
+                print(f"{GREEN}✓{RESET} Game created by {self.display_name} (ID: {game.get('id', 'N/A')})")
+                return game
+            else:
+                print(f"{RED}✗{RESET} Failed to create game: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while creating game: {e}")
+            return None
+
+    def get_game(self, game_id: str) -> Optional[dict]:
+        """Get game details by ID. Returns game data if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.get(f"{GAME_URL}/{game_id}", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+            elif resp.status_code == 404:
+                print(f"{YELLOW}⚠{RESET} Game not found")
+                return None
+            else:
+                print(f"{RED}✗{RESET} Failed to get game: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while fetching game: {e}")
+            return None
+
+    def update_game(self, game_id: str, score_to_win: int) -> Optional[dict]:
+        """Update game settings. Returns updated game data if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        data = {"scoreToWin": score_to_win}
+        
+        try:
+            resp = requests.put(f"{GAME_URL}/{game_id}", json=data, headers=headers, timeout=5)
+            if resp.status_code == 200:
+                game = resp.json()
+                print(f"{GREEN}✓{RESET} Game updated by {self.display_name}")
+                return game
+            else:
+                print(f"{RED}✗{RESET} Failed to update game: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while updating game: {e}")
+            return None
+
+    def generate_game_token(self, game_id: str) -> Optional[str]:
+        """Generate a token for a game. Returns token if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.post(f"{GAME_URL}/{game_id}/token", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                game = resp.json()
+                token = game.get('token')
+                print(f"{GREEN}✓{RESET} Game token generated: {BOLD}{token}{RESET}")
+                return token
+            else:
+                print(f"{RED}✗{RESET} Failed to generate token: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while generating token: {e}")
+            return None
+
+    def join_game(self, token: str) -> Optional[dict]:
+        """Join a game using a token. Returns join data if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.post(f"{GAME_URL}/{token}/join", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                result = resp.json()
+                print(f"{GREEN}✓{RESET} {self.display_name} joined the game")
+                return result
+            else:
+                print(f"{RED}✗{RESET} Failed to join game: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while joining game: {e}")
+            return None
+
+    def start_game(self, game_id: str) -> Optional[dict]:
+        """Start a game. Returns game data if successful."""
+        if not self.token:
+            print(f"{RED}✗{RESET} User {self.email} is not logged in")
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            resp = requests.put(f"{GAME_URL}/{game_id}/start", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                game = resp.json()
+                print(f"{GREEN}✓{RESET} Game started by {self.display_name}")
+                return game
+            else:
+                print(f"{RED}✗{RESET} Failed to start game: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while starting game: {e}")
+            return None
+
+
 def generate_random_string(length: int = 8) -> str:
     """Generate a random string of letters."""
     return ''.join(random.choices(string.ascii_lowercase, k=length))
@@ -243,7 +380,8 @@ def fetch_existing_users() -> List[User]:
                     name=u.get("name"),
                     surname=u.get("surname"),
                     display_name=u.get("displayName"),
-                    user_id=u.get("id")
+                    user_id=u.get("id"),
+                    is_online=u.get("isOnline", False)
                 )
                 users.append(user)
             print(f"{CYAN}✓{RESET} Fetched {len(users)} existing users from the database")
@@ -253,6 +391,52 @@ def fetch_existing_users() -> List[User]:
     except requests.exceptions.RequestException as e:
         print(f"{RED}✗{RESET} Network error while fetching users: {e}")
         return []
+
+def login_manual(users: List[User]) -> List[User]:
+    """Login a user with manual email and password input."""
+    print(f"\n{BOLD}Manual Login{RESET}")
+    print("-" * 40)
+    
+    email = input(f"Email: ").strip()
+    if not email or '@' not in email:
+        print(f"{RED}✗{RESET} Invalid email format")
+        return users
+    
+    password = input(f"Password: ").strip()
+    if not password:
+        print(f"{RED}✗{RESET} Password is required")
+        return users
+    
+    # Check if user already exists in our local list
+    existing_user = next((u for u in users if u.email == email), None)
+    
+    if existing_user:
+        # Update the password and try to login
+        existing_user.password = password
+        if existing_user.login():
+            print(f"{GREEN}✓{RESET} User logged in successfully!")
+        else:
+            print(f"{RED}✗{RESET} Login failed - check credentials")
+    else:
+        # Create a new user object with manual credentials (user must already exist in DB)
+        user = User(email, password, "", "", "")
+        data = {"email": email, "password": password}
+        try:
+            resp = requests.post(f"{BASE_URL}/login", json=data, timeout=5)
+            if resp.status_code in (200, 201):
+                json_data = resp.json()
+                user.token = json_data.get("accessToken") or json_data.get("token")
+                user.user_id = json_data.get("id") or json_data.get("user", {}).get("id")
+                user.name = json_data.get("name", "")
+                user.display_name = json_data.get("displayName", "")
+                users.append(user)
+                print(f"{GREEN}✓{RESET} Logged in {email}")
+            else:
+                print(f"{RED}✗{RESET} Failed to login {email}: {resp.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error during login: {e}")
+    
+    return users
 
 def create_manual_user(users: List[User]) -> List[User]:
     """Create a single user with manual input."""
@@ -323,16 +507,22 @@ def display_user_friends(user: User) -> None:
     pending_requests = user.get_pending_requests()
     
     print(f"\n{BOLD}Friends of {user.display_name}{RESET}")
-    print("-" * 60)
+    print("-" * 80)
     
-    # Display active friends
+    # Display active friends with online status
     if friends:
         print(f"\n{GREEN}Active Friends:{RESET}")
         for friend in friends:
             display = friend.get('displayName', 'Unknown')
             user_id = friend.get('id', 'N/A')
             friendship_id = friend.get('friendshipId', 'N/A')
-            print(f"  • {display} (User ID: {user_id}) - Friendship ID: {friendship_id}")
+            is_online = friend.get('isOnline', False)
+            
+            # Show online status indicator
+            status_icon = f"{GREEN}●{RESET}" if is_online else f"{DIM}○{RESET}"
+            status_text = f"{GREEN}Online{RESET}" if is_online else f"{DIM}Offline{RESET}"
+            
+            print(f"  {status_icon} {display} (User ID: {user_id}) - {status_text} - Friendship ID: {friendship_id}")
     else:
         print(f"\n{DIM}No active friends{RESET}")
     
@@ -348,7 +538,7 @@ def display_user_friends(user: User) -> None:
     else:
         print(f"\n{DIM}No pending requests{RESET}")
     
-    print()
+    print(f"\n{DIM}{GREEN}●{RESET}{DIM} = Online  ○ = Offline{RESET}\n")
 
 def clean_database() -> bool:
     """Clean the database. Returns True if successful."""
@@ -504,9 +694,117 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     
     print(f"\n{GREEN}✓{RESET} Mock scenario created successfully!\n")
     
+    # Create games
+    print(f"{CYAN}Step 3: Creating games...{RESET}")
+    
+    games_data = []
+    
+    # Game 1: Alice creates an ONLINE game, generates token, Bob joins, Alice starts
+    print(f"{DIM}  Creating ONLINE game: Alice vs Bob{RESET}")
+    game1 = alice.create_game("ONLINE", 10)
+    if game1:
+        time.sleep(0.3)
+        token1 = alice.generate_game_token(game1['id'])
+        if token1:
+            time.sleep(0.3)
+            bob.join_game(token1)
+            time.sleep(0.3)
+            alice.start_game(game1['id'])
+            games_data.append({
+                'id': game1['id'],
+                'type': 'ONLINE',
+                'status': 'IN_PROGRESS',
+                'players': ['Alice', 'Bob'],
+                'token': token1
+            })
+            time.sleep(0.3)
+    
+    # Game 2: Charlie creates a LOCAL game
+    print(f"{DIM}  Creating LOCAL game: Charlie (practice mode){RESET}")
+    game2 = charlie.create_game("LOCAL", 5)
+    if game2:
+        games_data.append({
+            'id': game2['id'],
+            'type': 'LOCAL',
+            'status': 'PENDING',
+            'players': ['Charlie'],
+            'token': None
+        })
+        time.sleep(0.3)
+    
+    # Game 3: Diana creates an ONLINE game, generates token, Frank joins, Diana starts
+    print(f"{DIM}  Creating ONLINE game: Diana vs Frank{RESET}")
+    game3 = diana.create_game("ONLINE", 7)
+    if game3:
+        time.sleep(0.3)
+        token3 = diana.generate_game_token(game3['id'])
+        if token3:
+            time.sleep(0.3)
+            frank.join_game(token3)
+            time.sleep(0.3)
+            diana.start_game(game3['id'])
+            games_data.append({
+                'id': game3['id'],
+                'type': 'ONLINE',
+                'status': 'IN_PROGRESS',
+                'players': ['Diana', 'Frank'],
+                'token': token3
+            })
+            time.sleep(0.3)
+    
+    # Game 4: Eve creates a TOURNAMENT game (pending)
+    print(f"{DIM}  Creating TOURNAMENT game: Eve (waiting for players){RESET}")
+    game4 = eve.create_game("TOURNAMENT", 10)
+    if game4:
+        time.sleep(0.3)
+        token4 = eve.generate_game_token(game4['id'])
+        games_data.append({
+            'id': game4['id'],
+            'type': 'TOURNAMENT',
+            'status': 'PENDING',
+            'players': ['Eve'],
+            'token': token4
+        })
+        time.sleep(0.3)
+    
+    # Game 5: Grace creates an ONLINE game and generates token (waiting for opponent)
+    print(f"{DIM}  Creating ONLINE game: Grace (waiting for opponent){RESET}")
+    game5 = grace.create_game("ONLINE", 10)
+    if game5:
+        time.sleep(0.3)
+        token5 = grace.generate_game_token(game5['id'])
+        games_data.append({
+            'id': game5['id'],
+            'type': 'ONLINE',
+            'status': 'PENDING',
+            'players': ['Grace'],
+            'token': token5
+        })
+        time.sleep(0.3)
+    
+    # Game 6: Henry creates an ONLINE game, Iris joins (ready to start)
+    print(f"{DIM}  Creating ONLINE game: Henry vs Iris (ready to start){RESET}")
+    game6 = henry.create_game("ONLINE", 9)
+    if game6:
+        time.sleep(0.3)
+        token6 = henry.generate_game_token(game6['id'])
+        if token6:
+            time.sleep(0.3)
+            iris.join_game(token6)
+            games_data.append({
+                'id': game6['id'],
+                'type': 'ONLINE',
+                'status': 'PENDING',
+                'players': ['Henry', 'Iris'],
+                'token': token6
+            })
+            time.sleep(0.3)
+    
+    print(f"\n{GREEN}✓{RESET} Games created successfully!\n")
+    
     # Display summary
     print(f"{CYAN}{BOLD}Mock Scenario Summary:{RESET}")
-    print(f"{GREEN}Active Friendships:{RESET}")
+    print(f"\n{GREEN}Active Friendships:{RESET}")
     print(f"  • Alice ↔ Bob, Charlie, Diana, Frank (4 friends)")
     print(f"  • Bob ↔ Alice, Eve, Henry (3 friends)")
     print(f"  • Charlie ↔ Alice, Diana (2 friends)")
@@ -515,14 +813,214 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     print(f"  • Frank ↔ Alice, Diana, Eve, Grace (4 friends)")
     print(f"  • Grace ↔ Frank (1 friend)")
     print(f"  • Henry ↔ Bob (1 friend)")
-    print(f"\n{YELLOW}Pending Requests:{RESET}")
+    print(f"\n{YELLOW}Pending Friend Requests:{RESET}")
     print(f"  • Grace → Alice")
     print(f"  • Bob → Iris")
     print(f"  • Eve → Henry")
     print(f"  • Jack → Charlie")
+    
+    print(f"\n{MAGENTA}Games Created:{RESET}")
+    for i, game in enumerate(games_data, 1):
+        status_color = GREEN if game['status'] == 'IN_PROGRESS' else YELLOW
+        players_str = ' vs '.join(game['players'])
+        token_str = f" | Token: {BOLD}{game['token']}{RESET}" if game['token'] and game['status'] == 'PENDING' else ""
+        print(f"  {i}. {status_color}{game['status']}{RESET} - {game['type']} - {players_str}{token_str}")
+        if game['id']:
+            print(f"     {DIM}Game ID: {game['id']}{RESET}")
+    
+    print(f"\n{CYAN}Game Status Legend:{RESET}")
+    print(f"  {GREEN}IN_PROGRESS{RESET} - Game is currently being played")
+    print(f"  {YELLOW}PENDING{RESET} - Game is waiting to start")
+    print(f"\n{DIM}Tip: Use 'getgame' to view detailed game information")
+    print(f"     Use 'joingame' to join games with tokens")
+    print(f"     Use 'startgame' to start pending games with 2 players{RESET}")
     print()
     
     return users
+
+def display_game_info(game: dict) -> None:
+    """Display detailed game information."""
+    print(f"\n{BOLD}Game Information{RESET}")
+    print("-" * 80)
+    print(f"Game ID: {game.get('id', 'N/A')}")
+    print(f"Type: {game.get('type', 'N/A')}")
+    print(f"Status: {game.get('status', 'N/A')}")
+    print(f"Score to Win: {game.get('scoreToWin', 'N/A')}")
+    print(f"Token: {game.get('token', 'Not generated')}")
+    print(f"Created By: {game.get('createdBy', 'N/A')}")
+    print(f"Is Creator: {game.get('isCreator', False)}")
+    
+    game_users = game.get('gameUsers', [])
+    if game_users:
+        print(f"\n{BOLD}Players:{RESET}")
+        for gu in game_users:
+            user = gu.get('user', {})
+            score = gu.get('score', 0)
+            is_winner = gu.get('isWinner', False)
+            winner_tag = f" {GREEN}[WINNER]{RESET}" if is_winner else ""
+            print(f"  • {user.get('displayName', 'Unknown')} - Score: {score}{winner_tag}")
+    
+    print(f"\nCreated At: {game.get('createdAt', 'N/A')}")
+    print(f"Started At: {game.get('startedAt', 'N/A')}")
+    print(f"Completed At: {game.get('completedAt', 'N/A')}")
+    print()
+
+def create_game_interactive(users: List[User]) -> None:
+    """Interactive game creation."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to create game:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    print(f"\n{CYAN}Game Types:{RESET}")
+    print("  [0] LOCAL")
+    print("  [1] ONLINE")
+    print("  [2] TOURNAMENT")
+    
+    game_type_idx = get_int_input("\nSelect game type:")
+    game_types = ["LOCAL", "ONLINE", "TOURNAMENT"]
+    
+    if game_type_idx is None or not (0 <= game_type_idx < len(game_types)):
+        print(f"{RED}✗{RESET} Invalid game type")
+        return
+    
+    game_type = game_types[game_type_idx]
+    
+    score_input = input(f"Score to win (1-10, press Enter for default): ").strip()
+    score_to_win = None
+    if score_input.isdigit():
+        score = int(score_input)
+        if 1 <= score <= 10:
+            score_to_win = score
+        else:
+            print(f"{RED}✗{RESET} Score must be between 1 and 10")
+            return
+    
+    game = user.create_game(game_type, score_to_win)
+    if game:
+        display_game_info(game)
+
+def join_game_interactive(users: List[User]) -> None:
+    """Interactive game joining."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to join game:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    token = input(f"\nEnter game token: ").strip()
+    if not token:
+        print(f"{RED}✗{RESET} Token is required")
+        return
+    
+    result = user.join_game(token)
+    if result:
+        print(f"\n{GREEN}✓{RESET} Successfully joined game!")
+        print(f"Game ID: {result.get('gameId', 'N/A')}")
+
+def start_game_interactive(users: List[User]) -> None:
+    """Interactive game starting."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to start game:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    game_id = input(f"\nEnter game ID: ").strip()
+    if not game_id:
+        print(f"{RED}✗{RESET} Game ID is required")
+        return
+    
+    game = user.start_game(game_id)
+    if game:
+        display_game_info(game)
+
+def get_game_interactive(users: List[User]) -> None:
+    """Interactive game info retrieval."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to get game info:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    game_id = input(f"\nEnter game ID: ").strip()
+    if not game_id:
+        print(f"{RED}✗{RESET} Game ID is required")
+        return
+    
+    game = user.get_game(game_id)
+    if game:
+        display_game_info(game)
+
+def generate_token_interactive(users: List[User]) -> None:
+    """Interactive game token generation."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to generate token:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    game_id = input(f"\nEnter game ID: ").strip()
+    if not game_id:
+        print(f"{RED}✗{RESET} Game ID is required")
+        return
+    
+    token = user.generate_game_token(game_id)
+    if token:
+        print(f"\n{BOLD}Share this token with other players:{RESET}")
+        print(f"{CYAN}{BOLD}{token}{RESET}")
+
 
 def main():
     clear_terminal()
@@ -534,7 +1032,10 @@ def main():
         print(f"{YELLOW}⚠{RESET} No users found in database")
 
     while True:
-        print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {GREEN}mock{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}reject{RESET}{DIM} | {CYAN}delete{RESET}{DIM} | {CYAN}friends{RESET}{DIM} | {YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
+        print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {GREEN}mock{RESET}{DIM} | {GREEN}manuallogin{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}refresh{RESET}{DIM}]")
+        print(f"{DIM}[{CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}reject{RESET}{DIM} | {CYAN}delete{RESET}{DIM} | {CYAN}friends{RESET}{DIM}]")
+        print(f"{DIM}[{MAGENTA}creategame{RESET}{DIM} | {MAGENTA}joingame{RESET}{DIM} | {MAGENTA}startgame{RESET}{DIM} | {MAGENTA}getgame{RESET}{DIM} | {MAGENTA}gentoken{RESET}{DIM}]")
+        print(f"{DIM}[{YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
         cmd = input(f"{CYAN}>{RESET} ").strip().lower()
         
         if cmd == "exit":
@@ -553,9 +1054,16 @@ def main():
                 
         elif cmd == "mock":
             users = create_mock_scenario(users)
+        
+        elif cmd == "manuallogin":
+            users = login_manual(users)
                 
         elif cmd == "login":
             login_all_users(users)
+        
+        elif cmd == "refresh":
+            print(f"\n{CYAN}Refreshing user list from database...{RESET}")
+            users = fetch_existing_users()
             
         elif cmd == "friend":
             if not users:
@@ -729,6 +1237,21 @@ def main():
                 users[idx].login()
             
             display_user_friends(users[idx])
+            
+        elif cmd == "creategame":
+            create_game_interactive(users)
+            
+        elif cmd == "joingame":
+            join_game_interactive(users)
+            
+        elif cmd == "startgame":
+            start_game_interactive(users)
+            
+        elif cmd == "getgame":
+            get_game_interactive(users)
+            
+        elif cmd == "gentoken":
+            generate_token_interactive(users)
             
         elif cmd == "logout":
             if not users:

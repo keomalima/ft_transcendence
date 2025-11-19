@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api/friends
-@token = 9118ba1e-04cc-4ea2-b23b-e542128b9918
-@userId = abace9ff-0271-4bc3-9626-d0f08883a834
+@token = d5b37df3-1251-4726-8118-eb1950f4e163
+@userId = 99379f4c-3253-4581-94a0-603ec8fa4fec
 
 ### ACEPT REQUEST
 PUT {{baseUrl}}/accept/c406e87a-f145-4fd7-a527-1822c383e686 HTTP/1.1

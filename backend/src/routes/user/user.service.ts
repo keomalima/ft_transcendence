@@ -59,12 +59,35 @@ async function editUser(prisma: PrismaClient, id: string, data: EditInput) {
 
   return prisma.user.update({
     where: { id: id },
-    data: { ...updateData }
+    data: { ...updateData },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      displayName: true,
+      surname: true,
+      avatarUrl: true,
+      isOnline: true,
+      createdAt: true,
+      updatedAt: true,
+    }
+  });
+}
+
+async function editUserAvatar(prisma: PrismaClient, id: string, avatarUrl: string) {
+	return prisma.user.update({
+    where: { id: id },
+    data: { avatarUrl },
+    select: {
+      id: true,
+      avatarUrl: true,
+      updatedAt: true,
+    }
   });
 }
 
 async function deleteUser(prisma: PrismaClient, id: string) {
-  await prisma.user.delete({
+  return prisma.user.delete({
     where: { id },
   });
 }
@@ -77,10 +100,14 @@ async function createSession(prisma: PrismaClient, userId: string) {
 	const expiresAt = new Date();
 	expiresAt.setDate(expiresAt.getDate() + 7);
 	
-	prisma.user.update({
+	await prisma.user.update({
 		where: { id: userId },
-		data: { isOnline: true, lastSeenAt: new Date() }
+		data: { lastSeenAt: new Date() }
 	});
+
+	await prisma.session.deleteMany({
+		where: { userId }
+	})
 
 	return prisma.session.create({
 		data: {
@@ -95,21 +122,23 @@ async function createSession(prisma: PrismaClient, userId: string) {
 // =====================
 
 async function logoutUser(prisma: PrismaClient, id: string) {
-	await prisma.user.update({
-		where: { id },
-		data: { isOnline: false }
-	});
-	
 	await prisma.session.deleteMany({
 		where: { userId: id }
 	});
 }
 
 async function validateToken(prisma: PrismaClient, credentials: string) {
-	return  await prisma.session.findUnique({
+	return await prisma.session.findUnique({
 	    where: { id: credentials },
 	    include: { user: true }
 	});
+}
+
+async function updateLastSeen(prisma: PrismaClient, id: string) {
+	return prisma.user.update({
+		where : {id},
+		data : { lastSeenAt: new Date() }
+	})
 }
 
 // =====================
@@ -123,6 +152,8 @@ export const userService = {
   createUser,
   editUser,
   deleteUser,
+  editUserAvatar,
+  updateLastSeen,
   
   // Session operations
   createSession,

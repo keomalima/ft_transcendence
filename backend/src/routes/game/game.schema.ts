@@ -6,8 +6,17 @@ import { GameStatus, GameMode } from "@prisma/client";
 // =====================
 
 const createGameSchema = z.object({
-	type: z.enum(GameMode)
+	type: z.enum(GameMode),
+	scoreToWin: z.int().max(10).optional()
 });
+
+const updateGameSchema = z.object({
+	scoreToWin: z.int().optional()
+});
+
+// =====================
+// Response Schemas
+// =====================
 
 const createGameResponseSchema = z.object({
 	id: z.string(),
@@ -16,21 +25,50 @@ const createGameResponseSchema = z.object({
 	status: z.enum(GameStatus),
 })
 
-const updateGameSchema = z.object({
-	status: z.enum(GameStatus).optional(),
-	startedAt: z.coerce.date().optional(),
-	completedAt: z.coerce.date().optional(),
-	guestScore: z.int().optional()
-});
+const getGameResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	isCreator: z.boolean(),
+	type: z.enum(GameMode),
+	status: z.enum(GameStatus),
+	token: z.string().nullable(),
+	scoreToWin: z.int(),
+	createdAt: z.date(),
+	updatedAt: z.date().nullable(),
+	completedAt: z.date().nullable(),
+	startedAt: z.date().nullable(),
+	gameUsers: z.array(
+		z.object({
+			id: z.string(),
+			user: z.object({
+				id: z.string(),
+				displayName: z.string()
+			}),
+			score: z.int(),
+			isWinner: z.boolean(),
+		})
+	)
+})
+
+const generateGameTokenResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	type: z.enum(GameMode),
+	token: z.string()
+})
 
 const updateGameResponseSchema = z.object({
 	id: z.string(),
 	createdBy: z.string(),
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
-	startedAt: z.date(),
-	completedAt: z.date(),
-	guestScore: z.int()
+	scoreToWin: z.int()
+})
+
+const joinGameResponseSchema = z.object({
+	id: z.string(),
+	gameId: z.string(),
+	userId: z.string(),
 })
 
 // =====================
@@ -48,12 +86,16 @@ export const gameSchemas = {
   // Request schemas
   request: {
 	createGame: createGameSchema,
-	updateGame: updateGameSchema,
+	updateGame: updateGameSchema
   },
   
   // Response schemas
   response: {
 	createGame: createGameResponseSchema,
 	updateGame: updateGameResponseSchema,
+	generateToken: generateGameTokenResponseSchema,
+	getGame: getGameResponseSchema,
+	joinGame: joinGameResponseSchema,
+	startGame: updateGameResponseSchema
   },
 };

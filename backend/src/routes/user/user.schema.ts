@@ -10,7 +10,7 @@ const multipartField = <T extends z.ZodTypeAny>(schema: T) =>
 
 const createUserSchema = z.object({
 	email: multipartField(z.email()),
-	name: multipartField(z.string().min(3)),
+	name: multipartField(z.string().min(3).max(20)),
 	password: multipartField(z.string()),
 	surname: multipartField(z.string().nullable()),
 	displayName: multipartField(z.string().min(3)),
@@ -33,10 +33,9 @@ const loginSchema = z.object({
 });
 
 const editUserSchema = z.object({
-	name: z.string().min(3).optional(),
+	name: z.string().min(3).max(20).optional(),
 	displayName: z.string().optional(),
-	surname: z.string().nullable().optional(),
-	avatarUrl: z.string().nullable().optional(),
+	surname: z.string().nullable().optional()
 });
 
 const uploadSchema = z.object({
@@ -95,10 +94,9 @@ const editUserResponseSchema = z.object({
 });
 
 const uploadAvatarResponseSchema = z.object({
-	message: z.string(),
-	filename: z.string(),
-	avatarUrl: z.string(),
-	mimetype: z.string()
+	id: z.string(),
+    avatarUrl: z.string(),
+    updatedAt: z.date(),
 });
 
 // =====================
