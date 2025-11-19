@@ -60,7 +60,7 @@ model Session {
 
 model Game {
 	id String @id @default(uuid())
-	token String?
+	token String? @unique
 	scoreToWin Int?
 	createdBy String 
 	user User @relation(fields: [createdBy], references: [id])

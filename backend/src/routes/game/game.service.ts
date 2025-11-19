@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import type { CreateGameInput, UpdateGameInput } from "./game.schema.js";
 import { includes } from "zod";
 
@@ -6,12 +6,62 @@ import { includes } from "zod";
 // Game CRUD Operations
 // =====================
 
-async function findGameByUserId(prisma:PrismaClient, userId: string, gameId: string) {
+async function findGameById(prisma: PrismaClient, gameId: string) {
+	return prisma.game.findUnique({
+		where: { id: gameId },
+		include: {
+			gameUsers: {
+				include: {
+					user: {
+						select: {
+                        	id: true,
+                        	displayName: true
+                    	}
+					}
+				}
+			}
+		}
+	});
+}
+
+async function findGameByToken(prisma: PrismaClient, token: string) {
+    return prisma.game.findUnique({
+        where: {
+            token
+        },
+        include: {
+            gameUsers: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            displayName: true
+                        }
+                    }
+                }
+            }
+        }
+    })
+}
+
+async function findGameByUserId(prisma: PrismaClient, userId: string, gameId: string) {
 	return prisma.game.findFirst({
 		where: {
 			id: gameId,
 			createdBy: userId
-		}
+		},
+		include: {
+            gameUsers: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            displayName: true
+                        }
+                    }
+                }
+            }
+        }
 	});
 }
 
@@ -50,6 +100,19 @@ async function generateToken(prisma: PrismaClient, gameId: string, token: string
 	})
 }
 
+async function joinUserToGame(prisma: PrismaClient, gameId: string, userId: string) {
+	return prisma.gamePlayer.create({ data: { gameId, userId}})
+}
+
+async function startGame(prisma: PrismaClient, gameId: string) {
+	return prisma.game.update({
+		where: { id: gameId },
+		data: {
+			status : "IN_PROGRESS"
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -60,5 +123,9 @@ export const gameService = {
 	updateGame,
 	findActiveGameByUserId,
 	generateToken,
-	findGameByUserId
+	findGameByUserId,
+	findGameById,
+	findGameByToken,
+	joinUserToGame,
+	startGame
 };
