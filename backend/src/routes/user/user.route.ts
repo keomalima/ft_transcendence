@@ -14,9 +14,9 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 			tags: ['Authentication'],
 			description: 'Login user and get access token',
 			summary: 'User login'
-		}
-	}, 
-	userController.loginUserHandler);
+		},
+		handler: userController.loginUserHandler
+	});
 
 	fastify.post('/', { 
 		schema: { 
@@ -26,9 +26,9 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 			tags: ['Users'],
 			description: 'Create a new user account',
 			summary: 'Create user'
-		}
-	}, 
-	userController.createUserHandler);
+		},
+		handler: userController.createUserHandler
+	});
 
 	// DELETE AFTER, ONLY FOR DEV
 	fastify.get('/', {
@@ -51,8 +51,32 @@ export async function userPublicRoutes(fastify: FastifyInstance){
         }
     }, async (req, reply) => {
         const prisma = req.server.prisma
-        await prisma.user.deleteMany();
-        return reply.send({ message: "Database cleaned" });
+        
+        try {
+            // Delete in correct order to respect foreign key constraints
+            // 1. Delete GamePlayers first (has FK to both Game and User)
+            await prisma.gamePlayer.deleteMany();
+            
+            // 2. Delete Games (has FK to User)
+            await prisma.game.deleteMany();
+            
+            // 3. Delete Friendships (has FK to User)
+            await prisma.friendship.deleteMany();
+            
+            // 4. Delete Sessions (has FK to User)
+            await prisma.session.deleteMany();
+            
+            // 5. Finally delete Users
+            await prisma.user.deleteMany();
+            
+            return reply.send({ message: "Database cleaned successfully" });
+        } catch (error: any) {
+            req.log.error('Error cleaning database:', error);
+            return reply.code(500).send({ 
+                message: "Failed to clean database",
+                error: error.message 
+            });
+        }
     });
 }
 
@@ -68,9 +92,10 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Get user details by ID',
 			summary: 'Get user by ID',
 			security: [{ bearerAuth: [] }]
-		}
-	}, 
-	userController.getUserHandler);
+		},
+		preHandler: userController.updateLastSeen,
+		handler: userController.getUserHandler
+	});
 
 	fastify.put('/me', { 
 		schema: { 
@@ -80,9 +105,10 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Update current user profile',
 			summary: 'Update user profile',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	userController.editUserHandler);
+		}, 
+		preHandler: userController.updateLastSeen,
+		handler: userController.editUserHandler
+	});
 
 	fastify.post('/logout', {
 		schema: {
@@ -90,9 +116,9 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Logout current user',
 			summary: 'User logout',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	userController.logoutHandler);
+		},
+		handler: userController.logoutHandler
+	});
 
 	fastify.delete('/', {
 		schema: {
@@ -100,20 +126,20 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			description: 'Delete current user account',
 			summary: 'Delete user',
 			security: [{ bearerAuth: [] }]
-		}
-	},
-	userController.deleteHandler);
+		},
+		handler: userController.deleteHandler
+	});
 
 	fastify.post('/upload', {
     	schema: {
 			consumes: ['multipart/form-data'],
 			body: userSchemas.request.uploadAvatar,
-			response: { 201: userSchemas.response.uploadtAvatar },
+			response: { 200: userSchemas.response.uploadtAvatar },
 			tags: ['Users'],
 			description: 'Upload avatar profile',
 			summary: 'Upload Avatar',
 			security: [{ bearerAuth: [] }]
    		},
-  	},
-	userController.uploadAvatarHandler);
+		handler: userController.uploadAvatarHandler
+  	});
 }

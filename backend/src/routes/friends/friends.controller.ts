@@ -17,17 +17,15 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const requesterId = request.user!.id;
 		const friendships = await friendsService.findActiveFriends(request.server.prisma, requesterId);
-		if (!friendships || friendships.length === 0) {
-			return reply.code(404).send({
-				message: "No active friends found"
-			});
-		}
 
 		const friends = friendships.map(f => {
 		    const friend = f.requesterId === requesterId ? f.addressee : f.requester;
-		    const { password, salt, email, ...safeFriend } = friend;
+		    const { password, salt, email, isOnline, ...safeFriend } = friend;
+			const isOnlineCheck = isFriendOnline(friend.lastSeenAt)
+
 		    return {
 		        friendshipId: f.id,
+				isOnline: isOnlineCheck,
 		        ...safeFriend
 		    };
 		});
@@ -135,11 +133,6 @@ async function getPendingRequestsHandler(request: FastifyRequest, reply: Fastify
 		const userId = request.user!.id;
 
 		const pending = await friendsService.findPendingRequests(request.server.prisma, userId)
-		if (!pending || pending.length === 0) {
-			return reply.code(404).send({
-                message: "No pending requests"
-            });
-		}
 		const newArray = pending.map(f => ({
 			id: f.id,
 			createdAt: f.createdAt,
@@ -187,6 +180,19 @@ async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete request"});
 	}
+}
+
+// =====================
+// Helper Functions
+// =====================
+
+function isFriendOnline (date: Date | null): boolean {
+	if (!date) {
+		return false;
+	}
+	const fiveMinutes = 5 * 60 * 1000;
+	const now = Date.now();
+	return now - date.getTime() < fiveMinutes;
 }
 
 // =====================

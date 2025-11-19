@@ -4,9 +4,9 @@ import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
-import { writeFile } from 'fs/promises';
-import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
+import { verifyPassword } from '../../plugins/hash.plugin.js';
 import path from 'path';
+import fs from 'fs/promises';
 
 // =====================
 // Type Declarations
@@ -98,9 +98,6 @@ async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 async function getUserHandlerDev(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const users = await userService.getUsersDev(request.server.prisma);
-		if (users.length === 0) {
-    		return reply.code(404).send({ message: 'No users found' });
-		}
 		return users;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to fetch users"});
@@ -114,19 +111,16 @@ async function getUserHandlerDev(request: FastifyRequest, reply: FastifyReply) {
 async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
 	const { avatarFile, ...userData } = request.body;
 
-	let avatarUrl = '/uploads/avatars/default.png';
-
-	if (avatarFile && avatarFile.file) {
-		const fileExtension = path.extname(avatarFile.filename);
-		const uniqueFilename = `${randomUUID()}${fileExtension}`;
-		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
-		const fileBuffer = await avatarFile.toBuffer();
-		await writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
-    	avatarUrl = `/uploads/avatars/${uniqueFilename}`;
-  	}
-
 	try {
+		let avatarUrl = '/uploads/avatars/default.png';
+
+        if (avatarFile?.file) {
+            const fileBuffer = await avatarFile.toBuffer();
+            if (fileBuffer && fileBuffer.length > 0) {
+                avatarUrl = await saveAvatarFile(avatarFile, fileBuffer);
+            }
+        }
+
 		const newUser = await userService.createUser(request.server.prisma, {
 			...userData,
 			avatarUrl
@@ -165,43 +159,88 @@ async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply
 }
 
 async function uploadAvatarHandler(request: FastifyRequest<{Body: UploadInput}>, reply: FastifyReply){
-	try {
-		const { avatarUrl } = request.body;
+    try {
+        const { avatarFile } = request.body;
+        const userId = request.user!.id;
 
-		if (!avatarUrl || !avatarUrl.file)
-			return reply.code(400).send({ message: 'No file uploaded' });
+        if (!avatarFile?.file) {
+            return reply.code(400).send({
+                message: "No file provided",
+            });
+        }
 
-		const fileExtension = path.extname(avatarUrl.filename);
-		const uniqueFilename = `${randomUUID()}${fileExtension}`;
-		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
+        const fileBuffer = await avatarFile.toBuffer();
+        if (!fileBuffer || fileBuffer.length === 0) {
+            return reply.code(400).send({
+                message: "Uploaded file is empty",
+            });
+        }
 
-		const fileBuffer = await avatarUrl.toBuffer();
-		await writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+        await deleteOldAvatar(userId, request.server.prisma);
 
-		return reply.code(201).send({ 
-			message: 'File received successfully',
-			filename: uniqueFilename,
-			avatarUrl: `/uploads/avatars/${uniqueFilename}`,
-			mimetype: avatarUrl.mimetype 
-		});
-	} catch (error: unknown) {
-		console.error('Upload error:', error);
-		if (error instanceof Error)
-			return reply.code(500).send({ message: error.message });
-		return reply.code(500).send({ message: 'Failed to upload file' });
-	}
+        const avatarUrl = await saveAvatarFile(avatarFile, fileBuffer);
+
+        return await userService.editUserAvatar(request.server.prisma, userId, avatarUrl);
+    } catch (error: unknown) {
+        request.server.log.error(error);
+        const message = error instanceof Error ? error.message : 'Failed to upload avatar';
+        return reply.code(500).send({ message });
+    }
 }
 
 async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: { id: string}}>, reply: FastifyReply) {
 	try {
-		await userService.deleteUser(request.server.prisma, request.user!.id);
-		reply.code(204).send()
+		const userId = request.user!.id;
+        
+        await deleteOldAvatar(userId, request.server.prisma);
+        await userService.deleteUser(request.server.prisma, userId);
+        
+        reply.code(204).send();
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
 		return reply.code(401).send({ message: 'Unauthorized' });
 	}
+}
+
+// =====================
+// Helper Functions
+// =====================
+
+async function updateLastSeen(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		await userService.updateLastSeen(request.server.prisma, request.user!.id);
+		return;
+	} catch (error: any) {
+		return reply.code(500).send("Error");
+	}
+}
+
+async function deleteOldAvatar(userId: string, prisma: any): Promise<void> {
+    const user = await userService.findUserById(prisma, userId);
+    
+    if (!user?.avatarUrl || user.avatarUrl === '/uploads/avatars/default.jpg') {
+        return;
+    }
+
+    try {
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
+        const filePath = path.join(__dirname, '../../..', user.avatarUrl);
+        await fs.unlink(filePath);
+    } catch (error) {
+        console.warn(`Failed to delete old avatar: ${user.avatarUrl}`, error);
+    }
+}
+
+async function saveAvatarFile(avatarFile: any, fileBuffer: Buffer): Promise<string> {
+    const fileExtension = path.extname(avatarFile.filename);
+    const uniqueFilename = `${randomUUID()}${fileExtension}`;
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const uploadDir = path.join(__dirname, '../../../uploads/avatars/');
+    
+    await fs.writeFile(path.join(uploadDir, uniqueFilename), fileBuffer);
+    
+    return `/uploads/avatars/${uniqueFilename}`;
 }
 
 // =====================
@@ -214,6 +253,7 @@ export const userController = {
 	logoutHandler,
 	protectedRouteHandler,
 	getUserHandlerDev,
+	updateLastSeen,
 	
 	// User CRUD
 	createUserHandler,
