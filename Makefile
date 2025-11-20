@@ -6,10 +6,11 @@ all: dev
 dev:
 	@echo "🚀 Starting DEVELOPMENT mode..."
 	@echo "📦 Starting backend in Docker..."
-	$(COMPOSE) up -d backend
+	$(COMPOSE) up backend
 	@echo "⏳ Waiting for backend to be ready..."
 	@sleep 3
 	@echo "✨ Starting frontend locally with hot-reload..."
+	@echo "💡 Tip: Run 'make logs' in another terminal to see backend logs"
 	cd frontend && npm run serve
 
 # Production/Release mode: both services in Docker

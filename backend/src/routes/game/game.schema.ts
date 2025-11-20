@@ -7,11 +7,11 @@ import { GameStatus, GameMode } from "@prisma/client";
 
 const createGameSchema = z.object({
 	type: z.enum(GameMode),
-	scoreToWin: z.int().max(10).optional()
+	scoreToWin: z.number().int().max(10).optional()
 });
 
 const updateGameSchema = z.object({
-	scoreToWin: z.int().optional()
+	scoreToWin: z.number().int().optional()
 });
 
 // =====================
@@ -32,7 +32,7 @@ const getGameResponseSchema = z.object({
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
 	token: z.string().nullable(),
-	scoreToWin: z.int(),
+	scoreToWin: z.number().int(),
 	createdAt: z.date(),
 	updatedAt: z.date().nullable(),
 	completedAt: z.date().nullable(),
@@ -44,7 +44,7 @@ const getGameResponseSchema = z.object({
 				id: z.string(),
 				displayName: z.string()
 			}),
-			score: z.int(),
+			score: z.number().int(),
 			isWinner: z.boolean(),
 		})
 	)
@@ -62,7 +62,7 @@ const updateGameResponseSchema = z.object({
 	createdBy: z.string(),
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
-	scoreToWin: z.int()
+	scoreToWin: z.number().int()
 })
 
 const joinGameResponseSchema = z.object({

@@ -12,6 +12,11 @@ async function getGameHandler (request: FastifyRequest<{ Body: UpdateGameInput, 
 		const userId = request.user!.id;
 		const gameId = request.params.id;
 		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.code(404).send({
+            	message: "Game not found or unauthorized"
+        	});
+		}
 		const response = {
 			...game,
 			isCreator: game.createdBy === userId,
