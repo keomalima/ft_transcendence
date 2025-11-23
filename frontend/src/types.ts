@@ -57,8 +57,42 @@ export interface FriendData {
 	avatarUrl: string | null;
 }
 
+// for game data
+export interface GameData {
+	id: string | null;
+	createdBy: string | null;
+	isCreator: boolean;
+	type: string | null;
+	token: string | null;
+	status: string | null;
+	scoreToWin: string | null;
+	createdAt: string | null;
+	updatedAt: string | null;
+	completedAt: string | null;
+	startedAt: string | null;
+	gameUsers: GameUsers[] | null;
+}
+
+// for gameUsers
+export interface GameUsers {
+	id: string | null;
+	user: Pick<UserState, 'id' | 'displayName'> | null;
+	score: string | null;
+	isWinner: boolean;
+}
+
+// for gameToken
+export interface GameToken {
+	id: string | null;
+	createdAt: string | null;
+	type: string | null;
+	token: string | null;
+}
+
+
 import { UserStore } from "./store/userStore";
 // Define context type
 export interface AppContext {
 	userStore: UserStore;
 }
+

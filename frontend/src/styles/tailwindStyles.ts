@@ -20,3 +20,6 @@ export const NAV_LOGO_CLASSES = 'font-[Calistoga] text-black text-2xl';
 // Nav elements
 export const NAV_ELEM_CLASSES = 'font-[Inter] text-medium text-base md:text-base sm:text-sm font-normal';
 export const NAV_ELEM_SELECTED_CLASSES = 'font-[Inter] text-black text-base md:text-base sm:text-sm font-normal';
+
+// Radio button
+export const RADIO_LABEL = 'w-full h-full px-3 py-1 flex items-center justify-center text-center outline outline-1 outline-black rounded-full cursor-pointer peer-checked:bg-black peer-checked:text-white';
