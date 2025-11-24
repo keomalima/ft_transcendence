@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:3000/api/games
-@token = 1be738d4-c9f7-4c76-97a9-9bcff179b6ee
-@userId = d4424ed1-c537-496f-b848-85e8fb6d7dfa
-@gameId = 59ebe32b-3e35-4f6b-8b24-efb72d31b488
+@token = 14f20f1c-c47f-426d-b704-6e68269541e1
+@userId = 7342a938-228e-471e-bbac-0f43fec6e83f
+@gameId = 4c6a298f-e5c4-404c-b579-a859c4d6a3e8
 
 @gameToken = 0MXxxE3-
 
@@ -38,4 +38,8 @@ Authorization: Bearer {{token}}
 
 ### START A GAME
 PUT {{baseUrl}}/{{gameId}}/start HTTP/1.1
+Authorization: Bearer {{token}}
+
+### GET GAME HISTORY
+GET {{baseUrl}}/history HTTP/1.1
 Authorization: Bearer {{token}}

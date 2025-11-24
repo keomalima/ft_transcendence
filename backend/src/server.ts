@@ -60,7 +60,7 @@ fastify.register(async (protectedRoutes) => {
 	protectedRoutes.addHook('onRequest', async (request, reply) => await userController.protectedRouteHandler(request, reply));
 	protectedRoutes.register(userPrivateRoutes, { prefix: "/api/users" })
 	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
-	protectedRoutes.register(tournamentPrivateRoutes, { prefix: "/api/tournaments" })
+	// protectedRoutes.register(tournamentPrivateRoutes, { prefix: "/api/tournaments" })
 	protectedRoutes.register(friendsPrivateRoutes, { prefix: "/api/friends" })
 });
 

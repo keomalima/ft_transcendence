@@ -6,7 +6,7 @@ all: dev
 dev:
 	@echo "🚀 Starting DEVELOPMENT mode..."
 	@echo "📦 Starting backend in Docker..."
-	$(COMPOSE) up backend
+	$(COMPOSE) up -d backend
 	@echo "⏳ Waiting for backend to be ready..."
 	@sleep 3
 	@echo "✨ Starting frontend locally with hot-reload..."
