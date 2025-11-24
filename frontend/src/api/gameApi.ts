@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000/api/games';
+const BASE_URL = '/api/games';
 
 import { GameData, GameToken } from "../types";
 

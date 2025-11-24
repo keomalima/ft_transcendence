@@ -16,27 +16,23 @@ dev:
 # Production/Release mode: both services in Docker
 prod:
 	@echo "🏭 Starting PRODUCTION mode..."
-	@echo "📦 Building frontend..."
-	cd frontend && npm run build
-	@echo "📦 Starting all services in Docker..."
+	@echo "📦 Building images (frontend assets baked into nginx)..."
 	$(COMPOSE) up --build -d
 	@echo "✅ Services started!"
-	@echo "   Frontend: http://localhost:4173"
+	@echo "   Frontend: http://localhost"
 	@echo "   Backend:  http://localhost:3000"
 
 # Alternative: same as prod
 release:
 	@echo "🏭 Starting RELEASE mode..."
-	@echo "📦 Building frontend..."
-	cd frontend && npm run build
-	@echo "📦 Starting all services in Docker..."
+	@echo "📦 Building images (frontend assets baked into nginx)..."
 	$(COMPOSE) up --build -d
 	@echo "✅ Services started!"
-	@echo "   Frontend: http://localhost:4173"
+	@echo "   Frontend: http://localhost"
 	@echo "   Backend:  http://localhost:3000"
 
 build:
-	$(COMPOSE) up --build
+	$(COMPOSE) build
 
 start:
 	$(COMPOSE) start
@@ -49,7 +45,7 @@ down:
 
 clean:
 	$(COMPOSE) down -v
-	docker rmi ft_transcendence-backend:latest ft_transcendence-frontend:latest
+	docker rmi ft_transcendence-backend:latest ft_transcendence-nginx:latest
 
 studio:
 	$(COMPOSE) exec backend npx prisma studio
