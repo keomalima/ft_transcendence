@@ -1,6 +1,5 @@
 import { AppContext } from "../types.js";
 import { router } from "../main.js";
-import { userService } from "../services/UserService.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -15,12 +14,10 @@ export function Profile(ctx: AppContext): string {
 	const accessToken = currentUser?.accessToken;
 	if (!accessToken)
 	{
-		console.log('no session when access /login')
-		router.navigateTo('/');
-		return '';
+		console.log('no session when access /profile')
+		setTimeout(() => router.navigateTo('/'), 0);
+		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
-
-	userService.getUserState(ctx, currentUser.id);
 
 	setTimeout(() => {
 		passContext(ctx);

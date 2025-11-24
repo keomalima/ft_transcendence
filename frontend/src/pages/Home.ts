@@ -9,6 +9,13 @@ import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
 export function Home(ctx: AppContext): string {
 
+	if (ctx.userStore.get()?.accessToken) {
+		console.log('session already active, navigate to dashboard');
+		router.navigateTo('/home');
+	}
+
+	console.log('here');
+
 	setTimeout(() => {
 		passContext(ctx);
 		setupHomeEventListeners(ctx);
@@ -92,42 +99,42 @@ function setupHomeEventListeners(ctx: AppContext) {
 	const startedBtn = document.getElementById('get-started-btn');
 	const learnBtn = document.getElementById('learn-more-btn');
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
-	
-	if (startedBtn) {
-		startedBtn.addEventListener('click', (e) => {
-			e.preventDefault();
-			if (hidenForm) {
-				hidenForm.style.display = 'block';
-				startedBtn.style.display = 'none';
-			}
-			if (learnBtn)
-				learnBtn.style.display = 'none';
-		});
-	}
+
+
+	startedBtn?.addEventListener('click', (e) => {
+		e.preventDefault();
+		if (hidenForm) {
+			hidenForm.style.display = 'block';
+			startedBtn.style.display = 'none';
+		}
+		if (learnBtn)
+			learnBtn.style.display = 'none';
+	});
+
 
 	// **** SIGN IN ****
 	const form = document.getElementById('signin-form') as HTMLFormElement;
-	if (form) {
-		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			e.stopPropagation();
 
-			const emailInput = document.getElementById('email') as HTMLInputElement;
-			const passwordInput = document.getElementById('password') as HTMLInputElement;
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		e.stopPropagation();
 
-			const email = emailInput?.value;
-			const password = passwordInput?.value;
-			
-			try {
-				const user = await userService.loginUser(email, password, ctx);
-				router.navigateTo('/home');
-			} catch (error) {
-				console.log(error);
-				const popUpLogin = document.getElementById('login-error');
-				popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
-			}
-		});
-	}
+		const emailInput = document.getElementById('email') as HTMLInputElement;
+		const passwordInput = document.getElementById('password') as HTMLInputElement;
+
+		const email = emailInput?.value;
+		const password = passwordInput?.value;
+
+		try {
+			const user = await userService.loginUser(email, password, ctx);
+			router.navigateTo('/home');
+		} catch (error) {
+			console.log(error);
+			const popUpLogin = document.getElementById('login-error');
+			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
+		}
+	});
+
 
 	// **** CREATE NEW ACCOUNT ****
 	registerComponent?.addEventListener('event-account-creation', async (e: Event) => {
@@ -142,7 +149,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 				displayName: data.username,
 				avatarFile: data.avatarFile,
 			}, ctx);
-			
+
 			// Login after successful creation
 			await userService.loginUser(data.email, data.password, ctx);
 			router.navigateTo('/home');

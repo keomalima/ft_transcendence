@@ -1,7 +1,6 @@
 import { AppContext, UserState } from "../types.js";
 import { router } from "../main.js";
 import { friendshipApi } from "../api/friendshipApi.js";
-import { userService } from "../services/UserService.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -9,6 +8,8 @@ import "../components/FriendList.js";
 import "../components/MatchHistory.js";
 import "../components/FriendRequests.js";
 import "../components/AddFriend.js";
+import "../components/JoinGamePopUp.js";
+import { gameApi } from "../api/gameApi.js";
 
 
 export function Dashboard(ctx: AppContext): string{
@@ -20,13 +21,13 @@ export function Dashboard(ctx: AppContext): string{
     if (!currentUser?.accessToken || !currentUser?.id)
     {
         console.log('no session when accessing /home')
-        router.navigateTo('/');
-        return '';
+        setTimeout(() => router.navigateTo('/'), 0);
+        return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
     }
 
 	setTimeout(() => {
 		passContext(ctx);
-		setupHomeEventListeners(ctx);
+		setupDashboardEventListeners(ctx);
 	}, 0);
 
 	const content = /*html*/`
@@ -41,11 +42,11 @@ export function Dashboard(ctx: AppContext): string{
 				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
-				<div class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center">
-					<a data-link href='/create-game' class='font-[Calistoga] m-5 text-white text-3xl'>Create new game</a>
+				<div class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
+					<a data-link href='/create-game' class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</a>
 				</div>
-				<div class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center">
-					<a data-link href='/join-game' class='font-[Calistoga] m-5 text-white text-3xl'>Join a game</a>
+				<div class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
+					<a class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer' onclick="document.getElementById('join-game-dialog').showModal()">Join a game</a>
 				</div>
 				<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
 					<h1>???</h1>
@@ -64,14 +65,15 @@ export function Dashboard(ctx: AppContext): string{
 				<div class='flex flex-col col-span-1 gap-5 min-h-full'>
 					<requests-list id='requests-component' class="p-4 lg:p-10 rounded-lg bg-white order-last lg:order-0 lg:col-start-3 lg:row-start-1"></requests-list>
 					<add-friend id='add-friend-component' class="p-4 lg:p-10 rounded-lg bg-white order-first lg:order-0 lg:col-start-3 lg:row-start-2"></add-friend>
-
-					<!-- <div id='add-new-friend' class="p-4 lg:p-10 rounded-lg bg-white order-first lg:order-0 lg:col-start-3 lg:row-start-2">
-						<h1>Add a new friend</h1>
-					</div> -->
 					<friend-list id='friend-list-component' class="grow rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></friend-list>
 				</div>
 			</div>
 		</div>
+
+		<!-- Dialog for join game -->
+		<dialog id="join-game-dialog" class="place-self-center">
+			<join-game-pop-up id="join-game-component"></join-game-pop-up>
+		</dialog>
 	`
 	return (content);
 }
@@ -81,6 +83,10 @@ function passContext(ctx: AppContext) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
+	}
+	const joinGameComponent = document.getElementById('join-game-component') as any;
+	if (joinGameComponent) {
+		joinGameComponent.ctx = ctx;
 	}
 	const friendListComponent = document.getElementById('friend-list-component') as any;
 	if (friendListComponent) {
@@ -98,16 +104,16 @@ function passContext(ctx: AppContext) {
 	if (matchHistoryComponent) {
 		matchHistoryComponent.ctx = ctx;
 	}
-
 }
 
 // ======== EVENT LISTENER ============
-function setupHomeEventListeners(ctx: AppContext) {
+function setupDashboardEventListeners(ctx: AppContext) {
 
 	const friendListComponent = document.getElementById('friend-list-component') as any;
 	const requestsComponent = document.getElementById('requests-component') as any;
 	const addFriendComponent = document.getElementById('add-friend-component') as any;
 	const errorMsg = document.getElementById('add-friend-message') as HTMLElement;
+	const joinGameComponent = document.getElementById('join-game-component') as any;
 
 	// **** DELETE FRIEND ****
 	friendListComponent?.addEventListener('event-delete-friend', async (e: Event) => {
@@ -135,7 +141,6 @@ function setupHomeEventListeners(ctx: AppContext) {
 		try {
 			if (data.requestId && data.accessToken) {
 				await friendshipApi.accept(data.requestId, data.accessToken);
-				console.log('Friend accepted successfully');
 				
 				// Refresh both lists after accepting
 				if (requestsComponent.loadAndRender) {
@@ -150,6 +155,27 @@ function setupHomeEventListeners(ctx: AppContext) {
 		}
 	});
 
+	// **** REJECT FRIEND ****
+	requestsComponent?.addEventListener('event-reject-friend', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			if (data.requestId && data.accessToken) {
+				await friendshipApi.reject(data.requestId, data.accessToken);
+
+				// Refresh both lists after accepting
+				if (requestsComponent.loadAndRender) {
+					await requestsComponent.loadAndRender();
+				}
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+			console.log('Error rejecting friend:', error);
+		}
+	});
+
 	// **** SEND FRIEND REQUEST ****
 	addFriendComponent?.addEventListener('event-send-friendship-request', async (e: Event) => {
 		const customEvent = e as CustomEvent;
@@ -157,7 +183,6 @@ function setupHomeEventListeners(ctx: AppContext) {
 		try {
 			if (data.accessToken && data.friendName) {
 				await friendshipApi.sendRequest(data.friendName, data.accessToken);
-				console.log('Friendship request successfull');
 				if (errorMsg) {
 					errorMsg.className = 'text-green-500';
 					errorMsg.innerText = `Friend request sent successfully to ${data.friendName}!`;
@@ -171,4 +196,25 @@ function setupHomeEventListeners(ctx: AppContext) {
 			console.log('Error send friendship request:', error);
 		}
 	});
+
+	// **** JOIN A GAME ****
+	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		const accessToken = ctx.userStore.get()?.accessToken;
+		console.log('data', data )
+		if (!accessToken)
+			return;
+		try {
+			const result = await gameApi.joinGame(accessToken, data);
+			console.log('OK', result);
+			router.navigateTo(`/game-room/${result.gameId}`);
+		} catch (error) {
+			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;
+			errorMsgJoinGame.className = 'mt-2 text-red-500'
+			errorMsgJoinGame.innerText = error as string;
+			console.log(error);
+		}
+	})
+
 }

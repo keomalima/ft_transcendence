@@ -31,7 +31,7 @@ export class RegisterPopUp extends HTMLElement {
 							<img id="avatar-preview" src="/src/images/defaultProfile.webp" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
 							<div>
 								<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
-								<label for="avatar-input" class="btn-primary bg-white hover:bg-black cursor-pointer">Add avatar</label>
+								<label for="avatar-input" class='${BUTTON_WHITE_CLASSES}'>Add avatar</label>
 								<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
 							</div>
 						</div>

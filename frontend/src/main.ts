@@ -1,16 +1,17 @@
 import { Router } from "./router.js";
 import { AppContext } from "./types.js";
+import { userService } from "./services/UserService.js";
 
 // Import pages
 import { Home } from "./pages/Home.js";
-import { About } from "./pages/about.js";
 import { createUserStore, UserStore } from "./store/userStore.js";
 import { NotFound } from "./pages/404.js";
 import { Dashboard } from "./pages/Dashboard.js";
 import { Profile } from "./pages/Profile.js";
 import { EditProfile } from "./pages/EditProfile.js";
-import { userService } from "./services/UserService.js";
-
+import { CreateGame } from "./pages/CreateGame.js";
+import { GameRoom } from "./pages/GameRoom.js";
+import { LaunchGame } from "./pages/LaunchGame.js";
 
 // Create and init user store
 const userStore = createUserStore(null);
@@ -36,7 +37,7 @@ async function initializeApp() {
 			accessToken: savedAccessToken,
 			isLoggedIn: true,
 		}));
-		
+
 		// Fetch full user data from API (wait for it to complete)
 		try {
 			await userService.getUserState(context, savedUserId);
@@ -52,11 +53,13 @@ async function initializeApp() {
 	// Start router after data is loaded
 	router
 		.add("/", Home)
-		.add("/about", About)
 		.add("/404", NotFound)
 		.add("/home", Dashboard)
 		.add("/profile", Profile)
 		.add("/edit-profile", EditProfile)
+		.add("/create-game", CreateGame)
+		.add("/game-room/:id", GameRoom)
+		.add("/launch-game", LaunchGame)
 		.start();
 }
 

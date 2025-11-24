@@ -106,11 +106,17 @@ export class FriendRequests extends HTMLElement {
 
 		// actions ===================
 		const actions = document.createElement('div');
+		actions.classList = 'flex flex-row gap-3'
 		const acceptBtn = document.createElement('button');
 		acceptBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-green-500 outline outline-1 outline-green-500 hover:bg-green-500 hover:text-white';
 		acceptBtn.innerText = '+';
 		acceptBtn.id = `accept-${request.friend?.id}`;
+		const rejectBtn = document.createElement('button');
+		rejectBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
+		rejectBtn.innerText = 'x';
+		rejectBtn.id = `reject-${request.friend?.id}`;
 		actions.appendChild(acceptBtn);
+		actions.appendChild(rejectBtn);
 		// ===========================
 
 		card.appendChild(avatar);
@@ -120,6 +126,17 @@ export class FriendRequests extends HTMLElement {
 		acceptBtn.addEventListener('click', async (e) => {
 			console.log('event accept friend ', request.friend?.name);
 			this.dispatchEvent(new CustomEvent('event-accept-friend', {
+				detail: {
+					requestId: request.id as string,
+					accessToken: this._accessToken as string
+				},
+				bubbles: true
+			}));
+		});
+
+		rejectBtn.addEventListener('click', async (e) => {
+			console.log('event reject friend ', request.friend?.name);
+			this.dispatchEvent(new CustomEvent('event-reject-friend', {
 				detail: {
 					requestId: request.id as string,
 					accessToken: this._accessToken as string

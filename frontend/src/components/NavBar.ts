@@ -2,7 +2,7 @@ import { AppContext } from "../types.js";
 import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 
-// import style 
+// import style
 import { NAV_ELEM_CLASSES, NAV_LOGO_CLASSES, NAV_ELEM_SELECTED_CLASSES } from "../styles/tailwindStyles.js";
 
 export class NavBar extends HTMLElement {
@@ -37,7 +37,7 @@ export class NavBar extends HTMLElement {
 					<div class="hidden lg:flex lg:gap-x-12">
 					<a data-link href="/home" class="${window.location.pathname === '/home' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >home</a>
 					<a data-link href="/profile" class="${window.location.pathname === '/profile' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >profile</a>
-					<a data-link href="/game" class="${window.location.pathname === '/game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
+					<a data-link href="/create-game" class="${window.location.pathname === '/game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
 					<a data-link href="/tournament" class="${window.location.pathname === '/tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
 					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">Log out</a>
 				</div>
@@ -76,11 +76,11 @@ export class NavBar extends HTMLElement {
 			</el-dialog>
 		`
 	}
-	
+
 	// ======== EVENT LISTENER ============
-	
+
 	private attachEventListener(ctx: AppContext) {
-	
+
 		// Logout listener
 		const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
 		logoutBtn.addEventListener('click', async (e) => {
