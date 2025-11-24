@@ -12,6 +12,11 @@ async function getGameHandler (request: FastifyRequest<{ Body: UpdateGameInput, 
 		const userId = request.user!.id;
 		const gameId = request.params.id;
 		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.code(404).send({
+            	message: "Game not found or unauthorized"
+        	});
+		}
 		const response = {
 			...game,
 			isCreator: game.createdBy === userId,
@@ -148,6 +153,45 @@ async function startGameHandler (request: FastifyRequest<{ Params: { id: string}
 	}
 }
 
+async function gameHistoryHandler (request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const games = await gameService.getGamesByUserId(request.server.prisma, userId);
+		const filteredGames = games.filter((gp: typeof games[0]) => gp.game.gameUsers.length === 2 
+			&& gp.game.type !== "LOCAL" 
+			&& (gp.game.status === "COMPLETED"
+			|| gp.game.status === "ABANDONED"));
+		const result = filteredGames.map((gp: typeof filteredGames[0]) => {
+			const opponent = gp.game.gameUsers.find((gu: typeof result[0])  => gu.userId !== userId);
+			let durationMs;
+			if (gp.game.completedAt && gp.game.startedAt)
+				durationMs = Math.round(new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000;
+			else
+				durationMs = 0;
+			return {
+				gameId: gp.gameId,
+				score: gp.score,
+				isWinner: gp.isWinner, 
+				duration: durationMs,
+				type: gp.game.type,
+				status: gp.game.status,
+				date: gp.game.createdAt,
+				opponent: {
+					id: opponent.userId,
+					avatarUrl: opponent.user.avatarUrl,
+					name: opponent.user.displayName,
+					score: opponent.score,
+					isWinner: opponent.isWinner,
+				}
+			}
+		})
+		return reply.code(200).send(result)
+	} catch (error: any) {
+		console.error(error);
+		reply.code(500).send({ message: "Failed to fetch game history"});
+	}
+}
+
 // =====================
 // Game Helpers
 // =====================
@@ -169,5 +213,6 @@ export const gameController = {
 	generateTokenHandler,
 	getGameHandler,
 	joinGameHandler,
-	startGameHandler
+	startGameHandler,
+	gameHistoryHandler
 };
