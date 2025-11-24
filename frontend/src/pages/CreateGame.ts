@@ -74,6 +74,7 @@ export function CreateGame(ctx: AppContext): string{
 				</div>
 				<hr class="w-full h-px border-0 bg-medium">
 				<button type='submit' class='${BUTTON_CREAM_CLASSES}'>CREATE GAME</button>
+				<p id='error-create-game'></p>
 			</form>
 
 		</div>
@@ -96,6 +97,7 @@ function passContext(ctx: AppContext) {
 function setupGameEventListeners(ctx: AppContext) {
 
 
+	// **** CREATE GAME ****
 	const form = document.querySelector('form[id="game-settings"]') as HTMLFormElement;
 	form?.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -108,6 +110,9 @@ function setupGameEventListeners(ctx: AppContext) {
 			console.log('result = ', result);
 			router.navigateTo(`/game-room/${result.id}`);
 		} catch (error) {
+			const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;
+			errorMsgCreateGame.className = 'text-red-500'
+			errorMsgCreateGame.innerText = error as string;
 			console.log(error);
 		}
 

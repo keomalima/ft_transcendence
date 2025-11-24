@@ -11,6 +11,7 @@ import { Profile } from "./pages/Profile.js";
 import { EditProfile } from "./pages/EditProfile.js";
 import { CreateGame } from "./pages/CreateGame.js";
 import { GameRoom } from "./pages/GameRoom.js";
+import { LaunchGame } from "./pages/LaunchGame.js";
 
 // Create and init user store
 const userStore = createUserStore(null);
@@ -58,6 +59,7 @@ async function initializeApp() {
 		.add("/edit-profile", EditProfile)
 		.add("/create-game", CreateGame)
 		.add("/game-room/:id", GameRoom)
+		.add("/launch-game", LaunchGame)
 		.start();
 }
 

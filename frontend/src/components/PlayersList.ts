@@ -1,13 +1,15 @@
 import { AppContext } from "../types.js";
-import type { GameUsers } from "../types.js";
+import type { GameData, GameUsers } from "../types.js";
+import { BUTTON_BLACK_CLASSES } from "../styles/tailwindStyles.js";
 
 export class PlayerList extends HTMLElement {
 	private _ctx: AppContext | null = null;
+	private _gameData: GameData | null = null;
 	private _gamePlayers: GameUsers[] | null = null;
+	private _isCreator: boolean | null = false;
 
 	constructor() {
 		super();
-		console.log('player list component')
 	}
 
 	set ctx(value : AppContext)
@@ -15,25 +17,34 @@ export class PlayerList extends HTMLElement {
 		this._ctx = value;
 	}
 
-	set playerList(value : GameUsers[] | null)
+	set isCreator(value: boolean | null) {
+		this._isCreator = value;
+		if (this.isConnected && this._gamePlayers && this._gamePlayers && this._isCreator !== null) {
+			this.loadAndRender();
+		}
+	}
+
+	set gameData(value : GameData | null)
 	{
-		this._gamePlayers = value;
-		if (this.isConnected) {
+		this._gameData = value;
+		if (value)
+			this._gamePlayers = value.gameUsers;
+		if (this.isConnected && this._gamePlayers && this._gamePlayers && this._isCreator !== null) {
 			this.loadAndRender();
 		}
 	}
 
 	async connectedCallback() {
 		// Load data if ctx is already set
-		if (this._ctx && this._gamePlayers) {
+		if (this.isConnected && this._gamePlayers && this._gamePlayers && this._isCreator !== null) {
 			await this.loadAndRender();
 		}
 	}
 
 	public async loadAndRender() {
-		console.log('load and render');
 		this.render();
 		this.displayPlayerCards();
+		this.attachEventListener();
 	}
 
 	private render() {
@@ -49,21 +60,19 @@ export class PlayerList extends HTMLElement {
 			this.innerHTML =
 			/*html*/`
 				<div class='h-full flex flex-col'>
-					<h1 class='mb-5'>Players connected</h1>
+					<h1 class='mb-5'>Players connected ${this._gameData?.gameUsers?.length}/2</h1>
 					<div id='player-cards' class='flex-1 overflow-auto'></div>
+					<button id='start-game-button'
+						${this._isCreator === false ? "hidden" : ""} 
+						${this._gameData?.gameUsers?.length !== 2 ? "hidden" : ""} 
+						class='mt-10 w-1/3 font-[Calistoga] px-3.5 py-2.5 rounded-full bg-black text-white outline outline-1 outline-black hover:shadow-xl
+							disable:opacity-75
+							enabled:hover:font-semibold
+							focus-visible:outline-2 focus-visible:outline-offset-2'>
+						START
+					</button>
+					<p id='error-start-game'></p>
 				</div>
-
-				<!-- Confirmation Dialog -->
-				<dialog id="delete-friend-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
-					<div class="flex flex-col gap-4">
-						<h2 class="text-xl font-semibold">Delete Friend</h2>
-						<p id="delete-friend-message" class="text-gray-600">Are you sure you want to remove this friend?</p>
-						<div class="flex gap-3 justify-end">
-							<button id="cancel-delete-btn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
-							<button id="confirm-delete-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Delete</button>
-						</div>
-					</div>
-				</dialog>
 			`;
 		}
 	}
@@ -102,23 +111,26 @@ export class PlayerList extends HTMLElement {
 
 		const name = document.createElement('p');
 		name.innerText = `${player.user?.displayName}`;
-		name.className = 'text-sm font-[Inter]'
+		if (this._ctx?.userStore.get()?.id === player.user?.id) {
+			name.className = 'text-sm font-[Inter] font-semibold'
+		} else {
+			name.className = 'text-sm font-[Inter]'
+		}
 
-		// const status = document.createElement('p');
-		// status.innerText = `${friend.isOnline === true ? 'onilne' : 'offline'}`;
-		// status.className = `text-xs font-[Inter] ${friend.isOnline === true ? 'text-green-500' : 'text-red-500'}`
+
 		text.appendChild(name);
-		// text.appendChild(status);
 		// ===========================
 
 
 		// actions ===================
 		const actions = document.createElement('div');
-		const removeBtn = document.createElement('button');
-		removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
-		removeBtn.innerText = 'remove';
-		removeBtn.id = `remove-${player.user?.id}`;
-		actions.appendChild(removeBtn);
+			const removeBtn = document.createElement('button');
+			removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
+			removeBtn.innerText = 'remove';
+			removeBtn.id = `remove-${player.user?.id}`;
+		if (this._isCreator === true && this._ctx?.userStore.get()?.id != player.user?.id) {
+			actions.appendChild(removeBtn);
+		}
 		// ===========================
 
 		// card.appendChild(avatar);
@@ -129,59 +141,23 @@ export class PlayerList extends HTMLElement {
 			console.log('remove triger');
 		});
 
-
-		// removeBtn.addEventListener('click', (e) => {
-		// 	// Get dialog elements
-		// 	const dialog = this.querySelector('#delete-friend-dialog') as HTMLDialogElement;
-		// 	const message = this.querySelector('#delete-friend-message') as HTMLElement;
-		// 	const cancelBtn = this.querySelector('#cancel-delete-btn') as HTMLButtonElement;
-		// 	const confirmBtn = this.querySelector('#confirm-delete-btn') as HTMLButtonElement;
-
-		// 	if (!dialog) return;
-
-		// 	// Update message with friend name
-		// 	if (message) {
-		// 		message.textContent = `Are you sure you want to remove ${friend.displayName} from your friends?`;
-		// 	}
-
-		// 	// Show dialog
-		// 	dialog.showModal();
-
-		// 	// Handle cancel
-		// 	const handleCancel = () => {
-		// 		dialog.close();
-		// 		cancelBtn?.removeEventListener('click', handleCancel);
-		// 		confirmBtn?.removeEventListener('click', handleConfirm);
-		// 	};
-
-		// 	// Handle confirm
-		// 	const handleConfirm = () => {
-		// 		dialog.close();
-		// 		this.dispatchEvent(new CustomEvent('event-delete-friend', {
-		// 			detail: {
-		// 				friendshipId: friend.friendshipId as string,
-		// 				accessToken: this._accessToken as string
-		// 			},
-		// 			bubbles: true
-		// 		}));
-		// 		cancelBtn?.removeEventListener('click', handleCancel);
-		// 		confirmBtn?.removeEventListener('click', handleConfirm);
-		// 	};
-
-		// 	// Attach event listeners
-		// 	cancelBtn?.addEventListener('click', handleCancel);
-		// 	confirmBtn?.addEventListener('click', handleConfirm);
-
-		// 	// Close on backdrop click
-		// 	dialog.addEventListener('click', (e) => {
-		// 		if (e.target === dialog) {
-		// 			handleCancel();
-		// 		}
-		// 	});
-		// });
-
-
 		return card;
+	}
+
+	// ======== EVENT LISTENER ============
+
+	private attachEventListener() {
+
+		// **** START GAME ****
+		const startBtn = this.querySelector('#start-game-button') as HTMLButtonElement;
+		startBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.dispatchEvent(new CustomEvent('event-start-game', {
+				detail: this._gameData?.id,
+				bubbles: true
+			}));
+			console.log('Start button trigger');
+		});
 	}
 }
 

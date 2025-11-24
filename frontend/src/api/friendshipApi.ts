@@ -73,6 +73,22 @@ export const friendshipApi = {
 		console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
 	},
 
+	reject: async (id: string | null, accessToken: string): Promise<void> => {
+		if (id == null)
+			throw new Error('Request ID is required');
+		const response = await fetch (`${BASE_URL}/reject/${id}`, {
+			method: 'PUT',
+			headers:{
+				'Authorization': `Bearer ${accessToken}`}
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to reject friend');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to reject friend');
+		}
+		console.log('🧑‍🤝‍🧑 rejectFriend sucess ✅ ');
+	},
+
 	delete: async (id: string | null, accessToken: string): Promise<void> => {
 		if (id == null)
 			throw new Error('Friendship ID is required');

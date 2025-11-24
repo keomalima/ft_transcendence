@@ -54,5 +54,37 @@ export const gameApi = {
 		const result: GameData = await response.json();
 		console.log('🎮 generate token sucess ✅ ', result);
 		return result;
+	},
+
+	joinGame: async (accessToken: string, gameToken: string): Promise<{id: string, gameId: string, userId: string}> => {
+		const response = await fetch (`${BASE_URL}/${gameToken}/join`, {
+			method: 'POST',
+			headers:{
+				'Authorization': `Bearer ${accessToken}`},
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to join game');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to join game');
+		}
+		const result: {id: string, gameId: string, userId: string} = await response.json();
+		console.log('🎮 join game sucess ✅ ', result);
+		return result;
+	},
+
+	startGame: async (accessToken: string, gameId: string): Promise<Partial<GameData>> => {
+		const response = await fetch (`${BASE_URL}/${gameId}/start`, {
+			method: 'PUT',
+			headers:{
+				'Authorization': `Bearer ${accessToken}`},
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to start game');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to start game');
+		}
+		const result: Partial<GameData> = await response.json();
+		console.log('🎮 start game sucess ✅ ', result);
+		return result;
 	}
 }
