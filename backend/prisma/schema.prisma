@@ -18,6 +18,14 @@ enum GameStatus {
 	ABANDONED
 }
 
+enum TournamentStatus {
+	REGISTRATION
+  	READY
+  	IN_PROGRESS
+  	COMPLETED
+  	CANCELLED
+}
+
 enum GameMode {
 	LOCAL
 	ONLINE
@@ -43,11 +51,14 @@ model User {
 	lastSeenAt DateTime?
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
-	sentFriendRequests     Friendship[] @relation("FriendshipRequester")
-  	receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
-	sessions Session[]
-	games Game[]
-	gameUsers GamePlayer[]
+	sentFriendRequests     	Friendship[] @relation("FriendshipRequester")
+  	receivedFriendRequests 	Friendship[] @relation("FriendshipAddressee")
+	sessions 				Session[]
+	games 					Game[]
+	gameUsers 				GamePlayer[]
+	tournamentsCreated      Tournament[] @relation("CreatedTournaments")
+  	tournamentsWon      	Tournament[] @relation("TournamentWinner")
+  	tournamentParticipation TournamentPlayer[]
 }
 
 model Session {
@@ -58,16 +69,52 @@ model Session {
 	createdAt DateTime @default(now())
 }
 
+model Tournament {
+	id String @id @default(uuid())
+	token String? @unique
+	createdBy String? 
+	creator User? @relation("CreatedTournaments", fields: [createdBy], references: [id], onDelete: SetNull)
+	numberPlayers Int @default(4)
+	participants TournamentPlayer[]
+	status TournamentStatus @default(REGISTRATION)
+	currentRound Int @default(1)
+	totalRounds Int
+	winnerId String?
+	winner User? @relation("TournamentWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+	scoreToWin Int @default(10)
+	startedAt DateTime?
+	completedAt DateTime?
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	games Game[]
+}
+
+model TournamentPlayer {
+	id String @id @default(uuid())
+	tournamentId String
+	tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+	userId String
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+	joinedAt DateTime @default(now())
+	finalPosition Int?
+	isEliminated Boolean @default(false)
+	eliminatedInRound Int?
+
+	@@unique([tournamentId, userId])
+}
+
 model Game {
 	id String @id @default(uuid())
 	token String? @unique
 	scoreToWin Int?
-	createdBy String 
-	user User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-	// tournamentId String?
-	// tournament Tournament? @relation(fields: [tournamentId], references: [id])
+	createdBy String?
+	user User? @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+	tournamentId String?
+	tournament Tournament? @relation(fields: [tournamentId], references: [id])
 	status GameStatus @default(PENDING)
 	type GameMode @default(ONLINE)
+	roundNumber Int?
+	matchNumber Int?
 	startedAt DateTime?
 	completedAt DateTime?
 	createdAt DateTime @default(now())
@@ -83,6 +130,7 @@ model GamePlayer {
 	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 	score Int @default(0)
 	isWinner Boolean @default(false)
+	joinedAt DateTime @default(now())
 	
 	@@unique([gameId, userId])
 }

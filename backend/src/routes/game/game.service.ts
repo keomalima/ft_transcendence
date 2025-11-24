@@ -6,6 +6,30 @@ import { includes } from "zod";
 // Game CRUD Operations
 // =====================
 
+async function getGamesByUserId(prisma: PrismaClient, userId: string) {
+	return prisma.gamePlayer.findMany({
+		where: { userId },
+		include: {
+			game: {
+				include : {
+					gameUsers: {
+						include: {
+							user: {
+								select: {
+									id: true, 
+									displayName: true,
+									avatarUrl: true
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	})
+
+}
+
 async function findGameById(prisma: PrismaClient, gameId: string) {
 	return prisma.game.findUnique({
 		where: { id: gameId },
@@ -15,7 +39,8 @@ async function findGameById(prisma: PrismaClient, gameId: string) {
 					user: {
 						select: {
                         	id: true,
-                        	displayName: true
+                        	displayName: true,
+							avatarUrl: true
                     	}
 					}
 				}
@@ -127,5 +152,6 @@ export const gameService = {
 	findGameById,
 	findGameByToken,
 	joinUserToGame,
-	startGame
+	startGame,
+	getGamesByUserId
 };

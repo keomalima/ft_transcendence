@@ -112,7 +112,7 @@ async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInpu
 	const { avatarFile, ...userData } = request.body;
 
 	try {
-		let avatarUrl = '/uploads/avatars/default.png';
+		let avatarUrl = '/uploads/avatars/default.jpg';
 
         if (avatarFile?.file) {
             const fileBuffer = await avatarFile.toBuffer();

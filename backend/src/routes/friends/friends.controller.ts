@@ -18,7 +18,7 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 		const requesterId = request.user!.id;
 		const friendships = await friendsService.findActiveFriends(request.server.prisma, requesterId);
 
-		const friends = friendships.map(f => {
+		const friends = friendships.map((f: typeof friendships[0]) => {
 		    const friend = f.requesterId === requesterId ? f.addressee : f.requester;
 		    const { password, salt, email, isOnline, ...safeFriend } = friend;
 			const isOnlineCheck = isFriendOnline(friend.lastSeenAt)
@@ -133,17 +133,20 @@ async function getPendingRequestsHandler(request: FastifyRequest, reply: Fastify
 		const userId = request.user!.id;
 
 		const pending = await friendsService.findPendingRequests(request.server.prisma, userId)
-		const newArray = pending.map(f => ({
+		const newArray = pending.map((f: typeof pending[0]) => ({
 			id: f.id,
 			createdAt: f.createdAt,
 			friend: f.requester
 		}))
-		const safeRequests = newArray.map(f => {
+		const safeRequests = newArray.map((f: typeof newArray[0]) => {
 			const { password, salt, email, ...safeFriend } = f.friend;
 			return {
 				id: f.id,
 				createdAt: f.createdAt,
-				friend: safeFriend
+				friend: {
+					...safeFriend,
+					isOnline: isFriendOnline(f.friend.lastSeenAt)
+				}
 			}
 		})
 		return safeRequests
