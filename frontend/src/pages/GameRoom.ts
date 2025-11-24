@@ -1,6 +1,7 @@
 import type { AppContext, UserState, GameUsers, GameData } from "../types.js";
 import { router } from "../main.js";
 import { gameApi } from "../api/gameApi.js";
+import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -39,6 +40,13 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		const playerList: GameUsers[] | null = gameData.gameUsers;
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
+		
+		const wsConnection = new WaitingRoomConnection();
+		wsConnection.connect(params['id'], (updateGameData) => {
+			if (updateGameData.message) {
+            	console.log('🔔', updateGameData.message);
+			}
+		})
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);
 

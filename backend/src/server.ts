@@ -18,6 +18,7 @@ import { friendsPrivateRoutes } from './routes/friends/friends.route.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { tournamentPrivateRoutes } from './routes/tournaments/tournaments.route.js';
+import { webSocketGameController } from './websockets/waitingRoomHandler.js';
 
 const fastify = Fastify({
   logger: true
@@ -67,6 +68,10 @@ fastify.register(async (protectedRoutes) => {
 fastify.register(async (fastify) => {
     fastify.get('/ws', { websocket: true }, webSocketController.testHandler)
 });
+
+fastify.register(async (fastify) => {
+	fastify.get('/waiting-room/:gameId', { websocket: true}, webSocketGameController.waitingRoomHandler)
+})
 
 try {
   await fastify.listen({ port: 3000, host: '0.0.0.0' })

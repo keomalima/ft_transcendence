@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateGameInput, UpdateGameInput } from './game.schema.js';
 import crypto from 'crypto';
 import { gameService } from './game.service.js';
+import { broadcasToRoom } from '../../websockets/waitingRoomHandler.js';
 
 // =====================
 // Game CRUD Handlers
@@ -121,6 +122,11 @@ async function joinGameHandler (request: FastifyRequest<{ Params: { token: strin
 				});
 			}
 		}
+
+		broadcasToRoom(game.id, {
+			type: 'room_update',
+			message: `${userId} joined the game!`
+		})
 		return  await gameService.joinUserToGame(request.server.prisma, game.id, userId);
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to join"});
