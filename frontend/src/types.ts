@@ -76,7 +76,7 @@ export interface GameData {
 // for gameUsers
 export interface GameUsers {
 	id: string | null;
-	user: Pick<UserState, 'id' | 'displayName'> | null;
+	user: Pick<UserState, 'id' | 'displayName' | 'avatarUrl'> | null;
 	score: string | null;
 	isWinner: boolean;
 }
@@ -96,3 +96,25 @@ export interface AppContext {
 	userStore: UserStore;
 }
 
+interface Opponent {
+	id: string | null;
+
+}
+
+export interface GameHistory {
+	gameId: string | null;
+	score: number | null;
+	isWinner: boolean | null;
+	duration: number | null;
+	type: string | null;
+	status: string | null;
+	date: string | null;
+	opponent: {
+		id: string | null;
+		avatarUrl: string | null;
+		name: string | null;
+		score: number | null;
+		isWinner: boolean | null;
+	} | null;
+
+}

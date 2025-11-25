@@ -21,7 +21,11 @@ export class RegisterPopUp extends HTMLElement {
 	private render() {
 		this.innerHTML = /*html*/`
 			<div>
-				<button onclick="this.closest('dialog').close()" class="outline-none float-right p-10">X</button>
+				<button onclick="this.closest('dialog').close()" class="outline-none float-right p-10">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+					</svg>
+				</button>
 			</div>
 			<div class="px-6 py-12 sm:rounded-lg sm:px-12">
 				<h1 class="mb-10 text-xl">Create a new account</h1>
@@ -129,7 +133,6 @@ export class RegisterPopUp extends HTMLElement {
 			createAccountForm.addEventListener('submit', async (e) => {
 				e.preventDefault();
 				e.stopPropagation();
-				console.log('save btn trigger');
 
 				const displayError = this.querySelector('#register-error');
 				const formData = new FormData(createAccountForm);
@@ -157,7 +160,6 @@ export class RegisterPopUp extends HTMLElement {
 					},
 					bubbles: true
 				}))
-				console.log('create user in register');
 			});
 		}
 	}

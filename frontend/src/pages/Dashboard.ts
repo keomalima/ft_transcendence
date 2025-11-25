@@ -10,12 +10,12 @@ import "../components/FriendRequests.js";
 import "../components/AddFriend.js";
 import "../components/JoinGamePopUp.js";
 import { gameApi } from "../api/gameApi.js";
+import type { GameHistory } from "../types.js";
 
 
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
     const currentUser: UserState | null = ctx.userStore.get();
-    console.log('current user ', currentUser);
 
     // secure if no access token or user ID
     if (!currentUser?.accessToken || !currentUser?.id)
@@ -25,8 +25,9 @@ export function Dashboard(ctx: AppContext): string{
         return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
     }
 
-	setTimeout(() => {
-		passContext(ctx);
+	setTimeout( async () => {
+		const gameHistory: GameHistory[] = await gameApi.getHistory(currentUser?.accessToken!);
+		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
 	}, 0);
 
@@ -40,6 +41,7 @@ export function Dashboard(ctx: AppContext): string{
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
 				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
+					<img src='http://localhost:3000${currentUser.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
 				<div class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
@@ -63,8 +65,8 @@ export function Dashboard(ctx: AppContext): string{
 					<match-history id='match-component' class="bg-white p-4 lg:p-10 shadow-sm rounded-lg h-full flex flex-col gap-3"></match-history>
 				</div>
 				<div class='flex flex-col col-span-1 gap-5 min-h-full'>
-					<requests-list id='requests-component' class="p-4 lg:p-10 rounded-lg bg-white order-last lg:order-0 lg:col-start-3 lg:row-start-1"></requests-list>
-					<add-friend id='add-friend-component' class="p-4 lg:p-10 rounded-lg bg-white order-first lg:order-0 lg:col-start-3 lg:row-start-2"></add-friend>
+					<requests-list id='requests-component' class="p-4 lg:p-10 rounded-lg bg-white order-first lg:order-0 lg:col-start-3 lg:row-start-1"></requests-list>
+					<add-friend id='add-friend-component' class="p-4 lg:p-10 rounded-lg bg-white order-0 lg:order-0 lg:col-start-3 lg:row-start-2"></add-friend>
 					<friend-list id='friend-list-component' class="grow rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></friend-list>
 				</div>
 			</div>
@@ -79,7 +81,7 @@ export function Dashboard(ctx: AppContext): string{
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext) {
+function passContext(ctx: AppContext, gameHistory: GameHistory[]) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
@@ -103,6 +105,7 @@ function passContext(ctx: AppContext) {
 	const matchHistoryComponent = document.getElementById('match-component') as any;
 	if (matchHistoryComponent) {
 		matchHistoryComponent.ctx = ctx;
+		matchHistoryComponent.gameHistory = gameHistory;
 	}
 }
 
@@ -122,7 +125,6 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		try {
 			if (data.friendshipId && data.accessToken) {
 				await friendshipApi.delete(data.friendshipId, data.accessToken);
-				console.log('Friend deleted successfully');
 				
 				// Refresh friend list after deletion
 				if (friendListComponent.loadAndRender) {
@@ -184,7 +186,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			if (data.accessToken && data.friendName) {
 				await friendshipApi.sendRequest(data.friendName, data.accessToken);
 				if (errorMsg) {
-					errorMsg.className = 'text-green-500';
+					errorMsg.className = 'text-green-500 text-sm mt-2';
 					errorMsg.innerText = `Friend request sent successfully to ${data.friendName}!`;
 				}
 			}
@@ -202,12 +204,10 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		const accessToken = ctx.userStore.get()?.accessToken;
-		console.log('data', data )
 		if (!accessToken)
 			return;
 		try {
 			const result = await gameApi.joinGame(accessToken, data);
-			console.log('OK', result);
 			router.navigateTo(`/game-room/${result.gameId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;

@@ -1,64 +1,77 @@
-import { AppContext } from "../types.js";
-import { MatchData } from "../data/matchData.js";
-
-interface matchInfo {
-	id: number;
-	opponentName: string;
-	scoreUser: number;
-	scoreOpponent: number;
-	winner: boolean;
-	duration: number;
-	date: string;
-	mode: string;
-}
+import { AppContext, GameHistory } from "../types.js";
 
 export class MatchHistory extends HTMLElement {
 
 	private _ctx: AppContext | null = null;
+	private _gameHistory: GameHistory[] | null = null;
+	private _uploadsUrl: string = 'http://localhost:3000';
 
 	constructor() {
 		super();
 	}
 
-	set ctx(value : AppContext)
-	{
+	set ctx(value: AppContext) {
 		this._ctx = value;
+		if (this.isConnected && this._ctx && this._gameHistory)
+			this.loadAndRender();
+	}
+	set gameHistory(value: GameHistory[]) {
+		this._gameHistory = value;
+		if (this.isConnected && this._ctx && this._gameHistory)
+			this.loadAndRender();
 	}
 
 	connectedCallback() {
+		if (this.isConnected && this._ctx && this._gameHistory)
+			this.loadAndRender();
+	}
+
+	private async loadAndRender() {
 		this.render();
 		this.generateMatchHistory();
 	}
 
 	private render() {
+		if (this._gameHistory?.length == 0) {
+			this.innerHTML =
+			/*html*/`
+				<h1 class='flex-none'>Match history</h1>
+				<div class="flex-1 overflow-auto min-h-0">
+					<p>No history available</p>
+				</div>
+			`
+		} else {
 		this.innerHTML =
-		/*html*/`
-			<h1 class='flex-none'>Match history</h1>
-			<div class="flex-1 overflow-auto min-h-0">
-				<table class="w-full border-separate border-spacing-0">
-			<thead>
-				<tr>
-				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
-				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
-				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
-				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
-				<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
-				</tr>
-			</thead>
-			<tbody id='match-data'></tbody>
-			</table>
-			</div>
-		`
+			/*html*/`
+				<h1 class='flex-none'>Match history</h1>
+				<div class="flex-1 overflow-auto min-h-0">
+					<table class="w-full border-separate border-spacing-0">
+						<thead>
+							<tr>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
+							</tr>
+						</thead>
+						<tbody id='match-data'></tbody>
+					</table>
+				</div>
+			`
+		}
+
 	}
 
 	private generateMatchHistory() {
-		const scores = document.getElementById('match-data');
-		MatchData.forEach((s) => {
-			scores?.appendChild(this.createMatchElem(s));
+		const matchs = document.getElementById('match-data');
+
+		this._gameHistory?.forEach((match) => {
+			matchs?.appendChild(this.createMatchElem(match));
 		})
 	}
 
-	private createMatchElem(match: matchInfo) : HTMLElement {
+	private createMatchElem(match: GameHistory) : HTMLElement {
 
 		const elem = document.createElement('tr');
 
@@ -66,19 +79,19 @@ export class MatchHistory extends HTMLElement {
 		profile.className = 'border-b border-creamgrey px-3 py-4 text-sm font-medium whitespace-nowrap text-gray-900 flex flex-col justify-center items-center gap-2';
 
 		const img = document.createElement('img');
-		img.className = 'w-10 h-10 bg-gray-300 rounded-full shrink-0';
-		img.src = '/src/images/defaultProfile.webp';
+		img.className = 'w-10 h-10 bg-gray-300 rounded-full shrink-0 object-cover';
+		img.src = `${this._uploadsUrl}${match.opponent?.avatarUrl}`;
 
 		const opponent = document.createElement('p');
 		opponent.className = 'my-0';
-		opponent.innerHTML = `${match.opponentName}`;
+		opponent.innerHTML = `${match.opponent?.name}`;
 
 		profile.appendChild(img);
 		profile.appendChild(opponent);
 
 		const score = document.createElement('td');
 		score.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap sm:table-cell text-center';
-		score.innerHTML = `${match.scoreUser.toString()} - ${match.scoreOpponent.toString()}`;
+		score.innerHTML = `${match.score?.toString()} - ${match.opponent?.score?.toString()}`;
 
 		const duration = document.createElement('td');
 		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap lg:table-cell text-center';
@@ -86,11 +99,11 @@ export class MatchHistory extends HTMLElement {
 
 		const date = document.createElement('td');
 		date.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap text-center';
-		date.innerHTML = `${match.date}`;
+		date.innerHTML = `${match.date?.split('T')[0]}`;
 
 		const mode = document.createElement('td');
 		mode.className = 'border-b border-creamgrey py-4 pr-4 pl-3 text-sm whitespace-nowrap text-center';
-		mode.innerHTML = `${match.mode}`;
+		mode.innerHTML = `${match.type === 'ONLINE' ? '1 vs 1' : match.type}`;
 
 		elem.appendChild(profile);
 		elem.appendChild(score);

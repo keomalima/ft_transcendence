@@ -6,6 +6,7 @@ export class FriendList extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<FriendData>[] | null = null;
 	private _accessToken: string | null = null;
+	private _uploadsUrl: string = 'http://localhost:3000';
 	
 	constructor() {
 		super();
@@ -14,14 +15,12 @@ export class FriendList extends HTMLElement {
 	set ctx(value : AppContext)
 	{
 		this._ctx = value;
-		// Load data when ctx is set and component is connected
 		if (this.isConnected) {
 			this.loadAndRender();
 		}
 	}
 
 	async connectedCallback() {
-		// Load data if ctx is already set
 		if (this._ctx) {
 			await this.loadAndRender();
 		}
@@ -102,10 +101,8 @@ export class FriendList extends HTMLElement {
 		avatar.className = 'shrink-0';
 
 		const image = document.createElement('img');
-		// if (friend.avatarUrl)
-		// 	image.src = `http://localhost:3000/${friend.avatarUrl}`;
-		image.src = '/src/images/ProfilePictureSquared.png';
-		image.className = 'w-10 h-10 bg-gray-300 rounded-full';
+		image.src = `${this._uploadsUrl}${friend.avatarUrl}`;
+		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
 		avatar.appendChild(image);
 		// ===========================
 
@@ -128,9 +125,13 @@ export class FriendList extends HTMLElement {
 
 		// actions ===================
 		const actions = document.createElement('div');
+		actions.className = 'flex flex-row justify-center items-center';
 		const deleteBtn = document.createElement('button');
-		deleteBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
-		deleteBtn.innerText = 'x';
+		deleteBtn.innerHTML = /*html*/`
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-7 stroke-1 stroke-red-500 fill-none hover:stroke-white  hover:fill-red-500">
+			<path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+			</svg>
+		`;
 		deleteBtn.id = `delete-${friend.id}`;
 		actions.appendChild(deleteBtn);
 		// ===========================
@@ -195,3 +196,5 @@ export class FriendList extends HTMLElement {
 }
 
 customElements.define('friend-list', FriendList);
+
+

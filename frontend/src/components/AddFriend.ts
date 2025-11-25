@@ -23,7 +23,7 @@ export class AddFriend extends HTMLElement {
 	private render() {
 		this.innerHTML = 
 		/*html*/`
-			<h1 class='mb-5'>Add a friend</h1>
+			<h1 class='mb-5'>Add a new friend</h1>
 			<form id='add-friend-form' class='flex items-center justify-between'>
 				<div>
 					<input id="friend-name-input" type="text" name="friend_name" placeholder="friend username" class="block w-full rounded-md px-3 py-1.5 text-stone-900 outline outline-1 -outline-offset-1 outline-medium placeholder:text-stone-400 focus:outline-2 focus:-outline-offset-2 focus:outline-muted sm:text-sm/6" />

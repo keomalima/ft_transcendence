@@ -14,8 +14,6 @@ export function Home(ctx: AppContext): string {
 		router.navigateTo('/home');
 	}
 
-	console.log('here');
-
 	setTimeout(() => {
 		passContext(ctx);
 		setupHomeEventListeners(ctx);
@@ -30,8 +28,6 @@ export function Home(ctx: AppContext): string {
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
 							<a href="#" id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</a>
-							<a data-link href="/test" id="test-btn" class='${LINK_STYLED_CLASSES}'>Test user</a>
-							<a href="#" id="clear-local-storage" class='${LINK_STYLED_CLASSES}'>Clear local storage</a>
 							<a data-link href="/LearnMore" id="learn-more-btn" class='${LINK_STYLED_CLASSES}'>Learn more →</a>
 						</div>
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
@@ -155,7 +151,8 @@ function setupHomeEventListeners(ctx: AppContext) {
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);
-			// TODO: Show error to user
+			const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
+			displayError.innerText = `${error}`;
 		}
 	});
 
