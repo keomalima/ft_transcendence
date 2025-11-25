@@ -2,7 +2,7 @@ export class WaitingRoomConnection {
 	private ws: WebSocket | null = null;
 
 	connect(gameId: string, onUpdate: (gameData: any) => void) {
-		this.ws = new WebSocket(`wss://localhost/waiting-room/${gameId}`);
+		this.ws = new WebSocket(`wss://localhost:8443/ws/waiting-room/${gameId}`);
 		
 		this.ws.onopen = () => {
 			console.log('🔌 Connected to waiting room');
@@ -10,8 +10,6 @@ export class WaitingRoomConnection {
 
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
-			console.log('📨 Received update:', data);
-
 			if (data.type === 'room_update') {
 				onUpdate(data);
 			}

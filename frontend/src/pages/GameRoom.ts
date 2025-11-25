@@ -2,6 +2,7 @@ import type { AppContext, UserState, GameUsers, GameData } from "../types.js";
 import { router } from "../main.js";
 import { gameApi } from "../api/gameApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
+import type { PlayerList } from "../components/PlayersList.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -13,6 +14,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
 	console.log('current user ', currentUser);
+	let currentGameData: GameData | null = null;
 
 	// secure if no access token or user ID
 	if (!currentUser?.accessToken || !currentUser?.id)
@@ -37,14 +39,43 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		const gameData = await getGameData(currentUser?.accessToken!, params['id']);
 		if (!gameData)
 			return;
-		const playerList: GameUsers[] | null = gameData.gameUsers;
+		currentGameData = gameData;
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
 		
+		// Create websocket with gameid
 		const wsConnection = new WaitingRoomConnection();
 		wsConnection.connect(params['id'], (updateGameData) => {
-			if (updateGameData.message) {
-            	console.log('🔔', updateGameData.message);
+			if (updateGameData.message && currentGameData) {
+
+				// Print the notification
+            	console.log('🔔', updateGameData);
+
+				// Inserts new player
+				const playerListComponent = document.getElementById('player-list-component') as PlayerList | null;
+				if (playerListComponent && updateGameData.userId) {
+					const incomingPlayer: GameUsers = {
+						id: null,
+						user: {
+							id: updateGameData.userId,
+							displayName: updateGameData.displayName ?? 'Unknown player',
+						},
+						score: null,
+						isWinner: false,
+					};
+					const updatedPlayers = currentGameData.gameUsers ? [...currentGameData.gameUsers] : [];
+					const existingIndex = updatedPlayers.findIndex((player) => player.user?.id === incomingPlayer.user?.id);
+					if (existingIndex >= 0) {
+						updatedPlayers[existingIndex] = incomingPlayer;
+					} else {
+						updatedPlayers.push(incomingPlayer);
+					}
+					currentGameData = {
+						...currentGameData,
+						gameUsers: updatedPlayers
+					};
+					playerListComponent.gameData = currentGameData;
+				}
 			}
 		})
 		await setupGameRoomEventListeners(ctx, params['id']);

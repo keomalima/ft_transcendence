@@ -1,6 +1,10 @@
 import type { FastifyRequest } from 'fastify'
 import { WebSocket } from 'ws';
 
+// =====================
+// Websocket Handlers
+// =====================
+
 const gameRooms = new Map<string, Set<WebSocket>>();
 
 async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Params: {gameId: string}}>) {
@@ -12,22 +16,23 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 	gameRooms.get(gameId)!.add(socket);
 
 	const pingInterval = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-            socket.ping();
-        }
-    }, 30000);
-
-	socket.on('message', (message: Buffer) => {
-		const data = JSON.parse(message.toString());
-
-		if (data.type === 'player_joined') {
-			broadcasToRoom(gameId, {
-				type: 'room_update',
-				players: data.players,
-				message: 'New player joined'
-			})
+		if (socket.readyState === WebSocket.OPEN) {
+			console.log('Ping sent');
+			socket.ping();
 		}
-	})
+	}, 30000);
+
+	// socket.on('message', (message: Buffer) => {
+	// 	const data = JSON.parse(message.toString());
+
+	// 	if (data.type === 'player_joined') {
+	// 		broadcasToRoom(gameId, {
+	// 			type: 'room_update',
+	// 			players: data.players,
+	// 			message: 'New player joined'
+	// 		})
+	// 	}
+	// })
 
 	socket.on('close', () => {
 		clearInterval(pingInterval);
@@ -36,7 +41,7 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 	})
 }
 
-export function broadcasToRoom(gameId: string, message: any) {
+function broadcasToRoom(gameId: string, message: any) {
 	const sockets = gameRooms.get(gameId);
 	if (sockets) {
 		sockets.forEach(socket => {
@@ -45,6 +50,7 @@ export function broadcasToRoom(gameId: string, message: any) {
 	}
 }
 
-export const webSocketGameController = {
+export const wsController = {
+	broadcasToRoom,
 	waitingRoomHandler
 };

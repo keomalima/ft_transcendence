@@ -40,7 +40,7 @@ async function findGameById(prisma: PrismaClient, gameId: string) {
 						select: {
                         	id: true,
                         	displayName: true,
-							avatarUrl: true
+							avatarUrl: true,
                     	}
 					}
 				}
@@ -60,7 +60,8 @@ async function findGameByToken(prisma: PrismaClient, token: string) {
                     user: {
                         select: {
                             id: true,
-                            displayName: true
+                            displayName: true,
+							avatarUrl: true
                         }
                     }
                 }
