@@ -47,35 +47,8 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		const wsConnection = new WaitingRoomConnection();
 		wsConnection.connect(params['id'], (updateGameData) => {
 			if (updateGameData.message && currentGameData) {
-
 				// Print the notification
             	console.log('🔔', updateGameData);
-
-				// Inserts new player
-				const playerListComponent = document.getElementById('player-list-component') as PlayerList | null;
-				if (playerListComponent && updateGameData.userId) {
-					const incomingPlayer: GameUsers = {
-						id: null,
-						user: {
-							id: updateGameData.userId,
-							displayName: updateGameData.displayName ?? 'Unknown player',
-						},
-						score: null,
-						isWinner: false,
-					};
-					const updatedPlayers = currentGameData.gameUsers ? [...currentGameData.gameUsers] : [];
-					const existingIndex = updatedPlayers.findIndex((player) => player.user?.id === incomingPlayer.user?.id);
-					if (existingIndex >= 0) {
-						updatedPlayers[existingIndex] = incomingPlayer;
-					} else {
-						updatedPlayers.push(incomingPlayer);
-					}
-					currentGameData = {
-						...currentGameData,
-						gameUsers: updatedPlayers
-					};
-					playerListComponent.gameData = currentGameData;
-				}
 			}
 		})
 		await setupGameRoomEventListeners(ctx, params['id']);

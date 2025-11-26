@@ -47,30 +47,6 @@ export class PlayerList extends HTMLElement {
 		this.attachEventListener();
 	}
 
-	public syncGamePlayers(players: GameUsers[]) {
-		this._gamePlayers = players;
-		if (this._gameData) {
-			this._gameData = {
-				...this._gameData,
-				gameUsers: players
-			};
-		}
-		if (this.isConnected) {
-			this.loadAndRender();
-		}
-	}
-
-	public upsertPlayer(player: GameUsers) {
-		const players = this._gamePlayers ? [...this._gamePlayers] : [];
-		const idx = players.findIndex((p) => p.user?.id === player.user?.id);
-		if (idx >= 0) {
-			players[idx] = player;
-		} else {
-			players.push(player);
-		}
-		this.syncGamePlayers(players);
-	}
-
 	private render() {
 		if (!this._gamePlayers) {
 			this.innerHTML =
