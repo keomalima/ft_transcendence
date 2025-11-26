@@ -37,7 +37,7 @@
 		"**/.hg": true,
 		"**/.DS_Store": true,
 		"**/Thumbs.db": true,
-		"frontend": true,
+		"frontend": false,
 		".vscode": true,
 		"**/*.json": true,
 		"**/*.yml": true,

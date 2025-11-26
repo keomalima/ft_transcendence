@@ -13,8 +13,7 @@ let isGenerated: boolean = false;
 export function GameRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
-	console.log('current user ', currentUser);
-	let currentGameData: GameData | null = null;
+	// console.log('game room user', currentUser);
 
 	// secure if no access token or user ID
 	if (!currentUser?.accessToken || !currentUser?.id)
@@ -31,9 +30,6 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
-
-	console.log('game room params = ', params);
-
 
 	setTimeout(async () => {
 		const gameData = await getGameData(currentUser?.accessToken!, params['id']);
@@ -61,7 +57,6 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 // ======== GET GAME DATA ============
 async function getGameData(token: string, id: string): Promise<GameData | null> {
 
-	console.log('Get player Get Game Info');
 	try {
 		const gameData: GameData | null = await gameApi.getGame(token, id);
 		return gameData;
@@ -142,7 +137,6 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
 	generateBtn?.addEventListener('click', async (e) => {
 		e.preventDefault();
-		console.log('generate token event')
 		try {
 			let result = null;
 			if (isGenerated == false) {
@@ -174,10 +168,8 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		const accessToken = ctx.userStore.get()?.accessToken;
 		if (!accessToken || !gameId)
 			return;
-		console.log('HERE');
 		try {
 			const result = await gameApi.startGame(accessToken, gameId);
-			console.log('Success Start Game');
 			router.navigateTo('/launch-game');
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;

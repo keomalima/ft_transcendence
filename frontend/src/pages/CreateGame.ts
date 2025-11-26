@@ -12,7 +12,6 @@ import { RADIO_LABEL, BUTTON_CREAM_CLASSES } from "../styles/tailwindStyles.js";
 export function CreateGame(ctx: AppContext): string{
     // get user data from store
     const currentUser: UserState | null = ctx.userStore.get();
-    console.log('current user ', currentUser);
 
     // secure if no access token or user ID
     if (!currentUser?.accessToken || !currentUser?.id)
@@ -33,34 +32,34 @@ export function CreateGame(ctx: AppContext): string{
 			<nav-bar id='nav-bar-component'></nav-bar>
 		</header>
 
-		<div class="flex-1 flex flex-col items-center justify-center">
+		<div class="flex-1 flex flex-col items-center justify-center h-full">
 			<!-- Select mode -->
 			<h1 class='text-3xl'>Game settings</h1>
 
-			<form id='game-settings'class='flex flex-col gap-10 items-center justify-center mt-20'>
+			<form id='game-settings'class='flex flex-col gap-10 items-center justify-center mt-20 h-full'>
 				<fieldset class="flex flex-row mt-5 gap-8 justify-between">
 					<legend class="w-full text-center mb-4 text-xl font-[Calistoga] font-medium">Select playing mode</legend>
-					<div class="flex-1 h-full">
+					<div class="flex-1 h-10">
 						<input
 						type="radio"
 						id="local-mode"
 						name="playing_mode"
 						value="LOCAL"
-						class="hidden peer"
+						class="hidden peer h-full"
 						checked />
-						<label for="local-mode" class="${RADIO_LABEL}">
-						Local mode
+						<label for="local-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
+						Local
 						</label>
 					</div>
-					<div class="flex-1 h-full">
+					<div class="flex-1 h-10">
 						<input
 						type="radio"
 						id="remote-mode"
 						name="playing_mode"
-						value="REMOTE"
-						class="hidden peer" />
-						<label for="remote-mode" class="${RADIO_LABEL}">
-						Remote
+						value="ONLINE"
+						class="hidden peer h-full" />
+						<label for="remote-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
+						Online
 						</label>
 					</div>
 				</fieldset>
@@ -103,11 +102,9 @@ function setupGameEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		const selectedMode = (document.querySelector('input[name="playing_mode"]:checked') as HTMLInputElement)?.value;
 		const scoreToWin = (document.querySelector('input[name="score_to_win"]') as HTMLInputElement)?.value;
-		console.log('create game with mode = ', selectedMode, ' and score to win = ', scoreToWin);
 
 		try {
 			const result = await gameApi.createGame(ctx.userStore.get()?.accessToken!, selectedMode, parseInt(scoreToWin));
-			console.log('result = ', result);
 			router.navigateTo(`/game-room/${result.id}`);
 		} catch (error) {
 			const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;

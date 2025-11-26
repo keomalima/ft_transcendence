@@ -39,8 +39,11 @@ export const userApi = {
 				password: password
 			})
 		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to login: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to login');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to login');
+		}
 		const result = await response.json();
 		console.log('⭐ loginUser success ✅', result);
 		return result;
@@ -51,8 +54,11 @@ export const userApi = {
 			method: 'POST',
 			headers: {'Authorization': `Bearer ${accessToken}`}
 		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to logout: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to logout');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to logout');
+		}
 		console.log('⭐ logoutUser success ✅ (no response body)');
 	},
 	
@@ -70,8 +76,11 @@ export const userApi = {
 			method: 'POST',
 			body: formData
 		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to create a user : ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to create a user');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to create a user');
+		}
 		const result = await response.json();
 		console.log('⭐ createUser success ✅', result);
 		return result;
@@ -85,8 +94,11 @@ export const userApi = {
 				'Authorization': `Bearer ${accessToken}`}
 			}
 		);
-		if (!response.ok)
-			throw new Error(`❌ Failed to get user info: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to get user info');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to get user info');
+		}
 		const result = await response.json();
 		console.log('⭐ getUser success ✅', result);
 		return result;
@@ -97,8 +109,11 @@ export const userApi = {
 			method: 'DELETE',
 			headers: {'Authorization': `Bearer ${accessToken}`}
 		})
-		if (!response.ok)
-			throw new Error(`❌ Failed to delete user: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to delete user');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to delete user');
+		}
 		console.log('⭐ deleteUser success ✅, (no response body)');
 	},
 
@@ -121,8 +136,11 @@ export const userApi = {
 			},
 			body: JSON.stringify(cleanData)
 		})
-		if (!response.ok)
-			throw new Error(`❌ Failed to update user: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to update user');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to update user');
+		}
 		const result = await response.json();
 		console.log('⭐ updateUser success ✅', result);
 		return result;
@@ -140,8 +158,11 @@ export const userApi = {
 			},
 			body: formData
 		});
-		if (!response.ok)
-			throw new Error(`❌ Failed to update avatar: ${response.statusText}`);
+		if (!response.ok) {
+			console.log('❌ Failed to update avatar');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to update avatar');
+		}
 		const result = await response.json();
 		console.log('⭐ updateAvatar success ✅', result);
 		return result;
