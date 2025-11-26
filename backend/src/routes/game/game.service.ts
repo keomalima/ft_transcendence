@@ -96,7 +96,7 @@ async function findActiveGameByUserId(prisma: PrismaClient, id: string) {
 		where: {
 			userId: id,
 			game: {
-				status: 'IN_PROGRESS'
+				status: {in: ['IN_PROGRESS', 'PENDING']}
 			}
 		},
 	})

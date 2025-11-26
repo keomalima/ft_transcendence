@@ -81,6 +81,12 @@ async function generateTokenHandler (request: FastifyRequest<{ Params: { id: str
             	message: "Game not found or unauthorized"
         	});
 		}
+		if (game.token) {
+			return reply.code(400).send({
+            	message: "Game already has a valid token",
+				token: game.token
+        	});
+		}
 		while (attempts < maxAttempts) {
 			const token = generateGameToken();
 			const existingGame = await gameService.findGameByToken(request.server.prisma, token);
