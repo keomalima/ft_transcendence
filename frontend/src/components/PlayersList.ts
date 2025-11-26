@@ -7,6 +7,7 @@ export class PlayerList extends HTMLElement {
 	private _gameData: GameData | null = null;
 	private _gamePlayers: GameUsers[] | null = null;
 	private _isCreator: boolean | null = false;
+	private _uploadsUrl: string = 'http://localhost:3000';
 
 	constructor() {
 		super();
@@ -35,13 +36,12 @@ export class PlayerList extends HTMLElement {
 	}
 
 	async connectedCallback() {
-		// Load data if ctx is already set
 		if (this.isConnected && this._gamePlayers && this._gamePlayers && this._isCreator !== null) {
 			await this.loadAndRender();
 		}
 	}
 
-	public async loadAndRender() {
+	private async loadAndRender() {
 		this.render();
 		this.displayPlayerCards();
 		this.attachEventListener();
@@ -93,15 +93,14 @@ export class PlayerList extends HTMLElement {
 		card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
 
 		// profile picture ===========
-		// const avatar = document.createElement('div');
-		// avatar.className = 'shrink-0';
+		const avatar = document.createElement('div');
+		avatar.className = 'shrink-0';
 
-		// const image = document.createElement('img');
-		// if (friend.avatarUrl)
-		// 	image.src = `http://localhost:3000/${friend.avatarUrl}`;
-		// image.src = '/src/images/ProfilePictureSquared.png';
-		// image.className = 'w-10 h-10 bg-gray-300 rounded-full';
-		// avatar.appendChild(image);
+		const image = document.createElement('img');
+		if (player.user?.avatarUrl)
+			image.src = `${this._uploadsUrl}${player.user.avatarUrl}`;
+		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
+		avatar.appendChild(image);
 		// ===========================
 
 
@@ -133,7 +132,7 @@ export class PlayerList extends HTMLElement {
 		}
 		// ===========================
 
-		// card.appendChild(avatar);
+		card.appendChild(avatar);
 		card.appendChild(text);
 		card.appendChild(actions);
 
@@ -156,7 +155,6 @@ export class PlayerList extends HTMLElement {
 				detail: this._gameData?.id,
 				bubbles: true
 			}));
-			console.log('Start button trigger');
 		});
 	}
 }

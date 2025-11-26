@@ -1,6 +1,6 @@
 const BASE_URL = 'http://localhost:3000/api/games';
 
-import { GameData, GameToken } from "../types";
+import { GameData, GameToken, GameHistory } from "../types";
 
 export const gameApi = {
 	createGame: async (accessToken: string, type: string, scoreToWin: number): Promise<Partial<GameData>> => {
@@ -86,5 +86,21 @@ export const gameApi = {
 		const result: Partial<GameData> = await response.json();
 		console.log('🎮 start game sucess ✅ ', result);
 		return result;
-	}
+	},
+
+	getHistory: async (accessToken: string): Promise<GameHistory[]> => {
+		const response = await fetch (`${BASE_URL}/history`, {
+			method: 'GET',
+			headers:{
+				'Authorization': `Bearer ${accessToken}`},
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to get game history');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to get game history');
+		}
+		const result: GameHistory[] = await response.json();
+		console.log('🎮 Get Game history sucess ✅ ', result);
+		return result;
+	},
 }

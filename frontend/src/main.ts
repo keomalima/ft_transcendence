@@ -61,6 +61,28 @@ async function initializeApp() {
 		.add("/game-room/:id", GameRoom)
 		.add("/launch-game", LaunchGame)
 		.start();
+
+	// Event listener to check localstorage change
+	window.addEventListener('storage', async (e) => {
+		if (e.key === 'accessToken') {
+			if (!localStorage.getItem('accessToken') ||!localStorage.getItem('userId')) {
+				userService.cleanUser(context);
+				router.navigateTo('/');
+			} else {
+				console.log('local storage event');
+				const userId = localStorage.getItem('userId');
+				const accessToken = localStorage.getItem('accessToken');
+
+				context.userStore.update((prevState) => ({
+					...prevState,
+					accessToken: accessToken,
+					id: userId
+				}));
+				await userService.getUserState(context, userId);
+				router.navigateTo('/home');
+			}
+		}
+	})
 }
 
 // launch router with context

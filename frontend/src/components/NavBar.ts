@@ -2,7 +2,7 @@ import { AppContext } from "../types.js";
 import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 
-// import style
+// import style 
 import { NAV_ELEM_CLASSES, NAV_LOGO_CLASSES, NAV_ELEM_SELECTED_CLASSES } from "../styles/tailwindStyles.js";
 
 export class NavBar extends HTMLElement {
@@ -23,7 +23,7 @@ export class NavBar extends HTMLElement {
 	private render() {
 		this.innerHTML = /*html*/`
 			<nav aria-label="Global" class=" flex items-center justify-between p-6 lg:px-20">
-				<a data-link href="/dashboard" class='${NAV_LOGO_CLASSES}'>
+				<a data-link href="/home" class='${NAV_LOGO_CLASSES}'>
 					<span class=''>Let's Pong !</span>
 				</a>
 				<div class="flex lg:hidden">
@@ -37,7 +37,7 @@ export class NavBar extends HTMLElement {
 					<div class="hidden lg:flex lg:gap-x-12">
 					<a data-link href="/home" class="${window.location.pathname === '/home' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >home</a>
 					<a data-link href="/profile" class="${window.location.pathname === '/profile' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >profile</a>
-					<a data-link href="/create-game" class="${window.location.pathname === '/game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
+					<a data-link href="/create-game" class="${window.location.pathname === '/create-game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
 					<a data-link href="/tournament" class="${window.location.pathname === '/tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
 					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">Log out</a>
 				</div>
@@ -60,9 +60,9 @@ export class NavBar extends HTMLElement {
 					<div class="mt-6 flow-root">
 						<div class="-my-6 divide-y divide-gray-500/10">
 						<div class="space-y-2 py-6">
-							<a data-link href="/dashboard" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">home</a>
+							<a data-link href="/home" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">home</a>
 							<a data-link href="/profile" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
-							<a data-link href="/game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
+							<a data-link href="/create-game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
 							<a data-link href="/tournament" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">tournament</a>
 						</div>
 						<div class="py-6">
@@ -76,11 +76,11 @@ export class NavBar extends HTMLElement {
 			</el-dialog>
 		`
 	}
-
+	
 	// ======== EVENT LISTENER ============
-
+	
 	private attachEventListener(ctx: AppContext) {
-
+	
 		// Logout listener
 		const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
 		logoutBtn.addEventListener('click', async (e) => {
@@ -88,7 +88,7 @@ export class NavBar extends HTMLElement {
 			e.stopPropagation();
 
 			try {
-				userService.logoutUser(ctx);
+				await userService.logoutUser(ctx); // Ensure logout is awaited
 				router.navigateTo('/');
 			} catch (error) {
 				console.log(error);
@@ -101,7 +101,7 @@ export class NavBar extends HTMLElement {
 			e.stopPropagation();
 
 			try {
-				userService.logoutUser(ctx);
+				await userService.logoutUser(ctx); // Ensure logout is awaited
 				router.navigateTo('/');
 			} catch (error) {
 				console.log(error);

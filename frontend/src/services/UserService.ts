@@ -59,7 +59,7 @@ class UserService {
 		if (!accessToken)
 			throw new Error ('No active session for logout');
 		await userApi.logout(accessToken);
-		ctx.userStore.set(null);
+		this.cleanUser(ctx);
 		localStorage.removeItem('userId');
 		localStorage.removeItem('accessToken');
 	}
@@ -100,7 +100,7 @@ class UserService {
 			throw new Error('No active session for delete user');
 
 		await userApi.delete(accessToken);
-		ctx.userStore.set(null);
+		this.cleanUser(ctx);
 		localStorage.removeItem('userId');
 		localStorage.removeItem('accessToken');
 	}
@@ -145,7 +145,7 @@ class UserService {
 	}
 
 	// clean user store
-	private cleanUser(ctx: AppContext): void {
+	cleanUser(ctx: AppContext): void {
 		ctx.userStore.set({
 			id: null,
 			email: null,

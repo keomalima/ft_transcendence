@@ -5,10 +5,12 @@ export interface UserStore {
     get(): UserState | null;
     set(value: UserState | null): void;
     update(updater: (prev: UserState) => UserState | null): void;
+    subscribe(fn: () => void): void;
 }
 
 export function createUserStore(initial: UserState | null): UserStore {
     let state = initial;
+    const listeners: Array<() => void> = [];
 
     return {
 		init(value: UserState | null): void {
@@ -36,6 +38,7 @@ export function createUserStore(initial: UserState | null): UserStore {
         },
         set(value: UserState | null) {
             state = value;
+            listeners.forEach(fn => fn());
         },
         update(updater: (prev: UserState) => UserState | null) {
             // Safety: if state is null, provide a default empty UserState
@@ -56,6 +59,10 @@ export function createUserStore(initial: UserState | null): UserStore {
                 };
             }
             state = updater(state);
+            listeners.forEach(fn => fn());
+        },
+        subscribe(fn: () => void) {
+            listeners.push(fn);
         }
     };
 }

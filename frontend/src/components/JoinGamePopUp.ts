@@ -52,7 +52,6 @@ export class JoinGamePopUp extends HTMLElement {
 			e.preventDefault();
 			const input = this.querySelector('input[name="game_token"') as HTMLInputElement;
 			const token = input.value;
-			console.log('join game with token = ', token);
 			this.dispatchEvent(new CustomEvent ('event-join-game', {
 				detail: token,
 				bubbles: true
