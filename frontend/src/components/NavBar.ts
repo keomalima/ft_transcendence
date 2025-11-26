@@ -88,7 +88,7 @@ export class NavBar extends HTMLElement {
 			e.stopPropagation();
 
 			try {
-				userService.logoutUser(ctx);
+				await userService.logoutUser(ctx); // Ensure logout is awaited
 				router.navigateTo('/');
 			} catch (error) {
 				console.log(error);
@@ -101,7 +101,7 @@ export class NavBar extends HTMLElement {
 			e.stopPropagation();
 
 			try {
-				userService.logoutUser(ctx);
+				await userService.logoutUser(ctx); // Ensure logout is awaited
 				router.navigateTo('/');
 			} catch (error) {
 				console.log(error);

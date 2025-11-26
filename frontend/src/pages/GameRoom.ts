@@ -11,6 +11,7 @@ let isGenerated: boolean = false;
 export function GameRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
+	// console.log('game room user', currentUser);
 
 	// secure if no access token or user ID
 	if (!currentUser?.accessToken || !currentUser?.id)
