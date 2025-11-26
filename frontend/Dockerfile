@@ -1,14 +1,12 @@
-FROM node:18-alpine
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.json ./
-RUN npm install
+COPY package*.json tsconfig.json tailwind.config.json ./
+RUN npm ci
 
-COPY . .
-RUN npm run build
+COPY src ./src
+COPY index.html style.css ./
 
-EXPOSE 4173
+RUN npm run build && cp index.html dist/ && cp style.css dist/
 
-CMD ["npm", "run", "preview"]

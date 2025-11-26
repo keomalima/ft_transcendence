@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000/api/users';
+const BASE_URL = 'api/users';
 
 import { UserState } from "../types";
 

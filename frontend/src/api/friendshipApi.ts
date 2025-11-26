@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000/api/friends';
+const BASE_URL = '/api/friends';
 
 import { FriendData } from "../types";
 

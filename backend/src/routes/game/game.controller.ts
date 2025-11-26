@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateGameInput, UpdateGameInput } from './game.schema.js';
 import crypto from 'crypto';
 import { gameService } from './game.service.js';
+import { wsController } from '../websockets/ws.controller.js';
 
 // =====================
 // Game CRUD Handlers
@@ -80,6 +81,12 @@ async function generateTokenHandler (request: FastifyRequest<{ Params: { id: str
             	message: "Game not found or unauthorized"
         	});
 		}
+		if (game.token) {
+			return reply.code(400).send({
+            	message: "Game already has a valid token",
+				token: game.token
+        	});
+		}
 		while (attempts < maxAttempts) {
 			const token = generateGameToken();
 			const existingGame = await gameService.findGameByToken(request.server.prisma, token);
@@ -97,6 +104,7 @@ async function generateTokenHandler (request: FastifyRequest<{ Params: { id: str
 async function joinGameHandler (request: FastifyRequest<{ Params: { token: string} }>, reply: FastifyReply) {
 	try {
 		const userId = request.user!.id;
+		const joinedUser = request.user!;
 		const token = request.params.token;
 		const game = await gameService.findGameByToken(request.server.prisma, token);
 		if (!game) {
@@ -121,8 +129,17 @@ async function joinGameHandler (request: FastifyRequest<{ Params: { token: strin
 				});
 			}
 		}
+
+		wsController.broadcasToRoom(game.id, {
+			type: 'room_update',
+			message: `${joinedUser.displayName} joined the game!`,
+			userId,
+			displayName: joinedUser.displayName,
+			avatarUrl: joinedUser.avatarUrl
+		})
 		return  await gameService.joinUserToGame(request.server.prisma, game.id, userId);
 	} catch (error: any) {
+		console.error(error);
 		reply.code(500).send({ message: "Failed to join"});
 	}
 }

@@ -7,17 +7,24 @@ services:
     environment:
       - DATABASE_URL=file:/app/data/dev.db
       - NODE_ENV=development
+    networks:
+      - transcendence
     volumes:
       - prisma-data:/app/data
       - ./backend:/app
       - /app/node_modules
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "4173:5173"
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
     depends_on:
       - backend
+    ports:
+      - "8000:80"
+      - "8443:443"
+    networks:
+      - transcendence
 
 networks:
   transcendence:
