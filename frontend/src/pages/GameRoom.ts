@@ -35,14 +35,14 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		const gameData = await getGameData(currentUser?.accessToken!, params['id']);
 		if (!gameData)
 			return;
-		currentGameData = gameData;
+		
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
 		
 		// Create websocket with gameid
 		const wsConnection = new WaitingRoomConnection();
 		wsConnection.connect(params['id'], (updateGameData) => {
-			if (updateGameData.message && currentGameData) {
+			if (updateGameData.message) {
 				// Print the notification
             	console.log('🔔', updateGameData);
 			}
