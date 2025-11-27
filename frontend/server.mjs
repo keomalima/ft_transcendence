@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PORT = 5173;
+const API_BASE = process.env.API_BASE_URL || 'http://localhost:3000';
+const injectConfig = `<script>window.__API_BASE_URL__='${API_BASE}';</script>`;
 
 // Racines servies: public d'abord, puis dist pour les .js
 const roots = [
@@ -31,6 +33,12 @@ const mime = {
 
 function contentType(path) {
     return mime[extname(path)] || 'application/octet-stream';
+}
+
+async function serveHtmlWithInjection(filePath, res) {
+    const html = await readFile(filePath, 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(html.replace('</head>', `${injectConfig}</head>`));
 }
 
 const server = http.createServer(async (req, res) => {
@@ -62,8 +70,7 @@ const server = http.createServer(async (req, res) => {
             const indexPath = join(__dirname, 'index.html');
             try {
                 await stat(indexPath);
-                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-                createReadStream(indexPath).pipe(res);
+                await serveHtmlWithInjection(indexPath, res);
                 return;
             } catch (_) {
                 res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -72,8 +79,13 @@ const server = http.createServer(async (req, res) => {
             }
         }
 
-        res.writeHead(200, { 'Content-Type': contentType(foundPath) });
-        createReadStream(foundPath).pipe(res);
+        // Inject API config only for index.html; stream other assets as-is
+        if (foundPath.endsWith('index.html')) {
+            await serveHtmlWithInjection(foundPath, res);
+        } else {
+            res.writeHead(200, { 'Content-Type': contentType(foundPath) });
+            createReadStream(foundPath).pipe(res);
+        }
     } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end('Internal Server Error\n' + (err?.message || String(err)));
