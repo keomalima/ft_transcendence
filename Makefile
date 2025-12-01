@@ -14,7 +14,7 @@ dev-local:
 	cd frontend && API_BASE_URL=http://localhost:3000 npm run start
 
 # Development mode: backend + frontend both in Docker (hot reload via bind mounts)
-dev-docker:
+dev:
 	@echo "🚀 Starting DEVELOPMENT (frontend in Docker) ..."
 	$(COMPOSE) up -d backend frontend
 	@echo "✅ Frontend: http://localhost:5173"
