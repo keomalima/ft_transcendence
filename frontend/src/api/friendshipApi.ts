@@ -1,4 +1,6 @@
-const BASE_URL = '/api/friends';
+import { API_BASE_URL } from '../config.js';
+
+const BASE_URL = `${API_BASE_URL}/api/friends`; // localhost:3000 in dev, proxied /api in prod
 
 import { FriendData } from "../types";
 

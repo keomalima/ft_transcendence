@@ -1,32 +1,38 @@
 COMPOSE = docker compose -f ./docker-compose.yml
 
-all: dev
+all: dev-local
 
-# Development mode: backend in Docker, frontend local with hot-reload
-dev:
-	@echo "🚀 Starting DEVELOPMENT mode..."
+# Development mode: backend in Docker, frontend local (hot reload)
+dev-local:
+	@echo "🚀 Starting DEVELOPMENT (local frontend) ..."
 	@echo "📦 Starting backend in Docker..."
 	$(COMPOSE) up -d backend
 	@echo "⏳ Waiting for backend to be ready..."
 	@sleep 3
 	@echo "✨ Starting frontend locally with hot-reload..."
 	@echo "💡 Tip: Run 'make logs' in another terminal to see backend logs"
-	cd frontend && npm run serve
+	cd frontend && API_BASE_URL=http://localhost:3000 npm run start
+
+# Development mode: backend + frontend both in Docker (hot reload via bind mounts)
+dev-docker:
+	@echo "🚀 Starting DEVELOPMENT (frontend in Docker) ..."
+	$(COMPOSE) up -d backend frontend
+	@echo "✅ Frontend: http://localhost:5173"
+	@echo "✅ Backend:  http://localhost:3000"
 
 # Production/Release mode: both services in Docker
 prod:
 	@echo "🏭 Starting PRODUCTION mode..."
 	@echo "📦 Building images (frontend assets baked into nginx)..."
-	$(COMPOSE) up --build -d
+	$(COMPOSE) up --build -d backend nginx
 	@echo "✅ Services started!"
-	@echo "   Frontend: http://localhost"
-	@echo "   Backend:  http://localhost:3000"
+	@echo "   Frontend: https://localhost:8443"
 
 # Alternative: same as prod
 release:
 	@echo "🏭 Starting RELEASE mode..."
 	@echo "📦 Building images (frontend assets baked into nginx)..."
-	$(COMPOSE) up --build -d
+	$(COMPOSE) up --build -d backend nginx
 	@echo "✅ Services started!"
 	@echo "   Frontend: http://localhost"
 	@echo "   Backend:  http://localhost:3000"
@@ -56,4 +62,4 @@ migrate:
 logs:
 	$(COMPOSE) logs -f backend
 
-.PHONY: clean build start stop down studio migrate logs
+.PHONY: clean build start stop down studio migrate logs dev-local dev-docker prod release
