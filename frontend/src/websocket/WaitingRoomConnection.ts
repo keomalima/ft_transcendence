@@ -1,8 +1,12 @@
+import { API_BASE_URL } from '../config.js';
+
 export class WaitingRoomConnection {
 	private ws: WebSocket | null = null;
 
 	connect(gameId: string, onUpdate: (gameData: any) => void) {
-		this.ws = new WebSocket(`wss://localhost:8443/ws/waiting-room/${gameId}`);
+		const httpUrl = new URL(`/ws/waiting-room/${gameId}`, API_BASE_URL);
+		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+		this.ws = new WebSocket(httpUrl.href);
 		
 		this.ws.onopen = () => {
 			console.log('🔌 Connected to waiting room');
