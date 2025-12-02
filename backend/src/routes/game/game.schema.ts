@@ -14,6 +14,10 @@ const updateGameSchema = z.object({
 	scoreToWin: z.number().int().optional()
 });
 
+const removePlayerRequestSchema = z.object({
+	playerId: z.string()
+});
+
 // =====================
 // Response Schemas
 // =====================
@@ -92,7 +96,7 @@ const joinGameResponseSchema = z.object({
 	userId: z.string(),
 })
 
-const getCurrentGameHandler = z.object({
+const getCurrentGameSchema = z.object({
 	userId: z.string(),
 	gameId: z.string(),
 	type: z.enum(GameMode),
@@ -115,7 +119,8 @@ export const gameSchemas = {
   // Request schemas
   request: {
 	createGame: createGameSchema,
-	updateGame: updateGameSchema
+	updateGame: updateGameSchema,
+	removePlayer: removePlayerRequestSchema
   },
   
   // Response schemas
@@ -127,6 +132,6 @@ export const gameSchemas = {
 	joinGame: joinGameResponseSchema,
 	startGame: updateGameResponseSchema,
 	gameHistory: gameHistoryResponseSchema,
-	currentGame: getCurrentGameHandler
+	currentGame: getCurrentGameSchema,
   },
 };

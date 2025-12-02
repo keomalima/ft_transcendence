@@ -111,6 +111,17 @@ async function findActiveGameByUserId(prisma: PrismaClient, id: string) {
 	})
 }
 
+async function removePlayerFromGame(prisma: PrismaClient, gameId: string, userId: string) {
+	return prisma.gamePlayer.delete({
+		where: {
+			gameId_userId: {
+				gameId,
+				userId,
+			},
+		}
+	})
+}
+
 async function createGame(prisma: PrismaClient, data: CreateGameInput, id: string) {
 	const game = await prisma.game.create({ data: { createdBy: id, ...data }});
 	await prisma.gamePlayer.create({ data: { gameId: game.id, userId: id}})
@@ -163,5 +174,6 @@ export const gameService = {
 	findGameByToken,
 	joinUserToGame,
 	startGame,
-	getGamesByUserId
+	getGamesByUserId,
+	removePlayerFromGame
 };

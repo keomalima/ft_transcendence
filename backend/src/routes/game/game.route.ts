@@ -111,6 +111,19 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.getCurrentGameHandler
 	})
+
+	fastify.put('/:id/remove', {
+		schema: {
+			params: z.object({id: z.string()}),
+			body: gameSchemas.request.removePlayer, 
+			tags: ['Game'],
+			description: 'Remove a player from a pending game',
+			summary: 'Remove player',
+			security: [{ bearerAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: gameController.removePlayerHandler
+	})
 }
 
 // PUT    /games/:id/finish           → terminer (scores, winner)
