@@ -99,6 +99,18 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.gameHistoryHandler
 	})
+
+	fastify.get('/current', {
+		schema: {
+			response: { 200: gameSchemas.response.currentGame },
+			tags: ['Game'],
+			description: 'Return the id of the current pending/active game',
+			summary: 'Get current game',
+			security: [{ bearerAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: gameController.getCurrentGameHandler
+	})
 }
 
 // PUT    /games/:id/finish           → terminer (scores, winner)

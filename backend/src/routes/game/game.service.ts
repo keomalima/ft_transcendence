@@ -99,6 +99,15 @@ async function findActiveGameByUserId(prisma: PrismaClient, id: string) {
 				status: {in: ['IN_PROGRESS', 'PENDING']}
 			}
 		},
+		include: {
+			game : {
+				select: {
+					token: true,
+					status: true,
+					type: true,
+				}
+			}
+		}
 	})
 }
 

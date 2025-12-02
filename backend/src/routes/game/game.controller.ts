@@ -204,8 +204,26 @@ async function gameHistoryHandler (request: FastifyRequest, reply: FastifyReply)
 		})
 		return reply.code(200).send(result)
 	} catch (error: any) {
-		console.error(error);
 		reply.code(500).send({ message: "Failed to fetch game history"});
+	}
+}
+
+async function getCurrentGameHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const game = await gameService.findActiveGameByUserId(request.server.prisma, userId);
+		if (!game) 
+			return reply.code(204).send();
+
+		return {
+			userId: game.userId,
+			gameId: game.gameId,
+			type: game.game.type,
+			status: game.game.status,
+			token: game.game.token
+		}
+	} catch (error:any) {
+		reply.code(500).send({ message: "Failed to fetch current game"});
 	}
 }
 
@@ -231,5 +249,6 @@ export const gameController = {
 	getGameHandler,
 	joinGameHandler,
 	startGameHandler,
-	gameHistoryHandler
+	gameHistoryHandler,
+	getCurrentGameHandler
 };

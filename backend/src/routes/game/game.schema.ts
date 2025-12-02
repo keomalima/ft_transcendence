@@ -92,6 +92,14 @@ const joinGameResponseSchema = z.object({
 	userId: z.string(),
 })
 
+const getCurrentGameHandler = z.object({
+	userId: z.string(),
+	gameId: z.string(),
+	type: z.enum(GameMode),
+	status: z.enum(GameStatus),
+	token: z.string()
+})
+
 // =====================
 // Type Exports
 // =====================
@@ -118,6 +126,7 @@ export const gameSchemas = {
 	getGame: getGameResponseSchema,
 	joinGame: joinGameResponseSchema,
 	startGame: updateGameResponseSchema,
-	gameHistory: gameHistoryResponseSchema
+	gameHistory: gameHistoryResponseSchema,
+	currentGame: getCurrentGameHandler
   },
 };
