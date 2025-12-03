@@ -101,7 +101,7 @@ const getCurrentGameSchema = z.object({
 	gameId: z.string(),
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
-	token: z.string()
+	token: z.string().nullable()
 })
 
 // =====================

@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify'
+import { checkServerIdentity } from 'tls';
 import { WebSocket } from 'ws';
 
 // =====================
@@ -7,13 +8,18 @@ import { WebSocket } from 'ws';
 
 const gameRooms = new Map<string, Set<WebSocket>>();
 
-async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Params: {gameId: string}}>) {
+async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Params: {gameId: string, userId: string}}>) {
 	const gameId = request.params.gameId;
+	const userId = request.params.userId;
+	const identifiedSocket = socket as WebSocket & { userId?: string};
+
+	identifiedSocket.userId = userId;
+	console.log(`===== User ${identifiedSocket.userId} connected to game room: ${gameId} =====`);
 
 	if (!gameRooms.has(gameId)) {
 		gameRooms.set(gameId, new Set());
 	}
-	gameRooms.get(gameId)!.add(socket);
+	gameRooms.get(gameId)!.add(identifiedSocket);
 
 	const pingInterval = setInterval(() => {
 		if (socket.readyState === WebSocket.OPEN) {
@@ -36,7 +42,7 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 
 	socket.on('close', () => {
 		clearInterval(pingInterval);
-		gameRooms.get(gameId)?.delete(socket);
+		gameRooms.get(gameId)?.delete(identifiedSocket);
 		console.log(`Player disconnected from game room: ${gameId}`);
 	})
 }
@@ -45,12 +51,41 @@ function broadcasToRoom(gameId: string, message: any) {
 	const sockets = gameRooms.get(gameId);
 	if (sockets) {
 		sockets.forEach(socket => {
-			socket.send(JSON.stringify(message));
+			if (socket.readyState === WebSocket.OPEN) {
+				socket.send(JSON.stringify(message));
+			}
 		})
 	}
 }
 
+function notifyPlayerRemoved(gameId: string, playerId: string) {
+
+	const sockets = gameRooms.get(gameId);
+	
+	if (!sockets) {
+		console.log(`❌ No sockets found for game room: ${gameId}`);
+		return;
+	}
+	
+	sockets.forEach(sock => {
+		const socketUserId = (sock as any).userId;
+		
+		if (socketUserId === playerId) {
+			console.log(`✅ MATCH! Notifying user ${playerId}`);
+			if (sock.readyState === WebSocket.OPEN) {
+				sock.send(JSON.stringify({
+					type: 'player_remove',
+					message: "You've been removed from the game"
+				}));
+			} else {
+				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+			}
+		}
+	});
+}
+
 export const wsController = {
 	broadcasToRoom,
-	waitingRoomHandler
+	waitingRoomHandler,
+	notifyPlayerRemoved
 };
