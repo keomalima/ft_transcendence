@@ -13,8 +13,7 @@ let wsConnection: WaitingRoomConnection | null = null;
 
 export function GameRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
-	const currentUser: UserState | null = ctx.userStore.get();
-	// console.log('game room user', currentUser);
+	const currentUser = ctx.userStore.get();
 
 	// secure if no access token or user ID
 	if (!currentUser?.accessToken || !currentUser?.id)
@@ -32,6 +31,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
 
+	// Execute after the first rendering
 	setTimeout(async () => {
 
 		// cleanup if any previous websocket connection
@@ -44,16 +44,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
 		
-		// Create websocket with gameid
-		wsConnection = new WaitingRoomConnection();
-		wsConnection.connect(params['id'], async (updateGameData) => {
-			if (updateGameData.message) {
-            	console.log('🔔', updateGameData);
-				// Update player cards
-				gameData = await getGameData(currentUser?.accessToken!, params['id']);
-				updatePlayerList(gameData);
-			}
-		})
+		setGameRoomWebSockets(currentUser, gameData);
 
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);
@@ -61,6 +52,30 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 
 	return `<div id="game-room-content">Loading game data...</div>`;
 }
+
+// ======== SET WEBSOCKET CONNECTION ============
+async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData) {
+
+	// Create websocket with gameid
+	wsConnection = new WaitingRoomConnection();
+	wsConnection.connect(gameData.id!, currentUser.id!,
+		async (updateGameData) => {
+			if (updateGameData.message) {
+				console.log('🔔', updateGameData);
+				const newGameData = await getGameData(currentUser?.accessToken!, gameData.id!);
+				if (newGameData)
+					gameData = newGameData;
+				updatePlayerList(gameData);
+			}
+		},
+		() => {
+			console.log("Player quit");
+			cleanupGameRoom();
+			router.navigateTo('/home');
+		}
+	)
+}
+
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
 export function cleanupGameRoom() {
@@ -72,7 +87,6 @@ export function cleanupGameRoom() {
 
 // ======== GET GAME DATA ============
 async function getGameData(token: string, id: string): Promise<GameData | null> {
-
 	try {
 		const gameData: GameData | null = await gameApi.getGame(token, id);
 		return gameData;
@@ -82,6 +96,31 @@ async function getGameData(token: string, id: string): Promise<GameData | null> 
 	}
 }
 
+
+// ======== UPDATE PLAYER LIST ============
+function updatePlayerList(updateGameData: any) {
+	const playerListComponent = document.getElementById('player-list-component') as PlayerList | null;
+	if (playerListComponent && updateGameData) {
+		// Update the gameData property with the new data from websocket
+		playerListComponent.gameData = updateGameData;
+	}
+}
+
+
+// ======== PASS CONTEXT ========
+function passContext(ctx: AppContext, gameData: GameData | null, isCreator: boolean | null) {
+
+	const navBarComponent = document.getElementById('nav-bar-component') as any;
+	if (navBarComponent) {
+		navBarComponent.ctx = ctx;
+	}
+	const playerListComponent = document.getElementById('player-list-component') as any;
+	if (playerListComponent) {
+		playerListComponent.ctx = ctx;
+		playerListComponent.isCreator = isCreator;
+		playerListComponent.gameData = gameData;
+	}
+}
 
 // ======== UPDATE CONTENT ============
 function renderGameRoomContent(gameData: GameData) {
@@ -96,10 +135,18 @@ function renderGameRoomContent(gameData: GameData) {
 					<div class='flex flex-1 flex-col w-full'>
 						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
 						<div class='flex flex-row w-full gap-5 justify-center'>
-							<div id='token' class='flex w-1/3 rounded-lg bg-white items-center justify-center'>
-								<p id='token-text' class='text-stone-400 text-sm'>generated token</p>
-							</div>
-							<button id='generate-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Generate token</button>
+							${gameData.token ? 
+								`<div id='token' class='flex w-1/3 rounded-lg bg-white items-center justify-center'>
+									<p id='token-text' class='text-black text-sm'>${gameData.token}</p>
+								</div>
+								<button id='copy-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Copy</button>
+								`
+								: 
+								`<div id='token' class='flex w-1/3 rounded-lg bg-white items-center justify-center'>
+									<p id='token-text' class='text-stone-400 text-sm'>generated token</p>
+								</div>
+								<button id='generate-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Generate token</button>
+								`}
 						</div>
 						<p id='error-generate-token'></p>
 					</div>
@@ -125,32 +172,6 @@ function renderGameRoomContent(gameData: GameData) {
 				</div>
 			</div>
 		`
-	}
-
-}
-
-// ======== UPDATE PLAYER LIST ============
-function updatePlayerList(updateGameData: any) {
-	const playerListComponent = document.getElementById('player-list-component') as PlayerList | null;
-	if (playerListComponent && updateGameData) {
-		// Update the gameData property with the new data from websocket
-		playerListComponent.gameData = updateGameData;
-	}
-}
-
-
-// ======== PASS CONTEXT ========
-function passContext(ctx: AppContext, gameData: GameData | null, isCreator: boolean | null) {
-
-	const navBarComponent = document.getElementById('nav-bar-component') as any;
-	if (navBarComponent) {
-		navBarComponent.ctx = ctx;
-	}
-	const playerListComponent = document.getElementById('player-list-component') as any;
-	if (playerListComponent) {
-		playerListComponent.ctx = ctx;
-		playerListComponent.isCreator = isCreator;
-		playerListComponent.gameData = gameData;
 	}
 
 }
@@ -184,6 +205,23 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		}
 	});
 
+	// **** COPY TOKEN ****
+	const copyBtn = document.querySelector('#copy-btn') as HTMLButtonElement;
+	copyBtn?.addEventListener('click', async (e) => {
+		e.preventDefault();
+		try {
+			copyBtn.innerText = 'Copied';
+			copyBtn.className = 'rounded-full bg-muted p-3 text-white font-normal focus-visible:outline-2 focus-visible:outline-offset-2';
+			const tokenText = document.querySelector('#token-text') as HTMLParagraphElement;
+			await navigator.clipboard.writeText(`${tokenText!.innerText}`);
+		} catch (error) {
+			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
+			errorMsgGenerateToken.className = 'mt-2 text-red-500'
+			errorMsgGenerateToken.innerText = error as string;
+			console.log(error);
+		}
+	});
+
 	// **** START GAME ****
 	const playerListComponent = document.getElementById('player-list-component') as any;
 	playerListComponent.addEventListener('event-start-game', async (e: Event) => {
@@ -200,6 +238,26 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
 			errorMsgStartGame.className = 'mt-2 text-red-500'
 			errorMsgStartGame.innerText = error as string;
+			console.log(error);
+		}
+	})
+
+	// **** REMOVE PLAYER ****
+	playerListComponent.addEventListener('event-remove-player', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const gameId = customEvent.detail.gameId;
+		const playerId = customEvent.detail.playerId;
+		const accessToken = ctx.userStore.get()?.accessToken;
+
+		console.log('Removing player with ID:', playerId);
+		if (!accessToken || !gameId || !playerId)
+			return;
+		try {
+			await gameApi.removePlayer(accessToken, gameId, playerId);
+			const gameData = await getGameData(accessToken, gameId);
+			updatePlayerList(gameData);
+		} catch (error) {
 			console.log(error);
 		}
 	})
