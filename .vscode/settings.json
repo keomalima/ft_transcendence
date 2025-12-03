@@ -11,7 +11,7 @@
 		"frontend": false,
 		".vscode": true,
 		"**/*.json": true,
-		"**/*.yml": false,
+		"**/*.yml": true,
 		"**/*.md": true,
 		".gitignore": true,
 		"Makefile": true,
@@ -29,7 +29,9 @@
 		"**/dist": true,
 		"**/types": true,
 		"**/registers": true,
-		"**/old_version": true
+		"**/old_version": true,
+		"**/frontend": true,
+		"**/nginx": true
 	},
     "explorerExclude.backup": {},
     "files.autoSave": "afterDelay",

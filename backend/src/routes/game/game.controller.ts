@@ -250,6 +250,31 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
 	}
 }
 
+async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const gameId = request.params.id;
+
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.code(404).send({
+            	message: "Game not found or unauthorized"
+        	});
+		}
+		if (game.status !== 'PENDING') {
+			return reply.code(400).send({
+            	message: "Can not delete game"
+        	});
+		}
+		if (game.createdBy === userId) {
+			return reply.code(204).send(await gameService.deletePendingGame(request.server.prisma, gameId));
+		}
+		return reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, userId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to delete game"});
+	}
+}
+
 // =====================
 // Game Helpers
 // =====================
@@ -274,5 +299,6 @@ export const gameController = {
 	startGameHandler,
 	gameHistoryHandler,
 	getCurrentGameHandler,
-	removePlayerHandler
+	removePlayerHandler,
+	deletePendingGameHandler
 };

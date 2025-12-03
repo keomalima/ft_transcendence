@@ -159,6 +159,14 @@ async function startGame(prisma: PrismaClient, gameId: string) {
 	})
 }
 
+async function deletePendingGame(prisma: PrismaClient, gameId: string) {
+	return prisma.game.delete({
+		where: {
+			id: gameId
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -175,5 +183,6 @@ export const gameService = {
 	joinUserToGame,
 	startGame,
 	getGamesByUserId,
-	removePlayerFromGame
+	removePlayerFromGame,
+	deletePendingGame
 };
