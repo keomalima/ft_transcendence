@@ -42,6 +42,22 @@ export const gameApi = {
 		return result;
 	},
 
+	getCurrentGame: async (accessToken: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null}> => {
+		const response = await fetch (`${BASE_URL}/current`, {
+			method: 'GET',
+			headers:{
+				'Authorization': `Bearer ${accessToken}`},
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to get current game');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to get current game');
+		}
+		const result = await response.json();
+		console.log('🎮 getCurrentGame sucess ✅ ', result);
+		return result;
+	},
+
 	generateToken: async (accessToken: string, gameId: string): Promise<GameToken> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/token`, {
 			method: 'POST',
@@ -88,6 +104,38 @@ export const gameApi = {
 		const result: Partial<GameData> = await response.json();
 		console.log('🎮 start game sucess ✅ ', result);
 		return result;
+	},
+
+	quitPendingGame: async (accessToken: string, gameId: string): Promise<void> => {
+		const response = await fetch (`${BASE_URL}/${gameId}`, {
+			method: 'DELETE',
+			headers:{
+				'Authorization': `Bearer ${accessToken}`},
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to quit / delete pending game');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to quit / delete pending game');
+		}
+		console.log('🎮 quit / delete pending game sucess ✅ ');
+	},
+
+	removePlayer: async (accessToken: string, gameId: string, playerId: string): Promise<void> => {
+		const response = await fetch (`${BASE_URL}/${gameId}/remove`, {
+			method: 'PUT',
+			headers:{
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${accessToken}`},
+			body: JSON.stringify({
+				playerId: playerId
+			}),
+		});
+		if (!response.ok) {
+			console.log('❌ Failed to remove player from game');
+			const errorData = await response.json().catch(() => ({ message: response.statusText }));
+			throw new Error(errorData.message || 'Failed to remove player from game');
+		}
+		console.log('🎮 remove player from game sucess ✅ ');
 	},
 
 	getHistory: async (accessToken: string): Promise<GameHistory[]> => {

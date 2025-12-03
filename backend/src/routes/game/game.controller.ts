@@ -244,6 +244,9 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
             	message: "Can not remove a player"
         	});
 		}
+
+		wsController.notifyPlayerRemoved(gameId, playerId);
+
 		reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, playerId));
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to remove player from game"});

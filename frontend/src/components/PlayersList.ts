@@ -124,10 +124,10 @@ export class PlayerList extends HTMLElement {
 
 		// actions ===================
 		const actions = document.createElement('div');
-			const removeBtn = document.createElement('button');
-			removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
-			removeBtn.innerText = 'remove';
-			removeBtn.id = `remove-${player.user?.id}`;
+		const removeBtn = document.createElement('button');
+		removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
+		removeBtn.innerText = 'remove';
+		removeBtn.id = `remove-${player.user?.id}`;
 		if (this._isCreator === true && this._ctx?.userStore.get()?.id != player.user?.id) {
 			actions.appendChild(removeBtn);
 		}
@@ -138,7 +138,15 @@ export class PlayerList extends HTMLElement {
 		card.appendChild(actions);
 
 		removeBtn.addEventListener('click', (e) => {
+			e.preventDefault();
 			console.log('remove triger');
+			this.dispatchEvent(new CustomEvent('event-remove-player', {
+				detail: {
+					gameId: this._gameData?.id as string,
+					playerId: player.user?.id as string
+				},
+				bubbles: true
+			}));
 		});
 
 		return card;
