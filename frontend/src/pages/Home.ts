@@ -18,18 +18,6 @@ export function Home(ctx: AppContext): string {
 	setTimeout(() => {
 		passContext(ctx);
 		setupHomeEventListeners(ctx);
-
-		// Subscribe to userStore changes and re-render welcome message
-		const welcomeElem = document.getElementById('welcome-message');
-		if (welcomeElem) {
-			ctx.userStore.subscribe(() => {
-				const user = ctx.userStore.get();
-				welcomeElem.textContent = user?.displayName ? `Welcome, ${user.displayName}` : '';
-			});
-			// Initial render
-			const user = ctx.userStore.get();
-			welcomeElem.textContent = user?.displayName ? `Welcome, ${user.displayName}` : '';
-		}
 	}, 0);
 
 	const content:string = /*html*/`
@@ -37,7 +25,6 @@ export function Home(ctx: AppContext): string {
 			<div class="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
 				<div class="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-8 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
 					<h1 class="max-w-2xl text-xl font-semibold text-black tracking-tight text-balance sm:text-7xl lg:col-span-2 xl:col-auto">Let's Pong !</h1>
-					<div id="welcome-message" class="text-lg font-bold mb-4"></div>
 					<div class="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">

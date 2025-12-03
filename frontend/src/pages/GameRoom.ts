@@ -9,6 +9,7 @@ import "../components/NavBar.js";
 import "../components/PlayersList.js";
 
 let isGenerated: boolean = false;
+let wsConnection: WaitingRoomConnection | null = null;
 
 export function GameRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
@@ -32,7 +33,11 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	}
 
 	setTimeout(async () => {
-		const gameData = await getGameData(currentUser?.accessToken!, params['id']);
+
+		// cleanup if any previous websocket connection
+		cleanupGameRoom();
+
+		let gameData = await getGameData(currentUser?.accessToken!, params['id']);
 		if (!gameData)
 			return;
 		
@@ -40,18 +45,29 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		passContext(ctx, gameData, gameData.isCreator);
 		
 		// Create websocket with gameid
-		const wsConnection = new WaitingRoomConnection();
-		wsConnection.connect(params['id'], (updateGameData) => {
+		wsConnection = new WaitingRoomConnection();
+		wsConnection.connect(params['id'], async (updateGameData) => {
 			if (updateGameData.message) {
-				// Print the notification
             	console.log('🔔', updateGameData);
+				// Update player cards
+				gameData = await getGameData(currentUser?.accessToken!, params['id']);
+				updatePlayerList(gameData);
 			}
 		})
+
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);
 
 
 	return `<div id="game-room-content">Loading game data...</div>`;
+}
+
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanupGameRoom() {
+	if (wsConnection) {
+		wsConnection.disconnect();
+		wsConnection = null;
+	}
 }
 
 // ======== GET GAME DATA ============
@@ -111,6 +127,15 @@ function renderGameRoomContent(gameData: GameData) {
 		`
 	}
 
+}
+
+// ======== UPDATE PLAYER LIST ============
+function updatePlayerList(updateGameData: any) {
+	const playerListComponent = document.getElementById('player-list-component') as PlayerList | null;
+	if (playerListComponent && updateGameData) {
+		// Update the gameData property with the new data from websocket
+		playerListComponent.gameData = updateGameData;
+	}
 }
 
 
