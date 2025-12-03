@@ -118,3 +118,34 @@ export interface GameHistory {
 	} | null;
 
 }
+
+export interface TournamentParticipant {
+    id: string;
+    userId: string;
+    user: Pick<UserState, 'id' | 'displayName' | 'avatarUrl'>;
+    joinedAt: string;
+    finalPosition: number | null;
+    isEliminated: boolean;
+    eliminatedInRound: number | null;
+}
+
+// for tournament data
+export interface TournamentData {
+	id: string;
+    token: string | null;
+    createdBy: string | null;
+	isCreator: boolean;
+    numberPlayers: number;
+    status: 'REGISTRATION' | 'READY' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    currentRound: number;
+    totalRounds: number;
+    winnerId: string | null;
+    winner?: Pick<UserState, 'id' | 'displayName' | 'avatarUrl'>;
+    scoreToWin: number;
+    startedAt: string | null;
+    completedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+    participants: TournamentParticipant[];
+    games: GameData[];
+}

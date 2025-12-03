@@ -41,7 +41,6 @@ const gameHistoryResponseSchema = z.array (
 	})
 )
 
-
 const createGameResponseSchema = z.object({
 	id: z.string(),
 	createdBy: z.string(),
