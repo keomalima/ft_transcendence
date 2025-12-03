@@ -12,6 +12,8 @@ import { EditProfile } from "./pages/EditProfile.js";
 import { CreateGame } from "./pages/CreateGame.js";
 import { GameRoom } from "./pages/GameRoom.js";
 import { LaunchGame } from "./pages/LaunchGame.js";
+import { CreateTournament } from './pages/CreateTournament.js'
+import { TournamentRoom } from "./pages/TournamentRoom.js";
 
 // Create and init user store
 const userStore = createUserStore(null);
@@ -60,6 +62,8 @@ async function initializeApp() {
 		.add("/create-game", CreateGame)
 		.add("/game-room/:id", GameRoom)
 		.add("/launch-game", LaunchGame)
+		.add("/create-tournament", CreateTournament)
+		.add("/tournament-room/:id", TournamentRoom)
 		.start();
 
 	// Event listener to check localstorage change

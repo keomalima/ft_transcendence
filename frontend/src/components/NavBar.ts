@@ -36,7 +36,7 @@ export class NavBar extends HTMLElement {
 					<a data-link href="/home" class="${window.location.pathname === '/home' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >home</a>
 					<a data-link href="/profile" class="${window.location.pathname === '/profile' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >profile</a>
 					<a data-link href="/create-game" class="${window.location.pathname === '/create-game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
-					<a data-link href="/tournament" class="${window.location.pathname === '/tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
+					<a data-link href="/create-tournament" class="${window.location.pathname === '/create-tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
 					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">Log out</a>
 				</div>
 			</nav>

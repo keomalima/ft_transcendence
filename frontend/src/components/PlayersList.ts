@@ -1,10 +1,12 @@
 import { AppContext } from "../types.js";
-import type { GameData, GameUsers } from "../types.js";
+import type { GameData, GameUsers, TournamentData, TournamentParticipant } from "../types.js";
 
 export class PlayerList extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameData: GameData | null = null;
 	private _gamePlayers: GameUsers[] | null = null;
+	private _tournamentData: TournamentData | null = null;
+	private _tournamentParticipants: TournamentParticipant | null = null;
 	private _isCreator: boolean | null = false;
 	private _uploadsUrl: string = 'http://localhost:3000';
 

@@ -34,7 +34,12 @@
 		"**/.vscode": false,
 		"**/fix-imports.js": false,
 		"**/*.mjs": false,
-		"**/tailwind.config.js": false
+		"**/tailwind.config.js": false,
+		"**/nginx": false,
+		"**/save": false,
+		"backend/uploads": false,
+		"backend/data": false,
+		"backend/animationPlayground": false
 	},
     "explorerExclude.backup": {},
     "explorerExclude.backup": {},

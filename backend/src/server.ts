@@ -16,7 +16,7 @@ import fastifyWebsocket from '@fastify/websocket';
 import { friendsPrivateRoutes } from './routes/friends/friends.route.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { tournamentPrivateRoutes } from './routes/tournaments/tournaments.route.js';
+import { tournamentPrivateRoutes } from './routes/tournaments/tournament.route.js';
 import { wsPrivateRoutes } from './routes/websockets/ws.routes.js';
 
 const fastify = Fastify({
@@ -62,7 +62,7 @@ fastify.register(async (protectedRoutes) => {
 	// HTTP routes
 	protectedRoutes.register(userPrivateRoutes, { prefix: "/api/users" })
 	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
-	// protectedRoutes.register(tournamentPrivateRoutes, { prefix: "/api/tournaments" })
+	protectedRoutes.register(tournamentPrivateRoutes, { prefix: "/api/tournaments" })
 	protectedRoutes.register(friendsPrivateRoutes, { prefix: "/api/friends" })
 });
 
