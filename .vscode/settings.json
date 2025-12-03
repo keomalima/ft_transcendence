@@ -70,6 +70,7 @@
 		"**/*.mjs": true,
 		"**/tailwind.config.js": true
 	},
+    "explorerExclude.backup": {},
     "files.autoSave": "afterDelay",
 
 	"editor.insertSpaces": false,

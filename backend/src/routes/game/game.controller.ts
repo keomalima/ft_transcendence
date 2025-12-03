@@ -204,8 +204,74 @@ async function gameHistoryHandler (request: FastifyRequest, reply: FastifyReply)
 		})
 		return reply.code(200).send(result)
 	} catch (error: any) {
-		console.error(error);
 		reply.code(500).send({ message: "Failed to fetch game history"});
+	}
+}
+
+async function getCurrentGameHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const game = await gameService.findActiveGameByUserId(request.server.prisma, userId);
+		if (!game) 
+			return reply.code(204).send();
+
+		return {
+			userId: game.userId,
+			gameId: game.gameId,
+			type: game.game.type,
+			status: game.game.status,
+			token: game.game.token
+		}
+	} catch (error:any) {
+		reply.code(500).send({ message: "Failed to fetch current game"});
+	}
+}
+
+async function removePlayerHandler (request: FastifyRequest<{ Params: { id: string}, Body: {playerId: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const gameId = request.params.id;
+		const playerId = request.body.playerId;
+
+		const game = await gameService.findGameByUserId(request.server.prisma, userId, gameId);
+		if (!game) {
+			return reply.code(404).send({
+            	message: "Game not found or unauthorized"
+        	});
+		}
+		if (game.status !== "PENDING"){
+			return reply.code(400).send({
+            	message: "Can not remove a player"
+        	});
+		}
+		reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, playerId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to remove player from game"});
+	}
+}
+
+async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const gameId = request.params.id;
+
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.code(404).send({
+            	message: "Game not found or unauthorized"
+        	});
+		}
+		if (game.status !== 'PENDING') {
+			return reply.code(400).send({
+            	message: "Can not delete game"
+        	});
+		}
+		if (game.createdBy === userId) {
+			return reply.code(204).send(await gameService.deletePendingGame(request.server.prisma, gameId));
+		}
+		return reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, userId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to delete game"});
 	}
 }
 
@@ -231,5 +297,8 @@ export const gameController = {
 	getGameHandler,
 	joinGameHandler,
 	startGameHandler,
-	gameHistoryHandler
+	gameHistoryHandler,
+	getCurrentGameHandler,
+	removePlayerHandler,
+	deletePendingGameHandler
 };

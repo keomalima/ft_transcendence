@@ -99,6 +99,26 @@ async function findActiveGameByUserId(prisma: PrismaClient, id: string) {
 				status: {in: ['IN_PROGRESS', 'PENDING']}
 			}
 		},
+		include: {
+			game : {
+				select: {
+					token: true,
+					status: true,
+					type: true,
+				}
+			}
+		}
+	})
+}
+
+async function removePlayerFromGame(prisma: PrismaClient, gameId: string, userId: string) {
+	return prisma.gamePlayer.delete({
+		where: {
+			gameId_userId: {
+				gameId,
+				userId,
+			},
+		}
 	})
 }
 
@@ -139,6 +159,14 @@ async function startGame(prisma: PrismaClient, gameId: string) {
 	})
 }
 
+async function deletePendingGame(prisma: PrismaClient, gameId: string) {
+	return prisma.game.delete({
+		where: {
+			id: gameId
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -154,5 +182,7 @@ export const gameService = {
 	findGameByToken,
 	joinUserToGame,
 	startGame,
-	getGamesByUserId
+	getGamesByUserId,
+	removePlayerFromGame,
+	deletePendingGame
 };

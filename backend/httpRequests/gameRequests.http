@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:3000/api/games
-@token = 0543dfd9-c7ee-428b-af3e-b9802119b924
-@userId = b6e1dea9-6308-4a41-87cc-ae71d8ab212c
-@gameId = 04f2a750-3241-4339-a553-17ba232a3a1b
+@token = 226036d2-c4c2-47b0-8a5c-e0067e2dfa94
+@userId = 132a1eb9-90a3-4434-b48e-63b6148d603c
+@gameId = 79fd271c-1b5d-4317-8353-898a0582c514
 
 @gameToken = 0MXxxE3-
 
@@ -42,4 +42,21 @@ Authorization: Bearer {{token}}
 
 ### GET GAME HISTORY
 GET {{baseUrl}}/history HTTP/1.1
+Authorization: Bearer {{token}}
+
+### GET CURRENT GAME
+GET {{baseUrl}}/current HTTP/1.1
+Authorization: Bearer {{token}}
+
+### REMOVE PLAYER FROM GAME
+PUT {{baseUrl}}/{{gameId}}/remove HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+   "playerId": "0596fd31-71e3-4c34-bb7d-2cae13d4b165"
+}
+
+### DELETE OR QUIT PENDING GAME
+DELETE {{baseUrl}}/{{gameId}} HTTP/1.1
 Authorization: Bearer {{token}}
