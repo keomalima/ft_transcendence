@@ -1,6 +1,5 @@
 import { AppContext } from "../types.js";
 import type { GameData, GameUsers } from "../types.js";
-import { BUTTON_BLACK_CLASSES } from "../styles/tailwindStyles.js";
 
 export class PlayerList extends HTMLElement {
 	private _ctx: AppContext | null = null;
