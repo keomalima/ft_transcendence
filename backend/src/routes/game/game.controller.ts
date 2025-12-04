@@ -164,7 +164,12 @@ async function startGameHandler (request: FastifyRequest<{ Params: { id: string}
 				message: "Game is not full"
 			});
 		}
-		return await gameService.startGame(request.server.prisma, gameId);
+		let response = await gameService.startGame(request.server.prisma, gameId);
+		wsController.broadcasToRoom(game.id, {
+			type: 'start_game',
+			message: `Start game!`
+		})
+		return response;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to start game"});
 	}
@@ -270,8 +275,16 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
         	});
 		}
 		if (game.createdBy === userId) {
+			console.log('🔥 notify closed game (BY CREATOR)');
+			wsController.notifyGameClosed(gameId, userId);
 			return reply.code(204).send(await gameService.deletePendingGame(request.server.prisma, gameId));
 		}
+
+		console.log('🔥 notify closed game (BY PLAYER)');
+		wsController.broadcasToRoom(game.id, {
+			type: 'room_update',
+			message: `Need to update the game - QUIT!`,
+		});
 		return reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, userId));
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete game"});

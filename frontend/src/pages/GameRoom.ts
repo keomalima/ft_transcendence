@@ -33,24 +33,76 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 
 	// Execute after the first rendering
 	setTimeout(async () => {
-
-		// cleanup if any previous websocket connection
 		cleanupGameRoom();
-
 		let gameData = await getGameData(currentUser?.accessToken!, params['id']);
 		if (!gameData)
 			return;
-		
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
-		
 		setGameRoomWebSockets(currentUser, gameData);
-
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);
 
 
-	return `<div id="game-room-content">Loading game data...</div>`;
+	return (/*html*/`
+		<div id="game-room-content">
+			<p class='flex items-center justify-center h-screen'>Loading Game Room...</p>
+		</div>
+		`);
+}
+
+// ======== UPDATE CONTENT ============
+function renderGameRoomContent(gameData: GameData) {
+	const content = document.getElementById('game-room-content');
+	if (gameData.isCreator) {
+		content!.innerHTML = /*html*/`
+			<div class="flex flex-col min-h-screen">
+				<header>
+					<nav-bar id='nav-bar-component'></nav-bar>
+				</header>
+				<div class="flex flex-col lg:flex-row flex-1 w-full items-center gap-8 lg:gap-0 p-4 lg:p-0">
+					<div class='flex lg:flex-1 flex-col w-full'>
+						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
+						<div class='flex flex-row w-full gap-5 justify-center items-center'>
+							${gameData.token ? 
+								`<div id='token' class='flex w-full sm:w-2/3 lg:w-1/3 rounded-lg bg-white items-center justify-center p-4'>
+									<p id='token-text' class='text-black text-sm'>${gameData.token}</p>
+								</div>
+								<button id='copy-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Copy</button>
+								`
+								: 
+								`<div id='token' class='flex w-full sm:w-2/3 lg:w-1/3 rounded-lg bg-white items-center justify-center p-4'>
+									<p id='token-text' class='text-stone-400 text-sm'>generated token</p>
+								</div>
+								<button id='generate-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Generate token</button>
+								`}
+						</div>
+						<p id='error-generate-token'></p>
+					</div>
+					<div class='flex lg:flex-1 items-center justify-center w-full lg:w-auto h-auto lg:h-full min-h-0'>
+						<player-list id='player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
+					</div>
+				</div>
+			</div>
+		`
+	} else {
+		content!.innerHTML = /*html*/`
+			<div class="flex flex-col min-h-screen">
+				<header>
+					<nav-bar id='nav-bar-component'></nav-bar>
+				</header>
+				<div class="flex flex-col lg:flex-row flex-1 w-full items-center gap-8 lg:gap-0 p-4 lg:p-0">
+					<div class='flex lg:flex-1 flex-col w-full'>
+						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
+					</div>
+					<div class='flex lg:flex-1 items-center justify-center w-full lg:w-auto h-auto lg:h-full min-h-0'>
+						<player-list id='player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
+					</div>
+				</div>
+			</div>
+		`
+	}
+
 }
 
 // ======== SET WEBSOCKET CONNECTION ============
@@ -69,13 +121,18 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData)
 			}
 		},
 		() => {
-			console.log("Player quit");
 			cleanupGameRoom();
 			router.navigateTo('/home');
+		},
+		() => {
+			cleanupGameRoom();
+			router.navigateTo('/home');
+		},
+		() => {
+			router.navigateTo(`/launch-game/${gameData.id}`)
 		}
 	)
 }
-
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
 export function cleanupGameRoom() {
@@ -96,7 +153,6 @@ async function getGameData(token: string, id: string): Promise<GameData | null> 
 	}
 }
 
-
 // ======== UPDATE PLAYER LIST ============
 function updatePlayerList(updateGameData: any) {
 	const playerListComponent = document.getElementById('player-list-component') as PlayerList | null;
@@ -105,7 +161,6 @@ function updatePlayerList(updateGameData: any) {
 		playerListComponent.gameData = updateGameData;
 	}
 }
-
 
 // ======== PASS CONTEXT ========
 function passContext(ctx: AppContext, gameData: GameData | null, isCreator: boolean | null) {
@@ -120,60 +175,6 @@ function passContext(ctx: AppContext, gameData: GameData | null, isCreator: bool
 		playerListComponent.isCreator = isCreator;
 		playerListComponent.gameData = gameData;
 	}
-}
-
-// ======== UPDATE CONTENT ============
-function renderGameRoomContent(gameData: GameData) {
-	const content = document.getElementById('game-room-content');
-	if (gameData.isCreator) {
-		content!.innerHTML = /*html*/`
-			<div class="flex flex-col min-h-screen">
-				<header>
-					<nav-bar id='nav-bar-component'></nav-bar>
-				</header>
-				<div class="flex flex-row flex-1 w-full items-center">
-					<div class='flex flex-1 flex-col w-full'>
-						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
-						<div class='flex flex-row w-full gap-5 justify-center'>
-							${gameData.token ? 
-								`<div id='token' class='flex w-1/3 rounded-lg bg-white items-center justify-center'>
-									<p id='token-text' class='text-black text-sm'>${gameData.token}</p>
-								</div>
-								<button id='copy-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Copy</button>
-								`
-								: 
-								`<div id='token' class='flex w-1/3 rounded-lg bg-white items-center justify-center'>
-									<p id='token-text' class='text-stone-400 text-sm'>generated token</p>
-								</div>
-								<button id='generate-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Generate token</button>
-								`}
-						</div>
-						<p id='error-generate-token'></p>
-					</div>
-					<div class='flex flex-1 items-center justify-center h-full min-h-0'>
-						<player-list id='player-list-component' class="w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
-					</div>
-				</div>
-			</div>
-		`
-	} else {
-		content!.innerHTML = /*html*/`
-			<div class="flex flex-col min-h-screen">
-				<header>
-					<nav-bar id='nav-bar-component'></nav-bar>
-				</header>
-				<div class="flex flex-row flex-1 w-full items-center">
-					<div class='flex flex-1 flex-col w-full'>
-						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
-					</div>
-					<div class='flex flex-1 items-center justify-center h-full min-h-0'>
-						<player-list id='player-list-component' class="w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
-					</div>
-				</div>
-			</div>
-		`
-	}
-
 }
 
 // ======== EVENT LISTENER ============
@@ -233,11 +234,27 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			return;
 		try {
 			const result = await gameApi.startGame(accessToken, gameId);
-			router.navigateTo('/launch-game');
+			router.navigateTo(`/launch-game/${gameId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
 			errorMsgStartGame.className = 'mt-2 text-red-500'
 			errorMsgStartGame.innerText = error as string;
+			console.log(error);
+		}
+	})
+
+	// **** QUIT GAME ****
+	playerListComponent.addEventListener('event-quit-game', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const gameId = customEvent.detail;
+		const accessToken = ctx.userStore.get()?.accessToken;
+		if (!accessToken || !gameId)
+			return;
+		try {
+			await gameApi.quitPendingGame(accessToken, gameId);
+			router.navigateTo('/home');
+		} catch (error) {
 			console.log(error);
 		}
 	})

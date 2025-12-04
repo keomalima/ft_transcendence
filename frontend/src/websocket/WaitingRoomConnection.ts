@@ -3,7 +3,12 @@ import { API_BASE_URL } from '../config.js';
 export class WaitingRoomConnection {
 	private ws: WebSocket | null = null;
 
-	connect(gameId: string, userId: string, onUpdate: (gameData: any) => void, onRemoved: () => void) {
+	connect(gameId: string, userId: string,
+		onUpdate: (gameData: any) => void,
+		onRemoved: () => void,
+		onGameClosed: () => void,
+		onStartGame: () => void)
+		{
 		const httpUrl = new URL(`/ws/waiting-room/${gameId}/${userId}`, API_BASE_URL);
 		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
@@ -21,6 +26,14 @@ export class WaitingRoomConnection {
 			if (data.type === 'player_remove') {
 				console.log('🚫 You have been removed from the game');
 				onRemoved();
+			}
+			if (data.type === 'game_closed') {
+				console.log('🚫 Your game has been closed');
+				onGameClosed();
+			}
+			if (data.type === 'start_game') {
+				console.log('🚀 Your game just starts');
+				onStartGame();
 			}
 		}
 		

@@ -1,5 +1,6 @@
 import { AppContext } from "../types.js";
 import type { GameData, GameUsers, TournamentData, TournamentParticipant } from "../types.js";
+import { BUTTON_BLACK_CLASSES } from "../styles/tailwindStyles.js";
 
 export class PlayerList extends HTMLElement {
 	private _ctx: AppContext | null = null;
@@ -63,15 +64,20 @@ export class PlayerList extends HTMLElement {
 				<div class='h-full flex flex-col'>
 					<h1 class='mb-5'>Players connected ${this._gameData?.gameUsers?.length}/2</h1>
 					<div id='player-cards' class='flex-1 overflow-auto'></div>
-					<button id='start-game-button'
-						${this._isCreator === false ? "hidden" : ""} 
-						${this._gameData?.gameUsers?.length !== 2 ? "hidden" : ""} 
-						class='mt-10 w-1/3 font-[Calistoga] px-3.5 py-2.5 rounded-full bg-black text-white outline outline-1 outline-black hover:shadow-xl
-							disable:opacity-75
-							enabled:hover:font-semibold
-							focus-visible:outline-2 focus-visible:outline-offset-2'>
-						START
-					</button>
+					<div class='flex flex-1 flex-col mt-5 justify-center place-items-center gap-2'>
+						<button id='start-game-button'
+							${this._isCreator === false ? "hidden" : ""} 
+							${this._gameData?.gameUsers?.length !== 2 ? "hidden" : ""} 
+							class=' w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-black text-white outline outline-1 outline-black hover:shadow-md
+								disable:opacity-75
+								enabled:hover:font-semibold
+								focus-visible:outline-2 focus-visible:outline-offset-2'>
+							START
+						</button>
+						<button id='quit-game-button' class='w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-white text-black outline outline-1 outline-black hover:shadow-md hover:font-semibold'>
+							QUIT
+						</button>
+					</div>
 					<p id='error-start-game'></p>
 				</div>
 			`;
@@ -161,6 +167,16 @@ export class PlayerList extends HTMLElement {
 		startBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 			this.dispatchEvent(new CustomEvent('event-start-game', {
+				detail: this._gameData?.id,
+				bubbles: true
+			}));
+		});
+
+		// **** START GAME ****
+		const quitBtn = this.querySelector('#quit-game-button') as HTMLButtonElement;
+		quitBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.dispatchEvent(new CustomEvent('event-quit-game', {
 				detail: this._gameData?.id,
 				bubbles: true
 			}));
