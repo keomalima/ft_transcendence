@@ -10,7 +10,7 @@ export const tournamentApi = {
 			method: 'POST',
 			headers:{
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`},
+			},
 			body: JSON.stringify({
 				numberPlayers,
 				scoreToWin
@@ -29,8 +29,7 @@ export const tournamentApi = {
 	getTournament: async (accessToken: string, tournamentId: string): Promise<TournamentData> => {
 		const response = await fetch (`${BASE_URL}/${tournamentId}`, {
 			method: 'GET',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to get tournament');

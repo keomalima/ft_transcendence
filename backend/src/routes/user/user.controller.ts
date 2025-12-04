@@ -24,19 +24,13 @@ declare module 'fastify' {
 
 async function protectedRouteHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
-		const token = request.headers.authorization;
-		if (!token) {
+		const sessionId = request.cookies?.sessionId;
+		if (!sessionId) {
 			return reply.code(401).send({
-                message: "Unauthorized: No token provided"
+                message: "Unauthorized: No session cookie provided"
             });
 		}
-		const [scheme, credentials] = (token ?? '').split(' ');
-		if (scheme !== 'Bearer' || !credentials) {
-			return reply.code(401).send({
-                message: "Unauthorized: Invalid token format"
-            });
-		}
-		const session = await userService.validateToken(request.server.prisma, credentials)
+		const session = await userService.validateToken(request.server.prisma, sessionId)
 		if (!session) {
 			return reply.code(401).send({
                 message: "Unauthorized: Invalid token"
@@ -74,10 +68,19 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 		
 		const { password, salt, ...safeUser } = user;
 		const session = await userService.createSession(request.server.prisma, user.id);
+		const isProduction = process.env.NODE_ENV === 'production';
+		console.log(isProduction);
+		reply.setCookie('sessionId', session.id, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: isProduction ? 'none' : 'lax',
+			path: '/',
+			maxAge: 60 * 60 * 24,
+		})
 		return { 
 			accessToken: session.id, 
 	    	...safeUser
-	  };	
+	  	};	
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to login user"});
 	}

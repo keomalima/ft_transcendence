@@ -18,6 +18,8 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { tournamentPrivateRoutes } from './routes/tournaments/tournament.route.js';
 import { wsPrivateRoutes } from './routes/websockets/ws.routes.js';
+import type { FastifyCookieOptions } from '@fastify/cookie'
+import cookie from '@fastify/cookie'
 
 const fastify = Fastify({
   logger: true
@@ -37,6 +39,10 @@ await registerSwagger(fastify);
 await registerSwaggerUi(fastify);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+fastify.register(cookie, {
+	secret: "my-secret",
+} as FastifyCookieOptions)
 
 fastify.register(fastifyStatic, {
 	root: path.join(__dirname, '../uploads'),
@@ -64,10 +70,10 @@ fastify.register(async (protectedRoutes) => {
 	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
 	protectedRoutes.register(tournamentPrivateRoutes, { prefix: "/api/tournaments" })
 	protectedRoutes.register(friendsPrivateRoutes, { prefix: "/api/friends" })
+	//WebSocket routes
+	fastify.register(wsPrivateRoutes, { prefix: "/ws"})
 });
 
-// WebSocket routes
-fastify.register(wsPrivateRoutes, { prefix: "/ws"})
 
 try {
   await fastify.listen({ port: 3000, host: '0.0.0.0' })

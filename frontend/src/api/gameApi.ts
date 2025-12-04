@@ -8,9 +8,10 @@ export const gameApi = {
 	createGame: async (accessToken: string, type: string, scoreToWin: number): Promise<Partial<GameData>> => {
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'POST',
+			credentials: 'include',
 			headers:{
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`},
+				'Content-Type': 'application/json'
+			},
 			body: JSON.stringify({
 				type: type,
 				scoreToWin: scoreToWin
@@ -29,8 +30,7 @@ export const gameApi = {
 	getGame: async (accessToken: string, gameId: string): Promise<GameData> => {
 		const response = await fetch (`${BASE_URL}/${gameId}`, {
 			method: 'GET',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to get game');
@@ -45,8 +45,7 @@ export const gameApi = {
 	getCurrentGame: async (accessToken: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null}> => {
 		const response = await fetch (`${BASE_URL}/current`, {
 			method: 'GET',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to get current game');
@@ -61,8 +60,7 @@ export const gameApi = {
 	generateToken: async (accessToken: string, gameId: string): Promise<GameToken> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/token`, {
 			method: 'POST',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to generate token');
@@ -77,8 +75,7 @@ export const gameApi = {
 	joinGame: async (accessToken: string, gameToken: string): Promise<{id: string, gameId: string, userId: string}> => {
 		const response = await fetch (`${BASE_URL}/${gameToken}/join`, {
 			method: 'POST',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to join game');
@@ -93,8 +90,7 @@ export const gameApi = {
 	startGame: async (accessToken: string, gameId: string): Promise<Partial<GameData>> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/start`, {
 			method: 'PUT',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to start game');
@@ -109,8 +105,7 @@ export const gameApi = {
 	quitPendingGame: async (accessToken: string, gameId: string): Promise<void> => {
 		const response = await fetch (`${BASE_URL}/${gameId}`, {
 			method: 'DELETE',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to quit / delete pending game');
@@ -123,9 +118,10 @@ export const gameApi = {
 	removePlayer: async (accessToken: string, gameId: string, playerId: string): Promise<void> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/remove`, {
 			method: 'PUT',
+			credentials: 'include',
 			headers:{
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`},
+			},
 			body: JSON.stringify({
 				playerId: playerId
 			}),
@@ -141,8 +137,7 @@ export const gameApi = {
 	getHistory: async (accessToken: string): Promise<GameHistory[]> => {
 		const response = await fetch (`${BASE_URL}/history`, {
 			method: 'GET',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`},
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to get game history');
