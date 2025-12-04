@@ -10,8 +10,7 @@ export const friendshipApi = {
 	getList: async (accessToken: string): Promise<Partial<FriendData>[]> => {
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'GET',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to get list of friends');
@@ -28,9 +27,10 @@ export const friendshipApi = {
 			throw new Error('Display name is required');
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'POST',
+			credentials: 'include',
 			headers:{
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`},
+			},
 			body: JSON.stringify({
 				addresseeDisplayName: displayName
 			})
@@ -46,8 +46,7 @@ export const friendshipApi = {
 	getRequests: async (accessToken: string): Promise<Partial<FriendData>[]> => {
 		const response = await fetch (`${BASE_URL}/requests`, {
 			method: 'GET',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include'
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to get friend requests');
@@ -64,8 +63,7 @@ export const friendshipApi = {
 			throw new Error('Request ID is required');
 		const response = await fetch (`${BASE_URL}/accept/${id}`, {
 			method: 'PUT',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include'
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to accept friend');
@@ -80,8 +78,7 @@ export const friendshipApi = {
 			throw new Error('Request ID is required');
 		const response = await fetch (`${BASE_URL}/reject/${id}`, {
 			method: 'PUT',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include'
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to reject friend');
@@ -96,8 +93,7 @@ export const friendshipApi = {
 			throw new Error('Friendship ID is required');
 		const response = await fetch (`${BASE_URL}/${id}`, {
 			method: 'DELETE',
-			headers:{
-				'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include'
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to delete friend');

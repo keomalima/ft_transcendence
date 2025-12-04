@@ -62,4 +62,7 @@ migrate:
 logs:
 	$(COMPOSE) logs -f backend
 
+flog:
+	$(COMPOSE) logs -f frontend
+
 .PHONY: clean build start stop down studio migrate logs dev-local dev-docker prod release

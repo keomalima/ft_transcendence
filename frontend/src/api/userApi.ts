@@ -36,6 +36,7 @@ export const userApi = {
 		const response = await fetch (`${BASE_URL}/login`, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
+			credentials: 'include',
 			body: JSON.stringify({
 				email: email,
 				password: password
@@ -54,7 +55,7 @@ export const userApi = {
 	logout: async (accessToken: string): Promise<void> => {
 		const response = await fetch (`${BASE_URL}/logout`, {
 			method: 'POST',
-			headers: {'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include',
 		});
 		if (!response.ok) {
 			console.log('❌ Failed to logout');
@@ -76,6 +77,7 @@ export const userApi = {
 		}
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'POST',
+			credentials: 'include',
 			body: formData
 		});
 		if (!response.ok) {
@@ -91,10 +93,11 @@ export const userApi = {
 	get: async (userId: string, accessToken: string):Promise<getUserResp | null> => {
 		const response = await fetch (`${BASE_URL}/${userId}`, {
 			method: 'GET',
+			credentials: 'include',
 			headers:{
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`}
 			}
+		}
 		);
 		if (!response.ok) {
 			console.log('❌ Failed to get user info');
@@ -109,7 +112,7 @@ export const userApi = {
 	delete: async (accessToken: string): Promise<void> => {
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'DELETE',
-			headers: {'Authorization': `Bearer ${accessToken}`}
+			credentials: 'include'
 		})
 		if (!response.ok) {
 			console.log('❌ Failed to delete user');
@@ -132,9 +135,9 @@ export const userApi = {
 		}
 		const response = await fetch (`${BASE_URL}/me`, {
 			method: 'PUT',
+			credentials: 'include',
 			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(cleanData)
 		})
@@ -155,9 +158,7 @@ export const userApi = {
 		}
 		const response = await fetch (`${BASE_URL}/upload`, {
 			method: 'POST',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
+			credentials: 'include',
 			body: formData
 		});
 		if (!response.ok) {
