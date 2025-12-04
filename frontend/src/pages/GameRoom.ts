@@ -33,7 +33,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 
 	// Execute after the first rendering
 	setTimeout(async () => {
-		cleanupGameRoom();
+		disconnectFromWS();
 		let gameData = await getGameData(currentUser?.accessToken!, params['id']);
 		if (!gameData)
 			return;
@@ -121,21 +121,22 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData)
 			}
 		},
 		() => {
-			cleanupGameRoom();
+			disconnectFromWS();
 			router.navigateTo('/home');
 		},
 		() => {
-			cleanupGameRoom();
+			disconnectFromWS();
 			router.navigateTo('/home');
 		},
 		() => {
+			disconnectFromWS();
 			router.navigateTo(`/launch-game/${gameData.id}`)
 		}
 	)
 }
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
-export function cleanupGameRoom() {
+export function disconnectFromWS() {
 	if (wsConnection) {
 		wsConnection.disconnect();
 		wsConnection = null;
@@ -233,7 +234,8 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		if (!accessToken || !gameId)
 			return;
 		try {
-			const result = await gameApi.startGame(accessToken, gameId);
+			await gameApi.startGame(accessToken, gameId);
+			disconnectFromWS();
 			router.navigateTo(`/launch-game/${gameId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;

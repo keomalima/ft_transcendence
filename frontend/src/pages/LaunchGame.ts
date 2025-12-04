@@ -66,6 +66,10 @@ function getBottomLimit(): number {
 	return (getGameHeight() - getPaddleHeight());
 }
 
+function getSpeed() : number {
+	return (getGameHeight() / 50);
+}
+
 function game() {
 
 	const mapKeys = {'s': false, 'x': false, 'ArrowUp': false, 'ArrowDown': false }
@@ -79,8 +83,6 @@ function game() {
 
 	let paddleY_A = ( getGameHeight() - getPaddleHeight()) / 2;
 	let paddleY_B = ( getGameHeight() - getPaddleHeight()) / 2;
-	const FRAMES_TO_TRAVERSE = 60;  // Number of frames to go from top to bottom
-	let speed = getBottomLimit() / FRAMES_TO_TRAVERSE;
 
     document.addEventListener('keydown', (e) => {
         if (isValidKey(e.key)) {
@@ -96,8 +98,8 @@ function game() {
 
 	function loop() {
 		// --- LEFT PADDLE ---
-		if (mapKeys['s']) paddleY_A -= speed;
-		if (mapKeys['x']) paddleY_A += speed;
+		if (mapKeys['s']) paddleY_A -= getSpeed();
+		if (mapKeys['x']) paddleY_A += getSpeed();
 
 		if (paddleY_A < 0) paddleY_A = 0;
 		if (paddleY_A > getBottomLimit()) paddleY_A = getBottomLimit();
@@ -105,8 +107,8 @@ function game() {
 		paddleLeft!.style.top = paddleY_A + 'px';
 
 		// --- RIGHT PADDLE ---
-		if (mapKeys['ArrowUp'])   paddleY_B -= speed;
-		if (mapKeys['ArrowDown']) paddleY_B += speed;
+		if (mapKeys['ArrowUp'])   paddleY_B -= getSpeed();
+		if (mapKeys['ArrowDown']) paddleY_B += getSpeed();
 
 		if (paddleY_B < 0) paddleY_B = 0;
 		if (paddleY_B > getBottomLimit()) paddleY_B = getBottomLimit();
