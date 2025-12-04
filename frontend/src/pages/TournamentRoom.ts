@@ -104,6 +104,6 @@ function passContext(ctx: AppContext, tournamentData: TournamentData | null, isC
 	if (playerListComponent) {
 		playerListComponent.ctx = ctx;
 		playerListComponent.isCreator = isCreator;
-		playerListComponent.gameData = gameData;
+		// playerListComponent.gameData = gameData;
 	}
 }

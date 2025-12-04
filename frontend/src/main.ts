@@ -61,7 +61,7 @@ async function initializeApp() {
 		.add("/edit-profile", EditProfile)
 		.add("/create-game", CreateGame)
 		.add("/game-room/:id", GameRoom)
-		.add("/launch-game", LaunchGame)
+		.add("/launch-game/:id", LaunchGame)
 		.add("/create-tournament", CreateTournament)
 		.add("/tournament-room/:id", TournamentRoom)
 		.start();

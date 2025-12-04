@@ -42,7 +42,7 @@ export const gameApi = {
 		return result;
 	},
 
-	getCurrentGame: async (accessToken: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null}> => {
+	getCurrentGame: async (accessToken: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> => {
 		const response = await fetch (`${BASE_URL}/current`, {
 			method: 'GET',
 			headers:{
@@ -52,6 +52,10 @@ export const gameApi = {
 			console.log('❌ Failed to get current game');
 			const errorData = await response.json().catch(() => ({ message: response.statusText }));
 			throw new Error(errorData.message || 'Failed to get current game');
+		}
+		if (response.status === 204) {
+			console.log('🎮 No current game');
+			return null;
 		}
 		const result = await response.json();
 		console.log('🎮 getCurrentGame sucess ✅ ', result);
