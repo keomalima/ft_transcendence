@@ -5,6 +5,7 @@ import { cleanupGameRoom } from "./pages/GameRoom.js";
 // (here the function must take an AppContext parameter and return a string e.g. a HTML content)
 type View = (ctx: AppContext, params?: Record<string, string>) => string;
 
+type Guard = (path: string, ctx: AppContext) => Promise<boolean> | boolean;
 interface Route {
 	path: string;
 	view: View;
@@ -15,6 +16,7 @@ export class Router {
 	private routes: Route[] = [];
 	private app: HTMLElement; // HTML element where the page is rendered
 	private ctx: AppContext; // Context with stores (user, friend, games, etc)
+	private guard?: Guard;
 
 	constructor(appSelector: string, ctx: AppContext) {
 		// Find the container element where pages will be rendered
@@ -43,14 +45,24 @@ export class Router {
 		this.navigateTo(window.location.pathname, false);
 	}
 
+	public useGuard(guard: Guard) {
+		this.guard = guard;
+		return this;
+	}
+
 	// Route to the correct new path and add the path to history
-	public navigateTo(path: string, push = true) {
+	public async navigateTo(path: string, push = true) {
 		const currentPath = window.location.pathname;
 		if (currentPath.startsWith('/game-room')) {
 			cleanupGameRoom();
 		}
 		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;
+
+		if (this.guard) {
+			const ok = await this.guard(path, this.ctx);
+			if (!ok) return;
+		}
 
 		if (push) history.pushState({}, "", path); // update url except for back/forward navigation
 		this.app.innerHTML = route.view(this.ctx, route.params); // render the new path view

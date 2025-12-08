@@ -15,14 +15,6 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// get user data from store
 	const currentUser = ctx.userStore.get();
 
-	// secure if no access token or user ID
-	if (!currentUser?.id)
-	{
-		console.log('no session when accessing /game-room')
-		setTimeout(() => router.navigateTo('/'), 0);
-		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-	}
-
 	// secure if no params
 	if (!params || !params['id'])
 	{
@@ -44,7 +36,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
 		
-		setGameRoomWebSockets(currentUser, gameData);
+		setGameRoomWebSockets(currentUser!, gameData);
 
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);

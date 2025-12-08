@@ -42,6 +42,16 @@ export const userApi = {
 		}
 	},
 
+	me: async (): Promise<getUserResp | null> => {
+		try {
+			const response = await httpCall.get<getUserResp | null>(`${BASE_URL}/me`);
+			console.log('⭐ user validated! ✅', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('validation', error);
+		}
+	},
+
 	get: async (userId: string):Promise<getUserResp | null> => {
 		try {
 			const response = await httpCall.get<getUserResp> (`${BASE_URL}/${userId}`);

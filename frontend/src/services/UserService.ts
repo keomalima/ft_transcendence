@@ -44,7 +44,7 @@ class UserService {
 		if (result?.id)
 			localStorage.setItem('userId', result.id);
 
-		await this.getUserState(ctx, result.id);
+		await this.getUserState(ctx);
 		return result;
 	}
 
@@ -54,31 +54,30 @@ class UserService {
 		const user = ctx.userStore.get();
 		await userApi.logout();
 		this.cleanUser(ctx);
+		// Broadcast logout to other tabs
+		localStorage.setItem('session-cleared', Date.now().toString());
 		localStorage.removeItem('userId');
 	}
 
 	// get user
-	async getUserState(ctx: AppContext, id: string | null): Promise<getUserResp | null> {
-		if (!id)
-			throw new Error('Missing id to get user');
-		const currentUser = ctx.userStore.get();
-
-		const result = await userApi.get(id);
-		
-		// Update store only if the get concerns the current user
-		if (result && id === currentUser?.id) {
-			ctx.userStore.update((prevState) => ({
-				...prevState,
-				id: result.id ?? id,
-				email: result.email ?? null,
-				name: result.name ?? null,
-				surname: result.surname ?? null,
-				displayName: result.displayName ?? null,
-				avatarUrl: result.avatarUrl ?? null,
-				isOnline: result.isOnline ?? false,
-				isLoggedIn: true,
-			}));
+	async getUserState(ctx: AppContext): Promise<getUserResp | null> {
+		const result = await userApi.me();
+		if (!result) {
+			throw new Error('No active session');
 		}
+
+		// Update store with the validated session data
+		ctx.userStore.update((prevState) => ({
+			...prevState,
+			id: result.id ?? prevState.id ?? null,
+			email: result.email ?? null,
+			name: result.name ?? null,
+			surname: result.surname ?? null,
+			displayName: result.displayName ?? null,
+			avatarUrl: result.avatarUrl ?? null,
+			isOnline: result.isOnline ?? false,
+			isLoggedIn: true,
+		}));
 		return result;
 	}
 

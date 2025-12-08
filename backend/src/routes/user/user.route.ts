@@ -110,6 +110,18 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 		handler: userController.editUserHandler
 	});
 
+	fastify.get('/me', {
+		schema: {
+			response: { 200: userSchemas.response.getUser },
+			tags: ['Authentication'],
+			description: 'Validate user session',
+			summary: 'Validate user session',
+			security: [{ bearerAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: userController.validateSessionAuth
+	});
+
 	fastify.post('/logout', {
 		schema: {
 			tags: ['Authentication'],

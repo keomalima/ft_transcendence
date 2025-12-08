@@ -11,6 +11,10 @@ const httpCall = axios.create({
 function handleUnauthorized() {
   console.warn('Session expired, redirecting to landing page');
   localStorage.removeItem('userId');
+  // Broadcast to other tabs and local app state.
+  localStorage.setItem('session-cleared', Date.now().toString());
+  // Notify the app so stores can be cleared without circular imports.
+  window.dispatchEvent(new Event('session:unauthorized'));
   setTimeout(() => router.navigateTo('/'), 0);
 }
 

@@ -47,6 +47,13 @@ async function protectedRouteHandler(request: FastifyRequest, reply: FastifyRepl
 	}
 }
 
+async function validateSessionAuth ( request: FastifyRequest, reply: FastifyReply) {
+	if (request.user)
+		return reply.code(200).send(request.user);
+	else
+		return reply.code(401).send({ message: "Unauthorized" });
+}
+
 async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
 	try {
 		const data = request.body;
@@ -260,5 +267,6 @@ export const userController = {
 	getUserHandler,
 	editUserHandler,
 	deleteHandler,
-	uploadAvatarHandler
+	uploadAvatarHandler,
+	validateSessionAuth
 };

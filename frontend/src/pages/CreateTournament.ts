@@ -13,12 +13,6 @@ export function CreateTournament(ctx: AppContext): string {
 	//get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
 	
-	if (!currentUser?.id) {
-		console.log('no session when accessing /home')
-        setTimeout(() => router.navigateTo('/'), 0);
-        return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-	}
-
 	setTimeout(() => {
 		passContext(ctx);
 		setupTournamentEventListeners(ctx);

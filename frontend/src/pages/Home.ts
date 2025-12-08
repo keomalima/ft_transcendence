@@ -8,15 +8,6 @@ import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
 export function Home(ctx: AppContext): string {
-	const currentUser = ctx.userStore.get();
-	if (currentUser?.isLoggedIn) {
-		console.log('session already active, navigate to dashboard');
-		setTimeout(() => {
-			router.navigateTo('/home');
-		}, 0);
-		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to dashboard...</p></div>';
-	}
-
 	setTimeout(() => {
 		passContext(ctx);
 		setupHomeEventListeners(ctx);

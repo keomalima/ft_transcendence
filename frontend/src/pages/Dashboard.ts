@@ -17,14 +17,6 @@ export function Dashboard(ctx: AppContext): string{
     // get user data from store
     const currentUser: UserState | null = ctx.userStore.get();
 
-    // secure if no access token or user ID
-    if (!currentUser?.id)
-    {
-        console.log('no session when accessing /home')
-        setTimeout(() => router.navigateTo('/'), 0);
-        return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-    }
-
 	setTimeout( async () => {
 		const gameHistory: GameHistory[] = await gameApi.getHistory();
 		passContext(ctx, gameHistory);
@@ -41,8 +33,8 @@ export function Dashboard(ctx: AppContext): string{
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
 				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
-					<img src='http://localhost:3000${currentUser.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
-					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
+					<img src='http://localhost:3000${currentUser!.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
+					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser!.name ?? 'User'}</span></h1>
 				</div>
 				<div class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
 					<a data-link href='/create-game' class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</a>
