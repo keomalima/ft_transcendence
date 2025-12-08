@@ -2,7 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateGameInput, UpdateGameInput } from './game.schema.js';
 import crypto from 'crypto';
 import { gameService } from './game.service.js';
-import { wsController } from '../websockets/ws.controller.js';
+import { wsController } from '../websockets/waitingroom.ws.controller.js';
 
 // =====================
 // Game CRUD Handlers

@@ -3,7 +3,7 @@ import { checkServerIdentity } from 'tls';
 import { WebSocket } from 'ws';
 
 // =====================
-// Websocket Handlers
+// Websocket Handlers for Waitning Room
 // =====================
 
 const gameRooms = new Map<string, Set<WebSocket>>();
@@ -110,7 +110,7 @@ function notifyGameClosed(gameId: string, userId: string) {
 	});
 }
 
-export const wsController = {
+export const WaintingRoomWsController = {
 	broadcasToRoom,
 	waitingRoomHandler,
 	notifyPlayerRemoved,

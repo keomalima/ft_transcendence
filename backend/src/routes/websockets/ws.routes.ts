@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { userController } from "../user/user.controller.js";
 import { z } from "zod";
-import { wsController } from "./ws.controller.js";
+import { WaintingRoomWsController } from "./waitingroom.ws.controller.js";
 import { ClientRequest, get, Server } from "http";
 import { Http2ServerRequest } from "http2";
 
@@ -10,5 +10,11 @@ import { Http2ServerRequest } from "http2";
 // =====================
 
 export async function wsPrivateRoutes(fastify: FastifyInstance) {
-	fastify.get('/waiting-room/:gameId/:userId', { websocket: true }, wsController.waitingRoomHandler);
+
+	// waiting game room websocket
+	fastify.get('/waiting-room/:gameId/:userId', { websocket: true }, WaintingRoomWsController.waitingRoomHandler);
+
+	// game websocket
+	// fastify.get('/game/:gameId/:userId', { websocket: true }, wsController.gameHandler);
+
 }
