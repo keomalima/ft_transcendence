@@ -12,13 +12,6 @@ import "../components/NavBar.js";
 
 export function EditProfile(ctx: AppContext) : string {
 	let currentUser = ctx.userStore.get();
-	const accessToken = currentUser?.accessToken;
-	if (!accessToken)
-	{
-		console.log('no session when access /login')
-		router.navigateTo('/');
-		return '';
-	}
 
 	if (!currentUser)
 		return '';

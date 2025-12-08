@@ -1,9 +1,8 @@
-import { API_BASE_URL } from '../config.js';
-
-const BASE_URL = `${API_BASE_URL}/api/users`; // localhost:3000 in dev, proxied /api in prod
-
+import { AxiosError } from "axios";
 import { UserState } from "../types";
+import httpCall from "./httpClient.js";
 
+const BASE_URL = '/users';
 
 // sending data to create a new user
 export interface CreateUserDto {
@@ -19,10 +18,10 @@ export interface CreateUserDto {
 export type CreateUserResp = Pick<UserState, 'id' | 'name' | 'email'>
 
 // response when login
-export type LoginUserResp = Pick<UserState, 'accessToken' | 'id'>
+export type LoginUserResp = Pick<UserState, 'id'>
 
 // response when get user
-export type getUserResp = Omit<UserState, 'isLoggedIn' | 'accessToken' | 'createdAt' | 'updatedAt'>
+export type getUserResp = Omit<UserState, 'isLoggedIn' | 'createdAt' | 'updatedAt'>
 
 // response update user
 export type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' | 'avatarFile'>
@@ -33,36 +32,42 @@ export type updateAvatarResp = Pick<UserState, 'id' | 'email' | 'name' | 'surnam
 export const userApi = {
 
 	login: async (email:string, password:string): Promise<LoginUserResp | null> => {
-		const response = await fetch (`${BASE_URL}/login`, {
-			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			credentials: 'include',
-			body: JSON.stringify({
-				email: email,
-				password: password
-			})
-		});
-		if (!response.ok) {
+
+		try {
+			const response = await httpCall.post (`${BASE_URL}/login`, {email, password });
+			console.log('⭐ loginUser success! ✅', response.data);
+			return response.data;
+		} catch (error: any) {
 			console.log('❌ Failed to login');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to login');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+  			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+  			throw new Error(errorData.message ?? 'Failed to login');
 		}
-		const result = await response.json();
-		console.log('⭐ loginUser success ✅', result);
-		return result;
 	},
 
-	logout: async (accessToken: string): Promise<void> => {
-		const response = await fetch (`${BASE_URL}/logout`, {
-			method: 'POST',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to logout');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to logout');
+	get: async (userId: string):Promise<getUserResp | null> => {
+		try {
+			const response = await httpCall.get (`${BASE_URL}/${userId}`);
+			console.log('⭐ getUser success ✅', response.data);
+			return response.data;
+		} catch (error: any) {
+			console.log('❌ Failed to get user info');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+  			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+  			throw new Error(errorData.message ?? 'Failed to get user info');
 		}
-		console.log('⭐ logoutUser success ✅ (no response body)');
+	},
+
+	logout: async (): Promise<void> => {
+		try {
+			await httpCall.post (`${BASE_URL}/logout`);
+			console.log('⭐ logoutUser success ✅ (no response body)');
+		} catch (error: any) {
+			console.log('❌ Failed to logout');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+  			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+			throw new Error(errorData.message ?? 'Failed to logout');
+		}
 	},
 	
 	create: async (data: CreateUserDto): Promise<CreateUserResp | null> => {
@@ -75,99 +80,71 @@ export const userApi = {
 		if (data.avatarFile) {
 			formData.append('avatarFile', data.avatarFile);
 		}
-		const response = await fetch (`${BASE_URL}`, {
-			method: 'POST',
-			credentials: 'include',
-			body: formData
-		});
-		if (!response.ok) {
+		try {
+			const response = await httpCall.post (`${BASE_URL}`, formData, {
+				headers: { 'Content-Type': 'multipart/form-data' }
+			});
+			console.log('⭐ createUser success ✅', response.data);
+			return response.data;
+		} catch (error: any) {
 			console.log('❌ Failed to create a user');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to create a user');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+			throw new Error(errorData.message ?? 'Failed to create a user');
 		}
-		const result = await response.json();
-		console.log('⭐ createUser success ✅', result);
-		return result;
 	},
 
-	get: async (userId: string, accessToken: string):Promise<getUserResp | null> => {
-		const response = await fetch (`${BASE_URL}/${userId}`, {
-			method: 'GET',
-			credentials: 'include',
-			headers:{
-				'Content-Type': 'application/json',
-			}
-		}
-		);
-		if (!response.ok) {
-			console.log('❌ Failed to get user info');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get user info');
-		}
-		const result = await response.json();
-		console.log('⭐ getUser success ✅', result);
-		return result;
-	},
-
-	delete: async (accessToken: string): Promise<void> => {
-		const response = await fetch (`${BASE_URL}`, {
-			method: 'DELETE',
-			credentials: 'include'
-		})
-		if (!response.ok) {
+	delete: async (): Promise<void> => {
+		try {
+			await httpCall.delete (`${BASE_URL}`);
+			console.log('⭐ deleteUser success ✅, (no response body)');
+		} catch (error: any) {
 			console.log('❌ Failed to delete user');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to delete user');
-		}
-		console.log('⭐ deleteUser success ✅, (no response body)');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+			throw new Error(errorData.message ?? 'Failed to delete user');
+		};
 	},
 
-	update: async (accessToken: string, data: Partial<UserState>): Promise<updateUserResp> => {
-		const cleanData = Object.fromEntries(
-			Object.entries(data).filter(([_, value]) =>
-				value !== null &&
-				value !== undefined &&
-				value !== ''
-			)
-		);
-		if (Object.keys(cleanData).length === 0) {
-			throw new Error('No fields to update');
-		}
-		const response = await fetch (`${BASE_URL}/me`, {
-			method: 'PUT',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(cleanData)
-		})
-		if (!response.ok) {
+	update: async (data: Partial<UserState>): Promise<updateUserResp> => {
+		try {
+			const cleanData = Object.fromEntries(
+				Object.entries(data).filter(([_, value]) =>
+					value !== null &&
+					value !== undefined &&
+					value !== ''
+				)
+			);
+			if (Object.keys(cleanData).length === 0) {
+				throw new Error('No fields to update');
+			}
+			const response = await httpCall.put (`${BASE_URL}/me`, cleanData);
+			console.log('⭐ updateUser success ✅', response.data);
+			return response.data;
+		} catch (error: any) {
 			console.log('❌ Failed to update user');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to update user');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+			throw new Error(errorData.message ?? 'Failed to update user');
 		}
-		const result = await response.json();
-		console.log('⭐ updateUser success ✅', result);
-		return result;
 	},
 
-	updateAvatar: async (accessToken: string, file: File): Promise<updateAvatarResp | null> => {
+	updateAvatar: async (file: File): Promise<updateAvatarResp | null> => {
 		const formData = new FormData();
 		if (file) {
 			formData.append('avatarFile', file);
 		}
-		const response = await fetch (`${BASE_URL}/upload`, {
-			method: 'POST',
-			credentials: 'include',
-			body: formData
-		});
-		if (!response.ok) {
+		try {
+			const response = await httpCall.post (`${BASE_URL}/upload`, formData, {
+				headers: { 'Content-Type': 'multipart/form-data' }
+			});
+			console.log('⭐ updateAvatar success ✅', response.data);
+			return response.data;
+		} catch (error: any) {
 			console.log('❌ Failed to update avatar');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to update avatar');
+			const axiosErr = error as AxiosError<{ message?: string }>;
+			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
+			throw new Error(errorData.message ?? 'Failed to update avatar');
 		}
-		const result = await response.json();
-		console.log('⭐ updateAvatar success ✅', result);
-		return result;
 	}
 }

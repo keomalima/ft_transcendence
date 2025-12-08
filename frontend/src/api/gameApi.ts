@@ -5,7 +5,7 @@ const BASE_URL = `${API_BASE_URL}/api/games`; // localhost:3000 in dev, proxied 
 import { GameData, GameToken, GameHistory } from "../types";
 
 export const gameApi = {
-	createGame: async (accessToken: string, type: string, scoreToWin: number): Promise<Partial<GameData>> => {
+	createGame: async (type: string, scoreToWin: number): Promise<Partial<GameData>> => {
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'POST',
 			credentials: 'include',
@@ -27,7 +27,7 @@ export const gameApi = {
 		return result;
 	},
 
-	getGame: async (accessToken: string, gameId: string): Promise<GameData> => {
+	getGame: async (gameId: string): Promise<GameData> => {
 		const response = await fetch (`${BASE_URL}/${gameId}`, {
 			method: 'GET',
 			credentials: 'include',
@@ -42,7 +42,7 @@ export const gameApi = {
 		return result;
 	},
 
-	getCurrentGame: async (accessToken: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null}> => {
+	getCurrentGame: async (): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null}> => {
 		const response = await fetch (`${BASE_URL}/current`, {
 			method: 'GET',
 			credentials: 'include',
@@ -57,7 +57,7 @@ export const gameApi = {
 		return result;
 	},
 
-	generateToken: async (accessToken: string, gameId: string): Promise<GameToken> => {
+	generateToken: async (gameId: string): Promise<GameToken> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/token`, {
 			method: 'POST',
 			credentials: 'include',
@@ -72,7 +72,7 @@ export const gameApi = {
 		return result;
 	},
 
-	joinGame: async (accessToken: string, gameToken: string): Promise<{id: string, gameId: string, userId: string}> => {
+	joinGame: async (gameToken: string): Promise<{id: string, gameId: string, userId: string}> => {
 		const response = await fetch (`${BASE_URL}/${gameToken}/join`, {
 			method: 'POST',
 			credentials: 'include',
@@ -87,7 +87,7 @@ export const gameApi = {
 		return result;
 	},
 
-	startGame: async (accessToken: string, gameId: string): Promise<Partial<GameData>> => {
+	startGame: async (gameId: string): Promise<Partial<GameData>> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/start`, {
 			method: 'PUT',
 			credentials: 'include',
@@ -102,7 +102,7 @@ export const gameApi = {
 		return result;
 	},
 
-	quitPendingGame: async (accessToken: string, gameId: string): Promise<void> => {
+	quitPendingGame: async (gameId: string): Promise<void> => {
 		const response = await fetch (`${BASE_URL}/${gameId}`, {
 			method: 'DELETE',
 			credentials: 'include',
@@ -115,7 +115,7 @@ export const gameApi = {
 		console.log('🎮 quit / delete pending game sucess ✅ ');
 	},
 
-	removePlayer: async (accessToken: string, gameId: string, playerId: string): Promise<void> => {
+	removePlayer: async (gameId: string, playerId: string): Promise<void> => {
 		const response = await fetch (`${BASE_URL}/${gameId}/remove`, {
 			method: 'PUT',
 			credentials: 'include',
@@ -134,7 +134,7 @@ export const gameApi = {
 		console.log('🎮 remove player from game sucess ✅ ');
 	},
 
-	getHistory: async (accessToken: string): Promise<GameHistory[]> => {
+	getHistory: async (): Promise<GameHistory[]> => {
 		const response = await fetch (`${BASE_URL}/history`, {
 			method: 'GET',
 			credentials: 'include',

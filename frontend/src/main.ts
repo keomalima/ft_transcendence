@@ -27,16 +27,14 @@ const context: AppContext = {
 
 // Async initialization function
 async function initializeApp() {
-	// Load saved userId and accessToken from localStorage
+	// Load saved userId from localStorage
 	const savedUserId = localStorage.getItem('userId');
-	const savedAccessToken = localStorage.getItem('accessToken');
 
 	// If both exist, restore the session and fetch user data
-	if (savedUserId && savedAccessToken) {
+	if (savedUserId) {
 		context.userStore.update((prevState) => ({
 			...prevState,
 			id: savedUserId,
-			accessToken: savedAccessToken,
 			isLoggedIn: true,
 		}));
 
@@ -47,7 +45,6 @@ async function initializeApp() {
 			console.error('Failed to restore session:', error);
 			// Clear invalid session
 			localStorage.removeItem('userId');
-			localStorage.removeItem('accessToken');
 			context.userStore.set(null);
 		}
 	}
@@ -68,18 +65,16 @@ async function initializeApp() {
 
 	// Event listener to check localstorage change
 	window.addEventListener('storage', async (e) => {
-		if (e.key === 'accessToken') {
-			if (!localStorage.getItem('accessToken') ||!localStorage.getItem('userId')) {
+		if (e.key === 'userId') {
+			if (!localStorage.getItem('userId')) {
 				userService.cleanUser(context);
 				router.navigateTo('/');
 			} else {
 				console.log('local storage event');
 				const userId = localStorage.getItem('userId');
-				const accessToken = localStorage.getItem('accessToken');
 
 				context.userStore.update((prevState) => ({
 					...prevState,
-					accessToken: accessToken,
 					id: userId
 				}));
 				await userService.getUserState(context, userId);

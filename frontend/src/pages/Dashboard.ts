@@ -18,7 +18,7 @@ export function Dashboard(ctx: AppContext): string{
     const currentUser: UserState | null = ctx.userStore.get();
 
     // secure if no access token or user ID
-    if (!currentUser?.accessToken || !currentUser?.id)
+    if (!currentUser?.id)
     {
         console.log('no session when accessing /home')
         setTimeout(() => router.navigateTo('/'), 0);
@@ -26,7 +26,7 @@ export function Dashboard(ctx: AppContext): string{
     }
 
 	setTimeout( async () => {
-		const gameHistory: GameHistory[] = await gameApi.getHistory(currentUser?.accessToken!);
+		const gameHistory: GameHistory[] = await gameApi.getHistory();
 		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
 	}, 0);
@@ -123,8 +123,8 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
-			if (data.friendshipId && data.accessToken) {
-				await friendshipApi.delete(data.friendshipId, data.accessToken);
+			if (data.friendshipId) {
+				await friendshipApi.delete(data.friendshipId);
 				
 				// Refresh friend list after deletion
 				if (friendListComponent.loadAndRender) {
@@ -141,8 +141,8 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
-			if (data.requestId && data.accessToken) {
-				await friendshipApi.accept(data.requestId, data.accessToken);
+			if (data.requestId) {
+				await friendshipApi.accept(data.requestId);
 				
 				// Refresh both lists after accepting
 				if (requestsComponent.loadAndRender) {
@@ -162,8 +162,8 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
-			if (data.requestId && data.accessToken) {
-				await friendshipApi.reject(data.requestId, data.accessToken);
+			if (data.requestId) {
+				await friendshipApi.reject(data.requestId);
 
 				// Refresh both lists after accepting
 				if (requestsComponent.loadAndRender) {
@@ -183,8 +183,8 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
-			if (data.accessToken && data.friendName) {
-				await friendshipApi.sendRequest(data.friendName, data.accessToken);
+			if (data.friendName) {
+				await friendshipApi.sendRequest(data.friendName);
 				if (errorMsg) {
 					errorMsg.className = 'text-green-500 text-sm mt-2';
 					errorMsg.innerText = `Friend request sent successfully to ${data.friendName}!`;
@@ -203,11 +203,8 @@ function setupDashboardEventListeners(ctx: AppContext) {
 	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
-		const accessToken = ctx.userStore.get()?.accessToken;
-		if (!accessToken)
-			return;
 		try {
-			const result = await gameApi.joinGame(accessToken, data);
+			const result = await gameApi.joinGame(data);
 			router.navigateTo(`/game-room/${result.gameId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;

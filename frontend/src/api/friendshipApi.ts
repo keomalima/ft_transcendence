@@ -7,7 +7,7 @@ import { FriendData } from "../types";
  
 export const friendshipApi = {
 
-	getList: async (accessToken: string): Promise<Partial<FriendData>[]> => {
+	getList: async (): Promise<Partial<FriendData>[]> => {
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'GET',
 			credentials: 'include',
@@ -22,7 +22,7 @@ export const friendshipApi = {
 		return result;
 	},
 
-	sendRequest: async (displayName: string | null, accessToken: string): Promise<void> => {
+	sendRequest: async (displayName: string | null): Promise<void> => {
 		if (displayName == null)
 			throw new Error('Display name is required');
 		const response = await fetch (`${BASE_URL}`, {
@@ -43,7 +43,7 @@ export const friendshipApi = {
 		console.log('🧑‍🤝‍🧑 sendFriendshipRequest sucess ✅ ');
 	},
 	
-	getRequests: async (accessToken: string): Promise<Partial<FriendData>[]> => {
+	getRequests: async (): Promise<Partial<FriendData>[]> => {
 		const response = await fetch (`${BASE_URL}/requests`, {
 			method: 'GET',
 			credentials: 'include'
@@ -58,7 +58,7 @@ export const friendshipApi = {
 		return result;
 	},
 
-	accept: async (id: string | null, accessToken: string): Promise<void> => {
+	accept: async (id: string | null): Promise<void> => {
 		if (id == null)
 			throw new Error('Request ID is required');
 		const response = await fetch (`${BASE_URL}/accept/${id}`, {
@@ -73,7 +73,7 @@ export const friendshipApi = {
 		console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
 	},
 
-	reject: async (id: string | null, accessToken: string): Promise<void> => {
+	reject: async (id: string | null): Promise<void> => {
 		if (id == null)
 			throw new Error('Request ID is required');
 		const response = await fetch (`${BASE_URL}/reject/${id}`, {
@@ -88,7 +88,7 @@ export const friendshipApi = {
 		console.log('🧑‍🤝‍🧑 rejectFriend sucess ✅ ');
 	},
 
-	delete: async (id: string | null, accessToken: string): Promise<void> => {
+	delete: async (id: string | null): Promise<void> => {
 		if (id == null)
 			throw new Error('Friendship ID is required');
 		const response = await fetch (`${BASE_URL}/${id}`, {

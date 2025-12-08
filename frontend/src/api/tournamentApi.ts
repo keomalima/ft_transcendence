@@ -5,7 +5,7 @@ const BASE_URL = `${API_BASE_URL}/api/tournaments`; // localhost:3000 in dev, pr
 import { TournamentData } from "../types";
 
 export const tournamentApi = {
-	createTournament: async (accessToken: string, numberPlayers: number, scoreToWin: number): Promise<Partial<TournamentData>> => {
+	createTournament: async (numberPlayers: number, scoreToWin: number): Promise<Partial<TournamentData>> => {
 		const response = await fetch (`${BASE_URL}`, {
 			method: 'POST',
 			headers:{
@@ -26,7 +26,7 @@ export const tournamentApi = {
 		return result;
 	},
 
-	getTournament: async (accessToken: string, tournamentId: string): Promise<TournamentData> => {
+	getTournament: async (tournamentId: string): Promise<TournamentData> => {
 		const response = await fetch (`${BASE_URL}/${tournamentId}`, {
 			method: 'GET',
 			credentials: 'include',

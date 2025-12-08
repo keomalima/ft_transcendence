@@ -69,7 +69,6 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 		const { password, salt, ...safeUser } = user;
 		const session = await userService.createSession(request.server.prisma, user.id);
 		const isProduction = process.env.NODE_ENV === 'production';
-		console.log(isProduction);
 		reply.setCookie('sessionId', session.id, {
 			httpOnly: true,
 			secure: isProduction,
@@ -77,10 +76,7 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 			path: '/',
 			maxAge: 60 * 60 * 24,
 		})
-		return { 
-			accessToken: session.id, 
-	    	...safeUser
-	  	};	
+		return safeUser;	
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to login user"});
 	}
@@ -89,6 +85,7 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		await userService.logoutUser(request.server.prisma, request.user!.id);
+		reply.clearCookie('sessionId', { path: '/' });
 		reply.code(204).send()
 	} catch (error: unknown) {
 		if (error instanceof Error)
