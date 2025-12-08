@@ -54,14 +54,14 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 
 		const user = await userService.findUserByEmail(prisma, data);
 		if (!user){
-			return reply.code(401).send({
+			return reply.code(400).send({
                 message: "Invalid email or password"
             });
 		}
 		
 		const isValid = verifyPassword(data.password, user.password, user.salt);
 		if (!isValid){
-			return reply.code(401).send({
+			return reply.code(400).send({
                 message: "Invalid email or password"
             });
 		}

@@ -1,24 +1,33 @@
-import axios, {AxiosError} from 'axios'
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { API_BASE_URL } from '../config.js';
 import { router } from '../main.js';
 
 const httpCall = axios.create({
-	baseURL: `${API_BASE_URL}/api`,
-	withCredentials: true,
-	headers: { 'Content-Type': 'application/json' }
+  baseURL: `${API_BASE_URL}/api`,
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
 });
 
+function handleUnauthorized() {
+  console.warn('Session expired, redirecting to landing page');
+  localStorage.removeItem('userId');
+  setTimeout(() => router.navigateTo('/'), 0);
+}
+
 httpCall.interceptors.response.use(
-  resp => resp,
-  err => {
-    if (axios.isAxiosError(err) && err.response?.status === 401) {
-      setTimeout(() => router.navigateTo('/'), 0);
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      handleUnauthorized();
+
       return Promise.resolve({
-        data: '<div class="flex …">Redirecting…</div>',
-      });
+        ...error.response,
+        data: null,
+      } as AxiosResponse);
     }
-    return Promise.reject(err);
-  }
+
+    return Promise.reject(error);
+  },
 );
 
 export default httpCall;

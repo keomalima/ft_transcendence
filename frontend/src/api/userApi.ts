@@ -1,6 +1,6 @@
-import { AxiosError } from "axios";
 import { UserState } from "../types";
 import httpCall from "./httpClient.js";
+import { buildApiError } from "./apiError.js";
 
 const BASE_URL = '/users';
 
@@ -34,27 +34,21 @@ export const userApi = {
 	login: async (email:string, password:string): Promise<LoginUserResp | null> => {
 
 		try {
-			const response = await httpCall.post (`${BASE_URL}/login`, {email, password });
+			const response = await httpCall.post<LoginUserResp> (`${BASE_URL}/login`, {email, password });
 			console.log('⭐ loginUser success! ✅', response.data);
 			return response.data;
-		} catch (error: any) {
-			console.log('❌ Failed to login');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-  			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-  			throw new Error(errorData.message ?? 'Failed to login');
+		} catch (error: unknown) {
+			throw buildApiError('login', error);
 		}
 	},
 
 	get: async (userId: string):Promise<getUserResp | null> => {
 		try {
-			const response = await httpCall.get (`${BASE_URL}/${userId}`);
+			const response = await httpCall.get<getUserResp> (`${BASE_URL}/${userId}`);
 			console.log('⭐ getUser success ✅', response.data);
 			return response.data;
-		} catch (error: any) {
-			console.log('❌ Failed to get user info');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-  			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-  			throw new Error(errorData.message ?? 'Failed to get user info');
+		} catch (error: unknown) {
+			throw buildApiError('get user info', error);
 		}
 	},
 
@@ -62,11 +56,8 @@ export const userApi = {
 		try {
 			await httpCall.post (`${BASE_URL}/logout`);
 			console.log('⭐ logoutUser success ✅ (no response body)');
-		} catch (error: any) {
-			console.log('❌ Failed to logout');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-  			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-			throw new Error(errorData.message ?? 'Failed to logout');
+		} catch (error: unknown) {
+			throw buildApiError('logout', error);
 		}
 	},
 	
@@ -81,16 +72,13 @@ export const userApi = {
 			formData.append('avatarFile', data.avatarFile);
 		}
 		try {
-			const response = await httpCall.post (`${BASE_URL}`, formData, {
+			const response = await httpCall.post<CreateUserResp> (`${BASE_URL}`, formData, {
 				headers: { 'Content-Type': 'multipart/form-data' }
 			});
 			console.log('⭐ createUser success ✅', response.data);
 			return response.data;
-		} catch (error: any) {
-			console.log('❌ Failed to create a user');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-			throw new Error(errorData.message ?? 'Failed to create a user');
+		} catch (error: unknown) {
+			throw buildApiError('create a user', error);
 		}
 	},
 
@@ -98,11 +86,8 @@ export const userApi = {
 		try {
 			await httpCall.delete (`${BASE_URL}`);
 			console.log('⭐ deleteUser success ✅, (no response body)');
-		} catch (error: any) {
-			console.log('❌ Failed to delete user');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-			throw new Error(errorData.message ?? 'Failed to delete user');
+		} catch (error: unknown) {
+			throw buildApiError('delete user', error);
 		};
 	},
 
@@ -118,14 +103,11 @@ export const userApi = {
 			if (Object.keys(cleanData).length === 0) {
 				throw new Error('No fields to update');
 			}
-			const response = await httpCall.put (`${BASE_URL}/me`, cleanData);
+			const response = await httpCall.put<updateUserResp> (`${BASE_URL}/me`, cleanData);
 			console.log('⭐ updateUser success ✅', response.data);
 			return response.data;
-		} catch (error: any) {
-			console.log('❌ Failed to update user');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-			throw new Error(errorData.message ?? 'Failed to update user');
+		} catch (error: unknown) {
+			throw buildApiError('update user', error);
 		}
 	},
 
@@ -135,16 +117,13 @@ export const userApi = {
 			formData.append('avatarFile', file);
 		}
 		try {
-			const response = await httpCall.post (`${BASE_URL}/upload`, formData, {
+			const response = await httpCall.post<updateAvatarResp> (`${BASE_URL}/upload`, formData, {
 				headers: { 'Content-Type': 'multipart/form-data' }
 			});
 			console.log('⭐ updateAvatar success ✅', response.data);
 			return response.data;
-		} catch (error: any) {
-			console.log('❌ Failed to update avatar');
-			const axiosErr = error as AxiosError<{ message?: string }>;
-			const errorData = axiosErr.response?.data ?? { message: axiosErr.message };
-			throw new Error(errorData.message ?? 'Failed to update avatar');
+		} catch (error: unknown) {
+			throw buildApiError('update avatar', error);
 		}
 	}
 }

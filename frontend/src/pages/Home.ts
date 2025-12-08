@@ -8,13 +8,13 @@ import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
 export function Home(ctx: AppContext): string {
-	// CHECK-HERE TO SEE WHAT HAPPENS WHEN USER'S ALREADY LOGGEDIN
-	// if (window.location.pathname !== '/home') {
-	// 	console.log('session already active, navigate to dashboard');
-	// 	setTimeout(() => {
-	// 		router.navigateTo('/home');
-	// 	}, 0);
-	// }
+	const currentUser = ctx.userStore.get();
+	if (currentUser?.id) {
+		console.log('session already active, navigate to dashboard');
+		setTimeout(() => {
+			router.navigateTo('/home');
+		}, 0);
+	}
 
 	setTimeout(() => {
 		passContext(ctx);
