@@ -38,7 +38,7 @@ class UserService {
 		ctx.userStore.update((prevState) => ({
 			...prevState,
 			id: result.id,
-			isLoggedIn: true
+			// wait for getUserState to set isLoggedIn after server confirmation
 		}));
 		
 		if (result?.id)

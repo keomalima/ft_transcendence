@@ -20,10 +20,7 @@ httpCall.interceptors.response.use(
     if (error.response?.status === 401) {
       handleUnauthorized();
 
-      return Promise.resolve({
-        ...error.response,
-        data: null,
-      } as AxiosResponse);
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);

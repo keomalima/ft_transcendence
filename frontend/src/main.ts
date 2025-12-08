@@ -35,9 +35,8 @@ async function initializeApp() {
 		context.userStore.update((prevState) => ({
 			...prevState,
 			id: savedUserId,
-			isLoggedIn: true,
+			// defer flipping isLoggedIn until getUserState confirms the session
 		}));
-
 		// Fetch full user data from API (wait for it to complete)
 		try {
 			await userService.getUserState(context, savedUserId);
