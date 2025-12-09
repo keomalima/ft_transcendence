@@ -3,7 +3,7 @@ import { checkServerIdentity } from 'tls';
 import { WebSocket } from 'ws';
 
 // =====================
-// Websocket Handlers
+// Websocket Handlers for Waitning Room
 // =====================
 
 const gameRooms = new Map<string, Set<WebSocket>>();
@@ -27,18 +27,6 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 			socket.ping();
 		}
 	}, 30000);
-
-	// socket.on('message', (message: Buffer) => {
-	// 	const data = JSON.parse(message.toString());
-
-	// 	if (data.type === 'player_joined') {
-	// 		broadcasToRoom(gameId, {
-	// 			type: 'room_update',
-	// 			players: data.players,
-	// 			message: 'New player joined'
-	// 		})
-	// 	}
-	// })
 
 	socket.on('close', () => {
 		clearInterval(pingInterval);
@@ -110,7 +98,7 @@ function notifyGameClosed(gameId: string, userId: string) {
 	});
 }
 
-export const wsController = {
+export const WaintingRoomWsController = {
 	broadcasToRoom,
 	waitingRoomHandler,
 	notifyPlayerRemoved,

@@ -30,7 +30,7 @@
 		"**/types": true,
 		"**/registers": true,
 		"**/old_version": true,
-		"**/backend": true,
+		"**/backend": false,
 		"**/.vscode": true,
 		"**/fix-imports.js": true,
 		"**/*.mjs": true,

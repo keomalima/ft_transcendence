@@ -1,5 +1,5 @@
 import { AppContext } from "./types";
-import { cleanupGameRoom } from "./pages/GameRoom.js";
+import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
 
 // Define a new function type to make sure that the function sent to route is well designed
 // (here the function must take an AppContext parameter and return a string e.g. a HTML content)
@@ -54,7 +54,7 @@ export class Router {
 	public async navigateTo(path: string, push = true) {
 		const currentPath = window.location.pathname;
 		if (currentPath.startsWith('/game-room')) {
-			cleanupGameRoom();
+			cleanWaitingRoomWS();
 		}
 		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;

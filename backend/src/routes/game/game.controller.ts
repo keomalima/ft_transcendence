@@ -2,7 +2,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CreateGameInput, UpdateGameInput } from './game.schema.js';
 import crypto from 'crypto';
 import { gameService } from './game.service.js';
-import { wsController } from '../websockets/ws.controller.js';
+import { WaintingRoomWsController } from '../websockets/waitingroom.ws.controller.js';
+// import { GameWsController } from '../websockets/game/game.ws.controller.js';
 
 // =====================
 // Game CRUD Handlers
@@ -130,7 +131,7 @@ async function joinGameHandler (request: FastifyRequest<{ Params: { token: strin
 			}
 		}
 
-		wsController.broadcasToRoom(game.id, {
+		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'room_update',
 			message: `${joinedUser.displayName} joined the game!`,
 			userId,
@@ -165,7 +166,7 @@ async function startGameHandler (request: FastifyRequest<{ Params: { id: string}
 			});
 		}
 		let response = await gameService.startGame(request.server.prisma, gameId);
-		wsController.broadcasToRoom(game.id, {
+		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'start_game',
 			message: `Start game!`
 		})
@@ -250,7 +251,7 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
         	});
 		}
 
-		wsController.notifyPlayerRemoved(gameId, playerId);
+		WaintingRoomWsController.notifyPlayerRemoved(gameId, playerId);
 
 		reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, playerId));
 	} catch (error: any) {
@@ -276,12 +277,12 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
 		}
 		if (game.createdBy === userId) {
 			console.log('🔥 notify closed game (BY CREATOR)');
-			wsController.notifyGameClosed(gameId, userId);
+			WaintingRoomWsController.notifyGameClosed(gameId, userId);
 			return reply.code(204).send(await gameService.deletePendingGame(request.server.prisma, gameId));
 		}
 
 		console.log('🔥 notify closed game (BY PLAYER)');
-		wsController.broadcasToRoom(game.id, {
+		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'room_update',
 			message: `Need to update the game - QUIT!`,
 		});

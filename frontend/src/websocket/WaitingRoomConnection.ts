@@ -32,7 +32,7 @@ export class WaitingRoomConnection {
 				onGameClosed();
 			}
 			if (data.type === 'start_game') {
-				console.log('🚀 Your game just starts');
+				console.log('🔌 Your game just starts');
 				onStartGame();
 			}
 		}

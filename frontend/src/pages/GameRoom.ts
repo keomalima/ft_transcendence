@@ -1,4 +1,4 @@
-import type { AppContext, UserState, GameUsers, GameData } from "../types.js";
+import type { AppContext, UserState, GameData } from "../types.js";
 import { router } from "../main.js";
 import { gameApi } from "../api/gameApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
@@ -25,9 +25,8 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 
 	// Execute after the first rendering
 	setTimeout(async () => {
-		cleanupGameRoom();
-
-		let gameData = await getGameData(params['id']);
+		cleanWaitingRoomWS();
+		let gameData = await getGameData(currentUser?.accessToken!, params['id']);
 		if (!gameData)
 			return;
 		renderGameRoomContent(gameData);
@@ -116,21 +115,22 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData)
 			}
 		},
 		() => {
-			cleanupGameRoom();
+			cleanWaitingRoomWS();
 			router.navigateTo('/home');
 		},
 		() => {
-			cleanupGameRoom();
+			cleanWaitingRoomWS();
 			router.navigateTo('/home');
 		},
 		() => {
-			router.navigateTo(`/launch-game/${gameData.id}`)
+			cleanWaitingRoomWS();
+			router.navigateTo(`/game/${gameData.id}`)
 		}
 	)
 }
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
-export function cleanupGameRoom() {
+export function cleanWaitingRoomWS() {
 	if (wsConnection) {
 		wsConnection.disconnect();
 		wsConnection = null;
@@ -225,8 +225,9 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail;
 		try {
-			const result = await gameApi.startGame(gameId);
-			router.navigateTo('/launch-game');
+			await gameApi.startGame(accessToken, gameId);
+			cleanWaitingRoomWS();
+			router.navigateTo(`/game/${gameId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
 			errorMsgStartGame.className = 'mt-2 text-red-500'
