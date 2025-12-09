@@ -90,7 +90,7 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 						<p class="text-gray-600 mb-6">
 							Enter an existing tournament with a token to compete with your friends.
 						</p>
-						<button type='button' id='join-tournament-btn' class='${BUTTON_WHITE_CLASSES} w-full'>
+						<button onclick="document.getElementById('join-tournament-dialog').showModal()" type='button' id='join-tournament-btn' class='${BUTTON_WHITE_CLASSES} w-full'>
 							JOIN TOURNAMENT
 						</button>
 					</div>
@@ -102,6 +102,11 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 			<p id='error-create-tournament' class='mt-6 text-center'></p>
 		</div>
 	</div>
+
+	<!-- Dialog for join game -->
+		<dialog id="join-tournament-dialog" class="place-self-center">
+			<join-game-pop-up id="join-game-component"></join-game-pop-up>
+	</dialog>
 	`
 	return content;
 }
@@ -124,11 +129,18 @@ function passContext(ctx: AppContext) {
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
 	}
+	const joinGameComponent = document.getElementById('join-game-component') as any;
+	if (joinGameComponent) {
+		joinGameComponent.type = 'tournament';
+		joinGameComponent.ctx = ctx;
+	}
 
 }
 
 // ======== EVENT LISTENER ============
 function setupTournamentEventListeners(ctx: AppContext) {
+
+	const joinGameComponent = document.getElementById('join-game-component') as any;
 
 	// **** CREATE TOURNAMENT ****
 	const createBtn = document.getElementById('create-tournament-btn');

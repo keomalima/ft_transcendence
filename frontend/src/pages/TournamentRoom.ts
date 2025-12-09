@@ -1,9 +1,15 @@
 import type { AppContext, TournamentData, UserState } from "../types.js";
 import { router } from "../main.js";
 import { tournamentApi } from "../api/tournamentApi.js";
-import type { PlayerList } from "../components/PlayersList.js";
+import { TournamentWaitingRoomConnection } from "../websocket/TournamentWaitingConnections.js";
+import type { TournamentPlayerList } from "../components/TournamentPlayerList.js";
+
+// Import components
+import "../components/NavBar.js";
+import "../components/TournamentPlayerList.js";
 
 let isGenerated: boolean = false;
+let wsConnection: TournamentWaitingRoomConnection | null = null;
 
 export function TournamentRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
@@ -24,6 +30,9 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 			return;
 		renderTournamentRoomContent(tournamentData);
 		passContext(ctx, tournamentData, tournamentData.isCreator);
+
+		console.log(tournamentData)
+		setTournamentRoomWebSockets(currentUser!, tournamentData);
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0)
 
@@ -63,7 +72,7 @@ function renderTournamentRoomContent(tournamentData: TournamentData) {
 						<p id='error-generate-token'></p>
 					</div>
 					<div class='flex lg:flex-1 items-center justify-center w-full lg:w-auto h-auto lg:h-full min-h-0'>
-						<player-list id='player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
+						<tournament-player-list id='tournament-player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></tournament-player-list>
 					</div>
 				</div>
 			</div>
@@ -79,13 +88,43 @@ function renderTournamentRoomContent(tournamentData: TournamentData) {
 						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
 					</div>
 					<div class='flex lg:flex-1 items-center justify-center w-full lg:w-auto h-auto lg:h-full min-h-0'>
-						<player-list id='player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
+						<tournament-player-list id='tournament-player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></tournament-player-list>
 					</div>
 				</div>
 			</div>
 		`
 	}
 
+}
+
+// ======== SET WEBSOCKET CONNECTION ============
+async function setTournamentRoomWebSockets(currentUser: UserState, tournamentData: TournamentData) {
+
+	// Create websocket with gameid
+	wsConnection = new TournamentWaitingRoomConnection();
+	wsConnection.connect(tournamentData.id!, currentUser.id!,
+		async (updateGameData) => {
+			if (updateGameData.message) {
+				console.log('🔔', updateGameData);
+				const newTournamentData = await getTournamentData(tournamentData.id!);
+				if (newTournamentData)
+					tournamentData = newTournamentData;
+				updatePlayerList(tournamentData);
+			}
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo('/home');
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo('/home');
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo(`/game/${tournamentData.id}`)
+		}
+	)
 }
 
 // ======== GET TOURNAMENT DATA ============
@@ -107,11 +146,31 @@ function passContext(ctx: AppContext, tournamentData: TournamentData | null, isC
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
 	}
-	const playerListComponent = document.getElementById('player-list-component') as any;
-	if (playerListComponent) {
-		playerListComponent.ctx = ctx;
-		playerListComponent.isCreator = isCreator;
-		// playerListComponent.gameData = gameData;
+	const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as any;
+	if (tournamentPlayerListComponent) {
+		tournamentPlayerListComponent.ctx = ctx;
+		tournamentPlayerListComponent.isCreator = isCreator;
+		tournamentPlayerListComponent.tournamentData = tournamentData;
+		console.log('✅ Context passed to tournament player list');
+	} else {
+		console.error('❌ Tournament player list component not found!');
+	}
+}
+
+// ======== UPDATE PLAYER LIST ============
+function updatePlayerList(tournamentData: TournamentData) {
+	const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as TournamentPlayerList | null;
+	if (tournamentPlayerListComponent && tournamentData) {
+		// Update the tournamentData property with the new data from websocket
+		tournamentPlayerListComponent.tournamentData = tournamentData;
+	}
+}
+
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanWaitingRoomWS() {
+	if (wsConnection) {
+		wsConnection.disconnect();
+		wsConnection = null;
 	}
 }
 
@@ -160,4 +219,60 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			console.log(error);
 		}
 	});
+
+	// // **** START TOURNAMENT ****
+	// const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as any;
+	// tournamentPlayerListComponent?.addEventListener('event-start-game', async (e: Event) => {
+	// 	e.preventDefault();
+	// 	const customEvent = e as CustomEvent;
+	// 	const tournamentId = customEvent.detail;
+	// 	try {
+	// 		await tournamentApi.startTournament(tournamentId);
+	// 		cleanWaitingRoomWS();
+	// 		router.navigateTo(`/tournament-room/${tournamentId}`);
+	// 	} catch (error) {
+	// 		const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
+	// 		if (errorMsgStartGame) {
+	// 			errorMsgStartGame.className = 'mt-2 text-red-500'
+	// 			errorMsgStartGame.innerText = error as string;
+	// 		}
+	// 		console.log(error);
+	// 	}
+	// })
+
+	// // **** QUIT TOURNAMENT ****
+	// tournamentPlayerListComponent?.addEventListener('event-quit-game', async (e: Event) => {
+	// 	e.preventDefault();
+	// 	const customEvent = e as CustomEvent;
+	// 	const tournamentId = customEvent.detail;
+	// 	if (!tournamentId)
+	// 		return;
+	// 	try {
+	// 		await tournamentApi.quitTournament(tournamentId);
+	// 		cleanWaitingRoomWS();
+	// 		router.navigateTo('/tournament');
+	// 	} catch (error) {
+	// 		console.log(error);
+	// 	}
+	// })
+
+	// // **** REMOVE PLAYER ****
+	// tournamentPlayerListComponent?.addEventListener('event-remove-player', async (e: Event) => {
+	// 	e.preventDefault();
+	// 	const customEvent = e as CustomEvent;
+	// 	const tournamentId = customEvent.detail.tournamentId;
+	// 	const playerId = customEvent.detail.playerId;
+
+	// 	console.log('Removing player with ID:', playerId);
+	// 	if (!tournamentId || !playerId)
+	// 		return;
+	// 	try {
+	// 		await tournamentApi.removePlayer(tournamentId, playerId);
+	// 		const tournamentData = await getTournamentData(tournamentId);
+	// 		if (tournamentData)
+	// 			updatePlayerList(tournamentData);
+	// 	} catch (error) {
+	// 		console.log(error);
+	// 	}
+	// })
 }
