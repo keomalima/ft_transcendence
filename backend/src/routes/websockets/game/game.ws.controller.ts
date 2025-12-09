@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
 import { WebSocket } from 'ws';
 import type { GameSession, PlayerConnection } from './game.types.js';
-import { calculateGame, calculatePaddle } from './game.algo.js';
+import { gameAlgo } from './game.algo.js';
 // import { gameLoop } from './game.session.js';
 
 // =====================
@@ -48,9 +48,11 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		notifyGameStarted(gameSession);
 	}
 
+	gameAlgo.service(gameSession);
+
 	const gameLoop = setInterval(() => {
 		if (gameSession.players.size! == 2) {
-			calculateGame(gameSession);
+			gameAlgo.calculateGame(gameSession);
 			broadcastGameState(gameSession, socket);
 		}
 	}, 1000 / 60)
@@ -78,7 +80,9 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			},
 			ball: {
 				x: 200 / 2,
-				y: 100 / 2
+				y: 100 / 2,
+				velocityX: 0,
+				velocityY: 0
 			},
 			score: {
 				playerA: 0,
@@ -91,7 +95,7 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			arenawidth: 200,
 			paddleheight: 100 / 5,
 			paddlespeed: 1,
-			ballspeed: 0.1,
+			ballspeed: 1,
 			scoreToWin: 5
 		}
 	};
@@ -150,14 +154,16 @@ function broadcastGameState(gameSession: GameSession, socket: WebSocket): void {
 
 	const leftPaddle = playerA?.position === 'left' ? paddleA.y : paddleB.y;
 	const rightPaddle = playerA?.position === 'right' ? paddleA.y : paddleB.y;
-	console.log(`📻 Broadcast ______ left = ${leftPaddle} ________ paddleB = ${rightPaddle}`);
+	// console.log(`📻 Broadcast ______ left = ${leftPaddle} ________ paddleB = ${rightPaddle}`);
 
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
 				type: 'update_game',
 				left: `${leftPaddle}`,
-				right: `${rightPaddle}`
+				right: `${rightPaddle}`,
+				ballX: `${gameSession.gameState.ball.x}`,
+				ballY: `${gameSession.gameState.ball.y}`,
 			}));
 		} else {
 			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);

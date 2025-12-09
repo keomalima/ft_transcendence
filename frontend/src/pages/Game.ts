@@ -48,8 +48,9 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 			</div>
 			<div id="arena" class='w-full h-[50vw] bg-black relative m-50 border border-2 border-black '>
 				<div id="paddleLeft" class='absolute w-[14px] h-1/5 bg-white left-[10px]' style="top: 40%"></div>
-
 				<div id="paddleRight" class='absolute w-[14px] h-1/5 bg-white right-[10px]' style="top: 40%"></div>
+				<div id='ball' class='absolute w-[20px] h-[20px] rounded-full bg-white' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 			</div>
 		</main>
 	`;
@@ -113,6 +114,7 @@ function game() {
 
 	let paddleRight = document.getElementById('paddleRight');
 	let paddleLeft = document.getElementById('paddleLeft');
+	let ball = document.getElementById('ball');
 
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'ArrowUp') {
@@ -134,6 +136,8 @@ function game() {
 		const data = customEvent.detail;
 		paddleLeft!.style.top = `${parseInt(data.leftPaddle) * getGameHeight() / 100}px`;
 		paddleRight!.style.top = `${parseInt(data.rightPaddle) * getGameHeight() / 100}px`;
+		ball!.style.left = `${parseInt(data.ballX) * getGameHeight() / 100}px`;
+		ball!.style.top = `${parseInt(data.ballY) * getGameHeight() / 100}px`;
 	})
 }
 

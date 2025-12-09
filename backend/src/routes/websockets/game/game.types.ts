@@ -1,7 +1,7 @@
 export interface GameState {
 	paddleA: {y: number, userId: string};
 	paddleB: {y: number, userId: string | undefined};
-	ball: {x: number, y: number};
+	ball: {x: number, y: number, velocityX: number, velocityY: number};
 	score: {playerA: number, playerB: number};
 	status: 'waiting' | 'playing' | 'finished';
 }
