@@ -104,8 +104,8 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 	</div>
 
 	<!-- Dialog for join tournament -->
-		<dialog id="join-tournament-dialog" class="place-self-center">
-			<join-game-pop-up id="join-tournament-component"></join-game-pop-up>
+	<dialog id="join-tournament-dialog" class="place-self-center">
+		<join-game-pop-up id="join-tournament-component"></join-game-pop-up>
 	</dialog>
 	`
 	return content;

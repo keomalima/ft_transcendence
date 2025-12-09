@@ -99,7 +99,7 @@ async function generateToken(prisma: PrismaClient, tournamentId: string, token: 
 }
 
 async function joinUserToTournament(prisma: PrismaClient, tournamentId: string, userId: string) {
-	return prisma.participants.create({ data: { tournamentId, userId}})
+	return prisma.tournamentPlayer.create({ data: { tournamentId, userId}})
 }
 
 // =====================

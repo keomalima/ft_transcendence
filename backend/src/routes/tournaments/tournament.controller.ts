@@ -101,7 +101,7 @@ async function joinTournamentHandler (request: FastifyRequest<{ Params: { token:
 				message: "Tournament not found"
 			});
 		}
-		if (tournament.status !== "PENDING") {
+		if (tournament.status !== "REGISTRATION") {
 			return reply.code(409).send({
 				message: "Cannot join, tournament has already started"
 			});
