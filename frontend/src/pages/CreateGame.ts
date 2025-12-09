@@ -13,14 +13,6 @@ export function CreateGame(ctx: AppContext): string{
     // get user data from store
     const currentUser: UserState | null = ctx.userStore.get();
 
-    // secure if no access token or user ID
-    if (!currentUser?.accessToken || !currentUser?.id)
-    {
-        console.log('no session when accessing /home')
-        setTimeout(() => router.navigateTo('/'), 0);
-        return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-    }
-
 	setTimeout(() => {
 		passContext(ctx);
 		setupGameEventListeners(ctx);
@@ -104,7 +96,7 @@ function setupGameEventListeners(ctx: AppContext) {
 		const scoreToWin = (document.querySelector('input[name="score_to_win"]') as HTMLInputElement)?.value;
 
 		try {
-			const result = await gameApi.createGame(ctx.userStore.get()?.accessToken!, selectedMode, parseInt(scoreToWin));
+			const result = await gameApi.createGame(selectedMode, parseInt(scoreToWin));
 			router.navigateTo(`/game-room/${result.id}`);
 		} catch (error) {
 			const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;

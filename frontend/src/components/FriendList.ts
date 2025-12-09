@@ -5,7 +5,6 @@ import type { FriendData } from "../types.js";
 export class FriendList extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<FriendData>[] | null = null;
-	private _accessToken: string | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
 	
 	constructor() {
@@ -66,22 +65,14 @@ export class FriendList extends HTMLElement {
 	}
 
 	private async getFriendList(): Promise<void> {
-		const currentUser = this._ctx?.userStore.get();
-		const token = currentUser?.accessToken;
-		if (token !== undefined)
-			this._accessToken = token;
-		if (!this._accessToken)
-			return;
 		try {
-			this._list = await friendshipApi.getList(this._accessToken);
+			this._list = await friendshipApi.getList();
 		} catch(error) {
 			console.log(error);
 		}
 	}
 
 	private displayFriendCards(): void {
-		if (!this._accessToken)
-			return;
 		const friendCards = document.getElementById('friend-cards');
 		if (friendCards && this._list)
 		{
@@ -169,8 +160,7 @@ export class FriendList extends HTMLElement {
 				dialog.close();
 				this.dispatchEvent(new CustomEvent('event-delete-friend', {
 					detail: {
-						friendshipId: friend.friendshipId as string,
-						accessToken: this._accessToken as string
+						friendshipId: friend.friendshipId as string
 					},
 					bubbles: true
 				}));

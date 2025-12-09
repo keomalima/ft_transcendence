@@ -12,18 +12,11 @@ import "../components/NavBar.js";
 
 export function EditProfile(ctx: AppContext) : string {
 	let currentUser = ctx.userStore.get();
-	const accessToken = currentUser?.accessToken;
-	if (!accessToken)
-	{
-		console.log('no session when access /login')
-		router.navigateTo('/');
-		return '';
-	}
 
 	if (!currentUser)
 		return '';
 	const uploadsUrl: string = 'http://localhost:3000';
-	userService.getUserState(ctx, currentUser.id);
+	void userService.getUserState(ctx);
 	currentUser = ctx?.userStore.get();
 	const profilePicture: string = `${uploadsUrl}${currentUser?.avatarUrl}`;
 

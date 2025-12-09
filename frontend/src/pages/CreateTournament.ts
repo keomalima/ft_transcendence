@@ -13,12 +13,6 @@ export function CreateTournament(ctx: AppContext): string {
 	//get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
 	
-	if (!currentUser?.accessToken || !currentUser?.id) {
-		console.log('no session when accessing /home')
-        setTimeout(() => router.navigateTo('/'), 0);
-        return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-	}
-
 	setTimeout(() => {
 		passContext(ctx);
 		setupTournamentEventListeners(ctx);
@@ -116,7 +110,7 @@ function setupTournamentEventListeners(ctx: AppContext) {
 		const scoreToWin = (document.querySelector('input[name="score_to_win"]') as HTMLInputElement)?.value;
 
 		try {
-			const result = await tournamentApi.createTournament(ctx.userStore.get()?.accessToken!, parseInt(nbrPlayers), parseInt(scoreToWin));
+			const result = await tournamentApi.createTournament(parseInt(nbrPlayers), parseInt(scoreToWin));
 			router.navigateTo(`/tournament-room/${result.id}`);
 		} catch (error) {
 			const errorMsgCreateGame = document.querySelector('#error-create-tournament') as HTMLParagraphElement;

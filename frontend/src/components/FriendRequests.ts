@@ -5,7 +5,6 @@ import type { RequestData } from "../types.js";
 export class FriendRequests extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<RequestData>[] | null = null;
-	private _accessToken: string | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
 	
 	constructor() {
@@ -57,22 +56,14 @@ export class FriendRequests extends HTMLElement {
 	}
 
 	private async getRequests(): Promise<void> {
-		const currentUser = this._ctx?.userStore.get();
-		const token = currentUser?.accessToken;
-		if (token !== undefined)
-			this._accessToken = token;
-		if (!this._accessToken)
-			return;
 		try {
-			this._list = await friendshipApi.getRequests(this._accessToken);
+			this._list = await friendshipApi.getRequests();
 		} catch(error) {
 			console.log(error);
 		}
 	}
 
 	private displayFriendCards(): void {
-		if (!this._accessToken)
-			return;
 		const requestsCards = document.getElementById('requests-list');
 		if (requestsCards)
 		{
@@ -143,7 +134,6 @@ export class FriendRequests extends HTMLElement {
 			this.dispatchEvent(new CustomEvent('event-accept-friend', {
 				detail: {
 					requestId: request.id as string,
-					accessToken: this._accessToken as string
 				},
 				bubbles: true
 			}));
@@ -178,8 +168,7 @@ export class FriendRequests extends HTMLElement {
 				dialog.close();
 				this.dispatchEvent(new CustomEvent('event-reject-friend', {
 					detail: {
-						requestId: request.id as string,
-						accessToken: this._accessToken as string
+						requestId: request.id as string
 					},
 					bubbles: true
 				}));

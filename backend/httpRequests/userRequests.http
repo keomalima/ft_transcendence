@@ -5,6 +5,9 @@
 ### GET ALL USERS
 GET {{baseUrl}} HTTP/1.1
 
+### AUTH USER
+GET {{baseUrl}}/me HTTP/1.1
+
 ### DELETE BASE
 DELETE {{baseUrl}}/clean HTTP/1.1
 
