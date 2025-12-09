@@ -17,7 +17,6 @@ export interface UserState {
 	surname: string | null;
 	displayName: string | null;
 	isLoggedIn: boolean;
-	accessToken: string | null;
 	isOnline: boolean;
 	createdAt: string | null;
 	updatedAt: string | null;

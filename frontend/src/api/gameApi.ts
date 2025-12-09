@@ -1,155 +1,98 @@
-import { API_BASE_URL } from '../config.js';
+import httpCall from './httpClient.js';
+import { GameData, GameHistory, GameToken } from '../types';
+import { buildApiError } from './apiError.js';
 
-const BASE_URL = `${API_BASE_URL}/api/games`; // localhost:3000 in dev, proxied /api in prod
-
-import { GameData, GameToken, GameHistory } from "../types";
+const BASE_URL = '/games';
 
 export const gameApi = {
-	createGame: async (accessToken: string, type: string, scoreToWin: number): Promise<Partial<GameData>> => {
-		const response = await fetch (`${BASE_URL}`, {
-			method: 'POST',
-			credentials: 'include',
-			headers:{
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				type: type,
-				scoreToWin: scoreToWin
-			})
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to create new game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to create new game');
+	createGame: async (type: string, scoreToWin: number): Promise<Partial<GameData>> => {
+		try {
+			const response = await httpCall.post<Partial<GameData>>(`${BASE_URL}`, {
+				type,
+				scoreToWin
+			});
+			console.log('🎮 createGame sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('create new game', error);
 		}
-		const result: Partial<GameData> = await response.json();
-		console.log('🎮 createGame sucess ✅ ', result);
-		return result;
 	},
 
-	getGame: async (accessToken: string, gameId: string): Promise<GameData> => {
-		const response = await fetch (`${BASE_URL}/${gameId}`, {
-			method: 'GET',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to get game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get game');
+	getGame: async (gameId: string): Promise<GameData> => {
+		try {
+			const response = await httpCall.get<GameData>(`${BASE_URL}/${gameId}`);
+			console.log('🎮 getGame sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('get game', error);
 		}
-		const result: GameData = await response.json();
-		console.log('🎮 getGame sucess ✅ ', result);
-		return result;
 	},
 
-	getCurrentGame: async (accessToken: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> => {
-		const response = await fetch (`${BASE_URL}/current`, {
-			method: 'GET',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to get current game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get current game');
+	getCurrentGame: async (): Promise<{ userId: string; gameId: string; type: string; status: string; token: string | null }> => {
+		try {
+			const response = await httpCall.get<{ userId: string; gameId: string; type: string; status: string; token: string | null }>(`${BASE_URL}/current`);
+			console.log('🎮 getCurrentGame sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('get current game', error);
 		}
-		if (response.status === 204) {
-			console.log('🎮 No current game');
-			return null;
-		}
-		const result = await response.json();
-		console.log('🎮 getCurrentGame sucess ✅ ', result);
-		return result;
 	},
 
-	generateToken: async (accessToken: string, gameId: string): Promise<GameToken> => {
-		const response = await fetch (`${BASE_URL}/${gameId}/token`, {
-			method: 'POST',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to generate token');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to generate token');
+	generateToken: async (gameId: string): Promise<GameToken> => {
+		try {
+			const response = await httpCall.post<GameToken>(`${BASE_URL}/${gameId}/token`);
+			console.log('🎮 generate token sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('generate token', error);
 		}
-		const result: GameData = await response.json();
-		console.log('🎮 generate token sucess ✅ ', result);
-		return result;
 	},
 
-	joinGame: async (accessToken: string, gameToken: string): Promise<{id: string, gameId: string, userId: string}> => {
-		const response = await fetch (`${BASE_URL}/${gameToken}/join`, {
-			method: 'POST',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to join game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to join game');
+	joinGame: async (gameToken: string): Promise<{ id: string; gameId: string; userId: string }> => {
+		try {
+			const response = await httpCall.post<{ id: string; gameId: string; userId: string }>(`${BASE_URL}/${gameToken}/join`);
+			console.log('🎮 join game sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('join game', error);
 		}
-		const result: {id: string, gameId: string, userId: string} = await response.json();
-		console.log('🎮 join game sucess ✅ ', result);
-		return result;
 	},
 
-	startGame: async (accessToken: string, gameId: string): Promise<Partial<GameData>> => {
-		const response = await fetch (`${BASE_URL}/${gameId}/start`, {
-			method: 'PUT',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to start game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to start game');
+	startGame: async (gameId: string): Promise<Partial<GameData>> => {
+		try {
+			const response = await httpCall.put<Partial<GameData>>(`${BASE_URL}/${gameId}/start`);
+			console.log('🎮 start game sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('start game', error);
 		}
-		const result: Partial<GameData> = await response.json();
-		console.log('🎮 start game sucess ✅ ', result);
-		return result;
 	},
 
-	quitPendingGame: async (accessToken: string, gameId: string): Promise<void> => {
-		const response = await fetch (`${BASE_URL}/${gameId}`, {
-			method: 'DELETE',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to quit / delete pending game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to quit / delete pending game');
+	quitPendingGame: async (gameId: string): Promise<void> => {
+		try {
+			await httpCall.delete(`${BASE_URL}/${gameId}`);
+			console.log('🎮 quit / delete pending game sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('quit / delete pending game', error);
 		}
-		console.log('🎮 quit / delete pending game sucess ✅ ');
 	},
 
-	removePlayer: async (accessToken: string, gameId: string, playerId: string): Promise<void> => {
-		const response = await fetch (`${BASE_URL}/${gameId}/remove`, {
-			method: 'PUT',
-			credentials: 'include',
-			headers:{
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				playerId: playerId
-			}),
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to remove player from game');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to remove player from game');
+	removePlayer: async (gameId: string, playerId: string): Promise<void> => {
+		try {
+			await httpCall.put(`${BASE_URL}/${gameId}/remove`, { playerId });
+			console.log('🎮 remove player from game sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('remove player from game', error);
 		}
-		console.log('🎮 remove player from game sucess ✅ ');
 	},
 
-	getHistory: async (accessToken: string): Promise<GameHistory[]> => {
-		const response = await fetch (`${BASE_URL}/history`, {
-			method: 'GET',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to get game history');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get game history');
+	getHistory: async (): Promise<GameHistory[]> => {
+		try {
+			const response = await httpCall.get<GameHistory[]>(`${BASE_URL}/history`);
+			console.log('🎮 Get Game history sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('get game history', error);
 		}
-		const result: GameHistory[] = await response.json();
-		console.log('🎮 Get Game history sucess ✅ ', result);
-		return result;
 	},
-}
+};

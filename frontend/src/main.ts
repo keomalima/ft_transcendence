@@ -19,40 +19,26 @@ import { TournamentRoom } from "./pages/TournamentRoom.js";
 const userStore = createUserStore(null);
 userStore.init(null);
 
+// Track whether we've already attempted to hydrate the session from the backend.
+let hasHydratedSession = false;
+let hydratingSession = false;
+
 
 // Create context
 const context: AppContext = {
 	userStore
 };
 
+// When session is invalidated elsewhere (401 interceptor), clear local state.
+window.addEventListener('session:unauthorized', () => {
+	hasHydratedSession = true; // we know there's no valid session
+	userService.cleanUser(context);
+});
+
 // Async initialization function
 async function initializeApp() {
-	// Load saved userId and accessToken from localStorage
-	const savedUserId = localStorage.getItem('userId');
-	const savedAccessToken = localStorage.getItem('accessToken');
-
-	// If both exist, restore the session and fetch user data
-	if (savedUserId && savedAccessToken) {
-		context.userStore.update((prevState) => ({
-			...prevState,
-			id: savedUserId,
-			accessToken: savedAccessToken,
-			isLoggedIn: true,
-		}));
-
-		// Fetch full user data from API (wait for it to complete)
-		try {
-			await userService.getUserState(context, savedUserId);
-		} catch (error) {
-			console.error('Failed to restore session:', error);
-			// Clear invalid session
-			localStorage.removeItem('userId');
-			localStorage.removeItem('accessToken');
-			context.userStore.set(null);
-		}
-	}
-
-	// Start router after data is loaded
+	// The router guard will handle the initial session check,
+	// so we can start the router immediately.
 	router
 		.add("/", Home)
 		.add("/404", NotFound)
@@ -66,31 +52,63 @@ async function initializeApp() {
 		.add("/tournament-room/:id", TournamentRoom)
 		.start();
 
-	// Event listener to check localstorage change
+	// This listener handles multi-tab logout. When one tab logs out
+	// (and clears the session state), others will follow.
 	window.addEventListener('storage', async (e) => {
-		if (e.key === 'accessToken') {
-			if (!localStorage.getItem('accessToken') ||!localStorage.getItem('userId')) {
-				userService.cleanUser(context);
-				router.navigateTo('/');
-			} else {
-				console.log('local storage event');
-				const userId = localStorage.getItem('userId');
-				const accessToken = localStorage.getItem('accessToken');
-
-				context.userStore.update((prevState) => ({
-					...prevState,
-					accessToken: accessToken,
-					id: userId
-				}));
-				await userService.getUserState(context, userId);
-				router.navigateTo('/home');
-			}
+		if (e.key === 'session-cleared' && e.newValue !== null) {
+			userService.cleanUser(context);
+			router.navigateTo('/');
 		}
 	})
 }
 
 // launch router with context
 export const router = new Router("#root", context);
+
+// Define which routes do not require authentication.
+const publicRoutes = new Set(['/', '/login', '/register', '/404']);
+
+// Try to hydrate the session from the server once per page load.
+const hydrateSessionOnce = async (ctx: AppContext): Promise<boolean> => {
+	// Avoid duplicate calls triggered by multiple guard executions.
+	if (hasHydratedSession || hydratingSession) {
+		return ctx.userStore.get()?.isLoggedIn ?? false;
+	}
+	hydratingSession = true;
+	try {
+		await userService.getUserState(ctx);
+		return true;
+	} catch {
+		return false;
+	} finally {
+		hasHydratedSession = true;
+		hydratingSession = false;
+	}
+};
+
+router.useGuard(async (path, ctx) => {
+	const entryPage = path === '/' || path === '/login' || path === '/register';
+	const isPublic = publicRoutes.has(path);
+	const user = ctx.userStore.get();
+	let isLoggedIn = user?.isLoggedIn ?? false;
+
+	// If we don't yet know, attempt to hydrate the session once.
+	if (!isLoggedIn) {
+		isLoggedIn = await hydrateSessionOnce(ctx);
+	}
+
+	// When already logged in, avoid showing public entry pages and jump to profile.
+	if (isPublic && isLoggedIn && entryPage) {
+		router.navigateTo('/home');
+		return false;
+	}
+
+	// Allow public pages; block protected routes if no session.
+	if (isPublic) {
+		return true;
+	}
+	return isLoggedIn;
+});
 
 // Initialize the app
 initializeApp();

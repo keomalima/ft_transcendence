@@ -46,11 +46,9 @@ export class AddFriend extends HTMLElement {
 				errorMsg.className = 'text-red-500 text-sm mt-2';
 				errorMsg.innerText = 'Please enter a valid user name';
 			}
-			const accessToken = this._ctx?.userStore.get()?.accessToken;
 			this.dispatchEvent(new CustomEvent('event-send-friendship-request', {
 				detail: {
-					friendName: friendName as string,
-					accessToken: accessToken as string
+					friendName: friendName as string
 				},
 				bubbles: true
 			}))

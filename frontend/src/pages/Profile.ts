@@ -11,17 +11,8 @@ import { gameApi } from "../api/gameApi.js";
 
 
 export function Profile(ctx: AppContext): string {
-	const currentUser = ctx.userStore.get();
-	const accessToken = currentUser?.accessToken;
-	if (!accessToken)
-	{
-		console.log('no session when access /profile')
-		setTimeout(() => router.navigateTo('/'), 0);
-		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-	}
-
 	setTimeout( async () => {
-		const gameHistory: GameHistory[] = await gameApi.getHistory(accessToken);
+		const gameHistory: GameHistory[] = await gameApi.getHistory();
 		passContext(ctx, gameHistory);
 	}, 0);
 

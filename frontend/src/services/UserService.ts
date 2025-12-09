@@ -30,24 +30,21 @@ class UserService {
 		const result = await userApi.login(email, password);
 		
 		// Validate result
-		if (!result || !result.accessToken || !result.id) {
+		if (!result || !result.id) {
 			throw new Error('Login failed: Invalid response from server');
 		}
 
 		// store user data in UserStore
 		ctx.userStore.update((prevState) => ({
 			...prevState,
-			accessToken: result.accessToken,
 			id: result.id,
-			isLoggedIn: true
+			// wait for getUserState to set isLoggedIn after server confirmation
 		}));
 		
 		if (result?.id)
 			localStorage.setItem('userId', result.id);
-		if (result?.accessToken)
-			localStorage.setItem('accessToken', result.accessToken);
 
-		await this.getUserState(ctx, result.id);
+		await this.getUserState(ctx);
 		return result;
 	}
 
@@ -55,64 +52,45 @@ class UserService {
 	async logoutUser(ctx: AppContext): Promise<void>
 	{
 		const user = ctx.userStore.get();
-		const accessToken = user?.accessToken;
-		if (!accessToken)
-			throw new Error ('No active session for logout');
-		await userApi.logout(accessToken);
+		await userApi.logout();
 		this.cleanUser(ctx);
+		// Broadcast logout to other tabs
+		localStorage.setItem('session-cleared', Date.now().toString());
 		localStorage.removeItem('userId');
-		localStorage.removeItem('accessToken');
 	}
 
 	// get user
-	async getUserState(ctx: AppContext, id: string | null): Promise<getUserResp | null> {
-		if (!id)
-			throw new Error('Missing id to get user');
-		const currentUser = ctx.userStore.get();
-		const accessToken = currentUser?.accessToken;
-		if (!accessToken)
-			throw new Error('No active session for get user');
-
-		const result = await userApi.get(id, accessToken);
-		
-		// Update store only if the get concerns the current user
-		if (result && id === currentUser.id) {
-			ctx.userStore.update((prevState) => ({
-				...prevState,
-				id: result.id ?? id,
-				email: result.email ?? null,
-				name: result.name ?? null,
-				surname: result.surname ?? null,
-				displayName: result.displayName ?? null,
-				avatarUrl: result.avatarUrl ?? null,
-				isOnline: result.isOnline ?? false,
-				isLoggedIn: true,
-			}));
+	async getUserState(ctx: AppContext): Promise<getUserResp | null> {
+		const result = await userApi.me();
+		if (!result) {
+			throw new Error('No active session');
 		}
+
+		// Update store with the validated session data
+		ctx.userStore.update((prevState) => ({
+			...prevState,
+			id: result.id ?? prevState.id ?? null,
+			email: result.email ?? null,
+			name: result.name ?? null,
+			surname: result.surname ?? null,
+			displayName: result.displayName ?? null,
+			avatarUrl: result.avatarUrl ?? null,
+			isOnline: result.isOnline ?? false,
+			isLoggedIn: true,
+		}));
 		return result;
 	}
 
 	// delete user
 	async deleteUser(ctx: AppContext): Promise<void> {
-		const currentUser = ctx.userStore.get();
-		const accessToken = currentUser?.accessToken;
-		if (!accessToken)
-			throw new Error('No active session for delete user');
-
-		await userApi.delete(accessToken);
+		await userApi.delete();
 		this.cleanUser(ctx);
 		localStorage.removeItem('userId');
-		localStorage.removeItem('accessToken');
 	}
 
 	// update user
 	async updateUser(data: Partial<UserState>, ctx: AppContext): Promise<updateUserResp> {
-		const currentUser = ctx.userStore.get();
-		const accessToken = currentUser?.accessToken;
-		if (!accessToken)
-			throw new Error('No active session for update user');
-
-		const result = await userApi.update(accessToken, data);
+		const result = await userApi.update(data);
 		
 		// Update only the fields that were returned from the API
 		ctx.userStore.update((prevState) => ({
@@ -128,12 +106,7 @@ class UserService {
 
 	// update Avatar
 	async updateAvatar(file: File, ctx: AppContext): Promise<updateAvatarResp | null> {
-		const currentUser = ctx.userStore.get();
-		const accessToken = currentUser?.accessToken;
-		if (!accessToken)
-			throw new Error('No active session for update avatar');
-
-		const result = await userApi.updateAvatar(accessToken, file);
+		const result = await userApi.updateAvatar(file);
 
 		// Update avatar URL in store
 		ctx.userStore.update((prevState) => ({
@@ -153,7 +126,6 @@ class UserService {
 			surname: null,
 			displayName: null,
 			isLoggedIn: false,
-			accessToken: null,
 			isOnline: false,
 			createdAt: null,
 			updatedAt: null,

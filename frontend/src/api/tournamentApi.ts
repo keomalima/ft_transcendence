@@ -1,43 +1,30 @@
-import { API_BASE_URL } from '../config.js';
+import httpCall from './httpClient.js';
+import { TournamentData } from '../types';
+import { buildApiError } from './apiError.js';
 
-const BASE_URL = `${API_BASE_URL}/api/tournaments`; // localhost:3000 in dev, proxied /api in prod
-
-import { TournamentData } from "../types";
+const BASE_URL = '/tournaments';
 
 export const tournamentApi = {
-	createTournament: async (accessToken: string, numberPlayers: number, scoreToWin: number): Promise<Partial<TournamentData>> => {
-		const response = await fetch (`${BASE_URL}`, {
-			method: 'POST',
-			headers:{
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
+	createTournament: async (numberPlayers: number, scoreToWin: number): Promise<Partial<TournamentData>> => {
+		try {
+			const response = await httpCall.post<Partial<TournamentData>>(`${BASE_URL}`, {
 				numberPlayers,
 				scoreToWin
-			})
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to create new tournament');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to create new tournament');
+			});
+			console.log('🎮 createTournament sucess ✅ ', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('create new tournament', error);
 		}
-		const result: Partial<TournamentData> = await response.json();
-		console.log('🎮 createTournament sucess ✅ ', result);
-		return result;
 	},
 
-	getTournament: async (accessToken: string, tournamentId: string): Promise<TournamentData> => {
-		const response = await fetch (`${BASE_URL}/${tournamentId}`, {
-			method: 'GET',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to get tournament');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get tournament');
+	getTournament: async (tournamentId: string): Promise<TournamentData> => {
+		try {
+			const response = await httpCall.get<TournamentData>(`${BASE_URL}/${tournamentId}`);
+			console.log('🎮 getTournament sucess ✅ ', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('get tournament', error);
 		}
-		const result: TournamentData = await response.json();
-		console.log('🎮 getTournament sucess ✅ ', result);
-		return result;
 	},
-}
+};

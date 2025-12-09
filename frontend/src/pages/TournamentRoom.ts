@@ -8,13 +8,6 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 	const currentUser: UserState | null = ctx.userStore.get();
 	// console.log('game room user', currentUser);
 
-	// secure if no access token or user ID
-	if (!currentUser?.accessToken || !currentUser?.id)
-	{
-		console.log('no session when accessing /game-room')
-		setTimeout(() => router.navigateTo('/'), 0);
-		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-	}
 	// secure if no params
 	if (!params || !params['id'])
 	{
@@ -24,7 +17,7 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 	}
 
 	setTimeout(async () => {
-		let tournamentData = await getTournamentData(currentUser?.accessToken!, params['id']);
+		let tournamentData = await getTournamentData(params['id']);
 		if (!tournamentData)
 			return;
 		renderTournamentRoomContent(tournamentData);
@@ -36,10 +29,10 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 
 
 // ======== GET TOURNAMENT DATA ============
-async function getTournamentData(token: string, id: string): Promise<TournamentData | null> {
+async function getTournamentData(id: string): Promise<TournamentData | null> {
 
 	try {
-		const tournamentData: TournamentData | null = await tournamentApi.getTournament(token, id);
+		const tournamentData: TournamentData | null = await tournamentApi.getTournament(id);
 		return tournamentData;
 	} catch(error) {
 		console.log(error);

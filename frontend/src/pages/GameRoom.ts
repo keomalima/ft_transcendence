@@ -15,14 +15,6 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// get user data from store
 	const currentUser = ctx.userStore.get();
 
-	// secure if no access token or user ID
-	if (!currentUser?.accessToken || !currentUser?.id)
-	{
-		console.log('no session when accessing /game-room')
-		setTimeout(() => router.navigateTo('/'), 0);
-		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-	}
-
 	// secure if no params
 	if (!params || !params['id'])
 	{
@@ -34,12 +26,15 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// Execute after the first rendering
 	setTimeout(async () => {
 		cleanupGameRoom();
-		let gameData = await getGameData(currentUser?.accessToken!, params['id']);
+
+		let gameData = await getGameData(params['id']);
 		if (!gameData)
 			return;
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
-		setGameRoomWebSockets(currentUser, gameData);
+		
+		setGameRoomWebSockets(currentUser!, gameData);
+
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);
 
@@ -114,7 +109,7 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData)
 		async (updateGameData) => {
 			if (updateGameData.message) {
 				console.log('🔔', updateGameData);
-				const newGameData = await getGameData(currentUser?.accessToken!, gameData.id!);
+				const newGameData = await getGameData(gameData.id!);
 				if (newGameData)
 					gameData = newGameData;
 				updatePlayerList(gameData);
@@ -143,9 +138,9 @@ export function cleanupGameRoom() {
 }
 
 // ======== GET GAME DATA ============
-async function getGameData(token: string, id: string): Promise<GameData | null> {
+async function getGameData(id: string): Promise<GameData | null> {
 	try {
-		const gameData: GameData | null = await gameApi.getGame(token, id);
+		const gameData: GameData | null = await gameApi.getGame(id);
 		return gameData;
 	} catch(error) {
 		console.log(error);
@@ -187,7 +182,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		try {
 			let result = null;
 			if (isGenerated == false) {
-				result = await gameApi.generateToken(ctx.userStore.get()?.accessToken!, gameId);
+				result = await gameApi.generateToken(gameId);
 				isGenerated = true;
 			}
 			if (result) {
@@ -229,12 +224,9 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail;
-		const accessToken = ctx.userStore.get()?.accessToken;
-		if (!accessToken || !gameId)
-			return;
 		try {
-			const result = await gameApi.startGame(accessToken, gameId);
-			router.navigateTo(`/launch-game/${gameId}`);
+			const result = await gameApi.startGame(gameId);
+			router.navigateTo('/launch-game');
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
 			errorMsgStartGame.className = 'mt-2 text-red-500'
@@ -265,14 +257,13 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail.gameId;
 		const playerId = customEvent.detail.playerId;
-		const accessToken = ctx.userStore.get()?.accessToken;
 
 		console.log('Removing player with ID:', playerId);
-		if (!accessToken || !gameId || !playerId)
+		if (!gameId || !playerId)
 			return;
 		try {
-			await gameApi.removePlayer(accessToken, gameId, playerId);
-			const gameData = await getGameData(accessToken, gameId);
+			await gameApi.removePlayer(gameId, playerId);
+			const gameData = await getGameData(gameId);
 			updatePlayerList(gameData);
 		} catch (error) {
 			console.log(error);

@@ -1,106 +1,74 @@
-import { API_BASE_URL } from '../config.js';
+import httpCall from './httpClient.js';
+import { FriendData } from '../types';
+import { buildApiError } from './apiError.js';
 
-const BASE_URL = `${API_BASE_URL}/api/friends`; // localhost:3000 in dev, proxied /api in prod
+const BASE_URL = '/friends';
 
-import { FriendData } from "../types";
-
- 
 export const friendshipApi = {
 
-	getList: async (accessToken: string): Promise<Partial<FriendData>[]> => {
-		const response = await fetch (`${BASE_URL}`, {
-			method: 'GET',
-			credentials: 'include',
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to get list of friends');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get list of friends');
+	getList: async (): Promise<Partial<FriendData>[]> => {
+		try {
+			const response = await httpCall.get<Partial<FriendData>[]>(`${BASE_URL}`);
+			console.log('🧑‍🤝‍🧑 getFriendList sucess ✅ ', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('get list of friends', error);
 		}
-		const result: Partial<FriendData>[] = await response.json();
-		console.log('🧑‍🤝‍🧑 getFriendList sucess ✅ ', result);
-		return result;
 	},
 
-	sendRequest: async (displayName: string | null, accessToken: string): Promise<void> => {
+	sendRequest: async (displayName: string | null): Promise<void> => {
 		if (displayName == null)
 			throw new Error('Display name is required');
-		const response = await fetch (`${BASE_URL}`, {
-			method: 'POST',
-			credentials: 'include',
-			headers:{
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
+		try {
+			await httpCall.post(`${BASE_URL}`, {
 				addresseeDisplayName: displayName
-			})
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to send friendship request');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to send friendship request');
+			});
+			console.log('🧑‍🤝‍🧑 sendFriendshipRequest sucess ✅ ');
+		} catch (error: unknown) {
+			throw buildApiError('send friendship request', error);
 		}
-		console.log('🧑‍🤝‍🧑 sendFriendshipRequest sucess ✅ ');
 	},
 	
-	getRequests: async (accessToken: string): Promise<Partial<FriendData>[]> => {
-		const response = await fetch (`${BASE_URL}/requests`, {
-			method: 'GET',
-			credentials: 'include'
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to get friend requests');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to get friend requests');
+	getRequests: async (): Promise<Partial<FriendData>[]> => {
+		try {
+			const response = await httpCall.get<Partial<FriendData>[]>(`${BASE_URL}/requests`);
+			console.log('🧑‍🤝‍🧑 getFriendRequests sucess ✅ ', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('get friend requests', error);
 		}
-		const result: Partial<FriendData>[] = await response.json();
-		console.log('🧑‍🤝‍🧑 getFriendRequests sucess ✅ ', result);
-		return result;
 	},
 
-	accept: async (id: string | null, accessToken: string): Promise<void> => {
+	accept: async (id: string | null): Promise<void> => {
 		if (id == null)
 			throw new Error('Request ID is required');
-		const response = await fetch (`${BASE_URL}/accept/${id}`, {
-			method: 'PUT',
-			credentials: 'include'
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to accept friend');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to accept friend');
+		try {
+			await httpCall.put(`${BASE_URL}/accept/${id}`);
+			console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
+		} catch (error: unknown) {
+			throw buildApiError('accept friend', error);
 		}
-		console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
 	},
 
-	reject: async (id: string | null, accessToken: string): Promise<void> => {
+	reject: async (id: string | null): Promise<void> => {
 		if (id == null)
 			throw new Error('Request ID is required');
-		const response = await fetch (`${BASE_URL}/reject/${id}`, {
-			method: 'PUT',
-			credentials: 'include'
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to reject friend');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to reject friend');
+		try {
+			await httpCall.put(`${BASE_URL}/reject/${id}`);
+			console.log('🧑‍🤝‍🧑 rejectFriend sucess ✅ ');
+		} catch (error: unknown) {
+			throw buildApiError('reject friend', error);
 		}
-		console.log('🧑‍🤝‍🧑 rejectFriend sucess ✅ ');
 	},
 
-	delete: async (id: string | null, accessToken: string): Promise<void> => {
+	delete: async (id: string | null): Promise<void> => {
 		if (id == null)
 			throw new Error('Friendship ID is required');
-		const response = await fetch (`${BASE_URL}/${id}`, {
-			method: 'DELETE',
-			credentials: 'include'
-		});
-		if (!response.ok) {
-			console.log('❌ Failed to delete friend');
-			const errorData = await response.json().catch(() => ({ message: response.statusText }));
-			throw new Error(errorData.message || 'Failed to delete friend');
+		try {
+			await httpCall.delete(`${BASE_URL}/${id}`);
+			console.log('🧑‍🤝‍🧑 deleteFriend sucess ✅ ');
+		} catch (error: unknown) {
+			throw buildApiError('delete friend', error);
 		}
-		console.log('🧑‍🤝‍🧑 deleteFriend sucess ✅ ');
 	},
 }
-
