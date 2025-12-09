@@ -3,6 +3,8 @@ import { router } from "../main.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import type { PlayerList } from "../components/PlayersList.js";
 
+let isGenerated: boolean = false;
+
 export function TournamentRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
@@ -22,11 +24,69 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 			return;
 		renderTournamentRoomContent(tournamentData);
 		passContext(ctx, tournamentData, tournamentData.isCreator);
+		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0)
 
-	return `<div id="game-room-content">Loading tournament data...</div>`;
+	return (/*html*/`
+		<div id="tournament-room-content">
+			<p class='flex items-center justify-center h-screen'>Loading Tournament Room...</p>
+		</div>
+	`);
 }
 
+// ======== UPDATE CONTENT ============
+function renderTournamentRoomContent(tournamentData: TournamentData) {
+	const content = document.getElementById('tournament-room-content');
+	if (tournamentData.isCreator) {
+		content!.innerHTML = /*html*/`
+			<div class="flex flex-col min-h-screen">
+				<header>
+					<nav-bar id='nav-bar-component'></nav-bar>
+				</header>
+				<div class="flex flex-col lg:flex-row flex-1 w-full items-center gap-8 lg:gap-0 p-4 lg:p-0">
+					<div class='flex lg:flex-1 flex-col w-full'>
+						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
+						<div class='flex flex-row w-full gap-5 justify-center items-center'>
+							${tournamentData.token ? 
+								`<div id='token' class='flex w-full sm:w-2/3 lg:w-1/3 rounded-lg bg-white items-center justify-center p-4'>
+									<p id='token-text' class='text-black text-sm'>${tournamentData.token}</p>
+								</div>
+								<button id='copy-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Copy</button>
+								`
+								: 
+								`<div id='token' class='flex w-full sm:w-2/3 lg:w-1/3 rounded-lg bg-white items-center justify-center p-4'>
+									<p id='token-text' class='text-stone-400 text-sm'>generated token</p>
+								</div>
+								<button id='generate-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Generate token</button>
+								`}
+						</div>
+						<p id='error-generate-token'></p>
+					</div>
+					<div class='flex lg:flex-1 items-center justify-center w-full lg:w-auto h-auto lg:h-full min-h-0'>
+						<player-list id='player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
+					</div>
+				</div>
+			</div>
+		`
+	} else {
+		content!.innerHTML = /*html*/`
+			<div class="flex flex-col min-h-screen">
+				<header>
+					<nav-bar id='nav-bar-component'></nav-bar>
+				</header>
+				<div class="flex flex-col lg:flex-row flex-1 w-full items-center gap-8 lg:gap-0 p-4 lg:p-0">
+					<div class='flex lg:flex-1 flex-col w-full'>
+						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
+					</div>
+					<div class='flex lg:flex-1 items-center justify-center w-full lg:w-auto h-auto lg:h-full min-h-0'>
+						<player-list id='player-list-component' class="w-full lg:w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
+					</div>
+				</div>
+			</div>
+		`
+	}
+
+}
 
 // ======== GET TOURNAMENT DATA ============
 async function getTournamentData(id: string): Promise<TournamentData | null> {
@@ -38,52 +98,6 @@ async function getTournamentData(id: string): Promise<TournamentData | null> {
 		console.log(error);
 		return null;
 	}
-}
-
-// ======== UPDATE CONTENT ============
-function renderTournamentRoomContent(tournamentData: TournamentData) {
-	const content = document.getElementById('tournament -room-content');
-	if (tournamentData.isCreator) {
-		content!.innerHTML = /*html*/`
-			<div class="flex flex-col min-h-screen">
-				<header>
-					<nav-bar id='nav-bar-component'></nav-bar>
-				</header>
-				<div class="flex flex-row flex-1 w-full items-center">
-					<div class='flex flex-1 flex-col w-full'>
-						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
-						<div class='flex flex-row w-full gap-5 justify-center'>
-							<div id='token' class='flex w-1/3 rounded-lg bg-white items-center justify-center'>
-								<p id='token-text' class='text-stone-400 text-sm'>generated token</p>
-							</div>
-							<button id='generate-btn' class='rounded-full bg-black p-3 text-white font-normal hover:shadow-md hover:font-medium focus-visible:outline-2 focus-visible:outline-offset-2'>Generate token</button>
-						</div>
-						<p id='error-generate-token'></p>
-					</div>
-					<div class='flex flex-1 items-center justify-center h-full min-h-0'>
-						<player-list id='player-list-component' class="w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
-					</div>
-				</div>
-			</div>
-		`
-	} else {
-		content!.innerHTML = /*html*/`
-			<div class="flex flex-col min-h-screen">
-				<header>
-					<nav-bar id='nav-bar-component'></nav-bar>
-				</header>
-				<div class="flex flex-row flex-1 w-full items-center">
-					<div class='flex flex-1 flex-col w-full'>
-						<h1 class='text-3xl mb-10 text-center'>Waiting room</h1>
-					</div>
-					<div class='flex flex-1 items-center justify-center h-full min-h-0'>
-						<player-list id='player-list-component' class="w-3/4 rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></player-list>
-					</div>
-				</div>
-			</div>
-		`
-	}
-
 }
 
 // ======== PASS CONTEXT ========
@@ -99,4 +113,51 @@ function passContext(ctx: AppContext, tournamentData: TournamentData | null, isC
 		playerListComponent.isCreator = isCreator;
 		// playerListComponent.gameData = gameData;
 	}
+}
+
+// ======== EVENT LISTENER ============
+async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string) {
+
+	// **** GENERATE TOKEN ****
+	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
+	generateBtn?.addEventListener('click', async (e) => {
+		e.preventDefault();
+		try {
+			let result = null;
+			if (isGenerated == false) {
+				result = await tournamentApi.generateToken(tournamentId);
+				isGenerated = true;
+			}
+			if (result) {
+				const tokenText = document.getElementById('token-text') as HTMLParagraphElement;
+				tokenText.innerText = `${result.token}`;
+				tokenText.className = 'text-black';
+				generateBtn.innerText = 'Copied';
+				generateBtn.className = 'rounded-full bg-muted p-3 text-white font-normal focus-visible:outline-2 focus-visible:outline-offset-2';
+				await navigator.clipboard.writeText(`${result.token}`);
+			}
+		} catch (error) {
+			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
+			errorMsgGenerateToken.className = 'mt-2 text-red-500'
+			errorMsgGenerateToken.innerText = error as string;
+			console.log(error);
+		}
+	});
+
+	// **** COPY TOKEN ****
+	const copyBtn = document.querySelector('#copy-btn') as HTMLButtonElement;
+	copyBtn?.addEventListener('click', async (e) => {
+		e.preventDefault();
+		try {
+			copyBtn.innerText = 'Copied';
+			copyBtn.className = 'rounded-full bg-muted p-3 text-white font-normal focus-visible:outline-2 focus-visible:outline-offset-2';
+			const tokenText = document.querySelector('#token-text') as HTMLParagraphElement;
+			await navigator.clipboard.writeText(`${tokenText!.innerText}`);
+		} catch (error) {
+			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
+			errorMsgGenerateToken.className = 'mt-2 text-red-500'
+			errorMsgGenerateToken.innerText = error as string;
+			console.log(error);
+		}
+	});
 }

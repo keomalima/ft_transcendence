@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { tournamentService } from './tournament.service.js';
 import type { CreateTournamentInput } from './tournament.schema.js';
+import crypto from 'crypto';
 
 // =====================
 // Game CRUD Handlers
@@ -33,6 +34,39 @@ async function createTournamentHandler (request: FastifyRequest<{ Body: CreateTo
 	}
 }
 
+async function generateTokenHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		let attempts = 0;
+		const maxAttempts = 10;
+
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId)
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		if (tournament.token) {
+			return reply.code(400).send({
+				message: "Tournament already has a valid token",
+				token: tournament.token
+			});
+		}
+		while (attempts < maxAttempts) {
+			const token = generateTournamentToken();
+			const existingTournament = await tournamentService.findTournamentByToken(request.server.prisma, token);
+			if (!existingTournament){
+				return await tournamentService.generateToken(request.server.prisma, tournamentId, token);
+			}
+			attempts++;
+		}
+		return reply.code(500).send({ message: "Failed to generate unique token" });
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to generate a token"});
+	}
+}
+
 async function getTournamentHandler (request: FastifyRequest<{Params: { id: string }}>, reply: FastifyReply) {
 	try {
 		const userId = request.user!.id;
@@ -55,6 +89,36 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 	}
 }
 
+async function getCurrentTournamentHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, userId);
+		console.log(tournament);
+		if (!tournament) 
+			return reply.code(204).send();
+
+		return {
+			userId: tournament.userId,
+			tournamentId: tournament.tournamentId,
+			status: tournament.tournament.status,
+			token: tournament.tournament.token
+		}
+	} catch (error:any) {
+		reply.code(500).send({ message: "Failed to fetch current tournament"});
+	}
+}
+
+
+// =====================
+// Tournament Helpers
+// =====================
+
+function generateTournamentToken() {
+	const randomBytes = crypto.randomBytes(8);
+	const token = randomBytes.toString('base64url');
+	return token.slice(0, 8);
+}
+
 // =====================
 // Export Controller Object
 // =====================
@@ -62,5 +126,7 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 export const tournamentController = {
 	// Tournament CRUD
 	createTournamentHandler,
-	getTournamentHandler
+	getTournamentHandler,
+	getCurrentTournamentHandler,
+	generateTokenHandler
 };

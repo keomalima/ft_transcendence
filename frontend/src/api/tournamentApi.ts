@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { TournamentData } from '../types';
+import { GameToken, TournamentData } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/tournaments';
@@ -25,6 +25,26 @@ export const tournamentApi = {
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('get tournament', error);
+		}
+	},
+
+	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null }> => {
+		try {
+			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null }>(`${BASE_URL}/current`);
+			console.log('🎮 getCurrentTournament sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('get current tournament', error);
+		}
+	},
+
+	generateToken: async (tournamentId: string): Promise<GameToken> => {
+		try {
+			const response = await httpCall.post<GameToken>(`${BASE_URL}/${tournamentId}/token`);
+			console.log('🎮 generate token sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('generate token', error);
 		}
 	},
 };

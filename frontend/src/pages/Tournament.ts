@@ -13,11 +13,24 @@ export function Tournament(ctx: AppContext): string {
 	//get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
 	
-	setTimeout(() => {
+	setTimeout(async () => {
+		const currentTournament = await getCurrentTournament();
+		renderTournamentContent(currentUser!, currentTournament?.tournamentId!);
 		passContext(ctx);
 		setupTournamentEventListeners(ctx);
 	}, 0);
-const content = /*html*/`
+
+	return (/*html*/`
+		<div id="tournament-content">
+			<p class='flex items-center justify-center h-screen'>Loading tournament data...</p>
+		</div>
+	`);
+}
+
+function renderTournamentContent(currentUser: UserState, tournamentId: string | null) {
+
+	const content = document.getElementById('tournament-content');
+	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
 		<header>
 			<nav-bar id='nav-bar-component'></nav-bar>
@@ -33,6 +46,27 @@ const content = /*html*/`
 			</div>
 
 		<!-- Action Cards -->
+		${tournamentId ?
+		`
+		<div class="flex flex-col items-center gap-6 max-w-2xl w-full">
+			<!-- Pending Tournament Card -->
+			<div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-8 w-full border-2 border-gray-400">
+				<div class="text-center">
+					<div class="text-6xl mb-4">🏆</div>
+					<h2 class="text-2xl font-bold text-gray-800 mb-3">Tournament in Progress</h2>
+					<p class="text-gray-600 mb-6">
+						You have an ongoing tournament
+					</p>
+					<a data-link href='/tournament-room/${tournamentId}' 
+					   class='inline-block ${BUTTON_WHITE_CLASSES}'>
+						Continue
+					</a>
+				</div>
+			</div>
+		</div>
+		`
+		:
+		`
 		<div class="flex flex-col md:flex-row gap-6 max-w-4xl w-full">
 			<!-- Create Tournament Card -->
 			<div class="flex-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-8 border border-gray-300 hover:border-gray-400 transition-all">
@@ -62,13 +96,25 @@ const content = /*html*/`
 					</div>
 				</div>
 			</div>
-
+		`
+		}
 			<!-- Error Message -->
 			<p id='error-create-tournament' class='mt-6 text-center'></p>
 		</div>
 	</div>
 	`
 	return content;
+}
+
+// ======== GET CURRENT TOURNAMENT ============
+async function getCurrentTournament(): Promise<{userId: string, tournamentId: string, type: string, token: string | null} | null> {
+	try {
+		const currentTournament = await tournamentApi.getCurrentTournament();
+		return currentTournament;
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
 }
 
 // ======== PASS CONTEXT ========
