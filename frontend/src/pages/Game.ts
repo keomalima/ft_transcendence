@@ -12,7 +12,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	const currentUser = ctx.userStore.get();
 
 	// secure if no access token or user ID
-	if (!currentUser?.accessToken || !currentUser?.id)
+	if (!currentUser?.id)
 	{
 		console.log('no session when accessing /game-room')
 		setTimeout(() => router.navigateTo('/'), 0);
@@ -28,7 +28,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	}
 
 	setTimeout(async () => {
-		let check = await userIsAuthorized(currentUser.accessToken!, currentUser.id!);
+		let check = await userIsAuthorized(currentUser.id!);
 		if (check !== null)
 			return check;
 		game();
@@ -58,9 +58,9 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 }
 
 // ======== CHECK IF USER IS AUTHORIZED ============
-async function userIsAuthorized(accessToken: string, userId: string): Promise<string | null>
+async function userIsAuthorized(userId: string): Promise<string | null>
 {
-	const gameData = await gameApi.getCurrentGame(accessToken);
+	const gameData = await gameApi.getCurrentGame();
 	if (userId !== gameData?.userId) {
 		return (
 			/*html*/`

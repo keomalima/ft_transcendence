@@ -26,7 +26,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// Execute after the first rendering
 	setTimeout(async () => {
 		cleanWaitingRoomWS();
-		let gameData = await getGameData(currentUser?.accessToken!, params['id']);
+		let gameData = await getGameData(params['id']);
 		if (!gameData)
 			return;
 		renderGameRoomContent(gameData);
@@ -225,7 +225,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail;
 		try {
-			await gameApi.startGame(accessToken, gameId);
+			await gameApi.startGame(gameId);
 			cleanWaitingRoomWS();
 			router.navigateTo(`/game/${gameId}`);
 		} catch (error) {
@@ -241,11 +241,10 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail;
-		const accessToken = ctx.userStore.get()?.accessToken;
-		if (!accessToken || !gameId)
+		if (!gameId)
 			return;
 		try {
-			await gameApi.quitPendingGame(accessToken, gameId);
+			await gameApi.quitPendingGame(gameId);
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);

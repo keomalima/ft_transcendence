@@ -12,12 +12,13 @@ import "../components/JoinGamePopUp.js";
 import { gameApi } from "../api/gameApi.js";
 import type { GameHistory } from "../types.js";
 
-
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
     const currentUser: UserState | null = ctx.userStore.get();
 
 	setTimeout( async () => {
+		const currentGame = await getCurrentGame();
+		renderDashboardContent(currentUser!, currentGame?.gameId!);
 		const gameHistory: GameHistory[] = await gameApi.getHistory();
 		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
@@ -44,8 +45,8 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
 				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
-					<img src='http://localhost:3000${currentUser!.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
-					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser!.name ?? 'User'}</span></h1>
+					<img src='http://localhost:3000${currentUser.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
+					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
 
 				${gameId ?
@@ -103,9 +104,9 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 }
 
 // ======== GET CURRENT GAME ============
-async function getCurrentGame(token: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
+async function getCurrentGame(): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
 	try {
-		const currentGame = await gameApi.getCurrentGame(token);
+		const currentGame = await gameApi.getCurrentGame();
 		return currentGame;
 	} catch(error) {
 		console.log(error);
