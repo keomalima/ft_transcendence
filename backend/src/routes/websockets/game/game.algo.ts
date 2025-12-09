@@ -41,6 +41,10 @@ function calculatePaddle(player: PlayerConnection, paddlePosition: number, confi
 	return paddlePosition;
 }
 
+function sleep(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function calculateBall(gameSession: GameSession) {
 	const config = gameSession.gameConfig;
 	const ball = gameSession.gameState.ball;
@@ -52,63 +56,62 @@ function calculateBall(gameSession: GameSession) {
 	ball.y += ball.velocityY;
 	
 	// Top wall collision
-	if (ball.y <= 0) {
-		ball.y = 0;
+	if (ball.y <= config.ballsize / 2) {
+		ball.y = config.ballsize / 2 + 0.1;
 		ball.velocityY = -ball.velocityY; // Bounce
 	}
 	
 	// Bottom wall collision
-	if (ball.y >= config.arenaheight) {
-		ball.y = config.arenaheight;
+	if (ball.y >= config.arenaheight - config.ballsize / 2) {
+		ball.y = config.arenaheight - config.ballsize / 2 - 0.1;
 		ball.velocityY = -ball.velocityY; // Bounce
 	}
 
-	// Right and Left collision
-	if (ball.x >= config.arenawidth || ball.x <= 0) {
-		ball.velocityX = 0;
-		ball.velocityY = 0;
-		// service(gameSession);
+	// Identify left / right player
+	const playerA = gameSession.players.get(paddleA.userId );
+	const leftPaddle = playerA?.position === 'left' ? paddleA : paddleB;
+	const rightPaddle = playerA?.position === 'right' ? paddleA : paddleB;
+	const gap = config.ballsize / 2 + config.paddlewidth; // = paddle width + half of ball size
+
+	// Left paddle collision
+	if (ball.x <= gap && ball.velocityX < 0) { // Ball x collision on left side and moving left
+		if (ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + config.paddleheight) { // Ball y is within paddle range
+			ball.velocityX = -ball.velocityX; // Bounce
+			ball.x = gap + 0.1;
+		}
 	}
 	
-	// // Left paddle collision (paddleA)
-	// const playerA = gameSession.players.get(paddleA.userId);
-	// if (playerA && playerA.position === 'left') {
-	// 	// Ball is on left side and moving left
-	// 	if (ball.x <= 10 && ball.velocityX < 0) { // 10 = paddle x position + paddle width
-	// 		// Check if ball Y is within paddle range
-	// 		if (ball.y >= paddleA.y && ball.y <= paddleA.y + config.paddleheight) {
-	// 			ball.velocityX = -ball.velocityX; // Bounce
-	// 			ball.x = 10; // Prevent ball from going through
-	// 		}
-	// 	}
-	// }
+	// Right paddle collision
+	if (ball.x >= config.arenawidth - gap  && ball.velocityX > 0) { // Ball x collision on right side and moving right
+		if (ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + config.paddleheight) { // Ball y is within paddle range
+			console.log(`🏓 BALL : ballX=${ball.x} | ballY=${ball.y}`)
+			console.log(`🏓 PADDLE : paddleY=${rightPaddle.y}`)
+			ball.velocityX = -ball.velocityX; // Bounce
+			ball.x = config.arenawidth - gap - 0.1; // Push ball away from paddle
+		}
+	}
 	
-	// // Right paddle collision (paddleB)
-	// const playerB = gameSession.players.get(paddleB.userId!);
-	// if (playerB && playerB.position === 'right') {
-	// 	// Ball is on right side and moving right
-	// 	if (ball.x >= config.arenawidth - 10 && ball.velocityX > 0) { // 10 = paddle x position
-	// 		// Check if ball Y is within paddle range
-	// 		if (ball.y >= paddleB.y && ball.y <= paddleB.y + config.paddleheight) {
-	// 			ball.velocityX = -ball.velocityX; // Bounce
-	// 			ball.x = config.arenawidth - 10; // Prevent ball from going through
-	// 		}
-	// 	}
-	// }
+	// Goal scored - left side
+	if (ball.x <= 0) {
+		if (gameSession.gameState.paddleA.side === 'left')
+			gameSession.gameState.score.playerA++;
+		else
+			gameSession.gameState.score.playerB++;
+		console.log(`💥 BALL OUT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
+		service(gameSession);
+		return;
+	}
 	
-	// // Goal scored - left side
-	// if (ball.x < 0) {
-	// 	gameSession.gameState.score.playerB++;
-	// 	service(gameSession); // Reset ball
-	// 	return;
-	// }
-	
-	// // Goal scored - right side
-	// if (ball.x > config.arenawidth) {
-	// 	gameSession.gameState.score.playerA++;
-	// 	service(gameSession); // Reset ball
-	// 	return;
-	// }
+	// Goal scored - right side
+	if (ball.x >= config.arenawidth) {
+		if (gameSession.gameState.paddleA.side === 'right')
+			gameSession.gameState.score.playerA++;
+		else
+			gameSession.gameState.score.playerB++;
+		console.log(`💥 BALL OUT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
+		service(gameSession); // Reset ball
+		return;
+	}
 }
 
 function getRandom(min: number, max: number) {
@@ -135,7 +138,7 @@ function service(gameSession: GameSession) {
 	ball.velocityX = (ball.velocityX / currentSpeed) * speed;
 	ball.velocityY = (ball.velocityY / currentSpeed) * speed;
 
-	console.log(`🏓 service : velocityX=${ball.velocityX} | velocityY=${ball.velocityY}`);
+	// console.log(`🏓 service : velocityX=${ball.velocityX} | velocityY=${ball.velocityY}`);
 }
 
 export const gameAlgo = {

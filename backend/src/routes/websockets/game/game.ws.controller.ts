@@ -31,6 +31,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
 			const player = gameSession.players.get(userId);
+			console.log(`🎮 INPUT: userId=${userId}, action=${message.action}, position=${player?.position}`);
 			if (message.action === 'up') {
 				player!.input.up = true;
 				player!.input.down = false;
@@ -72,11 +73,13 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 		gameState: {
 			paddleA: {
 				y: (100 / 2) - ((100 / 5) / 2),
-				userId: userId
+				userId: userId,
+				side: 'left'
 			},
 			paddleB: {
 				y: (100 / 2) - ((100 / 5) / 2),
-				userId: undefined
+				userId: undefined,
+				side: 'right'
 			},
 			ball: {
 				x: 200 / 2,
@@ -94,8 +97,10 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			arenaheight: 100,
 			arenawidth: 200,
 			paddleheight: 100 / 5,
+			paddlewidth: 2 * 200 / 100,
 			paddlespeed: 1,
-			ballspeed: 1,
+			ballspeed: 0.5,
+			ballsize: 5,
 			scoreToWin: 5
 		}
 	};

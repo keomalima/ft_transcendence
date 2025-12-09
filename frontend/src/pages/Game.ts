@@ -46,10 +46,10 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 					<button id='back-btn' class="styled-link">Go back home</button>
 				</div>
 			</div>
-			<div id="arena" class='w-full h-[50vw] bg-black relative m-50 border border-2 border-black '>
-				<div id="paddleLeft" class='absolute w-[14px] h-1/5 bg-white left-[10px]' style="top: 40%"></div>
-				<div id="paddleRight" class='absolute w-[14px] h-1/5 bg-white right-[10px]' style="top: 40%"></div>
-				<div id='ball' class='absolute w-[20px] h-[20px] rounded-full bg-white' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+			<div id="arena" class='w-full m-50 h-[50vw] bg-black relative  border border-2 border-black '>
+				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white' style="top: 40%"></div>
+				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px]' style="top: 40%"></div>
+				<div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 			</div>
 		</main>
