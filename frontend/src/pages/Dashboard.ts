@@ -23,7 +23,18 @@ export function Dashboard(ctx: AppContext): string{
 		setupDashboardEventListeners(ctx);
 	}, 0);
 
-	const content = /*html*/`
+	
+	return (/*html*/`
+		<div id="dashboard-content">
+			<p class='flex items-center justify-center h-screen'>Loading home data...</p>
+		</div>
+		`);
+}
+
+// ======== UPDATE CONTENT ========
+function renderDashboardContent(currentUser: UserState, gameId: string | null) {
+	const content = document.getElementById('dashboard-content');
+	content!.innerHTML = /*html*/`
 
 		<header>
 			<nav-bar id='nav-bar-component'></nav-bar>
@@ -36,15 +47,35 @@ export function Dashboard(ctx: AppContext): string{
 					<img src='http://localhost:3000${currentUser!.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser!.name ?? 'User'}</span></h1>
 				</div>
-				<div class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
-					<a data-link href='/create-game' class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</a>
-				</div>
-				<div class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
-					<a class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer' onclick="document.getElementById('join-game-dialog').showModal()">Join a game</a>
-				</div>
-				<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
-					<h1>???</h1>
-				</div>
+
+				${gameId ?
+					`
+						<a data-link href='/game-room/${gameId}'class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+							<p class='text-white' >You have a pending game</p>
+							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
+						</a>
+
+						<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
+							<h1>???</h1>
+						</div>
+					`
+					:
+					`
+						<a data-link href='/create-game' class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
+							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</p>
+						</a>
+						<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
+							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Join a game</p>
+						</a>
+						<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
+							<h1>???</h1>
+						</div>
+					`
+				}
+
+				
+
+
 				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white p-4 lg:p-10 order-4 lg:order-0">
 					<h1>Your achievements</h1>
 				</div>
@@ -69,7 +100,17 @@ export function Dashboard(ctx: AppContext): string{
 			<join-game-pop-up id="join-game-component"></join-game-pop-up>
 		</dialog>
 	`
-	return (content);
+}
+
+// ======== GET CURRENT GAME ============
+async function getCurrentGame(token: string): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
+	try {
+		const currentGame = await gameApi.getCurrentGame(token);
+		return currentGame;
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
 }
 
 // ======== PASS CONTEXT ========

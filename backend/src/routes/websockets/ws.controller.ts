@@ -84,8 +84,35 @@ function notifyPlayerRemoved(gameId: string, playerId: string) {
 	});
 }
 
+function notifyGameClosed(gameId: string, userId: string) {
+
+	const sockets = gameRooms.get(gameId);
+	
+	if (!sockets) {
+		console.log(`❌ No sockets found for game room: ${gameId}`);
+		return;
+	}
+	
+	sockets.forEach(sock => {
+		const socketUserId = (sock as any).userId;
+		
+		if (socketUserId != userId) {
+			console.log(`✅ MATCH! Notifying user ${socketUserId} that game is closed`);
+			if (sock.readyState === WebSocket.OPEN) {
+				sock.send(JSON.stringify({
+					type: 'game_closed',
+					message: "The game has been deleted"
+				}));
+			} else {
+				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+			}
+		}
+	});
+}
+
 export const wsController = {
 	broadcasToRoom,
 	waitingRoomHandler,
-	notifyPlayerRemoved
+	notifyPlayerRemoved,
+	notifyGameClosed
 };
