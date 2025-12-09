@@ -1,6 +1,7 @@
 import type { FastifyRequest } from 'fastify'
 import { WebSocket } from 'ws';
-import type { GameConfig, GameSession, PlayerConnection } from './game.types.js';
+import type { GameSession, PlayerConnection } from './game.types.js';
+import { calculateGame, calculatePaddle } from './game.algo.js';
 // import { gameLoop } from './game.session.js';
 
 // =====================
@@ -30,8 +31,16 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
 			const player = gameSession.players.get(userId);
-			player!.input.up = message.action === 'up';
-			player!.input.down = message.action === 'down';
+			if (message.action === 'up') {
+				player!.input.up = true;
+				player!.input.down = false;
+			} else if (message.action === 'down') {
+				player!.input.up = false;
+				player!.input.down = true;
+			} else if (message.action === 'stop') {
+				player!.input.up = false;
+				player!.input.down = false;
+			}
 		}
 	});
 
@@ -42,9 +51,9 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 	const gameLoop = setInterval(() => {
 		if (gameSession.players.size! == 2) {
 			calculateGame(gameSession);
-			broadcastGameState(gameSession);
+			broadcastGameState(gameSession, socket);
 		}
-	}, 3000)
+	}, 1000 / 60)
 
 	socket.on('close', () => {
 		clearInterval(gameLoop);
@@ -60,16 +69,16 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 		players: new Map(),
 		gameState: {
 			paddleA: {
-				y: 25,				// to set with correct value
+				y: (100 / 2) - ((100 / 5) / 2),
 				userId: userId
 			},
 			paddleB: {
-				y: 25,				// to set with correct value
+				y: (100 / 2) - ((100 / 5) / 2),
 				userId: undefined
 			},
 			ball: {
-				x: 50,				// to set with correct value
-				y: 25				// to set with correct value
+				x: 200 / 2,
+				y: 100 / 2
 			},
 			score: {
 				playerA: 0,
@@ -78,12 +87,12 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			status: 'waiting'
 		},
 		gameConfig: {
-			arenaheight: 50,
-			arenawidth: 100,
-			paddleheight: 20,
-			paddlespeed: 5,
-			ballspeed: 5,
-			scoreToWin: 5				// to set with correct value
+			arenaheight: 100,
+			arenawidth: 200,
+			paddleheight: 100 / 5,
+			paddlespeed: 1,
+			ballspeed: 0.1,
+			scoreToWin: 5
 		}
 	};
 
@@ -133,15 +142,14 @@ function notifyGameStarted(gameSession: GameSession): void {
 	})
 }
 
-function broadcastGameState(gameSession: GameSession): void {
+function broadcastGameState(gameSession: GameSession, socket: WebSocket): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
 
 	const playerA = gameSession.players.get(paddleA.userId );
-	// const playerB = gameSession.players.get(paddleB.userId!);
 
-	const leftPaddle = playerA?.position === 'left' ? paddleA : paddleB;
-	const rightPaddle = playerA?.position === 'right' ? paddleA : paddleB;
+	const leftPaddle = playerA?.position === 'left' ? paddleA.y : paddleB.y;
+	const rightPaddle = playerA?.position === 'right' ? paddleA.y : paddleB.y;
 	console.log(`📻 Broadcast ______ left = ${leftPaddle} ________ paddleB = ${rightPaddle}`);
 
 	gameSession.players.forEach((player) => {
@@ -157,65 +165,7 @@ function broadcastGameState(gameSession: GameSession): void {
 	})
 }
 
-function calculateGame(gameSession: GameSession): void {
-	const paddleA = gameSession.gameState.paddleA;
-	const paddleB = gameSession.gameState.paddleB;
-	if (!paddleA.userId || !paddleB.userId) {
-		console.log('❌ missing player 1');
-		return;
-	}
-
-	const playerA = gameSession.players.get(paddleA.userId );
-	const playerB = gameSession.players.get(paddleB.userId!);
-	if (!playerA || !playerB) {
-		console.log('❌ missing player 2');
-		return;
-	}
-	gameSession.gameState.paddleA.y = calculatePaddle(playerA, gameSession.gameState.paddleA.y, gameSession.gameConfig);
-	gameSession.gameState.paddleB.y = calculatePaddle(playerA, gameSession.gameState.paddleB.y, gameSession.gameConfig);
-	console.log(`🧮 Calculate______paddleA = ${gameSession.gameState.paddleA.y} ________ paddleB = ${gameSession.gameState.paddleB.y}`);
-}
-
-function calculatePaddle(player: PlayerConnection, paddlePosition: number, config: GameConfig): number {
-	const speed = config.paddlespeed;
-	const pHeight = config.paddleheight;
-	const aHeight = config.arenaheight;
-	if (player.input.up){
-		if (paddlePosition - speed < pHeight / 2)
-			return (pHeight / 2);
-		return (paddlePosition -= speed);
-	}
-	if (player.input.down) {
-		if (paddlePosition + speed > aHeight - (pHeight / 2))
-			return (aHeight - (pHeight / 2));
-		return (paddlePosition += speed);
-	}
-	return paddlePosition;
-}
-
-// function playerAction(gameSession: GameSession, userId: string, action: 'up' | 'down' | 'stop'): void {
-// 	const player = gameSession.players.get(userId);
-// 	if (!player) {
-// 		console.log('❌ player not found');
-// 		return;
-// 	}
-// 	console.log(`🖐️ User ${userId} send ${action}`)
-// 	// const gameState = gameSession.gameState;
-// 	if (action === 'up') {
-// 		player.input.up = true;
-// 		player.input.down = false;
-// 	}
-// 	else if (action === 'down') {
-// 		player.input.down = true;
-// 		player.input.up = false;
-// 	}
-// 	else if (action === 'stop'){
-// 		player.input.down = false;
-// 		player.input.up = false;
-// 	}
-// }
 
 export const GameWsController = {
 	gameHandler,
-	// playerAction
 };

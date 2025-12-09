@@ -47,9 +47,9 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 				</div>
 			</div>
 			<div id="arena" class='w-full h-[50vw] bg-black relative m-50 border border-2 border-black '>
-				<div id="paddleLeft" class='absolute w-[14px] h-1/5 bg-white top-[50vh] left-[10px]'></div>
+				<div id="paddleLeft" class='absolute w-[14px] h-1/5 bg-white left-[10px]' style="top: 40%"></div>
 
-				<div id="paddleRight" class='absolute w-[14px] h-1/5 bg-white top-[50vh] right-[10px]' ></div>
+				<div id="paddleRight" class='absolute w-[14px] h-1/5 bg-white right-[10px]' style="top: 40%"></div>
 			</div>
 		</main>
 	`;
@@ -102,50 +102,39 @@ function getGameHeight(): number
 	return (gameArea!.clientHeight);
 }
 
-function getPaddleHeight(): number
-{
-	const paddleLeft = document.getElementById('paddleLeft');
-	return (paddleLeft!.clientHeight);
-}
-
-function getBottomLimit(): number {
-	return (getGameHeight() - getPaddleHeight());
-}
-
-function getSpeed() : number {
-	return (getGameHeight() / 50);
-}
 
 function game() {
 
-	const mapKeys = {'s': false, 'x': false, 'ArrowUp': false, 'ArrowDown': false }
+	const mapKeys = {'ArrowUp': false, 'ArrowDown': false }
 
 	function isValidKey(key: string): key is keyof typeof mapKeys {
 		return key in mapKeys;
 	}
 
-	// let paddleRight = document.getElementById('paddleRight');
-	// let paddleLeft = document.getElementById('paddleLeft');
-
-	// let paddleY_A = ( getGameHeight() - getPaddleHeight()) / 2;
-	// let paddleY_B = ( getGameHeight() - getPaddleHeight()) / 2;
+	let paddleRight = document.getElementById('paddleRight');
+	let paddleLeft = document.getElementById('paddleLeft');
 
 	document.addEventListener('keydown', (e) => {
-		if (isValidKey(e.key)) {
-			mapKeys[e.key] = true;
-
-			gameConnection?.send({
-				type: 'input',
-				action: 'down'
-			});
+		if (e.key === 'ArrowUp') {
+			gameConnection?.send({ type: 'input', action: 'up' });
+		} else if (e.key === 'ArrowDown') {
+			gameConnection?.send({ type: 'input', action: 'down' });
 		}
 	});
 
 	document.addEventListener('keyup', (e) => {
-		if (isValidKey(e.key)) {
-			mapKeys[e.key] = false;
+		if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+			gameConnection?.send({ type: 'input', action: 'stop' });
 		}
 	});
+
+	document.addEventListener('event-update-game', (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		paddleLeft!.style.top = `${parseInt(data.leftPaddle) * getGameHeight() / 100}px`;
+		paddleRight!.style.top = `${parseInt(data.rightPaddle) * getGameHeight() / 100}px`;
+	})
 }
 
 // ======== EVENT LISTENER ============
@@ -156,6 +145,7 @@ function setupLaunchGameEventListeners() {
 	backBtn?.addEventListener('click', (e) => {
 		e.preventDefault();
 		cleanGameWS();
+		
 		router.navigateTo('/home');
 	});
 }

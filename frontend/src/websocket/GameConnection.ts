@@ -29,7 +29,14 @@ export class GameConnection {
 			if (data.type === 'update_game') {
 				const left = data.left;
 				const right = data.right;
-				console.log(`🔃 update game [L:${left}, R:${right}]`);
+				// console.log(`🔃 update game [L:${left}, R:${right}]`);
+				document.dispatchEvent(new CustomEvent('event-update-game', {
+					detail: {
+						leftPaddle: left,
+						rightPaddle: right
+					},
+					bubbles: true
+				}));
 			}
 		}
 	}
