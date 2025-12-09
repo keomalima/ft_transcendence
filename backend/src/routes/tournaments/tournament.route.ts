@@ -18,6 +18,19 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 			handler: tournamentController.createTournamentHandler
 	})
 
+	fastify.post('/:token/join', {
+		schema: {
+			params: z.object({token: z.string()}),
+			response: { 200: tournamentSchemas.response.joinTournament },
+			tags: ['Tournament'],
+			description: 'Join an existing tournament',
+			summary: 'Join a tournament',
+			security: [{ bearerAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.joinTournamentHandler
+	});
+
 	fastify.post('/:id/token', {
 		schema: {
 			params: z.object({id: z.string()}),

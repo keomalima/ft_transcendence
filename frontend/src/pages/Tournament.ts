@@ -103,9 +103,9 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 		</div>
 	</div>
 
-	<!-- Dialog for join game -->
+	<!-- Dialog for join tournament -->
 		<dialog id="join-tournament-dialog" class="place-self-center">
-			<join-game-pop-up id="join-game-component"></join-game-pop-up>
+			<join-game-pop-up id="join-tournament-component"></join-game-pop-up>
 	</dialog>
 	`
 	return content;
@@ -129,10 +129,11 @@ function passContext(ctx: AppContext) {
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
 	}
-	const joinGameComponent = document.getElementById('join-game-component') as any;
-	if (joinGameComponent) {
-		joinGameComponent.type = 'tournament';
-		joinGameComponent.ctx = ctx;
+	
+	const joinTournamentComponent = document.getElementById('join-tournament-component') as any;
+	if (joinTournamentComponent) {
+		joinTournamentComponent.type = 'tournament';
+		joinTournamentComponent.ctx = ctx;
 	}
 
 }
@@ -140,7 +141,7 @@ function passContext(ctx: AppContext) {
 // ======== EVENT LISTENER ============
 function setupTournamentEventListeners(ctx: AppContext) {
 
-	const joinGameComponent = document.getElementById('join-game-component') as any;
+	const joinTournamentComponent = document.getElementById('join-tournament-component') as any;
 
 	// **** CREATE TOURNAMENT ****
 	const createBtn = document.getElementById('create-tournament-btn');
@@ -151,13 +152,18 @@ function setupTournamentEventListeners(ctx: AppContext) {
 	});
 
 	// **** JOIN TOURNAMENT ****
-	const joinBtn = document.getElementById('join-tournament-btn');
-	joinBtn?.addEventListener('click', async (e) => {
-		e.preventDefault();
-		// TODO: Navigate to tournament list page or show available tournaments
-		// For now, show a message
-		const errorMsg = document.querySelector('#error-create-tournament') as HTMLParagraphElement;
-		errorMsg.className = 'text-blue-500 text-lg';
-		errorMsg.innerText = 'Tournament list coming soon!';
-	});
+	joinTournamentComponent?.addEventListener('event-join-tournament', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			const result = await tournamentApi.joinTournament(data);
+			console.log(result);
+			router.navigateTo(`/tournament-room/${result.tournamentId}`);
+		} catch (error) {
+			const errorMsgJoinGame = document.querySelector('#error-join-tournament') as HTMLParagraphElement;
+			errorMsgJoinGame.className = 'mt-2 text-red-500'
+			errorMsgJoinGame.innerText = error as string;
+			console.log(error);
+		}
+	})
 }

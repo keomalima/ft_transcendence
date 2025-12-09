@@ -47,4 +47,14 @@ export const tournamentApi = {
 			throw buildApiError('generate token', error);
 		}
 	},
+
+	joinTournament: async (tournamentToken: string): Promise<{ id: string; tournamentId: string; userId: string }> => {
+		try {
+			const response = await httpCall.post<{ id: string; tournamentId: string; userId: string }>(`${BASE_URL}/${tournamentToken}/join`);
+			console.log('🎮 join tournament sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('join tournament', error);
+		}
+	},
 };

@@ -2,9 +2,10 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import { tournamentService } from './tournament.service.js';
 import type { CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
+import { WaintingRoomWsController } from '../websockets/waitingroom.ws.controller.js';
 
 // =====================
-// Game CRUD Handlers
+// Tournament CRUD Handlers
 // =====================
 
 async function createTournamentHandler (request: FastifyRequest<{ Body: CreateTournamentInput }>, reply: FastifyReply) {
@@ -74,7 +75,7 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 		const tournament = await tournamentService.findTournamentById(request.server.prisma, tournamentId);
 		if (!tournament) {
 			return reply.code(404).send({
-            	message: "Game not found or unauthorized"
+            	message: "Tournament not found or unauthorized"
         	});
 		}
 		const response = {
@@ -86,6 +87,49 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 	} catch (error:any) {
 		console.log(error);
 		reply.code(500).send({ message: "Failed to get tournament"});
+	}
+}
+
+async function joinTournamentHandler (request: FastifyRequest<{ Params: { token: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const joinedUser = request.user!;
+		const token = request.params.token;
+		const tournament = await tournamentService.findTournamentByToken(request.server.prisma, token);
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found"
+			});
+		}
+		if (tournament.status !== "PENDING") {
+			return reply.code(409).send({
+				message: "Cannot join, tournament has already started"
+			});
+		}
+		if (tournament.participants.length >= tournament.numberPlayers) {
+			return reply.code(409).send({
+				message: "Tournament is already full"
+			});
+		}
+		for (const participant of tournament.participants) {
+			if (participant.user.id === userId) {
+				return reply.code(409).send({
+					message: "User is already in this tournament"
+				});
+			}
+		}
+
+		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+			type: 'room_update',
+			message: `${joinedUser.displayName} joined the tournament!`,
+			userId,
+			displayName: joinedUser.displayName,
+			avatarUrl: joinedUser.avatarUrl
+		})
+		return  await tournamentService.joinUserToTournament(request.server.prisma, tournament.id, userId);
+	} catch (error: any) {
+		console.error(error);
+		reply.code(500).send({ message: "Failed to join tournament"});
 	}
 }
 
@@ -128,5 +172,6 @@ export const tournamentController = {
 	createTournamentHandler,
 	getTournamentHandler,
 	getCurrentTournamentHandler,
-	generateTokenHandler
+	generateTokenHandler,
+	joinTournamentHandler
 };

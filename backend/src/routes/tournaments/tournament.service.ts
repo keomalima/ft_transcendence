@@ -98,6 +98,10 @@ async function generateToken(prisma: PrismaClient, tournamentId: string, token: 
 	})
 }
 
+async function joinUserToTournament(prisma: PrismaClient, tournamentId: string, userId: string) {
+	return prisma.participants.create({ data: { tournamentId, userId}})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -109,5 +113,6 @@ export const tournamentService = {
 	findTournamentById,
 	findTournamentByUserId,
 	findTournamentByToken,
-	generateToken
+	generateToken,
+	joinUserToTournament
 };
