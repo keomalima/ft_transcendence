@@ -1,4 +1,4 @@
-import type { AppContext, UserState, GameUsers, GameData } from "../types.js";
+import type { AppContext, UserState, GameData } from "../types.js";
 import { router } from "../main.js";
 import { gameApi } from "../api/gameApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";

@@ -87,6 +87,13 @@ async function setGameSockets(gameId: string, userId: string) {
 	gameConnection.connect(gameId, userId);
 }
 
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanGameWS() {
+	if (gameConnection) {
+		gameConnection.disconnect();
+		gameConnection = null;
+	}
+}
 
 // ======== GAME ACTION ============
 function getGameHeight(): number
@@ -148,7 +155,7 @@ function setupLaunchGameEventListeners() {
 	const backBtn = document.getElementById('back-btn');
 	backBtn?.addEventListener('click', (e) => {
 		e.preventDefault();
+		cleanGameWS();
 		router.navigateTo('/home');
-
 	});
 }

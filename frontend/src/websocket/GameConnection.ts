@@ -26,6 +26,11 @@ export class GameConnection {
 			if (data.type == 'start-game') {
 				console.log('🚀 game starts');
 			}
+			if (data.type === 'update_game') {
+				const left = data.left;
+				const right = data.right;
+				console.log(`🔃 update game [L:${left}, R:${right}]`);
+			}
 		}
 	}
 
