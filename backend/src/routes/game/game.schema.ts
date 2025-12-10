@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GameStatus, GameMode } from "@prisma/client";
+import { isWritable } from "stream";
 
 // =====================
 // Request Schemas
@@ -11,12 +12,23 @@ const createGameSchema = z.object({
 });
 
 const updateGameSchema = z.object({
-	scoreToWin: z.number().int().optional()
+	scoreToWin: z.number().int().optional(),
+	status: z.enum(GameStatus).optional()
 });
 
 const removePlayerRequestSchema = z.object({
 	playerId: z.string()
 });
+
+const finishGameReqSchema = z.object({
+    status: z.enum(GameStatus),
+    gamePlayers: z.array(
+        z.object({
+            playerId: z.string(),
+            score: z.number().int().nonnegative()
+        })
+    ).length(2)
+})
 
 // =====================
 // Response Schemas
@@ -46,6 +58,7 @@ const createGameResponseSchema = z.object({
 	createdBy: z.string(),
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
+	scoreToWin: z.number().int()
 })
 
 const getGameResponseSchema = z.object({
@@ -103,12 +116,29 @@ const getCurrentGameSchema = z.object({
 	token: z.string().nullable()
 })
 
+const finishGameResSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	type: z.enum(GameMode),
+	status: z.enum(GameStatus),
+	startedAt: z.date().nullable(),
+	completedAt: z.date().nullable(),
+	gameUsers: z.array(
+		z.object({
+			id: z.string(),
+			score: z.number().int(),
+			isWinner: z.boolean()
+		})
+	)
+})
+
 // =====================
 // Type Exports
 // =====================
 
 export type CreateGameInput = z.infer<typeof createGameSchema>;
 export type UpdateGameInput = z.infer<typeof updateGameSchema>;
+export type FinishGameInput = z.infer<typeof finishGameReqSchema>
 
 // =====================
 // Schema Objects Export
@@ -119,7 +149,8 @@ export const gameSchemas = {
   request: {
 	createGame: createGameSchema,
 	updateGame: updateGameSchema,
-	removePlayer: removePlayerRequestSchema
+	removePlayer: removePlayerRequestSchema,
+	finishGame: finishGameReqSchema
   },
   
   // Response schemas
@@ -132,5 +163,6 @@ export const gameSchemas = {
 	startGame: updateGameResponseSchema,
 	gameHistory: gameHistoryResponseSchema,
 	currentGame: getCurrentGameSchema,
+	finishGame: finishGameResSchema
   },
 };

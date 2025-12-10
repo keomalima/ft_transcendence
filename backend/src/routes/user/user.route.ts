@@ -37,7 +37,7 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 			tags: ['Dev'],
 			description: 'Get all users details ONLY FOR DEV',
 			summary: 'Get all users ONLY FOR DEV',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		}
 	}, 
 	userController.getUserHandlerDev)
@@ -91,7 +91,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Users'],
 			description: 'Get user details by ID',
 			summary: 'Get user by ID',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: userController.getUserHandler
@@ -104,7 +104,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Users'],
 			description: 'Update current user profile',
 			summary: 'Update user profile',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		}, 
 		preHandler: userController.updateLastSeen,
 		handler: userController.editUserHandler
@@ -116,7 +116,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Authentication'],
 			description: 'Validate user session',
 			summary: 'Validate user session',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: userController.validateSessionAuth
@@ -127,7 +127,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Authentication'],
 			description: 'Logout current user',
 			summary: 'User logout',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		handler: userController.logoutHandler
 	});
@@ -137,7 +137,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Users'],
 			description: 'Delete current user account',
 			summary: 'Delete user',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		handler: userController.deleteHandler
 	});
@@ -150,7 +150,7 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Users'],
 			description: 'Upload avatar profile',
 			summary: 'Upload Avatar',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
    		},
 		handler: userController.uploadAvatarHandler
   	});

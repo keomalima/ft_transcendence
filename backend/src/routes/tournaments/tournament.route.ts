@@ -12,10 +12,48 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 				tags: ['Tournament'],
 				description: 'Create a new tournament',
 				summary: 'Create tournament',
-				security: [{ bearerAuth: [] }]
+				security: [{ cookieAuth: [] }]
 			},
 			preHandler: userController.updateLastSeen,
 			handler: tournamentController.createTournamentHandler
+	})
+
+	fastify.post('/:token/join', {
+		schema: {
+			params: z.object({token: z.string()}),
+			response: { 200: tournamentSchemas.response.joinTournament },
+			tags: ['Tournament'],
+			description: 'Join an existing tournament',
+			summary: 'Join a tournament',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.joinTournamentHandler
+	});
+
+	fastify.post('/:id/token', {
+		schema: {
+			params: z.object({id: z.string()}),
+			response: { 200: tournamentSchemas.response.generateToken },
+			tags: ['Tournament'],
+			description: 'Generate a token for a tournament',
+			summary: 'Generate token',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.generateTokenHandler
+	});
+
+	fastify.get('/current', {
+		schema: {
+			response: { 200: tournamentSchemas.response.currentTournament },
+			tags: ['Tournament'],
+			description: 'Return the id of the current pending/active game',
+			summary: 'Get current game',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.getCurrentTournamentHandler
 	})
 
 	fastify.get('/:id', {
@@ -25,7 +63,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Tournament'],
 			description: 'Get the tournament info',
 			summary: 'Get a tournament',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: tournamentController.getTournamentHandler

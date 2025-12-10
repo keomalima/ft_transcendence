@@ -38,9 +38,11 @@ class User:
         self.name = name
         self.surname = surname
         self.display_name = display_name
-        self.token = token
+        self.token = token  # Deprecated: kept for backwards compatibility
         self.user_id = user_id
         self.is_online = is_online
+        # Session to persist cookies across requests
+        self.session = requests.Session()
 
     def register(self) -> bool:
         """Register a new user. Returns True if successful."""
@@ -53,7 +55,7 @@ class User:
             "avatarUrl": None
         }
         try:
-            resp = requests.post(f"{BASE_URL}/", json=data, timeout=5)
+            resp = self.session.post(f"{BASE_URL}/", json=data, timeout=5)
             if resp.status_code == 201:
                 print(f"{GREEN}✓{RESET} Registered {self.email}")
                 return True
@@ -65,15 +67,15 @@ class User:
             return False
 
     def login(self) -> bool:
-        """Login user. Returns True if successful."""
+        """Login user. Returns True if successful. Cookie is stored in session."""
         data = {"email": self.email, "password": self.password}
         try:
-            resp = requests.post(f"{BASE_URL}/login", json=data, timeout=5)
+            resp = self.session.post(f"{BASE_URL}/login", json=data, timeout=5)
             if resp.status_code in (200, 201):
                 json_data = resp.json()
-                self.token = json_data.get("accessToken") or json_data.get("token")
-                self.user_id = json_data.get("id") or json_data.get("user", {}).get("id")
-                print(f"{GREEN}✓{RESET} Logged in {self.email}")
+                # Cookie is automatically stored in self.session
+                self.user_id = json_data.get("id")
+                print(f"{GREEN}✓{RESET} Logged in {self.email} (session cookie stored)")
                 return True
             else:
                 print(f"{RED}✗{RESET} Failed to login {self.email}: {resp.text}")
@@ -84,16 +86,12 @@ class User:
 
     def logout(self) -> bool:
         """Logout user. Returns True if successful."""
-        if not self.token:
-            print(f"{YELLOW}⚠{RESET} User {self.email} is not logged in")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.post(f"{BASE_URL}/logout", headers=headers, timeout=5)
-            if resp.status_code == 200:
+            resp = self.session.post(f"{BASE_URL}/logout", timeout=5)
+            if resp.status_code in (200, 204):
                 print(f"{GREEN}✓{RESET} Logged out {self.email}")
-                self.token = None
+                # Clear the session cookies
+                self.session.cookies.clear()
                 return True
             else:
                 print(f"{YELLOW}⚠{RESET} Logout {self.email}: {resp.status_code}")
@@ -104,14 +102,9 @@ class User:
 
     def send_friend_request(self, target_display_name: str) -> bool:
         """Send friend request to another user. Returns True if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         data = {"addresseeDisplayName": target_display_name}
         try:
-            resp = requests.post(FRIENDS_URL, json=data, headers=headers, timeout=5)
+            resp = self.session.post(FRIENDS_URL, json=data, timeout=5)
             if resp.status_code == 201:
                 print(f"{GREEN}✓{RESET} Friend request sent from {self.display_name} to {target_display_name}")
                 return True
@@ -124,13 +117,8 @@ class User:
 
     def accept_friend_request(self, friendship_id: str) -> bool:
         """Accept a friend request. Returns True if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.put(f"{FRIENDS_URL}/accept/{friendship_id}", headers=headers, timeout=5)
+            resp = self.session.put(f"{FRIENDS_URL}/accept/{friendship_id}", timeout=5)
             if resp.status_code == 200:
                 print(f"{GREEN}✓{RESET} Friend request accepted by {self.display_name}")
                 return True
@@ -143,13 +131,8 @@ class User:
 
     def reject_friend_request(self, friendship_id: str) -> bool:
         """Reject a friend request. Returns True if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.put(f"{FRIENDS_URL}/reject/{friendship_id}", headers=headers, timeout=5)
+            resp = self.session.put(f"{FRIENDS_URL}/reject/{friendship_id}", timeout=5)
             if resp.status_code == 204:
                 print(f"{GREEN}✓{RESET} Friend request rejected by {self.display_name}")
                 return True
@@ -162,13 +145,8 @@ class User:
 
     def delete_friend(self, friendship_id: str) -> bool:
         """Delete an active friendship. Returns True if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.delete(f"{FRIENDS_URL}/{friendship_id}", headers=headers, timeout=5)
+            resp = self.session.delete(f"{FRIENDS_URL}/{friendship_id}", timeout=5)
             if resp.status_code == 204:
                 print(f"{GREEN}✓{RESET} Friendship deleted by {self.display_name}")
                 return True
@@ -181,13 +159,8 @@ class User:
 
     def get_friends(self) -> Optional[List[dict]]:
         """Get user's active friends list with online status. Returns list of friends if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.get(FRIENDS_URL, headers=headers, timeout=5)
+            resp = self.session.get(FRIENDS_URL, timeout=5)
             if resp.status_code == 200:
                 friends = resp.json()
                 # Friends list now includes isOnline status from the backend
@@ -203,13 +176,8 @@ class User:
 
     def get_pending_requests(self) -> Optional[List[dict]]:
         """Get user's pending friend requests. Returns list of pending requests if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.get(f"{FRIENDS_URL}/requests", headers=headers, timeout=5)
+            resp = self.session.get(f"{FRIENDS_URL}/requests", timeout=5)
             if resp.status_code == 200:
                 return resp.json()
             elif resp.status_code == 404:
@@ -227,17 +195,12 @@ class User:
 
     def create_game(self, game_type: str = "ONLINE", score_to_win: Optional[int] = None) -> Optional[dict]:
         """Create a new game. Returns game data if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         data = {"type": game_type}
         if score_to_win is not None:
             data["scoreToWin"] = score_to_win
         
         try:
-            resp = requests.post(GAME_URL, json=data, headers=headers, timeout=5)
+            resp = self.session.post(GAME_URL, json=data, timeout=5)
             if resp.status_code == 201:
                 game = resp.json()
                 print(f"{GREEN}✓{RESET} Game created by {self.display_name} (ID: {game.get('id', 'N/A')})")
@@ -251,13 +214,8 @@ class User:
 
     def get_game(self, game_id: str) -> Optional[dict]:
         """Get game details by ID. Returns game data if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.get(f"{GAME_URL}/{game_id}", headers=headers, timeout=5)
+            resp = self.session.get(f"{GAME_URL}/{game_id}", timeout=5)
             if resp.status_code == 200:
                 return resp.json()
             elif resp.status_code == 404:
@@ -272,15 +230,10 @@ class User:
 
     def update_game(self, game_id: str, score_to_win: int) -> Optional[dict]:
         """Update game settings. Returns updated game data if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         data = {"scoreToWin": score_to_win}
         
         try:
-            resp = requests.put(f"{GAME_URL}/{game_id}", json=data, headers=headers, timeout=5)
+            resp = self.session.put(f"{GAME_URL}/{game_id}", json=data, timeout=5)
             if resp.status_code == 200:
                 game = resp.json()
                 print(f"{GREEN}✓{RESET} Game updated by {self.display_name}")
@@ -294,13 +247,8 @@ class User:
 
     def generate_game_token(self, game_id: str) -> Optional[str]:
         """Generate a token for a game. Returns token if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.post(f"{GAME_URL}/{game_id}/token", headers=headers, timeout=5)
+            resp = self.session.post(f"{GAME_URL}/{game_id}/token", timeout=5)
             if resp.status_code == 200:
                 game = resp.json()
                 token = game.get('token')
@@ -315,13 +263,8 @@ class User:
 
     def join_game(self, token: str) -> Optional[dict]:
         """Join a game using a token. Returns join data if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.post(f"{GAME_URL}/{token}/join", headers=headers, timeout=5)
+            resp = self.session.post(f"{GAME_URL}/{token}/join", timeout=5)
             if resp.status_code == 200:
                 result = resp.json()
                 print(f"{GREEN}✓{RESET} {self.display_name} joined the game")
@@ -335,13 +278,8 @@ class User:
 
     def start_game(self, game_id: str) -> Optional[dict]:
         """Start a game. Returns game data if successful."""
-        if not self.token:
-            print(f"{RED}✗{RESET} User {self.email} is not logged in")
-            return None
-        
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            resp = requests.put(f"{GAME_URL}/{game_id}/start", headers=headers, timeout=5)
+            resp = self.session.put(f"{GAME_URL}/{game_id}/start", timeout=5)
             if resp.status_code == 200:
                 game = resp.json()
                 print(f"{GREEN}✓{RESET} Game started by {self.display_name}")
@@ -420,21 +358,13 @@ def login_manual(users: List[User]) -> List[User]:
     else:
         # Create a new user object with manual credentials (user must already exist in DB)
         user = User(email, password, "", "", "")
-        data = {"email": email, "password": password}
-        try:
-            resp = requests.post(f"{BASE_URL}/login", json=data, timeout=5)
-            if resp.status_code in (200, 201):
-                json_data = resp.json()
-                user.token = json_data.get("accessToken") or json_data.get("token")
-                user.user_id = json_data.get("id") or json_data.get("user", {}).get("id")
-                user.name = json_data.get("name", "")
-                user.display_name = json_data.get("displayName", "")
-                users.append(user)
-                print(f"{GREEN}✓{RESET} Logged in {email}")
-            else:
-                print(f"{RED}✗{RESET} Failed to login {email}: {resp.text}")
-        except requests.exceptions.RequestException as e:
-            print(f"{RED}✗{RESET} Network error during login: {e}")
+        if user.login():
+            # Fetch additional user details from the login response
+            # The login method already sets user_id
+            users.append(user)
+            print(f"{GREEN}✓{RESET} User logged in successfully!")
+        else:
+            print(f"{RED}✗{RESET} Login failed - check credentials")
     
     return users
 

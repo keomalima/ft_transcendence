@@ -5,10 +5,10 @@ import { AppContext } from "../types.js";
 export class JoinGamePopUp extends HTMLElement {
 	private selectedAvatarFile: File | null = null;
 	private _ctx: AppContext | null = null;
+	private _type: 'game' | 'tournament' = 'game'; // Default to game
 
 	constructor() {
 		super();
-		this.render();
 	}
 
 	set ctx(value: AppContext) {
@@ -16,7 +16,21 @@ export class JoinGamePopUp extends HTMLElement {
 		this.attachEventListener(this._ctx);
 	}
 
+	set type(value: 'game' | 'tournament') {
+		this._type = value;
+		this.render();
+	}
+
+	connectedCallback() {
+		this.render();
+	}
+
 	private render() {
+		const title = this._type === 'game' ? 'Join a game' : 'Join a tournament';
+		const label = this._type === 'game' 
+			? 'Enter game token to join the game' 
+			: 'Enter tournament token to join the tournament';
+		
 		this.innerHTML = /*html*/`
 			<div>
 				<button onclick="this.closest('dialog').close()" class="outline-none float-right p-10">
@@ -26,23 +40,27 @@ export class JoinGamePopUp extends HTMLElement {
 				</button>
 			</div>
 			<div class="px-6 py-12 sm:rounded-lg sm:px-12">
-				<h1 class="mb-10 text-xl">Join a game</h1>
-				<form action="/" method="POST" id='join-game-form' class="md:col-span-2">
+				<h1 class="mb-10 text-xl">${title}</h1>
+				<form action="/" method="POST" id='join-form' class="md:col-span-2">
 					<div class='flex flex-1 flex-row gap-10'>
 						<div class='flex flex-1 flex-col'>
-							<label class='text-sm text-medium' for="game_token">Enter game token to join the game</label>
-							<input id="game-token" type="text" name="game_token" autoComplete="token" class='${INPUT_CLASSES}'/>
+							<label class='text-sm text-medium' for="token">${label}</label>
+							<input id="token-input" type="text" name="token" autoComplete="token" class='${INPUT_CLASSES}'/>
 						</div>
 						<button type='submit' class='${BUTTON_BLACK_CLASSES}'>LET'S GO</button>
 					</div>
 				</form>
-				<p id='error-join-game'></p>
+				<p id='error-join'></p>
 			</div>
 
         `;
+		
+		// Re-attach event listener after render if context exists
+		if (this._ctx) {
+			this.attachEventListener(this._ctx);
+		}
 	}
 
-	
 	
 	// ======== EVENT LISTENER ============
 
@@ -51,12 +69,17 @@ export class JoinGamePopUp extends HTMLElement {
 		if (ctx == null)
 			return;
 
-		const form = this.querySelector('#join-game-form') as HTMLFormElement;
+		const form = this.querySelector('#join-form') as HTMLFormElement;
+		if (!form) return; // Guard in case render hasn't been called yet
+		
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const input = this.querySelector('input[name="game_token"') as HTMLInputElement;
+			const input = this.querySelector('input[name="token"]') as HTMLInputElement;
 			const token = input.value;
-			this.dispatchEvent(new CustomEvent ('event-join-game', {
+			
+			// Dispatch different event based on type
+			const eventName = this._type === 'game' ? 'event-join-game' : 'event-join-tournament';
+			this.dispatchEvent(new CustomEvent(eventName, {
 				detail: token,
 				bubbles: true
 			}))

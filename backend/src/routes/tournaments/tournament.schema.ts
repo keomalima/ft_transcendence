@@ -46,6 +46,26 @@ const getTournamentResponseSchema = z.object({
 	)
 })
 
+const getCurrentTournamentSchema = z.object({
+	userId: z.string(),
+	tournamentId: z.string(),
+	status: z.enum(TournamentStatus),
+	token: z.string().nullable()
+})
+
+const generateTournamentTokenResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	token: z.string()
+})
+
+const joinTournamentResponseSchema = z.object({
+	id: z.string(),
+	tournamentId: z.string(),
+	userId: z.string(),
+})
+
+
 // =====================
 // Type Exports
 // =====================
@@ -65,6 +85,9 @@ export const tournamentSchemas = {
   // Response schemas
   response: {
 	createTournament: createTournamentResponseSchema,
-	getTournament: getTournamentResponseSchema
+	getTournament: getTournamentResponseSchema,
+	currentTournament: getCurrentTournamentSchema,
+	generateToken: generateTournamentTokenResponseSchema,
+	joinTournament: joinTournamentResponseSchema
   },
 };

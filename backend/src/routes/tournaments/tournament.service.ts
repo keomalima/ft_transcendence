@@ -30,6 +30,48 @@ async function findActiveTournamentByUserId(prisma: PrismaClient, id: string) {
 	})
 }
 
+async function findTournamentByToken(prisma: PrismaClient, token: string) {
+    return prisma.tournament.findUnique({
+        where: {
+            token
+        },
+        include: {
+            participants: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            displayName: true,
+							avatarUrl: true
+                        }
+                    }
+                }
+            }
+        }
+    })
+}
+
+async function findTournamentByUserId(prisma: PrismaClient, userId: string, tournamentId: string) {
+	return prisma.tournament.findFirst({
+		where: {
+			id: tournamentId,
+			createdBy: userId
+		},
+		include: {
+            participants: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            displayName: true
+                        }
+                    }
+                }
+            }
+        }
+	});
+}
+
 async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 	return prisma.tournament.findUnique({
 		where: { id: tournamentId},
@@ -49,6 +91,17 @@ async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 	})
 }
 
+async function generateToken(prisma: PrismaClient, tournamentId: string, token: string) {
+	return prisma.tournament.update({
+		where: { id: tournamentId },
+		data: { token }
+	})
+}
+
+async function joinUserToTournament(prisma: PrismaClient, tournamentId: string, userId: string) {
+	return prisma.tournamentPlayer.create({ data: { tournamentId, userId}})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -57,5 +110,9 @@ export const tournamentService = {
 	// Tournament operations
 	createTournament,
 	findActiveTournamentByUserId,
-	findTournamentById
+	findTournamentById,
+	findTournamentByUserId,
+	findTournamentByToken,
+	generateToken,
+	joinUserToTournament
 };

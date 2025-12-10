@@ -122,6 +122,7 @@ function passContext(ctx: AppContext, gameHistory: GameHistory[]) {
 	}
 	const joinGameComponent = document.getElementById('join-game-component') as any;
 	if (joinGameComponent) {
+		joinGameComponent.type = 'game';
 		joinGameComponent.ctx = ctx;
 	}
 	const friendListComponent = document.getElementById('friend-list-component') as any;
