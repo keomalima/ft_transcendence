@@ -1,6 +1,7 @@
 import type { FastifyRequest } from 'fastify'
 import { WebSocket } from 'ws';
-import type { GameConfig, GameSession, PlayerConnection } from './game.types.js';
+import type { GameSession, PlayerConnection } from './game.types.js';
+import { gameAlgo } from './game.algo.js';
 // import { gameLoop } from './game.session.js';
 
 // =====================
@@ -9,6 +10,7 @@ import type { GameConfig, GameSession, PlayerConnection } from './game.types.js'
 
 // Game session mapping gameId(string) with gameSession(interface)
 const gameSessions = new Map<string, GameSession>();
+let gameLoop: NodeJS.Timeout | null = null;
 
 async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {gameId: string, userId: string}}>) {
 	const gameId = request.params.gameId;
@@ -30,24 +32,35 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
 			const player = gameSession.players.get(userId);
-			player!.input.up = message.action === 'up';
-			player!.input.down = message.action === 'down';
+			// console.log(`🎮 INPUT: userId=${userId}, action=${message.action}, position=${player?.position}`);
+			if (message.action === 'up') {
+				player!.input.up = true;
+				player!.input.down = false;
+			} else if (message.action === 'down') {
+				player!.input.up = false;
+				player!.input.down = true;
+			} else if (message.action === 'stop') {
+				player!.input.up = false;
+				player!.input.down = false;
+			}
 		}
 	});
 
 	if (gameSession.players.size! == 2) {
-		notifyGameStarted(gameSession);
+		notifyGameStarted(gameSession, gameId);
+		gameAlgo.service(gameSession);
 	}
 
-	const gameLoop = setInterval(() => {
+	gameLoop = setInterval(() => {
 		if (gameSession.players.size! == 2) {
-			calculateGame(gameSession);
+			gameAlgo.calculateGame(gameSession);
 			broadcastGameState(gameSession);
 		}
-	}, 3000)
+	}, 1000 / 60)
 
 	socket.on('close', () => {
-		clearInterval(gameLoop);
+		if (gameLoop)
+			clearInterval(gameLoop);
 		gameSession.players.delete(userId);
 		console.log(`Player ${userId} disconnected from game : ${gameId}`);
 		// TO DO : handle differently depending on is player is creator or not
@@ -55,35 +68,47 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 }
 
 function createGameSession(gameId: string, userId: string, socket: WebSocket): GameSession{
+	const arenaWidth = 200;
+	const arenaHeight = 100;
+	const paddleWidth = arenaWidth * (2/100);
+	const paddleHeight = arenaHeight * (1/5);
+
 	const newGame: GameSession = {
 		gameId: gameId,
 		players: new Map(),
 		gameState: {
 			paddleA: {
-				y: 25,				// to set with correct value
-				userId: userId
+				y: (arenaHeight / 2) - (paddleHeight / 2),
+				userId: userId,
+				side: 'left'
 			},
 			paddleB: {
-				y: 25,				// to set with correct value
-				userId: undefined
+				y: (arenaHeight / 2) - (paddleHeight / 2),
+				userId: undefined,
+				side: 'right'
 			},
 			ball: {
-				x: 50,				// to set with correct value
-				y: 25				// to set with correct value
+				x: 200 / 2,
+				y: 100 / 2,
+				velocityX: 0,
+				velocityY: 0
 			},
 			score: {
 				playerA: 0,
 				playerB: 0
 			},
-			status: 'waiting'
+			status: 'waiting',
+			nextservice: 'playerA'
 		},
 		gameConfig: {
-			arenaheight: 50,
-			arenawidth: 100,
-			paddleheight: 20,
-			paddlespeed: 5,
-			ballspeed: 5,
-			scoreToWin: 5				// to set with correct value
+			arenaheight: arenaHeight, // = 100
+			arenawidth: arenaWidth, // = 200
+			paddleheight: paddleHeight, // = 20
+			paddlewidth: paddleWidth, // = 4
+			paddlespeed: 1,
+			ballspeed: 1,
+			ballsize: 5,
+			scoreToWin: 1
 		}
 	};
 
@@ -95,7 +120,8 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 		input: {
 			up: false,
 			down: false
-		}
+		},
+		score: 0
 	};
 
 	newGame.players.set(userId, firstPlayer);
@@ -104,7 +130,6 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 }
 
 function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocket): void {
-
 	const newPlayer: PlayerConnection = {
 		socket: socket,
 		userId: userId,
@@ -113,20 +138,62 @@ function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocke
 		input: {
 			up: false,
 			down: false
-		}
+		},
+		score: 0
 	}
 	gameSession.players.set(userId, newPlayer);
 	gameSession.gameState.paddleB.userId = userId;
 }
 
-function notifyGameStarted(gameSession: GameSession): void {
+function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 	console.log('🚀 All players are connected, game starts!');
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
-				type: 'start_game',
-				message: "Your game is about to start"
+				type: 'start-game',
+				message: "Your game is about to start",
+				gameId
 			}));
+		} else {
+			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+		}
+	})
+}
+
+export function notifyService(gameSession: GameSession): void {
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			player.socket.send(JSON.stringify({
+				type: 'service',
+				message: "Service countdown"
+			}));
+		} else {
+			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+		}
+	})
+}
+
+export function notifyFinishGame(gameSession: GameSession, player: PlayerConnection): void {
+	console.log('🚀 Game is finished');
+	if (gameLoop)
+		clearInterval(gameLoop);
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			if (player.score >= gameSession.gameConfig.scoreToWin) {
+				player.socket.send(JSON.stringify({
+					type: 'finish-game',
+					message: "win",
+					player: player.userId,
+					score: player.score
+				}));
+			} else {
+				player.socket.send(JSON.stringify({
+					type: 'finish-game',
+					message: "quit",
+					player: player.userId,
+					iscreator: player.isCreator
+				}));
+			}
 		} else {
 			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
@@ -137,19 +204,34 @@ function broadcastGameState(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
 
-	const playerA = gameSession.players.get(paddleA.userId );
-	// const playerB = gameSession.players.get(paddleB.userId!);
+	const playerA = gameSession.players.get(paddleA.userId);
 
-	const leftPaddle = playerA?.position === 'left' ? paddleA : paddleB;
-	const rightPaddle = playerA?.position === 'right' ? paddleA : paddleB;
-	console.log(`📻 Broadcast ______ left = ${leftPaddle} ________ paddleB = ${rightPaddle}`);
+	const leftPlayer = playerA?.position === 'left' ? paddleA : paddleB;
+	const rightPlayer = playerA?.position === 'right' ? paddleA : paddleB;
+	const leftScore = playerA?.position === 'left' ? gameSession.gameState.score.playerA : gameSession.gameState.score.playerB;
+	const rightScore = playerA?.position === 'right' ? gameSession.gameState.score.playerA : gameSession.gameState.score.playerB;
+
+	const left = {
+		userid: leftPlayer.userId,
+		paddleposition: leftPlayer.y,
+		score: leftScore,
+	}
+
+	const right = {
+		userid: rightPlayer.userId,
+		paddleposition: rightPlayer.y,
+		score: rightScore,
+	}
+	// console.log(`📻 Broadcast ______ left = ${leftPlayer} ________ paddleB = ${rightPlayer}`);
 
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
 				type: 'update_game',
-				left: `${leftPaddle}`,
-				right: `${rightPaddle}`
+				left: left,
+				right: right,
+				ballX: gameSession.gameState.ball.x,
+				ballY: gameSession.gameState.ball.y
 			}));
 		} else {
 			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
@@ -157,65 +239,7 @@ function broadcastGameState(gameSession: GameSession): void {
 	})
 }
 
-function calculateGame(gameSession: GameSession): void {
-	const paddleA = gameSession.gameState.paddleA;
-	const paddleB = gameSession.gameState.paddleB;
-	if (!paddleA.userId || !paddleB.userId) {
-		console.log('❌ missing player 1');
-		return;
-	}
-
-	const playerA = gameSession.players.get(paddleA.userId );
-	const playerB = gameSession.players.get(paddleB.userId!);
-	if (!playerA || !playerB) {
-		console.log('❌ missing player 2');
-		return;
-	}
-	gameSession.gameState.paddleA.y = calculatePaddle(playerA, gameSession.gameState.paddleA.y, gameSession.gameConfig);
-	gameSession.gameState.paddleB.y = calculatePaddle(playerA, gameSession.gameState.paddleB.y, gameSession.gameConfig);
-	console.log(`🧮 Calculate______paddleA = ${gameSession.gameState.paddleA.y} ________ paddleB = ${gameSession.gameState.paddleB.y}`);
-}
-
-function calculatePaddle(player: PlayerConnection, paddlePosition: number, config: GameConfig): number {
-	const speed = config.paddlespeed;
-	const pHeight = config.paddleheight;
-	const aHeight = config.arenaheight;
-	if (player.input.up){
-		if (paddlePosition - speed < pHeight / 2)
-			return (pHeight / 2);
-		return (paddlePosition -= speed);
-	}
-	if (player.input.down) {
-		if (paddlePosition + speed > aHeight - (pHeight / 2))
-			return (aHeight - (pHeight / 2));
-		return (paddlePosition += speed);
-	}
-	return paddlePosition;
-}
-
-// function playerAction(gameSession: GameSession, userId: string, action: 'up' | 'down' | 'stop'): void {
-// 	const player = gameSession.players.get(userId);
-// 	if (!player) {
-// 		console.log('❌ player not found');
-// 		return;
-// 	}
-// 	console.log(`🖐️ User ${userId} send ${action}`)
-// 	// const gameState = gameSession.gameState;
-// 	if (action === 'up') {
-// 		player.input.up = true;
-// 		player.input.down = false;
-// 	}
-// 	else if (action === 'down') {
-// 		player.input.down = true;
-// 		player.input.up = false;
-// 	}
-// 	else if (action === 'stop'){
-// 		player.input.down = false;
-// 		player.input.up = false;
-// 	}
-// }
 
 export const GameWsController = {
 	gameHandler,
-	// playerAction
 };
