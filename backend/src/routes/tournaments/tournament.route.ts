@@ -12,7 +12,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 				tags: ['Tournament'],
 				description: 'Create a new tournament',
 				summary: 'Create tournament',
-				security: [{ bearerAuth: [] }]
+				security: [{ cookieAuth: [] }]
 			},
 			preHandler: userController.updateLastSeen,
 			handler: tournamentController.createTournamentHandler
@@ -25,7 +25,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Tournament'],
 			description: 'Join an existing tournament',
 			summary: 'Join a tournament',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: tournamentController.joinTournamentHandler
@@ -38,7 +38,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Tournament'],
 			description: 'Generate a token for a tournament',
 			summary: 'Generate token',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: tournamentController.generateTokenHandler
@@ -50,7 +50,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Tournament'],
 			description: 'Return the id of the current pending/active game',
 			summary: 'Get current game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: tournamentController.getCurrentTournamentHandler
@@ -63,7 +63,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Tournament'],
 			description: 'Get the tournament info',
 			summary: 'Get a tournament',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: tournamentController.getTournamentHandler

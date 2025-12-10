@@ -15,19 +15,22 @@ import { Game } from "./pages/Game.js";
 import { CreateTournament } from './pages/CreateTournament.js'
 import { TournamentRoom } from "./pages/TournamentRoom.js";
 import { Tournament } from "./pages/Tournament.js";
+import { createGameStore } from "./store/gameStore.js";
 
 // Create and init user store
 const userStore = createUserStore(null);
+const gameStore = createGameStore(null);
 userStore.init(null);
+gameStore.init(null);
 
 // Track whether we've already attempted to hydrate the session from the backend.
 let hasHydratedSession = false;
 let hydratingSession = false;
 
-
 // Create context
 const context: AppContext = {
-	userStore
+	userStore,
+	gameStore
 };
 
 // When session is invalidated elsewhere (401 interceptor), clear local state.

@@ -14,7 +14,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Friends'],
 			description: 'Get the list of all active friends',
 			summary: 'Get friends list',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: friendsController.getFriendsHandler
@@ -26,7 +26,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Friends'],
 			description: 'Get all the pending friendships requests',
 			summary: 'Get friendship requests',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: friendsController.getPendingRequestsHandler
@@ -39,7 +39,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Friends'],
 			description: 'Send a friendship request to another user',
 			summary: 'Send a friendship request',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: friendsController.sendRequestHandler
@@ -51,7 +51,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Friends'],
 			description: 'Accepts a friendshipt request',
 			summary: 'Accepts friendship',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: friendsController.acceptFriendHandler
@@ -62,7 +62,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Friends'],
 			description: 'Rejects a friendshipt request',
 			summary: 'Rejects friendship',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler:  friendsController.rejectFriendHandler
@@ -73,7 +73,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Friends'],
 			description: 'Deletes an existing friendship',
 			summary: 'Delete frienship',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: friendsController.deleteFriendHandler

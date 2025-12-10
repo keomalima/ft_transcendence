@@ -16,7 +16,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Get the game info',
 			summary: 'Get a game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: gameController.getGameHandler
@@ -29,7 +29,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Create a new game',
 			summary: 'Create game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: gameController.createGameHandler
@@ -43,7 +43,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Update a game',
 			summary: 'Update a game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen,
 		handler: gameController.updateGameHandler
@@ -56,7 +56,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Generate a token for a game',
 			summary: 'Generate token',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.generateTokenHandler
@@ -69,7 +69,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Join an existing game',
 			summary: 'Join a game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.joinGameHandler
@@ -82,10 +82,24 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Start an existing game',
 			summary: 'Start a game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.startGameHandler
+	})
+
+	fastify.post('/:id/finish', {
+		schema: {
+			params: z.object({id: z.string()}),
+			body: gameSchemas.request.finishGame,
+			response: { 200: gameSchemas.response.finishGame },
+			tags: ['Game'],
+			description: 'Finish an existing game',
+			summary: 'Finish a game',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: gameController.finishGameHandler
 	})
 
 	fastify.get('/history', {
@@ -94,7 +108,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Get users game history',
 			summary: 'Get game history',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.gameHistoryHandler
@@ -106,7 +120,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Return the id of the current pending/active game',
 			summary: 'Get current game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.getCurrentGameHandler
@@ -119,7 +133,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Remove a player from a pending game',
 			summary: 'Remove player',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.removePlayerHandler
@@ -131,7 +145,7 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 			tags: ['Game'],
 			description: 'Delete a pending game or quit the game if user is not the creator',
 			summary: 'Delete or quit pending game',
-			security: [{ bearerAuth: [] }]
+			security: [{ cookieAuth: [] }]
 		},
 		preHandler: userController.updateLastSeen, 
 		handler: gameController.deletePendingGameHandler
