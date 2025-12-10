@@ -4,6 +4,7 @@ export interface GameState {
 	ball: {x: number, y: number, velocityX: number, velocityY: number};
 	score: {playerA: number, playerB: number};
 	status: 'waiting' | 'playing' | 'finished';
+	nextservice: 'playerA' | 'playerB';
 }
 
 export interface GameConfig {
@@ -20,9 +21,11 @@ export interface GameConfig {
 export interface PlayerConnection {
 	socket: WebSocket;
 	userId: string;
+	// displayname: string;
 	isCreator: boolean;
 	position: 'right' | 'left';
 	input: {up: boolean, down: boolean};
+	score: number
 }
 
 export interface GameSession {

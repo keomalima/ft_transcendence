@@ -10,6 +10,7 @@ import { gameAlgo } from './game.algo.js';
 
 // Game session mapping gameId(string) with gameSession(interface)
 const gameSessions = new Map<string, GameSession>();
+let gameLoop: NodeJS.Timeout | null = null;
 
 async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {gameId: string, userId: string}}>) {
 	const gameId = request.params.gameId;
@@ -31,7 +32,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
 			const player = gameSession.players.get(userId);
-			console.log(`🎮 INPUT: userId=${userId}, action=${message.action}, position=${player?.position}`);
+			// console.log(`🎮 INPUT: userId=${userId}, action=${message.action}, position=${player?.position}`);
 			if (message.action === 'up') {
 				player!.input.up = true;
 				player!.input.down = false;
@@ -46,20 +47,20 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 	});
 
 	if (gameSession.players.size! == 2) {
-		notifyGameStarted(gameSession);
+		notifyGameStarted(gameSession, gameId);
+		gameAlgo.service(gameSession);
 	}
 
-	gameAlgo.service(gameSession);
-
-	const gameLoop = setInterval(() => {
+	gameLoop = setInterval(() => {
 		if (gameSession.players.size! == 2) {
 			gameAlgo.calculateGame(gameSession);
-			broadcastGameState(gameSession, socket);
+			broadcastGameState(gameSession);
 		}
 	}, 1000 / 60)
 
 	socket.on('close', () => {
-		clearInterval(gameLoop);
+		if (gameLoop)
+			clearInterval(gameLoop);
 		gameSession.players.delete(userId);
 		console.log(`Player ${userId} disconnected from game : ${gameId}`);
 		// TO DO : handle differently depending on is player is creator or not
@@ -67,17 +68,22 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 }
 
 function createGameSession(gameId: string, userId: string, socket: WebSocket): GameSession{
+	const arenaWidth = 200;
+	const arenaHeight = 100;
+	const paddleWidth = arenaWidth * (2/100);
+	const paddleHeight = arenaHeight * (1/5);
+
 	const newGame: GameSession = {
 		gameId: gameId,
 		players: new Map(),
 		gameState: {
 			paddleA: {
-				y: (100 / 2) - ((100 / 5) / 2),
+				y: (arenaHeight / 2) - (paddleHeight / 2),
 				userId: userId,
 				side: 'left'
 			},
 			paddleB: {
-				y: (100 / 2) - ((100 / 5) / 2),
+				y: (arenaHeight / 2) - (paddleHeight / 2),
 				userId: undefined,
 				side: 'right'
 			},
@@ -91,17 +97,18 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 				playerA: 0,
 				playerB: 0
 			},
-			status: 'waiting'
+			status: 'waiting',
+			nextservice: 'playerA'
 		},
 		gameConfig: {
-			arenaheight: 100,
-			arenawidth: 200,
-			paddleheight: 100 / 5,
-			paddlewidth: 2 * 200 / 100,
+			arenaheight: arenaHeight, // = 100
+			arenawidth: arenaWidth, // = 200
+			paddleheight: paddleHeight, // = 20
+			paddlewidth: paddleWidth, // = 4
 			paddlespeed: 1,
-			ballspeed: 0.5,
+			ballspeed: 1,
 			ballsize: 5,
-			scoreToWin: 5
+			scoreToWin: 1
 		}
 	};
 
@@ -113,7 +120,8 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 		input: {
 			up: false,
 			down: false
-		}
+		},
+		score: 0
 	};
 
 	newGame.players.set(userId, firstPlayer);
@@ -122,7 +130,6 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 }
 
 function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocket): void {
-
 	const newPlayer: PlayerConnection = {
 		socket: socket,
 		userId: userId,
@@ -131,19 +138,21 @@ function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocke
 		input: {
 			up: false,
 			down: false
-		}
+		},
+		score: 0
 	}
 	gameSession.players.set(userId, newPlayer);
 	gameSession.gameState.paddleB.userId = userId;
 }
 
-function notifyGameStarted(gameSession: GameSession): void {
+function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 	console.log('🚀 All players are connected, game starts!');
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
-				type: 'start_game',
-				message: "Your game is about to start"
+				type: 'start-game',
+				message: "Your game is about to start",
+				gameId
 			}));
 		} else {
 			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
@@ -151,24 +160,78 @@ function notifyGameStarted(gameSession: GameSession): void {
 	})
 }
 
-function broadcastGameState(gameSession: GameSession, socket: WebSocket): void {
+export function notifyService(gameSession: GameSession): void {
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			player.socket.send(JSON.stringify({
+				type: 'service',
+				message: "Service countdown"
+			}));
+		} else {
+			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+		}
+	})
+}
+
+export function notifyFinishGame(gameSession: GameSession, player: PlayerConnection): void {
+	console.log('🚀 Game is finished');
+	if (gameLoop)
+		clearInterval(gameLoop);
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			if (player.score >= gameSession.gameConfig.scoreToWin) {
+				player.socket.send(JSON.stringify({
+					type: 'finish-game',
+					message: "win",
+					player: player.userId,
+					score: player.score
+				}));
+			} else {
+				player.socket.send(JSON.stringify({
+					type: 'finish-game',
+					message: "quit",
+					player: player.userId,
+					iscreator: player.isCreator
+				}));
+			}
+		} else {
+			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+		}
+	})
+}
+
+function broadcastGameState(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
 
-	const playerA = gameSession.players.get(paddleA.userId );
+	const playerA = gameSession.players.get(paddleA.userId);
 
-	const leftPaddle = playerA?.position === 'left' ? paddleA.y : paddleB.y;
-	const rightPaddle = playerA?.position === 'right' ? paddleA.y : paddleB.y;
-	// console.log(`📻 Broadcast ______ left = ${leftPaddle} ________ paddleB = ${rightPaddle}`);
+	const leftPlayer = playerA?.position === 'left' ? paddleA : paddleB;
+	const rightPlayer = playerA?.position === 'right' ? paddleA : paddleB;
+	const leftScore = playerA?.position === 'left' ? gameSession.gameState.score.playerA : gameSession.gameState.score.playerB;
+	const rightScore = playerA?.position === 'right' ? gameSession.gameState.score.playerA : gameSession.gameState.score.playerB;
+
+	const left = {
+		userid: leftPlayer.userId,
+		paddleposition: leftPlayer.y,
+		score: leftScore,
+	}
+
+	const right = {
+		userid: rightPlayer.userId,
+		paddleposition: rightPlayer.y,
+		score: rightScore,
+	}
+	// console.log(`📻 Broadcast ______ left = ${leftPlayer} ________ paddleB = ${rightPlayer}`);
 
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
 				type: 'update_game',
-				left: `${leftPaddle}`,
-				right: `${rightPaddle}`,
-				ballX: `${gameSession.gameState.ball.x}`,
-				ballY: `${gameSession.gameState.ball.y}`,
+				left: left,
+				right: right,
+				ballX: gameSession.gameState.ball.x,
+				ballY: gameSession.gameState.ball.y
 			}));
 		} else {
 			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);

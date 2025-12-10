@@ -25,22 +25,41 @@ export class GameConnection {
 			const data = JSON.parse(event.data);
 			if (data.type == 'start-game') {
 				console.log('🚀 game starts');
-			}
-			if (data.type === 'update_game') {
-				const left = data.left;
-				const right = data.right;
-				const ballX = data.ballX;
-				const ballY = data.ballY;
-				// console.log(`🔃 update game [L:${left}, R:${right}]`);
-				document.dispatchEvent(new CustomEvent('event-update-game', {
+				const gameId = data.gameId;
+				document.dispatchEvent(new CustomEvent('event-start-game', {
 					detail: {
-						leftPaddle: left,
-						rightPaddle: right,
-						ballX: ballX,
-						ballY: ballY
+						gameId: gameId
 					},
 					bubbles: true
 				}));
+			} if (data.type === 'update_game') {
+				// console.log(`🔃 update game [L:${left}, R:${right}]`);
+				document.dispatchEvent(new CustomEvent('event-update-game', {
+					detail: {
+						left: data.left,
+						right: data.right,
+						ballX: data.ballX,
+						ballY: data.ballY
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'service') {
+				document.dispatchEvent(new CustomEvent('event-service-countdown', {
+					detail: {
+						count: 3
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'finish-game') {
+				if (data.message === 'win') {
+					document.dispatchEvent(new CustomEvent('event-won-game', {
+						detail: {
+							player: data.player
+						},
+						bubbles: true
+					}));
+				}
+				
 			}
 		}
 	}
