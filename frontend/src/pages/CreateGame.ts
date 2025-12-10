@@ -7,6 +7,7 @@ import "../components/NavBar.js";
 
 // import styles
 import { RADIO_LABEL, BUTTON_CREAM_CLASSES } from "../styles/tailwindStyles.js";
+import { gameService } from "../services/GameService.js";
 
 
 export function CreateGame(ctx: AppContext): string{
@@ -96,8 +97,11 @@ function setupGameEventListeners(ctx: AppContext) {
 		const scoreToWin = (document.querySelector('input[name="score_to_win"]') as HTMLInputElement)?.value;
 
 		try {
-			const result = await gameApi.createGame(selectedMode, parseInt(scoreToWin));
-			router.navigateTo(`/game-room/${result.id}`);
+			const result = await gameService.createGame({
+				scoreToWin: parseInt(scoreToWin),
+				type: selectedMode
+			}, ctx);
+			router.navigateTo(`/game-room/${result!.id}`);
 		} catch (error) {
 			const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;
 			errorMsgCreateGame.className = 'text-red-500'

@@ -24,6 +24,22 @@ export interface UserState {
 	avatarUrl: string | null;
 }
 
+export type GameState = Pick<GameData,
+		| 'id' | 'token'
+		| 'scoreToWin'
+		| 'createdAt'
+		| 'updatedAt'
+		| 'tournamentId'
+		| 'status' | 'type'
+		| 'startedAt'
+		| 'completedAt'
+		| 'createdBy'
+		| 'gameUsers'
+	> & {
+	roundNumber: number | null;
+	matchNumber: number | null;
+};
+
 // for frienship data
 export interface FriendshipData {
 	id: string | null;
@@ -60,11 +76,12 @@ export interface FriendData {
 export interface GameData {
 	id: string | null;
 	createdBy: string | null;
+	tournamentId: string | null;
 	isCreator: boolean;
 	type: string | null;
 	token: string | null;
 	status: string | null;
-	scoreToWin: string | null;
+	scoreToWin: number | null;
 	createdAt: string | null;
 	updatedAt: string | null;
 	completedAt: string | null;
@@ -90,9 +107,11 @@ export interface GameToken {
 
 
 import { UserStore } from "./store/userStore";
+import { GameStore } from "./store/gameStore"
 // Define context type
 export interface AppContext {
 	userStore: UserStore;
+	gameStore: GameStore;
 }
 
 interface Opponent {

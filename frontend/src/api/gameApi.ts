@@ -1,20 +1,48 @@
 import httpCall from './httpClient.js';
-import { GameData, GameHistory, GameToken } from '../types';
+import { GameData, GameHistory, GameState, GameToken } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/games';
 
+export interface CreateGameDto {
+	scoreToWin: number | null;
+	type: string | null;
+}
+
+interface FinishGamePlayerDto {
+	playerId: string;
+	score: number;
+}
+
+export interface FinishGameDto {
+	status: Exclude<GameState['status'], null>;
+	gamePlayers: [FinishGamePlayerDto, FinishGamePlayerDto];
+}
+
+// response when creating a new game
+export type CreateGameResp = Pick<GameState, 'id' | 'createdBy' | 'type' | 'status' | 'scoreToWin' >
+
+// response when finishing a game
+export type FinishGameResp = Pick<GameState, 'id' | 'createdBy' | 'type' | 'status' | 'gameUsers' | 'startedAt' | 'completedAt' >
+
 export const gameApi = {
-	createGame: async (type: string, scoreToWin: number): Promise<Partial<GameData>> => {
+	createGame: async (data: CreateGameDto): Promise<CreateGameResp> => {
 		try {
-			const response = await httpCall.post<Partial<GameData>>(`${BASE_URL}`, {
-				type,
-				scoreToWin
-			});
+			const response = await httpCall.post<CreateGameResp>(`${BASE_URL}`, data);
 			console.log('🎮 createGame sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('create new game', error);
+		}
+	},
+
+	finishGame: async (gameId: string, data: FinishGameDto): Promise<FinishGameResp> => {
+		try {
+			const response = await httpCall.post<FinishGameResp>(`${BASE_URL}/${gameId}/finish`, data);
+			console.log('🎮 finishGame sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('finish game', error);
 		}
 	},
 

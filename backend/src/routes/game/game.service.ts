@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import type { CreateGameInput, UpdateGameInput } from "./game.schema.js";
+import { GameStatus, Prisma, PrismaClient } from "@prisma/client";
+import type { CreateGameInput, FinishGameInput, UpdateGameInput } from "./game.schema.js";
 import { includes } from "zod";
 
 // =====================
@@ -167,6 +167,47 @@ async function deletePendingGame(prisma: PrismaClient, gameId: string) {
 	})
 }
 
+async function finishGame(prisma: PrismaClient, gameId: string, status: GameStatus) {
+	await prisma.game.update({
+		where: { id: gameId },
+		data: {
+			status,
+			completedAt: status === "COMPLETED" ? new Date() : null
+		}
+	})
+	return prisma.game.findFirst({
+		where: { id: gameId },
+		include: {
+			gameUsers: {
+				select: {
+					id: true, 
+					score: true,
+					isWinner: true
+				}
+			}
+		}
+	})
+}
+
+type FinishGamePlayer = FinishGameInput["gamePlayers"][number];
+
+async function findGamePlayerById(prisma: PrismaClient, playerId: string) {
+	return prisma.gamePlayer.findUnique({
+		where: { id: playerId },
+		select: { id: true, gameId: true }
+	});
+}
+
+async function updatePlayer(prisma: PrismaClient, player: FinishGamePlayer, isWinner: boolean) {
+	return prisma.gamePlayer.update({
+		where: { id: player.playerId },
+		data: {
+			score: player.score,
+			isWinner,
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -184,5 +225,8 @@ export const gameService = {
 	startGame,
 	getGamesByUserId,
 	removePlayerFromGame,
-	deletePendingGame
+	deletePendingGame,
+	finishGame,
+	updatePlayer,
+	findGamePlayerById
 };

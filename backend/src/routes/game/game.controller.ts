@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { CreateGameInput, UpdateGameInput } from './game.schema.js';
+import type { CreateGameInput, FinishGameInput, UpdateGameInput } from './game.schema.js';
 import crypto from 'crypto';
 import { gameService } from './game.service.js';
 import { WaintingRoomWsController } from '../websockets/waitingroom.ws.controller.js';
@@ -292,6 +292,53 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
 	}
 }
 
+async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInput, Params: { id: string}} >, reply: FastifyReply) {
+	try {
+		const gameId = request.params.id;
+		const { gamePlayers, status } = request.body;
+		const [player1, player2] = gamePlayers;
+
+		if (!player1 || !player2) {
+			return reply.code(400).send({ message: "Missing players to finish the game" });
+		}
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.code(404).send({
+            	message: "Game not found or unauthorized"
+        	});
+		}
+		if (game.status !== 'IN_PROGRESS') {
+			return reply.code(409).send({
+            	message: "Can not finish a game that is not in progress"
+        	});
+		}
+		const gamePlayer1 = await gameService.findGamePlayerById(request.server.prisma, player1.playerId);
+		const gamePlayer2 = await gameService.findGamePlayerById(request.server.prisma, player2.playerId);
+		if (gameId === gamePlayer1?.gameId && gameId === gamePlayer2?.gameId) {
+			const player1Winner = player1.score >= player2.score;
+			const updatePlayer1 = await gameService.updatePlayer(request.server.prisma, player1, player1Winner);
+			if (!updatePlayer1) {
+				return reply.code(404).send({
+					message: "Player does not belong to the game"
+				});
+			}
+			const updatePlayer2 = await gameService.updatePlayer(request.server.prisma, player2, !player1Winner);
+			if (!updatePlayer2) {
+				return reply.code(404).send({
+					message: "Player does not belong to the game"
+				});
+			}
+			const finishedGame = await gameService.finishGame(request.server.prisma, game.id, status);
+			console.log(finishedGame);
+			return reply.code(200).send(finishedGame);
+		}
+		return reply.code(400).send({ message: "Player does not belong to the game"});
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to finish game"});
+	}
+}
+
 // =====================
 // Game Helpers
 // =====================
@@ -317,5 +364,6 @@ export const gameController = {
 	gameHistoryHandler,
 	getCurrentGameHandler,
 	removePlayerHandler,
-	deletePendingGameHandler
+	deletePendingGameHandler,
+	finishGameHandler
 };
