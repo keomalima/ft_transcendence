@@ -1,6 +1,13 @@
 import type { GameSession, PlayerConnection, GameConfig } from "./game.types.js";
 import { notifyFinishGame, notifyService } from "./game.ws.controller.js";
 
+function initBall(gameSession: GameSession): void {
+	gameSession.gameState.ball.x = 100;
+	gameSession.gameState.ball.y = 50;
+	gameSession.gameState.ball.velocityX = 0;
+	gameSession.gameState.ball.velocityY = 0;
+}
+
 function calculateGame(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
@@ -158,10 +165,7 @@ function calculateBall(gameSession: GameSession) {
 				notifyFinishGame(gameSession, gameSession.players.get(gameSession.gameState.paddleA.userId)!);
 			} else
 				notifyFinishGame(gameSession, gameSession.players.get(gameSession.gameState.paddleB.userId!)!);
-			gameSession.gameState.ball.x = 0;
-			gameSession.gameState.ball.y = 0;
-			gameSession.gameState.ball.velocityX = 0;
-			gameSession.gameState.ball.velocityY = 0;
+			initBall(gameSession);
 			return;
 		}
 		// console.log(`💥 BALL OUT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
@@ -193,10 +197,7 @@ function calculateBall(gameSession: GameSession) {
 					notifyFinishGame(gameSession, gameSession.players.get(gameSession.gameState.paddleA.userId)!);
 				} else
 					notifyFinishGame(gameSession, gameSession.players.get(gameSession.gameState.paddleB.userId!)!);
-				gameSession.gameState.ball.x = 0;
-				gameSession.gameState.ball.y = 0;
-				gameSession.gameState.ball.velocityX = 0;
-				gameSession.gameState.ball.velocityY = 0;
+				initBall(gameSession);
 				return;
 			}
 			return;
