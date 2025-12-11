@@ -240,20 +240,20 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 	// })
 
 	// // **** QUIT TOURNAMENT ****
-	// tournamentPlayerListComponent?.addEventListener('event-quit-game', async (e: Event) => {
-	// 	e.preventDefault();
-	// 	const customEvent = e as CustomEvent;
-	// 	const tournamentId = customEvent.detail;
-	// 	if (!tournamentId)
-	// 		return;
-	// 	try {
-	// 		await tournamentApi.quitTournament(tournamentId);
-	// 		cleanWaitingRoomWS();
-	// 		router.navigateTo('/tournament');
-	// 	} catch (error) {
-	// 		console.log(error);
-	// 	}
-	// })
+	tournamentPlayerListComponent?.addEventListener('event-quit-tournament', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const tournamentId = customEvent.detail;
+		if (!tournamentId)
+			return;
+		try {
+			await tournamentApi.quitTournament(tournamentId);
+			cleanWaitingRoomWS();
+			router.navigateTo('/tournament');
+		} catch (error) {
+			console.log(error);
+		}
+	})
 
 	// **** REMOVE PLAYER ****
 	tournamentPlayerListComponent?.addEventListener('event-remove-player', async (e: Event) => {

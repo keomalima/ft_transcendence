@@ -113,6 +113,15 @@ async function removePlayerFromTournament(prisma: PrismaClient, tournamentId: st
 	})
 }
 
+async function deletePendingTournament(prisma: PrismaClient, tournamentId: string) {
+	return prisma.tournament.delete({
+		where: {
+			id: tournamentId
+		}
+	})
+}
+
+
 // =====================
 // Export Service Object
 // =====================
@@ -126,5 +135,6 @@ export const tournamentService = {
 	findTournamentByToken,
 	generateToken,
 	joinUserToTournament,
-	removePlayerFromTournament
+	removePlayerFromTournament,
+	deletePendingTournament
 };

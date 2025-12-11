@@ -151,21 +151,3 @@ export async function gamePrivateRoutes(fastify: FastifyInstance) {
 		handler: gameController.deletePendingGameHandler
 	})
 }
-
-// PUT    /games/:id/finish           → terminer (scores, winner)
-// 	Payload :
-// 	scores
-// 	winners
-// 	Backend :
-// 	met game.state = FINISHED
-// 	met winners = true dans Game_Players
-// 	durée + stats
-// 	met a jour historique
-
-// DELETE /games/:id                  → annuler si WAITING et creator
-// 	Seulement si :
-// 	game.state === “WAITING”
-// 	user === creator
-// 	Dans la pratique :
-// 	Online matches : ok
-// 	Tournament matches : should NEVER be deletable

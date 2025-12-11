@@ -66,4 +66,13 @@ export const tournamentApi = {
 			throw buildApiError('remove player tournament game', error);
 		}
 	},
+
+	quitTournament: async (tournamentId: string): Promise<void> => {
+		try {
+			await httpCall.delete(`${BASE_URL}/${tournamentId}`);
+			console.log('🎮 quit / delete pending tournament sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('quit / delete pending tournament', error);
+		}
+	},
 };

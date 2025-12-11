@@ -81,4 +81,16 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen, 
 		handler: tournamentController.removePlayerHandler
 	})
+
+	fastify.delete('/:id', {
+		schema: {
+			params: z.object({id: z.string()}),
+			tags: ['Tournament'],
+			description: 'Delete a pending tournament or quit it if user is not the creator',
+			summary: 'Delete or quit pending tournament',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.deletePendingTournamentHandler
+	})
 }

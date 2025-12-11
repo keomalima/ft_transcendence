@@ -75,7 +75,7 @@ export class TournamentPlayerList extends HTMLElement {
 								focus-visible:outline-2 focus-visible:outline-offset-2'>
 							START
 						</button>
-						<button id='quit-game-button' class='w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-white text-black outline outline-1 outline-black hover:shadow-md hover:font-semibold'>
+						<button id='quit-tournament-button' class='w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-white text-black outline outline-1 outline-black hover:shadow-md hover:font-semibold'>
 							QUIT
 						</button>
 					</div>
@@ -175,10 +175,10 @@ export class TournamentPlayerList extends HTMLElement {
 		});
 
 		// **** START GAME ****
-		const quitBtn = this.querySelector('#quit-game-button') as HTMLButtonElement;
+		const quitBtn = this.querySelector('#quit-tournament-button') as HTMLButtonElement;
 		quitBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			this.dispatchEvent(new CustomEvent('event-quit-game', {
+			this.dispatchEvent(new CustomEvent('event-quit-tournament', {
 				detail: this._tournamentData?.id,
 				bubbles: true
 			}));
