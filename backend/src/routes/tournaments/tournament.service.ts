@@ -121,6 +121,14 @@ async function deletePendingTournament(prisma: PrismaClient, tournamentId: strin
 	})
 }
 
+async function startTournament(prisma: PrismaClient, tournamentId: string) {
+	return prisma.tournament.update({
+		where: { id: tournamentId },
+		data: {
+			status : "IN_PROGRESS"
+		}
+	})
+}
 
 // =====================
 // Export Service Object
@@ -136,5 +144,6 @@ export const tournamentService = {
 	generateToken,
 	joinUserToTournament,
 	removePlayerFromTournament,
-	deletePendingTournament
+	deletePendingTournament,
+	startTournament
 };

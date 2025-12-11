@@ -93,4 +93,17 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen, 
 		handler: tournamentController.deletePendingTournamentHandler
 	})
+
+	fastify.put('/:id/start', {
+		schema: {
+			params: z.object({id: z.string()}),
+			response: { 200: tournamentSchemas.response.startTournament },
+			tags: ['Tournament'],
+			description: 'Start an existing tournament',
+			summary: 'Start a tournament',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.startTournamentHandler
+	})
 }

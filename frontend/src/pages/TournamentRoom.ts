@@ -221,23 +221,23 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 
 	// // **** START TOURNAMENT ****
 	const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as any;
-	// tournamentPlayerListComponent?.addEventListener('event-start-game', async (e: Event) => {
-	// 	e.preventDefault();
-	// 	const customEvent = e as CustomEvent;
-	// 	const tournamentId = customEvent.detail;
-	// 	try {
-	// 		await tournamentApi.startTournament(tournamentId);
-	// 		cleanWaitingRoomWS();
-	// 		router.navigateTo(`/tournament-room/${tournamentId}`);
-	// 	} catch (error) {
-	// 		const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
-	// 		if (errorMsgStartGame) {
-	// 			errorMsgStartGame.className = 'mt-2 text-red-500'
-	// 			errorMsgStartGame.innerText = error as string;
-	// 		}
-	// 		console.log(error);
-	// 	}
-	// })
+	tournamentPlayerListComponent?.addEventListener('event-start-tournament', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const tournamentId = customEvent.detail;
+		try {
+			await tournamentApi.startTournament(tournamentId);
+			cleanWaitingRoomWS();
+			router.navigateTo(`/tournament/${tournamentId}`);
+		} catch (error) {
+			const errorMsgStartGame = document.querySelector('#error-start-tournament') as HTMLParagraphElement;
+			if (errorMsgStartGame) {
+				errorMsgStartGame.className = 'mt-2 text-red-500'
+				errorMsgStartGame.innerText = error as string;
+			}
+			console.log(error);
+		}
+	})
 
 	// // **** QUIT TOURNAMENT ****
 	tournamentPlayerListComponent?.addEventListener('event-quit-tournament', async (e: Event) => {

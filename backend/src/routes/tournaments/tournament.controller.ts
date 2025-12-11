@@ -161,7 +161,7 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
 		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId);
 		if (!tournament) {
 			return reply.code(404).send({
-				message: "Game not found or unauthorized"
+				message: "Tournament not found or unauthorized"
 			});
 		}
 		if (tournament.status !== "REGISTRATION"){
@@ -186,7 +186,7 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 		const tournament = await tournamentService.findTournamentById(request.server.prisma, tournamentId);
 		if (!tournament) {
 			return reply.code(404).send({
-				message: "Game not found or unauthorized"
+				message: "Tournament not found or unauthorized"
 			});
 		}
 		if (tournament.status !== 'REGISTRATION') {
@@ -211,7 +211,36 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 	}
 }
 
-
+async function startTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId)
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		if (tournament.status !== "REGISTRATION") {
+			return reply.code(409).send({
+				message: "Cannot start tournament, tournament has already started or finished"
+			});
+		}
+		// if (tournament.participants.length < tournament.numberPlayers) {
+		// 	return reply.code(409).send({
+		// 		message: "Tournament is not yet full"
+		// 	});
+		// }
+		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
+		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+			type: 'start_game',
+			message: `Start tournament!`
+		})
+		return response;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to start tournament"});
+	}
+}
 
 // =====================
 // Tournament Helpers
@@ -235,5 +264,6 @@ export const tournamentController = {
 	generateTokenHandler,
 	joinTournamentHandler,
 	removePlayerHandler,
-	deletePendingTournamentHandler
+	deletePendingTournamentHandler,
+	startTournamentHandler
 };
