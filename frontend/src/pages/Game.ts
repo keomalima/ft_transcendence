@@ -1,6 +1,6 @@
 import { gameApi } from "../api/gameApi.js";
 import { router } from "../main.js";
-import type { AppContext } from "../types.js";
+import type { AppContext, UserState } from "../types.js";
 import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_BLACK_CLASSES, BUTTON_CREAM_CLASSES } from "../styles/tailwindStyles.js";
 
@@ -33,9 +33,9 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		let check = await userIsAuthorized(currentUser.id!);
 		if (check !== null)
 			return check;
-		game();
 		setGameSockets(params['id'], currentUser.id!);
-		setupLaunchGameEventListeners();
+		gameActionListener();
+		setupGameEventListeners(currentUser);
 	}, 0);
 
 	return (/*html*/`
@@ -58,18 +58,18 @@ function renderGameContent(gameId: string) {
 			</div>
 			<div class='flex flex-row w-full px-12'>
 				<div class='flex-1 justify-items-center'>
-					<p id='right-player' class='font-[Inter] text-xl'>player 1</p>
-					<p id='right-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
+					<p id='left-player' class='font-[Inter] text-xl'>player 1</p>
+					<p id='left-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
 				</div>
 				<div class='flex-1 justify-items-center center'>
 					<p>vs</p>
 				</div>
 				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-xl'>player 2</p>
-					<p id='left-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
+					<p id='right-player' class='font-[Inter] text-xl'>player 2</p>
+					<p id='right-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
 				</div>
 			</div>
-			<div id="arena" class='w-full mx-auto aspect-[2/1] bg-black relative border border-2 border-black rounded-xl'>
+			<div id="arena" class='w-full mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl'>
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
@@ -80,6 +80,16 @@ function renderGameContent(gameId: string) {
 					<button id='quit-btn' class='${BUTTON_CREAM_CLASSES}'>give up</button>
 				</div>
 			</div>
+
+			<!-- Dialog for start message -->
+			<dialog id="start-dialog" class="bg-white focus:border-none focus:outline-none">
+				<div class="shadow-none p-12 min-w-[400px]">
+					<div class="flex flex-col items-center justify-center gap-6">
+						<p class="text-3xl font-[Calistoga] font-black text-black">Your game will start soon</p>
+						<p id='start-side' class="text-3xl font-[Calistoga] text-black"></p>
+					</div>
+				</div>
+			</dialog>
 
 			<!-- Dialog for countdown -->
 			<dialog id="countdown-dialog" class="bg-white-500 focus:border-none focus:outline-none">
@@ -96,7 +106,8 @@ function renderGameContent(gameId: string) {
 				<div class="shadow-2xl p-12 min-w-[400px]">
 					<div class="flex flex-col items-center justify-center gap-6">
 						<p class="text-3xl font-[Calistoga] font-bold text-gray-500 tracking-wide">Finish Game</p>
-						<p class="text-8xl font-[Calistoga] font-black text-black animate-pulse" id="winner">??</p>
+						<p class="text-5xl font-[Calistoga] font-black text-black" id="winner"></p>
+						<p class="text-2xl font-[Calistoga] font-black text-black" id="final-score"></p>
 					</div>
 				</div>
 			</dialog>
@@ -169,13 +180,7 @@ function getGameWidth(): number
 }
 
 
-function game() {
-
-	const mapKeys = {'ArrowUp': false, 'ArrowDown': false }
-
-	function isValidKey(key: string): key is keyof typeof mapKeys {
-		return key in mapKeys;
-	}
+function gameActionListener() {
 
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'ArrowUp') {
@@ -190,13 +195,44 @@ function game() {
 			gameConnection?.send({ type: 'input', action: 'stop' });
 		}
 	});
+}
 
+// ======== EVENT LISTENER ============
+function setupGameEventListeners(currentUser: UserState) {
+
+	// **** START GAME ****
+	document.addEventListener('event-start-game', (e: Event) => {
+		e.preventDefault();
+		console.log('event listener START');
+		const customEvent = e as CustomEvent;
+		const detail = customEvent.detail;
+		renderGameContent(detail.gameId);
+
+		const startDialog = document.querySelector('#start-dialog') as HTMLDialogElement;
+		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement;
+		playingSide.innerText = `You play on ${detail.position} side ${detail.position === 'left' ? '⬅️' : '➡️' }`;
+		startDialog.showModal();
+
+		let count = 3;
+		const interval = setInterval(() => {
+			count--;
+			if (count >= 0)
+				count--;
+			else {
+				startDialog.close();
+				clearInterval(interval);
+			}
+		}, 1000);
+
+		setupGameEventListeners(currentUser);
+	})
+
+	// **** UPDATE GAME ****
 	document.addEventListener('event-update-game', (e: Event) => {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		
-		// Query elements each time (they're created by renderGameContent)
 		const paddleLeft = document.getElementById('paddleLeft');
 		const paddleRight = document.getElementById('paddleRight');
 		const ball = document.getElementById('ball');
@@ -206,46 +242,39 @@ function game() {
 		const rightScore = document.getElementById('right-score') as HTMLParagraphElement;
 		
 		if (!paddleLeft || !paddleRight || !ball) return;
+
 		
 		paddleLeft.style.top = `${parseInt(data.left.paddleposition) * getGameHeight() / 100}px`;
 		paddleRight.style.top = `${parseInt(data.right.paddleposition) * getGameHeight() / 100}px`;
 		ball.style.left = `${parseInt(data.ballX) * getGameWidth() / 200}px`;
 		ball.style.top = `${parseInt(data.ballY) * getGameHeight() / 100}px`;
 		ball.style.transform = 'translate(-50%, -50%)';
-		leftPlayer.innerText = data.left.userid;
+		leftPlayer.innerText = data.left.userid === currentUser.id ? 'You' : data.left.userid;
 		leftScore.innerText = data.left.score;
-		rightPlayer.innerText = data.right.userid;
+		rightPlayer.innerText = data.right.userid === currentUser.id ? 'You' : data.right.userid;
 		rightScore.innerText = data.right.score;
 	})
-}
 
-// ======== EVENT LISTENER ============
-function setupLaunchGameEventListeners() {
-
-	// **** START GAME ****
-	document.addEventListener('event-start-game', (e: Event) => {
-		e.preventDefault();
-		console.log('event listener START');
-		const customEvent = e as CustomEvent;
-		const detail = customEvent.detail;
-		renderGameContent(detail.gameId);
-		setupLaunchGameEventListeners();
-	})
-
-	// **** START GAME ****
+	// **** WON GAME ****
 	document.addEventListener('event-won-game', (e: Event) => {
 		e.preventDefault();
-		console.log('event listener WON GAME');
+		console.log('🏆 WON GAME');
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
 
 		const wonGameDialog = document.querySelector('#won-game-dialog') as HTMLDialogElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;
+		const finalScore = document.querySelector('#final-score') as HTMLParagraphElement;
 
 		if (!wonGameDialog || !winner)
 			return;
 
-		winner.innerText = detail.winner;
+		const isWinner = detail.iswinner;
+		if (isWinner === true)
+			winner.innerText = `Congratulation you won the game !`;
+		else
+			winner.innerText = `Sorry, you've lost`;
+		finalScore.innerText = `My final score : ${detail.playerinfo.score}`;
 		wonGameDialog.showModal();
 	})
 
