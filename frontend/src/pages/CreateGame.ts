@@ -1,6 +1,5 @@
 import { AppContext, UserState } from "../types.js";
 import { router } from "../main.js";
-import { gameApi } from "../api/gameApi.js";
 
 // import HTML components
 import "../components/NavBar.js";

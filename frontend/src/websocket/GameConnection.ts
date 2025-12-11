@@ -54,7 +54,8 @@ export class GameConnection {
 				document.dispatchEvent(new CustomEvent('event-won-game', {
 					detail: {
 						iswinner: data.iswinner,
-						playerinfo: data.playerinfo
+						playerinfo: data.currentPlayer,
+						players: data.players
 					},
 					bubbles: true
 				}));

@@ -5,6 +5,7 @@ export class MatchHistory extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameHistory: GameHistory[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
+	private _isLoading: boolean = false;
 
 	constructor() {
 		super();
@@ -22,13 +23,18 @@ export class MatchHistory extends HTMLElement {
 	}
 
 	connectedCallback() {
-		if (this.isConnected && this._ctx && this._gameHistory)
+		if (this.isConnected && this._ctx && this._gameHistory && !this._isLoading)
 			this.loadAndRender();
 	}
 
 	private async loadAndRender() {
+		if (this._isLoading) return;
+		this._isLoading = true;
+		
 		this.render();
 		this.generateMatchHistory();
+		
+		this._isLoading = false;
 	}
 
 	private render() {

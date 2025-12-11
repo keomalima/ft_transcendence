@@ -1,6 +1,7 @@
 import { AppContext, UserState } from "../types.js";
 import { router } from "../main.js";
 import { friendshipApi } from "../api/friendshipApi.js";
+import { gameService } from "../services/GameService.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -9,7 +10,6 @@ import "../components/MatchHistory.js";
 import "../components/FriendRequests.js";
 import "../components/AddFriend.js";
 import "../components/JoinGamePopUp.js";
-import { gameApi } from "../api/gameApi.js";
 import type { GameHistory } from "../types.js";
 
 export function Dashboard(ctx: AppContext): string{
@@ -17,9 +17,9 @@ export function Dashboard(ctx: AppContext): string{
     const currentUser: UserState | null = ctx.userStore.get();
 
 	setTimeout( async () => {
-		const currentGame = await getCurrentGame();
+		const currentGame = await getCurrentGame(ctx);
 		renderDashboardContent(currentUser!, currentGame?.gameId!);
-		const gameHistory: GameHistory[] = await gameApi.getHistory();
+		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
 	}, 0);
@@ -104,9 +104,9 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 }
 
 // ======== GET CURRENT GAME ============
-async function getCurrentGame(): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
+async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
 	try {
-		const currentGame = await gameApi.getCurrentGame();
+		const currentGame = await gameService.getCurrentGame(ctx);
 		return currentGame;
 	} catch(error) {
 		console.log(error);
@@ -237,10 +237,10 @@ function setupDashboardEventListeners(ctx: AppContext) {
 	// **** JOIN A GAME ****
 	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
 		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
+		const gameToken = customEvent.detail;
 		try {
-			const result = await gameApi.joinGame(data);
-			router.navigateTo(`/game-room/${result.gameId}`);
+			const result = await gameService.joinGame(gameToken, ctx);
+			router.navigateTo(`/game-room/${result!.gameId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;
 			errorMsgJoinGame.className = 'mt-2 text-red-500'

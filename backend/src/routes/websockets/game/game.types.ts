@@ -33,4 +33,6 @@ export interface GameSession {
 	players: Map<string, PlayerConnection>; //userID - playerConnection
 	gameState: GameState;
 	gameConfig: GameConfig;
+	gameLoop: NodeJS.Timeout | null;
+	winnerNotified: boolean; // Flag to ensure notifyWonGame is called only once
 }

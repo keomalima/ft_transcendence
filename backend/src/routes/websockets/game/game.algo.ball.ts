@@ -41,7 +41,7 @@ async function service(gameSession: GameSession) {
 	ball.velocityX = (ball.velocityX / currentSpeed) * speed;
 	ball.velocityY = (ball.velocityY / currentSpeed) * speed;
 
-	// console.log(`🏓 service : velocityX=${ball.velocityX} | velocityY=${ball.velocityY}`);
+	console.log(`🏓 Service complete - Ball velocity: X=${ball.velocityX.toFixed(2)} | Y=${ball.velocityY.toFixed(2)}`);
 }
 
 function calculateWallCollision(ball: GameState['ball'], config: GameConfig) {
@@ -140,12 +140,17 @@ function setScore(gameSession: GameSession, playerObj: PlayerConnection, playerN
 
 function wonGame(gameSession: GameSession, config: GameConfig): boolean {
 	if (gameSession.gameState.score.playerA >= config.scoreToWin || gameSession.gameState.score.playerB >= config.scoreToWin) {
-		initBall(gameSession);
-		if (gameSession.gameState.score.playerA >= config.scoreToWin)
+		// Only notify if we haven't already
+		if (!gameSession.winnerNotified) {
+			// Set status to finished FIRST to stop the game loop immediately
+			gameSession.gameState.status = 'finished';
+			gameSession.winnerNotified = true;
+			
+			initBall(gameSession);
 			notifyWonGame(gameSession);
-		else
-			notifyWonGame(gameSession);
-		gameSession.gameState.status = 'finished';
+			console.log('🏆 Winner notified, game session marked as finished');
+		}
+		
 		return true;
 	}
 	return false;
