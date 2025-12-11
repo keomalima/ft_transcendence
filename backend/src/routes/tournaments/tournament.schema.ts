@@ -10,6 +10,10 @@ const createTournamentSchema = z.object({
 	scoreToWin: z.number().int().max(10).optional()
 });
 
+const removePlayerRequestSchema = z.object({
+	playerId: z.string()
+});
+
 // =====================
 // Response Schemas
 // =====================
@@ -53,6 +57,14 @@ const getCurrentTournamentSchema = z.object({
 	token: z.string().nullable()
 })
 
+const startTournamentResponseSchema = z.object({
+	id: z.string(),
+	createdBy: z.string(),
+	status: z.enum(TournamentStatus),
+	scoreToWin: z.number().int(),
+	totalRounds: z.number().int(),
+})
+
 const generateTournamentTokenResponseSchema = z.object({
 	id: z.string(),
 	createdBy: z.string(),
@@ -80,6 +92,7 @@ export const tournamentSchemas = {
   // Request schemas
   request: {
 	createTournament: createTournamentSchema,
+	removePlayer: removePlayerRequestSchema,
   },
   
   // Response schemas
@@ -88,6 +101,7 @@ export const tournamentSchemas = {
 	getTournament: getTournamentResponseSchema,
 	currentTournament: getCurrentTournamentSchema,
 	generateToken: generateTournamentTokenResponseSchema,
-	joinTournament: joinTournamentResponseSchema
+	joinTournament: joinTournamentResponseSchema,
+	startTournament: startTournamentResponseSchema
   },
 };

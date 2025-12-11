@@ -66,16 +66,16 @@ export class TournamentPlayerList extends HTMLElement {
 					<h1 class='mb-5'>Players connected ${currentPlayers}/${maxPlayers}</h1>
 					<div id='player-cards' class='flex-1 overflow-auto'></div>
 					<div class='flex flex-1 flex-col mt-5 justify-center place-items-center gap-2'>
-						<button id='start-game-button'
+						<button id='start-tournament-button'
 							${this._isCreator === false ? "hidden" : ""} 
-							${!isFull ? "hidden" : ""} 
+							${isFull ? "hidden" : ""} 
 							class=' w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-black text-white outline outline-1 outline-black hover:shadow-md
 								disable:opacity-75
 								enabled:hover:font-semibold
 								focus-visible:outline-2 focus-visible:outline-offset-2'>
 							START
 						</button>
-						<button id='quit-game-button' class='w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-white text-black outline outline-1 outline-black hover:shadow-md hover:font-semibold'>
+						<button id='quit-tournament-button' class='w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-white text-black outline outline-1 outline-black hover:shadow-md hover:font-semibold'>
 							QUIT
 						</button>
 					</div>
@@ -118,7 +118,7 @@ export class TournamentPlayerList extends HTMLElement {
 
 		const name = document.createElement('p');
 		name.innerText = `${participant.user?.displayName}`;
-		if (this._ctx?.userStore.get()?.id === participant.userId) {
+		if (this._ctx?.userStore.get()?.id === participant.user.id) {
 			name.className = 'text-sm font-[Inter] font-semibold'
 		} else {
 			name.className = 'text-sm font-[Inter]'
@@ -134,8 +134,9 @@ export class TournamentPlayerList extends HTMLElement {
 		const removeBtn = document.createElement('button');
 		removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
 		removeBtn.innerText = 'remove';
-		removeBtn.id = `remove-${participant.userId}`;
-		if (this._isCreator === true && this._ctx?.userStore.get()?.id != participant.userId) {
+		removeBtn.id = `remove-${participant.user.id}`;
+		console.log('Participant ', participant);
+		if (this._isCreator === true && this._ctx?.userStore.get()?.id != participant.user.id) {
 			actions.appendChild(removeBtn);
 		}
 		// ===========================
@@ -150,7 +151,7 @@ export class TournamentPlayerList extends HTMLElement {
 			this.dispatchEvent(new CustomEvent('event-remove-player', {
 				detail: {
 					tournamentId: this._tournamentData?.id as string,
-					playerId: participant.userId as string
+					playerId: participant.user.id as string
 				},
 				bubbles: true
 			}));
@@ -164,20 +165,20 @@ export class TournamentPlayerList extends HTMLElement {
 	private attachEventListener() {
 
 		// **** START GAME ****
-		const startBtn = this.querySelector('#start-game-button') as HTMLButtonElement;
+		const startBtn = this.querySelector('#start-tournament-button') as HTMLButtonElement;
 		startBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			this.dispatchEvent(new CustomEvent('event-start-game', {
+			this.dispatchEvent(new CustomEvent('event-start-tournament', {
 				detail: this._tournamentData?.id,
 				bubbles: true
 			}));
 		});
 
 		// **** START GAME ****
-		const quitBtn = this.querySelector('#quit-game-button') as HTMLButtonElement;
+		const quitBtn = this.querySelector('#quit-tournament-button') as HTMLButtonElement;
 		quitBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			this.dispatchEvent(new CustomEvent('event-quit-game', {
+			this.dispatchEvent(new CustomEvent('event-quit-tournament', {
 				detail: this._tournamentData?.id,
 				bubbles: true
 			}));

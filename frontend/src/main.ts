@@ -14,8 +14,9 @@ import { GameRoom } from "./pages/GameRoom.js";
 import { Game } from "./pages/Game.js";
 import { CreateTournament } from './pages/CreateTournament.js'
 import { TournamentRoom } from "./pages/TournamentRoom.js";
-import { Tournament } from "./pages/Tournament.js";
+import { TournamentPage } from "./pages/TournamentPage.js";
 import { createGameStore } from "./store/gameStore.js";
+import { Tournament } from "./pages/Tournament.js";
 
 // Create and init user store
 const userStore = createUserStore(null);
@@ -54,7 +55,8 @@ async function initializeApp() {
 		.add("/game/:id", Game)
 		.add("/create-tournament", CreateTournament)
 		.add("/tournament-room/:id", TournamentRoom)
-		.add("/tournament", Tournament)
+		.add("/tournament", TournamentPage)
+		.add("/tournament/:id", Tournament)
 		.start();
 
 	// This listener handles multi-tab logout. When one tab logs out

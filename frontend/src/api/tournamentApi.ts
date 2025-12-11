@@ -18,6 +18,16 @@ export const tournamentApi = {
 		}
 	},
 
+	startTournament: async (tournamentId: string): Promise<Partial<TournamentData>> => {
+		try {
+			const response = await httpCall.put<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/start`);
+			console.log('🎮 start tournament sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('start tournament', error);
+		}
+	},
+
 	getTournament: async (tournamentId: string): Promise<TournamentData> => {
 		try {
 			const response = await httpCall.get<TournamentData>(`${BASE_URL}/${tournamentId}`);
@@ -55,6 +65,24 @@ export const tournamentApi = {
 			return response.data;
 		} catch (error) {
 			throw buildApiError('join tournament', error);
+		}
+	},
+
+	removePlayer: async (tournamentId: string, playerId: string): Promise<void> => {
+		try {
+			await httpCall.put(`${BASE_URL}/${tournamentId}/remove`, { playerId });
+			console.log('🎮 remove player from tournament sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('remove player tournament game', error);
+		}
+	},
+
+	quitTournament: async (tournamentId: string): Promise<void> => {
+		try {
+			await httpCall.delete(`${BASE_URL}/${tournamentId}`);
+			console.log('🎮 quit / delete pending tournament sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('quit / delete pending tournament', error);
 		}
 	},
 };

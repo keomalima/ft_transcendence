@@ -102,6 +102,34 @@ async function joinUserToTournament(prisma: PrismaClient, tournamentId: string, 
 	return prisma.tournamentPlayer.create({ data: { tournamentId, userId}})
 }
 
+async function removePlayerFromTournament(prisma: PrismaClient, tournamentId: string, userId: string) {
+	return prisma.tournamentPlayer.delete({
+		where: {
+			tournamentId_userId: {
+				tournamentId,
+				userId,
+			},
+		}
+	})
+}
+
+async function deletePendingTournament(prisma: PrismaClient, tournamentId: string) {
+	return prisma.tournament.delete({
+		where: {
+			id: tournamentId
+		}
+	})
+}
+
+async function startTournament(prisma: PrismaClient, tournamentId: string) {
+	return prisma.tournament.update({
+		where: { id: tournamentId },
+		data: {
+			status : "IN_PROGRESS"
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -114,5 +142,8 @@ export const tournamentService = {
 	findTournamentByUserId,
 	findTournamentByToken,
 	generateToken,
-	joinUserToTournament
+	joinUserToTournament,
+	removePlayerFromTournament,
+	deletePendingTournament,
+	startTournament
 };

@@ -152,6 +152,95 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 	}
 }
 
+async function removePlayerHandler (request: FastifyRequest<{ Params: { id: string}, Body: {playerId: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const playerId = request.body.playerId;
+
+		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId);
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		if (tournament.status !== "REGISTRATION"){
+			return reply.code(400).send({
+				message: "Can not remove a player"
+			});
+		}
+
+		WaintingRoomWsController.notifyPlayerRemoved(tournamentId, playerId);
+
+		reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, playerId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to remove player from tournament"});
+	}
+}
+
+async function deletePendingTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		const tournament = await tournamentService.findTournamentById(request.server.prisma, tournamentId);
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		if (tournament.status !== 'REGISTRATION') {
+			return reply.code(400).send({
+				message: "Can not delete tournament"
+			});
+		}
+		if (tournament.createdBy === userId) {
+			console.log('🔥 notify closed tournament (BY CREATOR)');
+			WaintingRoomWsController.notifyGameClosed(tournamentId, userId);
+			return reply.code(204).send(await tournamentService.deletePendingTournament(request.server.prisma, tournamentId));
+		}
+
+		console.log('🔥 notify closed tournament (BY PLAYER)');
+		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+			type: 'room_update',
+			message: `Need to update the tournament - QUIT!`,
+		});
+		return reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, userId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to delete tournament"});
+	}
+}
+
+async function startTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId)
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		if (tournament.status !== "REGISTRATION") {
+			return reply.code(409).send({
+				message: "Cannot start tournament, tournament has already started or finished"
+			});
+		}
+		// if (tournament.participants.length < tournament.numberPlayers) {
+		// 	return reply.code(409).send({
+		// 		message: "Tournament is not yet full"
+		// 	});
+		// }
+		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
+		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+			type: 'start_game',
+			message: `Start tournament!`
+		})
+		return response;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to start tournament"});
+	}
+}
 
 // =====================
 // Tournament Helpers
@@ -173,5 +262,8 @@ export const tournamentController = {
 	getTournamentHandler,
 	getCurrentTournamentHandler,
 	generateTokenHandler,
-	joinTournamentHandler
+	joinTournamentHandler,
+	removePlayerHandler,
+	deletePendingTournamentHandler,
+	startTournamentHandler
 };
