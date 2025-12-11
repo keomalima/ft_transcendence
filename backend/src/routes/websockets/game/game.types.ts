@@ -3,7 +3,7 @@ export interface GameState {
 	paddleB: {y: number, userId: string | undefined, side: 'right' | 'left'};
 	ball: {x: number, y: number, velocityX: number, velocityY: number};
 	score: {playerA: number, playerB: number};
-	status: 'waiting' | 'playing' | 'finished';
+	status: 'waiting' | 'playing' | 'finished' | 'abandoned';
 	nextservice: 'playerA' | 'playerB';
 }
 

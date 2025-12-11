@@ -25,10 +25,10 @@ export class GameConnection {
 			const data = JSON.parse(event.data);
 			if (data.type == 'start-game') {
 				console.log('🚀 game starts');
-				const gameId = data.gameId;
 				document.dispatchEvent(new CustomEvent('event-start-game', {
 					detail: {
-						gameId: gameId
+						gameId: data.gameId,
+						position: data.position
 					},
 					bubbles: true
 				}));
@@ -50,15 +50,14 @@ export class GameConnection {
 					},
 					bubbles: true
 				}));
-			} if (data.type === 'finish-game') {
-				if (data.message === 'win') {
-					document.dispatchEvent(new CustomEvent('event-won-game', {
-						detail: {
-							player: data.player
-						},
-						bubbles: true
-					}));
-				}
+			} if (data.type === 'won-game') {
+				document.dispatchEvent(new CustomEvent('event-won-game', {
+					detail: {
+						iswinner: data.iswinner,
+						playerinfo: data.playerinfo
+					},
+					bubbles: true
+				}));
 				
 			}
 		}
