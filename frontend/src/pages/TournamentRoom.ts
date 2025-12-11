@@ -31,7 +31,6 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 		renderTournamentRoomContent(tournamentData);
 		passContext(ctx, tournamentData, tournamentData.isCreator);
 
-		console.log(tournamentData)
 		setTournamentRoomWebSockets(currentUser!, tournamentData);
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0)
@@ -221,7 +220,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 	});
 
 	// // **** START TOURNAMENT ****
-	// const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as any;
+	const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as any;
 	// tournamentPlayerListComponent?.addEventListener('event-start-game', async (e: Event) => {
 	// 	e.preventDefault();
 	// 	const customEvent = e as CustomEvent;
@@ -256,23 +255,23 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 	// 	}
 	// })
 
-	// // **** REMOVE PLAYER ****
-	// tournamentPlayerListComponent?.addEventListener('event-remove-player', async (e: Event) => {
-	// 	e.preventDefault();
-	// 	const customEvent = e as CustomEvent;
-	// 	const tournamentId = customEvent.detail.tournamentId;
-	// 	const playerId = customEvent.detail.playerId;
+	// **** REMOVE PLAYER ****
+	tournamentPlayerListComponent?.addEventListener('event-remove-player', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const tournamentId = customEvent.detail.tournamentId;
+		const playerId = customEvent.detail.playerId;
 
-	// 	console.log('Removing player with ID:', playerId);
-	// 	if (!tournamentId || !playerId)
-	// 		return;
-	// 	try {
-	// 		await tournamentApi.removePlayer(tournamentId, playerId);
-	// 		const tournamentData = await getTournamentData(tournamentId);
-	// 		if (tournamentData)
-	// 			updatePlayerList(tournamentData);
-	// 	} catch (error) {
-	// 		console.log(error);
-	// 	}
-	// })
+		console.log('Removing player with ID:', playerId);
+		if (!tournamentId || !playerId)
+			return;
+		try {
+			await tournamentApi.removePlayer(tournamentId, playerId);
+			const tournamentData = await getTournamentData(tournamentId);
+			if (tournamentData)
+				updatePlayerList(tournamentData);
+		} catch (error) {
+			console.log(error);
+		}
+	})
 }

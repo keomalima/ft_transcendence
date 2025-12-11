@@ -68,4 +68,17 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen,
 		handler: tournamentController.getTournamentHandler
 	})
+
+	fastify.put('/:id/remove', {
+		schema: {
+			params: z.object({id: z.string()}),
+			body: tournamentSchemas.request.removePlayer, 
+			tags: ['Tournament'],
+			description: 'Remove a player from a pending tournament',
+			summary: 'Remove player',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.removePlayerHandler
+	})
 }

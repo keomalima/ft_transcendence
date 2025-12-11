@@ -152,6 +152,32 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 	}
 }
 
+async function removePlayerHandler (request: FastifyRequest<{ Params: { id: string}, Body: {playerId: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const playerId = request.body.playerId;
+
+		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId);
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Game not found or unauthorized"
+			});
+		}
+		if (tournament.status !== "REGISTRATION"){
+			return reply.code(400).send({
+				message: "Can not remove a player"
+			});
+		}
+
+		WaintingRoomWsController.notifyPlayerRemoved(tournamentId, playerId);
+
+		reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, playerId));
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to remove player from tournament"});
+	}
+}
+
 
 // =====================
 // Tournament Helpers
@@ -173,5 +199,6 @@ export const tournamentController = {
 	getTournamentHandler,
 	getCurrentTournamentHandler,
 	generateTokenHandler,
-	joinTournamentHandler
+	joinTournamentHandler,
+	removePlayerHandler
 };

@@ -57,4 +57,13 @@ export const tournamentApi = {
 			throw buildApiError('join tournament', error);
 		}
 	},
+
+	removePlayer: async (tournamentId: string, playerId: string): Promise<void> => {
+		try {
+			await httpCall.put(`${BASE_URL}/${tournamentId}/remove`, { playerId });
+			console.log('🎮 remove player from tournament sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('remove player tournament game', error);
+		}
+	},
 };

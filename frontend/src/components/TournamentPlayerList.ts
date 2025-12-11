@@ -118,7 +118,7 @@ export class TournamentPlayerList extends HTMLElement {
 
 		const name = document.createElement('p');
 		name.innerText = `${participant.user?.displayName}`;
-		if (this._ctx?.userStore.get()?.id === participant.userId) {
+		if (this._ctx?.userStore.get()?.id === participant.user.id) {
 			name.className = 'text-sm font-[Inter] font-semibold'
 		} else {
 			name.className = 'text-sm font-[Inter]'
@@ -134,8 +134,9 @@ export class TournamentPlayerList extends HTMLElement {
 		const removeBtn = document.createElement('button');
 		removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
 		removeBtn.innerText = 'remove';
-		removeBtn.id = `remove-${participant.userId}`;
-		if (this._isCreator === true && this._ctx?.userStore.get()?.id != participant.userId) {
+		removeBtn.id = `remove-${participant.user.id}`;
+		console.log('Participant ', participant);
+		if (this._isCreator === true && this._ctx?.userStore.get()?.id != participant.user.id) {
 			actions.appendChild(removeBtn);
 		}
 		// ===========================
@@ -150,7 +151,7 @@ export class TournamentPlayerList extends HTMLElement {
 			this.dispatchEvent(new CustomEvent('event-remove-player', {
 				detail: {
 					tournamentId: this._tournamentData?.id as string,
-					playerId: participant.userId as string
+					playerId: participant.user.id as string
 				},
 				bubbles: true
 			}));

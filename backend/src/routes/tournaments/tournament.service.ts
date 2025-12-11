@@ -102,6 +102,17 @@ async function joinUserToTournament(prisma: PrismaClient, tournamentId: string, 
 	return prisma.tournamentPlayer.create({ data: { tournamentId, userId}})
 }
 
+async function removePlayerFromTournament(prisma: PrismaClient, tournamentId: string, userId: string) {
+	return prisma.tournamentPlayer.delete({
+		where: {
+			tournamentId_userId: {
+				tournamentId,
+				userId,
+			},
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -114,5 +125,6 @@ export const tournamentService = {
 	findTournamentByUserId,
 	findTournamentByToken,
 	generateToken,
-	joinUserToTournament
+	joinUserToTournament,
+	removePlayerFromTournament
 };

@@ -10,6 +10,10 @@ const createTournamentSchema = z.object({
 	scoreToWin: z.number().int().max(10).optional()
 });
 
+const removePlayerRequestSchema = z.object({
+	playerId: z.string()
+});
+
 // =====================
 // Response Schemas
 // =====================
@@ -80,6 +84,7 @@ export const tournamentSchemas = {
   // Request schemas
   request: {
 	createTournament: createTournamentSchema,
+	removePlayer: removePlayerRequestSchema,
   },
   
   // Response schemas
