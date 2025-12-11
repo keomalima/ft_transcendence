@@ -118,7 +118,7 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			paddlespeed: 1,
 			ballspeed: 0.8,
 			ballsize: 5,
-			scoreToWin: 2
+			scoreToWin: 5
 		}
 	};
 
