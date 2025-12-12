@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { userController } from "../user/user.controller.js";
 import { z } from "zod";
-import { WaintingRoomWsController } from "./waitingroom.ws.controller.js";
+import { WaintingRoomWsController } from "./gameroom/waitingroom.ws.controller.js";
 import { GameWsController } from "./game/game.ws.controller.js";
 import { ClientRequest, get, Server } from "http";
 import { Http2ServerRequest } from "http2";

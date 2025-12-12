@@ -59,7 +59,22 @@ export class GameConnection {
 					},
 					bubbles: true
 				}));
-				
+			} if (data.type === 'abandoned-game') {
+				document.dispatchEvent(new CustomEvent('event-abandoned-game', {
+					detail: {
+						iswinner: data.iswinner,
+						playerinfo: data.currentPlayer,
+						players: data.players
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'pause') {
+				document.dispatchEvent(new CustomEvent('event-pause-game', {
+					detail: {
+						status: data.status
+					},
+					bubbles: true
+				}));
 			}
 		}
 	}

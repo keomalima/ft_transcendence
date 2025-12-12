@@ -1,4 +1,3 @@
-import { gameSchemas } from "../../game/game.schema.js";
 import { sleep, getRandom } from "./game.algo.utils.js";
 import type { GameSession, GameConfig, GameState, PlayerConnection } from "./game.types.js";
 import { notifyWonGame, notifyService } from "./game.ws.controller.js";

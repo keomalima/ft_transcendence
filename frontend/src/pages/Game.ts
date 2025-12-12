@@ -1,7 +1,7 @@
 import { router } from "../main.js";
 import type { AppContext, GameData, UserState } from "../types.js";
 import { GameConnection } from "../websocket/GameConnection.js";
-import { BUTTON_BLACK_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
+import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
 import { FinishGameDto } from "../api/gameApi.js";
 
@@ -33,14 +33,28 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 
 	setTimeout(async () => {
 		let currentGame = await gameService.getGame(params['id'], ctx);
-		// renderGameContent(params['id']);
+		if (!currentGame) {
+			setTimeout(() => router.navigateTo('/'), 0);
+			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+		}
 		let check = await userIsAuthorized(currentUser.id!, ctx);
 		if (check !== null)
 			return check;
+		
+		// 1. Set game sockets
 		setGameSockets(params['id'], currentUser.id!);
+		
+		// 2. Start listener for action up and down arrows
 		gameActionListener();
-		startGame(currentUser, currentGame!, ctx);
+		
+		// 3. Render the initial game
+		renderGameContent(params['id'], currentGame!);
+		
+		// 4. Set all the event listeners
 		setupGameEventListeners(currentUser, currentGame!, params['id'], ctx);
+		
+		// 5. Start game (show the start overlays)
+		startGame(currentUser, currentGame!, ctx);
 	}, 0);
 
 	return (/*html*/`
@@ -85,7 +99,8 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 			</div>
 			<div class="text-center">
 				<div class="mt-10 flex items-center justify-center gap-x-6">
-					<button id='quit-btn' class='${BUTTON_CREAM_CLASSES}'>give up</button>
+					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES}'>pause</button>
+					<button id='quit-btn' type='click' class='${BUTTON_CREAM_CLASSES}'>give up</button>
 				</div>
 			</div>
 
@@ -109,6 +124,26 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				</div>
 			</div>
 
+			<!-- Player set pause overlay -->
+			<div id="player-set-pause-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+				<div class="bg-white rounded-lg shadow-2xl p-12 min-w-[400px]">
+					<div class="flex flex-col items-center justify-center gap-6">
+						<p class="text-3xl font-[Calistoga] font-bold text-gray-500 tracking-wide">Pause</p>
+						<button id='stop-pause-btn' type='click' class='${BUTTON_WHITE_CLASSES}'>Go!</button>
+					</div>
+				</div>
+			</div>
+
+
+			<!-- Opponent set pause overlay -->
+			<div id="opponent-set-pause-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+				<div class="bg-white rounded-lg shadow-2xl p-12 min-w-[400px]">
+					<div class="flex flex-col items-center justify-center gap-6">
+						<p class="text-3xl font-[Calistoga] font-bold text-gray-500 tracking-wide">Pause</p>
+						<p class="text-xl font-[Calistoga] font-bold text-black">Waiting for your opponent</p>
+					</div>
+				</div>
+			</div>
 
 			<!-- Won game overlay -->
 			<div id="won-game-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -158,7 +193,6 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 	return null;
 }
 
-
 // ======== SET WEBSOCKET CONNECTION ============
 async function setGameSockets(gameId: string, userId: string) {
 
@@ -178,19 +212,6 @@ export function cleanGameWS() {
 }
 
 // ======== GAME ACTION ============
-function getGameHeight(): number
-{
-	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientHeight);
-}
-
-function getGameWidth(): number
-{
-	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientWidth);
-}
-
-
 function gameActionListener() {
 
 	document.addEventListener('keydown', (e) => {
@@ -208,6 +229,7 @@ function gameActionListener() {
 	});
 }
 
+// ======== START ACTION ============
 function startGame(currentUser: UserState, currentGame: GameData, ctx: AppContext) {
 	// **** START GAME ****
 	document.addEventListener('event-start-game', (e: Event) => {
@@ -215,7 +237,6 @@ function startGame(currentUser: UserState, currentGame: GameData, ctx: AppContex
 		console.log('event listener START');
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
-		renderGameContent(detail.gameId, currentGame);
 
 		const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement;
 		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement;
@@ -252,8 +273,6 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		opponentDisplayName = currentGame.gameUsers[0].user?.displayName;
 	}
 
-
-
 	// **** UPDATE GAME ****
 	document.addEventListener('event-update-game', (e: Event) => {
 		e.preventDefault();
@@ -282,6 +301,48 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		rightScore.innerText = data.right.score;
 	})
 
+	// **** QUIT GAME ****
+	const quitBtn = document.getElementById('quit-btn');
+	quitBtn?.addEventListener('click', (e) => {
+		e.preventDefault();
+
+		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
+		if (!quitDialog)
+			return;
+
+		quitDialog.showModal();
+		const cancelBtn = document.querySelector('#cancel-quit-btn') as HTMLButtonElement;
+		const confirmBtn = document.querySelector('#confirm-quit-btn') as HTMLButtonElement;
+
+		// Handle cancel
+		const handleCancel = () => {
+			quitDialog.close();
+			cancelBtn?.removeEventListener('click', handleCancel);
+			confirmBtn?.removeEventListener('click', handleConfirm);
+		};
+		
+		// Handle confirm
+		const handleConfirm = () => {
+			quitDialog.close();
+			cancelBtn?.removeEventListener('click', handleCancel);
+			confirmBtn?.removeEventListener('click', handleConfirm);
+			gameConnection?.send({ type: 'quit', looser: currentUser.id});
+			cleanGameWS();
+			// router.navigateTo('/home');
+		};
+
+		// Attach event listeners
+		cancelBtn?.addEventListener('click', handleCancel);
+		confirmBtn?.addEventListener('click', handleConfirm);
+		
+		// Close on backdrop click
+		quitDialog.addEventListener('click', (e) => {
+			if (e.target === quitDialog) {
+				handleCancel();
+			}
+		});
+	});
+
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
 		e.preventDefault();
@@ -304,7 +365,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		}
 		
 		// Only the game creator should finish the game to avoid race condition
-		if (currentGame.isCreator && currentGame.status !== 'COMPLETED') {
+		if (currentGame.isCreator && currentGame.status !== 'ABANDONED' || currentGame.status !== 'COMPLETED') {	//not sure abut this condition
 			try {
 				// Build game players data from currentGame.gameUsers
 				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
@@ -365,47 +426,82 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 
 	}, { once: true }); // Game only ends once
 
-	// **** QUIT GAME ****
-	const quitBtn = document.getElementById('quit-btn');
-	quitBtn?.addEventListener('click', (e) => {
+	// **** ADANDONNED GAME ****
+	document.addEventListener('event-abandoned-game', async (e: Event) => {
 		e.preventDefault();
+		console.log('🏆 ABANDONED GAME');
+		
+		// Prevent duplicate calls using a flag - CHECK AND SET IMMEDIATELY
+		if (isFinishingGame) {
+			console.log('⏭️ Already finishing game, skipping...');
+			return;
+		}
+		isFinishingGame = true;
+		
+		const customEvent = e as CustomEvent;
+		const detail = customEvent.detail;
 
-		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
-		if (!quitDialog)
+		const currentGame = await gameService.getGame(gameId, ctx);
+		if (!currentGame) {
+			router.navigateTo('/home');
+			return;
+		}
+		
+		// Only the game creator should finish the game to avoid race condition
+		if (currentGame.isCreator && currentGame.status !== 'ABANDONED' || currentGame.status !== 'COMPLETED') { 	//not sure abut this condition
+			try {
+				// Build game players data from currentGame.gameUsers
+				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
+					console.error('❌ Missing game users data');
+					router.navigateTo('/home');
+					return;
+				}
+
+				const data: FinishGameDto = {
+					status: 'ABANDONED',
+					gamePlayers: [
+						{
+							playerId: currentGame.gameUsers[0].id!,
+							score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+						},
+						{
+							playerId: currentGame.gameUsers[1].id!,
+							score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+						}
+					]
+				};
+				console.log('🎮 Creator finishing game...');
+				await gameService.finishGame(currentGame.id!, data, ctx);
+				console.log('✅ Game finished successfully');
+			} catch (error) {
+				console.error('❌ Error finishing game:', error);
+			}
+		} else {
+			console.log('👀 Non-creator or game already finished, skipping finishGame API call');
+		}
+
+		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
+		const winner = document.querySelector('#winner') as HTMLParagraphElement;
+		const finalScore = document.querySelector('#final-score') as HTMLParagraphElement;
+		const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
+
+		if (!wonGameOverlay || !winner)
 			return;
 
-		quitDialog.showModal();
-		const cancelBtn = document.querySelector('#cancel-quit-btn') as HTMLButtonElement;
-		const confirmBtn = document.querySelector('#confirm-quit-btn') as HTMLButtonElement;
-
-		// Handle cancel
-		const handleCancel = () => {
-			quitDialog.close();
-			cancelBtn?.removeEventListener('click', handleCancel);
-			confirmBtn?.removeEventListener('click', handleConfirm);
-		};
+		const isWinner = detail.iswinner;
+		if (isWinner === true)
+			winner.innerText = `Your opponent gave up`;
+		else
+			winner.innerText = `Game over`;
+		finalScore.innerText = `Your final score : ${detail.playerinfo.score}`;
+		wonGameOverlay.classList.remove('hidden');
 		
-		// Handle confirm
-		const handleConfirm = () => {
-			quitDialog.close();
-			cancelBtn?.removeEventListener('click', handleCancel);
-			confirmBtn?.removeEventListener('click', handleConfirm);
-
+		backHomeBtn?.addEventListener('click', async () => {
 			cleanGameWS();
 			router.navigateTo('/home');
-		};
+		}, { once: true });
 
-		// Attach event listeners
-		cancelBtn?.addEventListener('click', handleCancel);
-		confirmBtn?.addEventListener('click', handleConfirm);
-		
-		// Close on backdrop click
-		quitDialog.addEventListener('click', (e) => {
-			if (e.target === quitDialog) {
-				handleCancel();
-			}
-		});
-	});
+	}, { once: true }); // Game only ends once
 
 	// **** COUNTDOWN ****
 	document.addEventListener('event-service-countdown', (e: Event) => {
@@ -416,12 +512,13 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		const countdownOverlay = document.querySelector('#countdown-overlay') as HTMLDivElement;
 		const countdownNumber = document.querySelector('#countdown-number') as HTMLParagraphElement;
 		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
+		const pauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
 
-		if (!countdownOverlay || !countdownNumber || !quitDialog)
+		if (!countdownOverlay || !countdownNumber || !quitDialog || !pauseOverlay)
 			return;
 
 		// Don't show countdown if quit dialog is open
-		if (quitDialog?.open) {
+		if (quitDialog?.open || !pauseOverlay.classList.contains('hidden')) {
 			return;
 		}
 
@@ -442,6 +539,54 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 				clearInterval(interval);
 			}
 		}, 1000);
-		
 	})
+
+	// **** CURRENT USER SET PAUSE ****
+	const pauseBtn = document.querySelector('#pause-btn') as HTMLButtonElement;
+	pauseBtn?.addEventListener('click', (e: Event) => {
+		e.preventDefault();
+		
+		const stopPauseBtn = document.querySelector('#stop-pause-btn') as HTMLButtonElement;
+		const playerPauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
+
+		playerPauseOverlay?.classList.remove('hidden');
+		gameConnection?.send({ type: 'pause', action: 'stop'});
+
+		stopPauseBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			playerPauseOverlay?.classList.add('hidden');
+			gameConnection?.send({ type: 'pause', action: 'start'});
+		});
+	});
+
+	// **** GAME PAUSED BY OPPONENT ****
+	document.addEventListener('event-pause-game', (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+
+		const opponentPauseOverlay = document.querySelector('#opponent-set-pause-overlay') as HTMLDivElement;
+
+		if (!opponentPauseOverlay)
+			return;
+
+		if (data.status === true) {
+			opponentPauseOverlay.classList.remove('hidden');
+		} if (data.status === false) {
+			opponentPauseOverlay.classList.add('hidden');
+		}
+	})
+}
+
+// ======== UTILS ============
+function getGameHeight(): number
+{
+	const gameArea = document.getElementById("arena")
+	return (gameArea!.clientHeight);
+}
+
+function getGameWidth(): number
+{
+	const gameArea = document.getElementById("arena")
+	return (gameArea!.clientWidth);
 }

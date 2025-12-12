@@ -4,6 +4,7 @@ import type { GameSession, PlayerConnection } from './game.types.js';
 import { gameAlgo } from './game.algo.js';
 import { ballAlgo } from './game.algo.ball.js';
 import { sleep } from './game.algo.utils.js';
+import { gameService } from '../../game/game.service.js';
 
 // =====================
 // Websocket Handlers for Game
@@ -41,6 +42,18 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 				player!.input.up = false;
 				player!.input.down = false;
 			}
+		} if (message.type === 'pause') {
+			if (message.action === 'stop') {
+				gameSession.isPaused = true;
+				notifyPause(gameSession, socket, true);
+			}
+			if (message.action === 'start') {
+				gameSession.isPaused = false;
+				notifyPause(gameSession, socket, false);
+			}
+		} if (message.type === 'quit') {
+			clearInterval(gameSession.gameLoop);
+			notifyAbandonnedGame(gameSession, message.looser);
 		}
 	});
 
@@ -127,10 +140,11 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			paddlespeed: 1,
 			ballspeed: 1,
 			ballsize: 5,
-			scoreToWin: 2
+			scoreToWin: 11
 		},
 		gameLoop: null,
-		winnerNotified: false
+		winnerNotified: false,
+		isPaused: false
 	};
 
 	const firstPlayer: PlayerConnection = {
@@ -195,6 +209,22 @@ export function notifyService(gameSession: GameSession): void {
 	})
 }
 
+export function notifyPause(gameSession: GameSession, socket: WebSocket, status: boolean): void {
+	gameSession.players.forEach((player) => {
+		if (player.socket !== socket) {
+			if (player.socket.readyState === WebSocket.OPEN) {
+				player.socket.send(JSON.stringify({
+					type: 'pause',
+					status,
+
+				}));
+			} else {
+				console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			}
+		}
+	})
+}
+
 export function notifyWonGame(gameSession: GameSession): void {
 	console.log('🚀 Game has a winner!');
 	
@@ -224,6 +254,39 @@ export function notifyWonGame(gameSession: GameSession): void {
 		}
 	})
 }
+
+export function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void {
+	
+	console.log('👎 Someone gave up the game!');
+	
+	// Prepare both players' info (without socket)
+	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
+		userId: player.userId,
+		isCreator: player.isCreator,
+		position: player.position,
+		score: player.score
+	}));
+	
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			player.socket.send(JSON.stringify({
+				type: 'abandoned-game',
+				iswinner: looserId !== player.userId,
+				currentPlayer: {
+					userId: player.userId,
+					isCreator: player.isCreator,
+					position: player.position,
+					score: player.score
+				},
+				players: playersInfo
+			}));
+		} else {
+			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+		}
+	})
+}
+
+
 
 function broadcastGameState(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;

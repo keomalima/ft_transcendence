@@ -1,9 +1,11 @@
 import type { GameSession, PlayerConnection, GameConfig } from "./game.types.js";
-import { notifyWonGame, notifyService } from "./game.ws.controller.js";
 import { ballAlgo } from "./game.algo.ball.js";
 
 
 function calculateGame(gameSession: GameSession): void {
+	if (gameSession.isPaused === true)
+		return;
+
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
 	if (!paddleA.userId || !paddleB.userId) {

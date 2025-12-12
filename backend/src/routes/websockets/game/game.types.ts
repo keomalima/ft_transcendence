@@ -35,4 +35,5 @@ export interface GameSession {
 	gameConfig: GameConfig;
 	gameLoop: NodeJS.Timeout | null;
 	winnerNotified: boolean; // Flag to ensure notifyWonGame is called only once
+	isPaused: boolean;
 }
