@@ -1,9 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { tournamentService } from './tournament.service.js';
-import type { CreateTournamentInput } from './tournament.schema.js';
+import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
 import { WaintingRoomWsController } from '../websockets/waitingroom.ws.controller.js';
-import { gameService } from '../game/game.service.js';
 
 // =====================
 // Tournament CRUD Handlers
@@ -253,35 +252,54 @@ async function matchMakeTournamentHandler (request: FastifyRequest<{ Params: { i
 				message: "Tournament not found or unauthorized"
 			});
 		}
-		const arr: number[] = [];
-		for (let i = 0; i < tournament.numberPlayers / 2; ++i) {
-			const data = {
-				createdBy: userId,
-				type: "TOURNAMENT",
-				scoreToWin: tournament.scoreToWin,
-				tournamentId: tournament.id,
-				roundNumber: 1,
-				matchNumber: i + 1
-			}
-			const game = await tournamentService.createTournamentGame(request.server.prisma, data);
-			for (let j = 0; j < 2;) {
-				let nbr = Math.floor(Math.random() * tournament.numberPlayers);
-				if (!arr.includes(nbr)) {
-					await gameService.joinUserToGame(request.server.prisma, game.id, tournament.participants[nbr].userId);
-					arr.push(nbr);
-					j++;
-				}
-			}
+		if (tournament.status !== "READY") {
+			return reply.code(409).send({
+				message: "Cannot match make, tournament has already started or finished"
+			});
 		}
+		if (tournament.participants.length < tournament.numberPlayers) {
+			return reply.code(409).send({
+				message: "Tournament is not yet full"
+			});
+		}
+
+		await request.server.prisma.$transaction(async (tx) => {
+			const shuffled = [...tournament.participants];
+			for (let i = shuffled.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				const temp = shuffled[i]!;
+				shuffled[i] = shuffled[j]!;
+				shuffled[j] = temp;
+			}
+
+			for (let i = 0; i < shuffled.length; i += 2) {
+				const first = shuffled[i];
+				const second = shuffled[i + 1];
+				if (!first || !second) {
+					throw new Error("Unexpected missing participant while pairing");
+				}
+				const game = await tx.game.create({ data: {
+					createdBy: userId, 
+					type: 'TOURNAMENT',
+					scoreToWin: tournament.scoreToWin,
+					tournamentId: tournament.id,
+					roundNumber: 1,
+					matchNumber: i/2 + 1,
+				}})
+				await tx.gamePlayer.createMany({
+					data: [
+						{ gameId: game.id, userId: first.userId },
+						{ gameId: game.id, userId: second.userId }
+					]
+				})
+			}
+			await tx.tournament.update({ where: { id: tournament.id}, data: { status: 'IN_PROGRESS' }})
+		});
+		return tournament;
 	} catch (error: any) {
 		console.log(error);
 		reply.code(500).send({ message: "Failed to match make tournament"});
 	}
-
-	// 	backend/src/routes/tournaments/tournament.controller.ts:246-275 never sends a reply on the happy path. Fastify expects you to either return a payload or call reply.send(). Right now the route handler resolves with undefined and the request times out even though the games were created successfully.
-	// backend/src/routes/tournaments/tournament.controller.ts:246-275 does not verify the tournament status or whether games for round 1 already exist. Hitting POST /:id/match-make twice will happily create another full set of games with the same participants, leaving you with duplicate round-one fixtures. You probably need to ensure the tournament is in the correct state (e.g. READY) and abort if round-one games already exist.
-	// backend/src/routes/tournaments/tournament.controller.ts:257-274 assumes tournament.numberPlayers === tournament.participants.length. If match-making is triggered while the bracket isn’t full (or if someone left after startTournamentHandler ran), tournament.participants[nbr] becomes undefined and joinUserToGame throws. Guarding on participants.length (or even better, using the participants collection you already fetched) would prevent the undefined access.
-	// The random pairing loop in backend/src/routes/tournaments/tournament.controller.ts:257-274 repeatedly samples until it finds an unused slot. As the bracket fills this becomes increasingly inefficient and couples “number of attempts” to luck. Shuffling the participants array once (Fisher–Yates) and pairing sequentially would be simpler, faster, and easier to test.
 }
 
 // =====================

@@ -7,7 +7,7 @@ import { TournamentStatus, GameMode} from "@prisma/client";
 
 const createTournamentSchema = z.object({
 	numberPlayers: z.number().int(),
-	scoreToWin: z.number().int().max(10).optional()
+	scoreToWin: z.number().int().max(10).default(10)
 });
 
 const removePlayerRequestSchema = z.object({
@@ -20,8 +20,7 @@ const removePlayerRequestSchema = z.object({
 
 const createTournamentGame = z.object({
 	createdBy: z.string(),
-	type: z.enum(GameMode),
-	scoreToWin: z.number().int().max(10).optional(),
+	scoreToWin: z.number().int().max(10).default(10),
 	tournamentId: z.string(),
 	roundNumber: z.number().int(),
 	matchNumber: z.number().int()

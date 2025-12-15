@@ -6,7 +6,16 @@ import type { CreateGameTournamentInput, CreateTournamentInput } from "./tournam
 // =====================
 
 async function createTournament(prisma: PrismaClient, data: CreateTournamentInput, id: string, totalRounds: number) {
-	const tournament = await prisma.tournament.create({ data: { createdBy: id, totalRounds, ...data }});
+	const { scoreToWin, ...rest } = data;
+	const tournament = await prisma.tournament.create({
+		// Avoid passing undefined with exactOptionalPropertyTypes enabled
+		data: {
+			createdBy: id,
+			totalRounds,
+			...rest,
+			...(scoreToWin !== undefined ? { scoreToWin } : {})
+		}
+	});
 	await prisma.tournamentPlayer.create({ data: { tournamentId: tournament.id, userId: id}})
 	return tournament;
 }
@@ -92,7 +101,7 @@ async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 }
 
 async function createTournamentGame(prisma: PrismaClient, data: CreateGameTournamentInput) {
-	return prisma.game.create({ data })
+	return prisma.game.create({ data: {type: "TOURNAMENT", ...data}})
 }
 
 async function generateToken(prisma: PrismaClient, tournamentId: string, token: string) {
@@ -129,7 +138,7 @@ async function startTournament(prisma: PrismaClient, tournamentId: string) {
 	return prisma.tournament.update({
 		where: { id: tournamentId },
 		data: {
-			status : "IN_PROGRESS"
+			status : "READY"
 		}
 	})
 }
