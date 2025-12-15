@@ -17,6 +17,7 @@ import { TournamentRoom } from "./pages/TournamentRoom.js";
 import { TournamentPage } from "./pages/TournamentPage.js";
 import { createGameStore } from "./store/gameStore.js";
 import { Tournament } from "./pages/Tournament.js";
+import { LiveChat } from "./pages/LiveChat.js";
 
 // Create and init user store
 const userStore = createUserStore(null);
@@ -57,6 +58,7 @@ async function initializeApp() {
 		.add("/tournament-room/:id", TournamentRoom)
 		.add("/tournament", TournamentPage)
 		.add("/tournament/:id", Tournament)
+		.add("/live-chat", LiveChat)
 		.start();
 
 	// This listener handles multi-tab logout. When one tab logs out
