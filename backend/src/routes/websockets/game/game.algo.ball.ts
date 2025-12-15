@@ -1,6 +1,6 @@
 import { sleep, getRandom } from "./game.algo.utils.js";
 import type { GameSession, GameConfig, GameState, PlayerConnection } from "./game.types.js";
-import { notifyWonGame, notifyService } from "./game.ws.controller.js";
+import { gameWsNotification } from "./game.ws.notification.js";
 
 
 function initBall(gameSession: GameSession): void {
@@ -24,7 +24,7 @@ async function service(gameSession: GameSession) {
 
 	console.log(`🥎 ball centered : x=${ball.x} | y=${ball.y}`);
 
-	notifyService(gameSession);
+	gameWsNotification.notifyService(gameSession);
 
 	// Wait before serving
 	await sleep(4000);
@@ -146,7 +146,7 @@ function wonGame(gameSession: GameSession, config: GameConfig): boolean {
 			gameSession.winnerNotified = true;
 			
 			initBall(gameSession);
-			notifyWonGame(gameSession);
+			gameWsNotification.notifyWonGame(gameSession);
 			console.log('🏆 Winner notified, game session marked as finished');
 		}
 		

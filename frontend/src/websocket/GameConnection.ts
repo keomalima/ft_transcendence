@@ -18,7 +18,7 @@ export class GameConnection {
 		}
 
 		this.ws.onclose = () => {
-			console.log('🎮 Disconnected from game');
+			// console.log('🎮 Disconnected from game');
 		}
 
 		this.ws.onmessage = (event) => {
@@ -75,6 +75,20 @@ export class GameConnection {
 					},
 					bubbles: true
 				}));
+			} if (data.type === 'player-disconnected') {
+				document.dispatchEvent(new CustomEvent('event-player-disconnected', {
+					detail: {
+						disconnectedUserId: data.disconnectedUserId
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'player-reconnected') {
+				document.dispatchEvent(new CustomEvent('event-player-reconnected', {
+					detail: {
+						reconnectedUserId: data.reconnectedUserId
+					},
+					bubbles: true
+				}));
 			}
 		}
 	}
@@ -90,6 +104,7 @@ export class GameConnection {
 	disconnect() {
 		this.ws?.close();
 		this.ws = null;
+		console.log('🎮 Disconnected from game');
 	}
 
 }

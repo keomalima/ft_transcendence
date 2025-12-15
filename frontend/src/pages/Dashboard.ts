@@ -51,7 +51,7 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 
 				${gameId ?
 					`
-						<a data-link href='/game-room/${gameId}'class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+						<a data-link href='/game-room/${gameId}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
 							<p class='text-white' >You have a pending game</p>
 							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
 						</a>
@@ -73,9 +73,6 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 						</div>
 					`
 				}
-
-				
-
 
 				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white p-4 lg:p-10 order-4 lg:order-0">
 					<h1>Your achievements</h1>

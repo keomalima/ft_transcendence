@@ -5,6 +5,7 @@ import { gameAlgo } from './game.algo.js';
 import { ballAlgo } from './game.algo.ball.js';
 import { sleep } from './game.algo.utils.js';
 import { gameService } from '../../game/game.service.js';
+import { gameWsNotification } from './game.ws.notification.js';
 
 // =====================
 // Websocket Handlers for Game
@@ -25,8 +26,29 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		gameSessions.set(gameId, gameSession);
 	}
 
-	if (gameSession.players.size! < 2 && !gameSession.players.has(userId))
+	// Check if this is a reconnection
+	if (gameSession.disconnectedUserId === userId && gameSession.disconnectTimer) {
+		console.log(`🔄 Player ${userId} reconnected! Clearing disconnect timeout`);
+		
+		// Clear the disconnect timeout
+		clearTimeout(gameSession.disconnectTimer);
+		gameSession.disconnectTimer = null;
+		gameSession.disconnectedUserId = null;
+		
+		// Update the socket for this player
+		const player = gameSession.players.get(userId);
+		if (player) {
+			player.socket = socket;
+		}
+		
+		// Resume the game
+		gameSession.isPaused = false;
+		
+		// Notify other players
+		gameWsNotification.notifyPlayerReconnected(gameSession, userId);
+	} else if (gameSession.players.size < 2 && !gameSession.players.has(userId)) {
 		addNewPlayer(gameSession, userId, socket);
+	}
 
 	socket.on('message', (data: Buffer) => {
 		const message = JSON.parse(data.toString());
@@ -45,57 +67,94 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		} if (message.type === 'pause') {
 			if (message.action === 'stop') {
 				gameSession.isPaused = true;
-				notifyPause(gameSession, socket, true);
+				gameSession.pausedByUserId = message.pausedby;
+				gameSession.pauseTimer = setTimeout(() => gameWsNotification.notifyAbandonnedGame(gameSession, gameSession.pausedByUserId!), 10000);
+				gameWsNotification.notifyPause(gameSession, userId, true);
 			}
-			if (message.action === 'start') {
+			if (message.action === 'resume') {
 				gameSession.isPaused = false;
-				notifyPause(gameSession, socket, false);
+				if (gameSession.pauseTimer) {
+					clearTimeout(gameSession.pauseTimer);
+					gameSession.pauseTimer = null;
+				}
+				gameWsNotification.notifyPause(gameSession, userId, false);
 			}
 		} if (message.type === 'quit') {
-			clearInterval(gameSession.gameLoop);
-			notifyAbandonnedGame(gameSession, message.looser);
+			if (gameSession.gameLoop) {
+				clearInterval(gameSession.gameLoop!);
+				gameSession.gameLoop = null;
+			}
+			gameWsNotification.notifyAbandonnedGame(gameSession, message.looser);
 		}
 	});
 
 	socket.on('close', () => {
-		if (gameSession.gameLoop)
-			clearInterval(gameSession.gameLoop);
-		gameSession.players.delete(userId);
-		console.log(`Player ${userId} disconnected from game : ${gameId}`);
-		// TO DO : handle differently depending on is player is creator or not
+		console.log(`👋 Player ${userId} disconnected from game : ${gameId}`);
+		
+		// Check if game session still exists (might have been cleaned up already)
+		const session = gameSessions.get(gameId);
+		if (!session) {
+			console.log(`⚠️ Game session ${gameId} already cleaned up`);
+			return;
+		}
+		
+		// Only handle disconnection if game is in 'playing' status
+		if (session.gameState.status === 'playing') {
+			console.log(`⏱️ Starting disconnect timeout for player ${userId}`);
+			
+			// Pause the game
+			session.isPaused = true;
+			
+			// Notify other players
+			gameWsNotification.notifyPlayerDisconnected(session, userId);
+			
+			// Set disconnect timeout (30 seconds)
+			session.disconnectedUserId = userId;
+			session.disconnectTimer = setTimeout(() => {
+				console.log(`⏰ Disconnect timeout expired for player ${userId}`);
+				const currentSession = gameSessions.get(gameId);
+				if (currentSession && currentSession.disconnectedUserId === userId) {
+					// Player didn't reconnect in time - abandon game
+					gameWsNotification.notifyAbandonnedGame(currentSession, userId);
+				}
+			}, 30000); // 30 seconds
+		} else {
+			// Game not in playing state, just remove player
+			session.players.delete(userId);
+			console.log(`�️ Player ${userId} removed from game session`);
+			
+			// If no players left, clean up the session
+			if (session.players.size === 0) {
+				console.log(`🧹 No players left, cleaning up game session ${gameId}`);
+				cleanupGameSession(gameId, session);
+			}
+		}
 	});
 
-	if (gameSession.players.size! == 2) {
+	if (gameSession.players.size === 2) {
 		gameSession.gameState.status = 'playing';
-		notifyGameStarted(gameSession, gameId);
+		gameWsNotification.notifyGameStarted(gameSession, gameId);
 		
-		// Start the game loop immediately
 		if (!gameSession.gameLoop) {
 			console.log('🎮 Starting game loop...');
 			gameSession.gameLoop = setInterval(() => {
-				// Check if game is finished FIRST, before processing
 				if (gameSession.gameState.status === 'finished') {
 					console.log('🏁 Game finished, stopping game loop');
-					clearInterval(gameSession.gameLoop!);
-					gameSession.gameLoop = null;
-					return; // Exit immediately, don't process this frame
+					if (gameSession.gameLoop) {
+						clearInterval(gameSession.gameLoop!);
+						gameSession.gameLoop = null;
+					}
+					return;
 				}
 				
-				// Only process if we have 2 players
 				if (gameSession.players.size === 2) {
 					gameAlgo.calculateGame(gameSession);
-					broadcastGameState(gameSession);
+					gameWsNotification.broadcastGameState(gameSession);
 				}
 			}, 1000 / 60);
-			console.log('✅ Game loop started successfully');
 		}
-		
-		// Start the service (will set ball velocity after countdown)
-		console.log('⏳ Waiting 3 seconds before service...');
 		await sleep(3000);
-		console.log('🎾 Starting service...');
 		await ballAlgo.service(gameSession);
-		console.log('✅ Service completed, ball should be moving');
 	}
 }
 
@@ -140,11 +199,15 @@ function createGameSession(gameId: string, userId: string, socket: WebSocket): G
 			paddlespeed: 1,
 			ballspeed: 1,
 			ballsize: 5,
-			scoreToWin: 11
+			scoreToWin: 10
 		},
 		gameLoop: null,
 		winnerNotified: false,
-		isPaused: false
+		isPaused: false,
+		pauseTimer: null,
+		pausedByUserId: null,
+		disconnectTimer: null,
+		disconnectedUserId: null
 	};
 
 	const firstPlayer: PlayerConnection = {
@@ -180,143 +243,37 @@ function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocke
 	gameSession.gameState.paddleB.userId = userId;
 }
 
-function notifyGameStarted(gameSession: GameSession, gameId: string): void {
-	console.log('🚀 All players are connected, game starts!');
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'start-game',
-				message: "Your game is about to start",
-				gameId,
-				position: player.position
-			}));
-		} else {
-			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	})
-}
 
-export function notifyService(gameSession: GameSession): void {
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'service',
-				message: "Service countdown"
-			}));
-		} else {
-			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	})
-}
 
-export function notifyPause(gameSession: GameSession, socket: WebSocket, status: boolean): void {
-	gameSession.players.forEach((player) => {
-		if (player.socket !== socket) {
-			if (player.socket.readyState === WebSocket.OPEN) {
-				player.socket.send(JSON.stringify({
-					type: 'pause',
-					status,
-
-				}));
-			} else {
-				console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-			}
-		}
-	})
-}
-
-export function notifyWonGame(gameSession: GameSession): void {
-	console.log('🚀 Game has a winner!');
+// ======== CLEANUP GAME SESSION ============
+export function cleanupGameSession(gameId: string, gameSession: GameSession): void {
+	console.log(`🧹 Cleaning up game session: ${gameId}`);
 	
-	// Prepare both players' info (without socket)
-	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
-		userId: player.userId,
-		isCreator: player.isCreator,
-		position: player.position,
-		score: player.score
-	}));
-	
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'won-game',
-				iswinner: player.score >= gameSession.gameConfig.scoreToWin,
-				currentPlayer: {
-					userId: player.userId,
-					isCreator: player.isCreator,
-					position: player.position,
-					score: player.score
-				},
-				players: playersInfo
-			}));
-		} else {
-			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	})
-}
-
-export function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void {
-	
-	console.log('👎 Someone gave up the game!');
-	
-	// Prepare both players' info (without socket)
-	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
-		userId: player.userId,
-		isCreator: player.isCreator,
-		position: player.position,
-		score: player.score
-	}));
-	
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'abandoned-game',
-				iswinner: looserId !== player.userId,
-				currentPlayer: {
-					userId: player.userId,
-					isCreator: player.isCreator,
-					position: player.position,
-					score: player.score
-				},
-				players: playersInfo
-			}));
-		} else {
-			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	})
-}
-
-
-
-function broadcastGameState(gameSession: GameSession): void {
-	const paddleA = gameSession.gameState.paddleA;
-	const paddleB = gameSession.gameState.paddleB;
-
-	const left = {
-		userid: paddleA.userId,
-		paddleposition: paddleA.y,
-		score: gameSession.gameState.score.playerA,
+	if (gameSession.gameLoop) {
+		clearInterval(gameSession.gameLoop);
+		gameSession.gameLoop = null;
 	}
 
-	const right = {
-		userid: paddleB.userId,
-		paddleposition: paddleB.y,
-		score: gameSession.gameState.score.playerB,
+	if (gameSession.pauseTimer) {
+		clearTimeout(gameSession.pauseTimer);
+		gameSession.pauseTimer = null;
 	}
 
-	gameSession.players.forEach((player) => {
+	if (gameSession.disconnectTimer) {
+		clearTimeout(gameSession.disconnectTimer);
+		gameSession.disconnectTimer = null;
+	}
+	
+	// Close all WebSocket connections
+	gameSession.players.forEach((player, userId) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'update_game',
-				left: left,
-				right: right,
-				ballX: gameSession.gameState.ball.x,
-				ballY: gameSession.gameState.ball.y
-			}));
-		} else {
-			console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			console.log(`👋 Closing WebSocket for player ${userId}`);
+			player.socket.close(1000, 'Game finished');
 		}
-	})
+	});
+	gameSession.players.clear();
+	gameSessions.delete(gameId);
+	console.log(`🧹 Game session ${gameId} cleaned up successfully`);
 }
 
 
