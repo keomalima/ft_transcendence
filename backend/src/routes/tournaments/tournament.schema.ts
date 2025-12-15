@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TournamentStatus } from "@prisma/client";
+import { TournamentStatus, GameMode} from "@prisma/client";
 
 // =====================
 // Request Schemas
@@ -18,10 +18,20 @@ const removePlayerRequestSchema = z.object({
 // Response Schemas
 // =====================
 
+const createTournamentGame = z.object({
+	createdBy: z.string(),
+	type: z.enum(GameMode),
+	scoreToWin: z.number().int().max(10).optional(),
+	tournamentId: z.string(),
+	roundNumber: z.number().int(),
+	matchNumber: z.number().int()
+})
+
 const createTournamentResponseSchema = z.object({
 	id: z.string(),
 	createdBy: z.string(),
-	status: z.enum(TournamentStatus)
+	status: z.enum(TournamentStatus),
+
 })
 
 const getTournamentResponseSchema = z.object({
@@ -83,6 +93,7 @@ const joinTournamentResponseSchema = z.object({
 // =====================
 
 export type CreateTournamentInput = z.infer<typeof createTournamentSchema>;
+export type CreateGameTournamentInput = z.infer<typeof createTournamentGame>;
 
 // =====================
 // Schema Objects Export

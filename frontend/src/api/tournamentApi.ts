@@ -28,6 +28,16 @@ export const tournamentApi = {
 		}
 	},
 
+	matchMaking: async (tournamentId: string): Promise<Partial<TournamentData>> => {
+		try {
+			const response = await httpCall.post<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/match-make`);
+			console.log('🎮 match making sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('match making', error);
+		}
+	},
+
 	getTournament: async (tournamentId: string): Promise<TournamentData> => {
 		try {
 			const response = await httpCall.get<TournamentData>(`${BASE_URL}/${tournamentId}`);

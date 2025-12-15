@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import type { CreateTournamentInput } from "./tournament.schema.js";
+import type { CreateGameTournamentInput, CreateTournamentInput } from "./tournament.schema.js";
 
 // =====================
 // Tournament CRUD Operations
@@ -91,6 +91,10 @@ async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 	})
 }
 
+async function createTournamentGame(prisma: PrismaClient, data: CreateGameTournamentInput) {
+	return prisma.game.create({ data })
+}
+
 async function generateToken(prisma: PrismaClient, tournamentId: string, token: string) {
 	return prisma.tournament.update({
 		where: { id: tournamentId },
@@ -145,5 +149,6 @@ export const tournamentService = {
 	joinUserToTournament,
 	removePlayerFromTournament,
 	deletePendingTournament,
-	startTournament
+	startTournament,
+	createTournamentGame
 };
