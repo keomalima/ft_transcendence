@@ -1,6 +1,6 @@
 import { AppContext } from "./types";
 import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
-import { cleanGameWS } from "./pages/Game";
+import { cleanGameWS } from "./pages/Game.js";
 
 // Define a new function type to make sure that the function sent to route is well designed
 // (here the function must take an AppContext parameter and return a string e.g. a HTML content)

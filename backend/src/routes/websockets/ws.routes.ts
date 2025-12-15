@@ -16,6 +16,6 @@ export async function wsPrivateRoutes(fastify: FastifyInstance) {
 	fastify.get('/waiting-room/:gameId/:userId', { websocket: true }, WaintingRoomWsController.waitingRoomHandler);
 
 	// game websocket
-	fastify.get('/game/:gameId/:userId', { websocket: true }, GameWsController.gameHandler);
+	fastify.get('/game/:gameId/:userId/:scoreToWin', { websocket: true }, GameWsController.gameHandler);
 
 }

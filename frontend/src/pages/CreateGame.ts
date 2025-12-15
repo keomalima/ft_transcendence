@@ -34,24 +34,25 @@ export function CreateGame(ctx: AppContext): string{
 					<div class="flex-1 h-10">
 						<input
 						type="radio"
-						id="local-mode"
+						id="remote-mode"
 						name="playing_mode"
-						value="LOCAL"
-						class="hidden peer h-full"
+						value="ONLINE"
+						class="hidden peer h-full" 
 						checked />
-						<label for="local-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
-						Local
+						<label for="remote-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
+						Online
 						</label>
 					</div>
 					<div class="flex-1 h-10">
 						<input
 						type="radio"
-						id="remote-mode"
+						id="local-mode"
 						name="playing_mode"
-						value="ONLINE"
-						class="hidden peer h-full" />
-						<label for="remote-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
-						Online
+						value="LOCAL"
+						class="hidden peer h-full"
+						/>
+						<label for="local-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
+						Local
 						</label>
 					</div>
 				</fieldset>
@@ -100,7 +101,10 @@ function setupGameEventListeners(ctx: AppContext) {
 				scoreToWin: parseInt(scoreToWin),
 				type: selectedMode
 			}, ctx);
-			router.navigateTo(`/game-room/${result!.id}`);
+			if (selectedMode === 'LOCAL')
+				router.navigateTo(`/local-game/${result!.id}`);
+			else
+				router.navigateTo(`/game-room/${result!.id}`);
 		} catch (error) {
 			const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;
 			errorMsgCreateGame.className = 'text-red-500'

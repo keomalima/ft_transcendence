@@ -33,6 +33,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 
 	setTimeout(async () => {
 		let currentGame = await gameService.getGame(params['id'], ctx);
+		console.log('💫 current game = ', currentGame);
 		if (!currentGame || currentGame.status === 'ABANDONED' || currentGame.status === 'COMPLETED') {
 			setTimeout(() => router.navigateTo('/'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
@@ -42,7 +43,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 			return check;
 		
 		// 1. Set game sockets
-		setGameSockets(params['id'], currentUser.id!);
+		setGameSockets(params['id'], currentUser.id!, currentGame.scoreToWin!.toString());
 		
 		// 2. Start listener for action up and down arrows
 		gameActionListener();
@@ -54,7 +55,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		setupGameEventListeners(currentUser, currentGame!, params['id'], ctx);
 		
 		// 5. Start game (show the start overlays)
-		startGame(currentUser, currentGame!, ctx);
+		startGame();
 	}, 0);
 
 	return (/*html*/`
@@ -206,11 +207,11 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 }
 
 // ======== SET WEBSOCKET CONNECTION ============
-async function setGameSockets(gameId: string, userId: string) {
+async function setGameSockets(gameId: string, userId: string, scoreToWin: string) {
 
 	// Create websocket
 	gameConnection = new GameConnection();
-	gameConnection.connect(gameId, userId);
+	gameConnection.connect(gameId, userId, scoreToWin);
 }
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
@@ -242,11 +243,9 @@ function gameActionListener() {
 }
 
 // ======== START ============
-function startGame(currentUser: UserState, currentGame: GameData, ctx: AppContext) {
-	// **** START GAME ****
+function startGame() {
 	document.addEventListener('event-start-game', (e: Event) => {
 		e.preventDefault();
-		console.log('event listener START');
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
 
@@ -254,7 +253,6 @@ function startGame(currentUser: UserState, currentGame: GameData, ctx: AppContex
 		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement;
 		playingSide.innerText = `You play on ${detail.position} side ${detail.position === 'left' ? '⬅️' : '➡️' }`;
 		
-		// Show overlay
 		startOverlay?.classList.remove('hidden');
 		
 		let count = 3;
@@ -270,10 +268,6 @@ function startGame(currentUser: UserState, currentGame: GameData, ctx: AppContex
 	}, { once: true });
 }
 
-// ======== ABANDON GAME ============
-// function quitGame() {
-	
-// }
 
 // ======== EVENT LISTENER ============
 function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
@@ -347,8 +341,6 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);
 			gameConnection?.send({ type: 'quit', looser: currentUser.id});
-			// cleanGameWS();
-			// router.navigateTo('/home');
 		};
 
 		// Attach event listeners
@@ -368,12 +360,11 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		e.preventDefault();
 		console.log('🏆 WON GAME');
 		
-		// Prevent duplicate calls using a flag - CHECK AND SET IMMEDIATELY
 		if (isFinishingGame) {
 			console.log('⏭️ Already finishing game, skipping...');
 			return;
 		}
-		isFinishingGame = true; // Set flag IMMEDIATELY before any async operations
+		isFinishingGame = true;
 		
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
@@ -422,14 +413,11 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
 		const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
 
-		// Don't show countdown if quit dialog is open
 		if (quitDialog?.open) {
 			return;
 		}
-
 		if (!wonGameOverlay || !winner)
 			return;
-
 		const isWinner = detail.iswinner;
 		if (isWinner === true)
 			winner.innerText = `Congratulation you won the game !`;
@@ -442,14 +430,13 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			router.navigateTo('/home');
 		}, { once: true });
 
-	}, { once: true }); // Game only ends once
+	}, { once: true });
 
 	// **** ADANDONNED GAME ****
 	document.addEventListener('event-abandoned-game', async (e: Event) => {
 		e.preventDefault();
 		console.log('🏆 ABANDONED GAME');
 		
-		// Prevent duplicate calls using a flag - CHECK AND SET IMMEDIATELY
 		if (isFinishingGame) {
 			console.log('⏭️ Already finishing game, skipping...');
 			return;
@@ -465,11 +452,10 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			return;
 		}
 		
-		// Only the game creator should finish the game to avoid race condition
+		// For abandoned games, ANY player can finish (creator might have left)
 		// Skip if game is already finished (ABANDONED or COMPLETED)
-		if (currentGame.isCreator && currentGame.status !== 'ABANDONED' && currentGame.status !== 'COMPLETED') {
+		if (currentGame.status !== 'ABANDONED' && currentGame.status !== 'COMPLETED') {
 			try {
-				// Build game players data from currentGame.gameUsers
 				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
 					console.error('❌ Missing game users data');
 					router.navigateTo('/home');
@@ -489,14 +475,14 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 						}
 					]
 				};
-				console.log('🎮 Creator finishing game...');
+				console.log('🎮 Finishing abandoned game...');
 				await gameService.finishGame(currentGame.id!, data, ctx);
 				console.log('✅ Game finished successfully');
 			} catch (error) {
 				console.error('❌ Error finishing game:', error);
 			}
 		} else {
-			console.log('👀 Non-creator or game already finished, skipping finishGame API call');
+			console.log('👀 Game already finished, skipping finishGame API call');
 		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
@@ -518,7 +504,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			router.navigateTo('/home');
 		}, { once: true });
 
-	}, { once: true }); // Game only ends once
+	}, { once: true });
 
 	// **** COUNTDOWN ****
 	document.addEventListener('event-service-countdown', (e: Event) => {
@@ -531,13 +517,9 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
 		const pauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
 
-		if (!countdownOverlay || !countdownNumber || !quitDialog || !pauseOverlay)
+		if (!countdownOverlay || !countdownNumber || !quitDialog || !pauseOverlay
+			|| quitDialog?.open || !pauseOverlay.classList.contains('hidden'))
 			return;
-
-		// Don't show countdown if quit dialog is open
-		if (quitDialog?.open || !pauseOverlay.classList.contains('hidden')) {
-			return;
-		}
 
 		let count = data.count;
 

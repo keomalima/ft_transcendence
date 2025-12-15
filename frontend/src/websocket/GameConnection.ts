@@ -3,8 +3,8 @@ import { API_BASE_URL } from '../config.js';
 export class GameConnection {
 	private ws: WebSocket | null = null;
 
-	connect(gameId: string, userId: string) {
-		const httpUrl = new URL(`/ws/game/${gameId}/${userId}`, API_BASE_URL);
+	connect(gameId: string, userId: string, scoreToWin: string) {
+		const httpUrl = new URL(`/ws/game/${gameId}/${userId}/${scoreToWin}`, API_BASE_URL);
 		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
 		this.ws = new WebSocket(httpUrl.href);
@@ -33,7 +33,6 @@ export class GameConnection {
 					bubbles: true
 				}));
 			} if (data.type === 'update_game') {
-				// console.log(`🔃 update game [L:${left}, R:${right}]`);
 				document.dispatchEvent(new CustomEvent('event-update-game', {
 					detail: {
 						left: data.left,

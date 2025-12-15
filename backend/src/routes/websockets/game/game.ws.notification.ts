@@ -1,3 +1,4 @@
+import { WebSocket } from 'ws';
 import type { GameSession } from "./game.types.js";
 import { cleanupGameSession } from "./game.ws.controller.js";
 
