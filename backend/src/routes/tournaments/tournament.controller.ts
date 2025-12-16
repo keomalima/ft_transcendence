@@ -146,7 +146,8 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 			userId: tournament.userId,
 			tournamentId: tournament.tournamentId,
 			status: tournament.tournament.status,
-			token: tournament.tournament.token
+			token: tournament.tournament.token,
+			totalRounds: tournament.tournament.totalRounds
 		}
 	} catch (error:any) {
 		reply.code(500).send({ message: "Failed to fetch current tournament"});

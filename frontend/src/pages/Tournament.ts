@@ -23,8 +23,8 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
 		const tournamentGames = await getTournamentGames(params['id']);
-		renderTournamentContent(currentUser!, currentTournament?.tournamentId!);
-		passContext(ctx, tournamentGames);
+		renderTournamentContent();
+		passContext(ctx, tournamentGames, currentTournament);
 		setupTournamentEventListeners(ctx);
 	}, 0);
 
@@ -35,7 +35,7 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	`);
 }
 
-function renderTournamentContent(currentUser: UserState, tournamentId: string | null) {
+function renderTournamentContent() {
 
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
@@ -68,7 +68,7 @@ async function getTournamentGames(tournamentId: string): Promise<TournamentGame 
 }
 
 // ======== GET CURRENT TOURNAMENT ============
-async function getCurrentTournament(): Promise<{userId: string, tournamentId: string, type: string, token: string | null} | null> {
+async function getCurrentTournament(): Promise<Partial< TournamentData | null>> {
 	try {
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
@@ -78,7 +78,7 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext, tournamentGames: TournamentGame | null) {
+function passContext(ctx: AppContext, tournamentGames: TournamentGame | null, tournament: Partial<TournamentData | null>) {
 
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
@@ -88,6 +88,7 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame | null) {
 	if (tournamentGameComponent) {
 		tournamentGameComponent.ctx = ctx;
 		tournamentGameComponent.tournamentGamesData = tournamentGames;
+		tournamentGameComponent.tournamentData = tournament;
 	} else {
 		console.error('❌ Tournament games component not found!');
 	}

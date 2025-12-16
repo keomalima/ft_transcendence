@@ -48,9 +48,9 @@ export const tournamentApi = {
 		}
 	},
 
-	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null }> => {
+	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number }> => {
 		try {
-			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null }>(`${BASE_URL}/current`);
+			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number }>(`${BASE_URL}/current`);
 			console.log('🎮 getCurrentTournament sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {

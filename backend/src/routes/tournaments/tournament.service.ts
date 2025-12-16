@@ -24,6 +24,7 @@ async function findActiveTournamentByUserId(prisma: PrismaClient, id: string) {
 				select: {
 					token: true,
 					status: true,
+					totalRounds: true
 				}
 			}
 		}

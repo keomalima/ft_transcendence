@@ -128,7 +128,6 @@ async function setTournamentRoomWebSockets(currentUser: UserState, tournamentDat
 
 // ======== GET TOURNAMENT DATA ============
 async function getTournamentData(id: string): Promise<TournamentData | null> {
-
 	try {
 		const tournamentData: TournamentData | null = await tournamentApi.getTournament(id);
 		return tournamentData;

@@ -88,7 +88,8 @@ const getCurrentTournamentSchema = z.object({
 	userId: z.string(),
 	tournamentId: z.string(),
 	status: z.enum(TournamentStatus),
-	token: z.string().nullable()
+	token: z.string().nullable(),
+	totalRounds: z.number().int()
 })
 
 const startTournamentResponseSchema = z.object({

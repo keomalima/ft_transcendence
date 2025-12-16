@@ -112,7 +112,7 @@ export class FriendList extends HTMLElement {
 		name.className = 'text-sm font-[Inter]'
 
 		const status = document.createElement('p');
-		status.innerText = `${friend.isOnline === true ? 'onilne' : 'offline'}`;
+		status.innerText = `${friend.isOnline === true ? 'online' : 'offline'}`;
 		status.className = `text-xs font-[Inter] ${friend.isOnline === true ? 'text-green-500' : 'text-red-500'}`
 		text.appendChild(name);
 		text.appendChild(status);
