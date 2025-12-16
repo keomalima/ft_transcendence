@@ -13,6 +13,12 @@ const sendRequestSchema = z.object({
 // Response Schemas
 // =====================
 
+const blockFriendResponseSchema = z.object({
+	id: z.string(),
+	status: z.enum(FriendshipStatus),
+	deletedAt: z.date()
+})
+
 const getFriendsResponseSchema = z.object({
 	id: z.string(),
 	friendshipId: z.string(),
@@ -70,6 +76,7 @@ export const friendsSchemas = {
 	getFriends: friendsArraySchema,
 	sendRequest: sendRequestResponseSchema,
 	acceptRequest: sendRequestResponseSchema,
-	pendingRquest: friendsRequestArraySchema
+	pendingRquest: friendsRequestArraySchema,
+	blockFriend: blockFriendResponseSchema
   },
 };

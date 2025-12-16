@@ -56,9 +56,10 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
 						</a>
 
-						<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
-							<h1>???</h1>
-						</div>
+						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
+						</a>
+
 					`
 					:
 					`
@@ -68,9 +69,10 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 						<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
 							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Join a game</p>
 						</a>
-						<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
-							<h1>???</h1>
-						</div>
+						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
+						</a>
+
 					`
 				}
 
@@ -233,6 +235,29 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			console.log('Error send friendship request:', error);
 		}
 	});
+
+	// **** BLOCK/UNBLOCK FRIEND ***
+	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			if (data.friendshipId) {
+				if (data.isBlocked) {
+					await friendshipApi.unblock(data.friendshipId);
+				} else {
+					await friendshipApi.block(data.friendshipId);
+				}
+
+				// Refresh friend list after blocking/unblocking
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+				console.log('Error blocking/unblocking friend:', error);
+		}
+	});
+
 
 	// **** JOIN A GAME ****
 	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {

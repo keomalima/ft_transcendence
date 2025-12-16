@@ -70,6 +70,7 @@ export interface FriendData {
 	surname: string | null;
 	isOnline: boolean;
 	avatarUrl: string | null;
+	isBlocked: boolean;
 }
 
 // for game data

@@ -71,4 +71,30 @@ export const friendshipApi = {
 			throw buildApiError('delete friend', error);
 		}
 	},
+
+	block: async (id: string | null): Promise<void> => {
+		if (id == null)
+			throw new Error('Friendship ID is required');
+
+		try {
+			await httpCall.put(`${BASE_URL}/block/${id}`);
+			console.log('🧑‍🤝‍🧑 blockFriend success ✅');
+		} catch (error: unknown) {
+			throw buildApiError('block friend', error);
+		}
+	},
+
+	unblock: async (id: string | null): Promise<void> => {
+		if (id == null)
+			throw new Error('Friendship ID is required');
+
+		try {
+			await httpCall.put(`${BASE_URL}/unblock/${id}`);
+			console.log('🧑‍🤝‍🧑 unblockFriend success ✅');
+		} catch (error: unknown) {
+			throw buildApiError('unblock friend', error);
+		}
+	},
+
+
 }

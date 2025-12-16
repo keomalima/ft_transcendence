@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { friendsController } from './friends.controller.js'
 import { friendsSchemas } from "./friends.schema.js";
 import { userController } from '../user/user.controller.js'
+import { z } from "zod";
 
 // =====================
 // Private Routes (Authentication Required)
@@ -19,6 +20,20 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen,
 		handler: friendsController.getFriendsHandler
 	});
+
+	fastify.put('/block/:id', {
+		schema: {
+			params: z.object({id: z.string()}),
+			response: { 200: friendsSchemas.response.blockFriend },
+			tags: ['Friends'],
+			description: 'Blocks a friend',
+			summary: 'Blocks a friend',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.blockFriend
+
+	})
 
 	fastify.get('/requests', {
 		schema: {
