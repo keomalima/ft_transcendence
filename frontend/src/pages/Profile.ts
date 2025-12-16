@@ -7,12 +7,12 @@ import "../components/ProfileCard.js";
 import "../components/LatestMatch.js";
 import "../components/BigStats.js";
 import "../components/MatchHistory.js";
-import { gameApi } from "../api/gameApi.js";
+import { gameService } from "../services/GameService.js";
 
 
 export function Profile(ctx: AppContext): string {
 	setTimeout( async () => {
-		const gameHistory: GameHistory[] = await gameApi.getHistory();
+		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
 	}, 0);
 

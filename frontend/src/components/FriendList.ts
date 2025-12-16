@@ -6,6 +6,7 @@ export class FriendList extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<FriendData>[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
+	private _isLoading: boolean = false;
 	
 	constructor() {
 		super();
@@ -20,15 +21,20 @@ export class FriendList extends HTMLElement {
 	}
 
 	async connectedCallback() {
-		if (this._ctx) {
+		if (this._ctx && !this._isLoading) {
 			await this.loadAndRender();
 		}
 	}
 
 	public async loadAndRender() {
+		if (this._isLoading) return;
+		this._isLoading = true;
+		
 		await this.getFriendList();
 		this.render();
 		this.displayFriendCards();
+		
+		this._isLoading = false;
 	}
 
 	private render() {

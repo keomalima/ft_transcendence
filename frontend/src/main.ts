@@ -12,6 +12,7 @@ import { EditProfile } from "./pages/EditProfile.js";
 import { CreateGame } from "./pages/CreateGame.js";
 import { GameRoom } from "./pages/GameRoom.js";
 import { Game } from "./pages/Game.js";
+import { LocalGame } from "./pages/LocalGame.js";
 import { CreateTournament } from './pages/CreateTournament.js'
 import { TournamentRoom } from "./pages/TournamentRoom.js";
 import { TournamentPage } from "./pages/TournamentPage.js";
@@ -54,6 +55,7 @@ async function initializeApp() {
 		.add("/create-game", CreateGame)
 		.add("/game-room/:id", GameRoom)
 		.add("/game/:id", Game)
+		.add("/local-game/:id", LocalGame)
 		.add("/create-tournament", CreateTournament)
 		.add("/tournament-room/:id", TournamentRoom)
 		.add("/tournament", TournamentPage)

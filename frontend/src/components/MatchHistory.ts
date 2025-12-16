@@ -5,6 +5,7 @@ export class MatchHistory extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameHistory: GameHistory[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
+	private _isLoading: boolean = false;
 
 	constructor() {
 		super();
@@ -22,13 +23,18 @@ export class MatchHistory extends HTMLElement {
 	}
 
 	connectedCallback() {
-		if (this.isConnected && this._ctx && this._gameHistory)
+		if (this.isConnected && this._ctx && this._gameHistory && !this._isLoading)
 			this.loadAndRender();
 	}
 
 	private async loadAndRender() {
+		if (this._isLoading) return;
+		this._isLoading = true;
+		
 		this.render();
 		this.generateMatchHistory();
+		
+		this._isLoading = false;
 	}
 
 	private render() {
@@ -50,6 +56,7 @@ export class MatchHistory extends HTMLElement {
 							<tr>
 							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
 							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">winner</th>
 							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
 							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
 							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
@@ -93,6 +100,10 @@ export class MatchHistory extends HTMLElement {
 		score.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap sm:table-cell text-center';
 		score.innerHTML = `${match.score?.toString()} - ${match.opponent?.score?.toString()}`;
 
+		const winner = document.createElement('td');
+		winner.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap sm:table-cell text-center';
+		winner.innerHTML = `${match.isWinner? '⭐' : '-'}`;
+
 		const duration = document.createElement('td');
 		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap lg:table-cell text-center';
 		duration.innerHTML = `${match.duration}`;
@@ -107,6 +118,7 @@ export class MatchHistory extends HTMLElement {
 
 		elem.appendChild(profile);
 		elem.appendChild(score);
+		elem.appendChild(winner);
 		elem.appendChild(duration);
 		elem.appendChild(date);
 		elem.appendChild(mode);

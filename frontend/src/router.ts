@@ -1,5 +1,6 @@
 import { AppContext } from "./types";
 import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
+import { cleanGameWS } from "./pages/Game.js";
 
 // Define a new function type to make sure that the function sent to route is well designed
 // (here the function must take an AppContext parameter and return a string e.g. a HTML content)
@@ -56,6 +57,9 @@ export class Router {
 		if (currentPath.startsWith('/game-room')) {
 			cleanWaitingRoomWS();
 		}
+		if (currentPath.startsWith('/game')) {
+			cleanGameWS();
+		}
 		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;
 
@@ -81,9 +85,11 @@ export class Router {
 		const target = e.target as HTMLElement | null;
 		if (!target) return;
 
-		if (target.matches('[data-link]')) {
+		// Use closest() to handle clicks on nested elements (e.g., <p> inside <a>)
+		const link = target.closest('[data-link]') as HTMLElement | null;
+		if (link) {
 			e.preventDefault();
-			const href = target.getAttribute('href');
+			const href = link.getAttribute('href');
 			if (href)
 				this.navigateTo(href);
 		}

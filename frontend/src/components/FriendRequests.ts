@@ -6,6 +6,7 @@ export class FriendRequests extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<RequestData>[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
+	private _isLoading: boolean = false;
 	
 	constructor() {
 		super();
@@ -22,15 +23,20 @@ export class FriendRequests extends HTMLElement {
 
 	async connectedCallback() {
 		// Load data if ctx is already set
-		if (this._ctx) {
+		if (this._ctx && !this._isLoading) {
 			await this.loadAndRender();
 		}
 	}
 
 	public async loadAndRender() {
+		if (this._isLoading) return;
+		this._isLoading = true;
+		
 		await this.getRequests();
 		this.render();
 		this.displayFriendCards();
+		
+		this._isLoading = false;
 	}
 
 	private render() {
