@@ -141,9 +141,14 @@ function notifyWonGame(gameSession: GameSession): void {
 
 function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void {
 	
+	if (gameSession.abandonedNotified) {
+		console.log('⏭️ Game already abandoned, skipping notification');
+		return;
+	}
+	
+	gameSession.abandonedNotified = true;
 	console.log('👎 Someone gave up the game!');
 	
-	// Prepare both players' info (without socket)
 	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
 		userId: player.userId,
 		isCreator: player.isCreator,

@@ -115,7 +115,7 @@ function calculateScored(game: LocalGameData) {
 	// Goal scored - left side
 	if (ball.x <= getGameValue.ballSize() / 2) {
 		game.scoreR++;
-		game.nextService = 'right';
+		game.nextService = 'left';
 		if (wonGame(game))
 			return;
 		service(game);
@@ -125,7 +125,7 @@ function calculateScored(game: LocalGameData) {
 	// Goal scored - right side
 	if (ball.x >= getGameValue.arenaWidth()- getGameValue.ballSize() / 2) {
 		game.scoreL++;
-		game.nextService = 'left';
+		game.nextService = 'right';
 		if (wonGame(game))
 			return;
 		service(game);
@@ -172,6 +172,9 @@ async function service(game: LocalGameData) {
 	// Wait before serving
 	await sleep(2000);
 
+	if (game.isPaused) {
+		return;
+	}
 
 	// Random direction
 	game.nextService === 'left' ? game.ball.vx = 1 : game.ball.vx = -1;

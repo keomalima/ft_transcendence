@@ -18,7 +18,7 @@ export function Dashboard(ctx: AppContext): string{
 
 	setTimeout( async () => {
 		const currentGame = await getCurrentGame(ctx);
-		renderDashboardContent(currentUser!, currentGame?.gameId!);
+		renderDashboardContent(currentUser!, currentGame);
 		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
@@ -33,8 +33,19 @@ export function Dashboard(ctx: AppContext): string{
 }
 
 // ======== UPDATE CONTENT ========
-function renderDashboardContent(currentUser: UserState, gameId: string | null) {
+function renderDashboardContent(currentUser: UserState, currentGame: {gameId: string, status: string, token: string | null, type: string, userId:string} | null) {
 	const content = document.getElementById('dashboard-content');
+
+	let link: string | null  = null;
+	if (currentGame) {
+		if (currentGame.type === 'LOCAL')
+			link = `/local-game/${currentGame.gameId}`;
+		else if (currentGame.status === 'PENDING')
+			link = `/game-room/${currentGame.gameId}`;
+		else if (currentGame.status === 'IN_PROGRESS')
+			link = `/game/${currentGame.gameId}`;
+	}
+
 	content!.innerHTML = /*html*/`
 
 		<header>
@@ -49,9 +60,9 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
 
-				${gameId ?
+				${currentGame?.gameId ?
 					`
-						<a data-link href='/game-room/${gameId}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+						<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
 							<p class='text-white' >You have a pending game</p>
 							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
 						</a>

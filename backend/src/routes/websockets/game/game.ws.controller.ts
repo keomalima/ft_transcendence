@@ -154,7 +154,8 @@ function createGameSession(gameId: string, userId: string, scoreToWin: number, s
 		pauseTimer: null,
 		pausedByUserId: null,
 		disconnectTimer: null,
-		disconnectedUserId: null
+		disconnectedUserId: null,
+		abandonedNotified: false
 	};
 
 	const firstPlayer: PlayerConnection = {

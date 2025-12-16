@@ -24,11 +24,14 @@ export interface LocalGameData {
 		y: number;
 		vx: number;
 		vy: number;
+		savedVx: number;
+		savedVy: number;
 		speed: number;
 	}
 	nextService : 'left' | 'right';
 	scoreToWin: number;
 	status: 'waiting' | 'playing' | 'finished' | 'abandoned';
+	isPaused: boolean;
 }
 
 export function LocalGame(ctx: AppContext, params?: Record<string, string>): string {
@@ -64,6 +67,9 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 		if (check !== null)
 			return check;
 		
+
+		// need to start the game (API) ===================================================================
+
 		// try {
 		// 	await gameService.startGame(currentGame.id!, ctx);
 		// } catch (error) {
@@ -72,9 +78,11 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 
 		// 1. Render the initial game (DOM must exist first)
 		renderGameContent(params['id'], currentGame!);
+
+		const game = initGame(currentGame.scoreToWin!);
 		
 		// 2. Start listener for action up and down arrows (after DOM exists)
-		runGame(currentGame.scoreToWin!, currentUser);
+		runGame(game, currentUser);
 
 		// try {
 		// 	// const data: FinishGameDto = {
@@ -96,6 +104,10 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 		// } catch (error) {
 		// 	console.log(error);
 		// }
+
+		// need to end the game (API) ===================================================================
+
+		setupLocalGameEventListeners(ctx, game);
 		
 	}, 0);
 
@@ -158,11 +170,10 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 
 
 			<!-- Pause overlay -->
-			<div id="player-set-pause-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div id="pause-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 				<div class="bg-white rounded-lg shadow-2xl p-12 min-w-[400px]">
 					<div class="flex flex-col items-center justify-center gap-6">
 						<p class="text-3xl font-[Calistoga] font-bold text-gray-500 tracking-wide">Pause</p>
-						<p id='player-pause-timer' class="text-3xl font-[Inter] font-light text-black"></p>
 						<button id='stop-pause-btn' type='click' class='${BUTTON_WHITE_CLASSES}'>Go!</button>
 					</div>
 				</div>
@@ -216,8 +227,34 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 	return null;
 }
 
+// ======== INIT GAME ============
+function initGame(scoreToWin: number): LocalGameData {
 
-function runGame(scoreToWin: number, currentUser: UserState) {
+	const game: LocalGameData = {
+		paddleL: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
+		paddleR: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
+		scoreL: 0,
+		scoreR: 0,
+		paddleSpeed: 10,
+		ball: {
+			x: getGameValue.arenaWidth() / 2,
+			y: getGameValue.arenaHeight() / 2,
+			vx: 0,
+			vy: 0,
+			speed: 10,
+			savedVx: 0,
+			savedVy: 0
+		},
+		nextService: 'left',
+		scoreToWin,
+		status: 'waiting',
+		isPaused: false
+	}
+	return game;
+}
+
+// ======== RUN GAME ============
+function runGame(game: LocalGameData, currentUser: UserState) {
 	const mapKeys: MapKeys = {
 		s: false,
 		x: false,
@@ -232,23 +269,7 @@ function runGame(scoreToWin: number, currentUser: UserState) {
 	const leftScore = document.getElementById('left-score') as HTMLParagraphElement;
 	const rightScore = document.getElementById('right-score') as HTMLParagraphElement;
 
-	const game: LocalGameData = {
-		paddleL: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
-		paddleR: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
-		scoreL: 0,
-		scoreR: 0,
-		paddleSpeed: 10,
-		ball: {
-			x: getGameValue.arenaWidth() / 2,
-			y: getGameValue.arenaHeight() / 2,
-			vx: 0,
-			vy: 0,
-			speed: 10,
-		},
-		nextService: 'left',
-		scoreToWin,
-		status: 'waiting'
-	}
+	
 
 	// Wait for next frame to ensure DOM is fully rendered with correct dimensions
 	requestAnimationFrame(() => {
@@ -276,19 +297,19 @@ function runGame(scoreToWin: number, currentUser: UserState) {
 			const wonGameOverlay = document.getElementById('won-game-overlay') as HTMLDivElement;
 			const winner = document.getElementById('winner') as HTMLParagraphElement;
 			
-			game.scoreL > game.scoreR ? winner.innerText = `${currentUser.displayName} won the game !` : 'Guest won the game!';
-			wonGameOverlay?.classList.remove('hidden');
+			if (winner && wonGameOverlay) {
+				game.scoreL > game.scoreR ? winner.innerText = `${currentUser.displayName} won the game !` : 'Guest won the game!';
+				wonGameOverlay.classList.remove('hidden');
+			}
 			return;
 		}
 		
 		calculateGame.calculatePaddle(game, mapKeys);
 		calculateGame.calculateBall(game);
 
-		// --- RENDER BALL ---
 		ball.style.left = `${game.ball.x}px`;
 		ball.style.top = `${game.ball.y}px`;
 
-		// --- RENDER SCORE ---
 		leftScore.innerText = game.scoreL.toString();
 		rightScore.innerText = game.scoreR.toString();
 
@@ -315,4 +336,92 @@ function gameActionListener(mapKeys: MapKeys) {
 }
 
 
+// ======== EVENT LISTENER ============
+function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData) {
+	const playerPauseOverlay = document.querySelector('#pause-overlay') as HTMLDivElement;
 
+	// **** PAUSE ****
+	const pauseBtn = document.querySelector('#pause-btn') as HTMLButtonElement;
+	pauseBtn?.addEventListener('click', (e: Event) => {
+		e.preventDefault();
+		
+		game.isPaused = true;
+		game.ball.savedVx = game.ball.vx;
+		game.ball.savedVy = game.ball.vy;
+		game.ball.vx = 0;
+		game.ball.vy = 0;
+		game.paddleSpeed = 0;
+		playerPauseOverlay?.classList.remove('hidden');
+	});
+
+	// **** RESUME GAME ****
+	const stopPauseBtn = document.querySelector('#stop-pause-btn') as HTMLButtonElement;
+	stopPauseBtn.addEventListener('click', (e) => {
+		e.preventDefault();
+
+		game.isPaused = false;
+		
+		if (game.ball.savedVx === 0 && game.ball.savedVy === 0) {
+			calculateGame.service(game);
+		} else {
+			game.ball.vx = game.ball.savedVx;
+			game.ball.vy = game.ball.savedVy;
+			game.ball.savedVx = 0;
+			game.ball.savedVy = 0;
+		}
+		
+		game.paddleSpeed = 10;
+		playerPauseOverlay?.classList.add('hidden');
+	});
+
+
+	// **** QUIT GAME ****
+	const quitBtn = document.getElementById('quit-btn');
+	quitBtn?.addEventListener('click', (e) => {
+		e.preventDefault();
+
+		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
+		if (!quitDialog)
+			return;
+
+		quitDialog.showModal();
+		const cancelBtn = document.querySelector('#cancel-quit-btn') as HTMLButtonElement;
+		const confirmBtn = document.querySelector('#confirm-quit-btn') as HTMLButtonElement;
+
+		// Handle cancel
+		const handleCancel = () => {
+			quitDialog.close();
+			cancelBtn?.removeEventListener('click', handleCancel);
+			confirmBtn?.removeEventListener('click', handleConfirm);
+		};
+		
+		// Handle confirm
+		const handleConfirm = () => {
+			console.log('quit game trigger');
+			quitDialog.close();
+			cancelBtn?.removeEventListener('click', handleCancel);
+			confirmBtn?.removeEventListener('click', handleConfirm);
+			game.status = 'abandoned';
+			// need to end the game (API) ===================================================================
+			router.navigateTo('/home');
+		};
+
+		// Attach event listeners
+		cancelBtn?.addEventListener('click', handleCancel);
+		confirmBtn?.addEventListener('click', handleConfirm);
+		
+		// Close on backdrop click
+		quitDialog.addEventListener('click', (e) => {
+			if (e.target === quitDialog) {
+				handleCancel();
+			}
+		});
+	});
+
+	// **** BACK HOME ****
+	const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
+	backHomeBtn?.addEventListener('click', async () => {
+		// need to end the game (API) ===================================================================
+		router.navigateTo('/home');
+	}, { once: true });
+}
