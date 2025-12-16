@@ -119,4 +119,17 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen, 
 		handler: tournamentController.matchMakeTournamentHandler
 	})
+
+	fastify.get('/:id/tournament-games', {
+		schema: {
+			params: z.object({ id: z.string()}),
+			response: { 200: tournamentSchemas.response.getTournamentGames},
+			tags: ['Tournament'],
+			description: 'Get all tournament games',
+			summary: 'Get all tournament games',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: tournamentController.getTournamentGamesHandler
+	})
 }

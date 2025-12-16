@@ -6,16 +6,7 @@ import type { CreateGameTournamentInput, CreateTournamentInput } from "./tournam
 // =====================
 
 async function createTournament(prisma: PrismaClient, data: CreateTournamentInput, id: string, totalRounds: number) {
-	const { scoreToWin, ...rest } = data;
-	const tournament = await prisma.tournament.create({
-		// Avoid passing undefined with exactOptionalPropertyTypes enabled
-		data: {
-			createdBy: id,
-			totalRounds,
-			...rest,
-			...(scoreToWin !== undefined ? { scoreToWin } : {})
-		}
-	});
+	const tournament = await prisma.tournament.create({ data: { createdBy: id, totalRounds, ...data }});
 	await prisma.tournamentPlayer.create({ data: { tournamentId: tournament.id, userId: id}})
 	return tournament;
 }
@@ -81,6 +72,20 @@ async function findTournamentByUserId(prisma: PrismaClient, userId: string, tour
 	});
 }
 
+async function findTournamentByParticipant(prisma: PrismaClient, userId: string, tournamentId: string) {
+	return prisma.tournamentPlayer.findUnique({
+		where: { 
+			tournamentId_userId: {
+				tournamentId,
+				userId
+			}
+		},
+		include: {
+			tournament: true
+		} 
+	})
+}
+
 async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 	return prisma.tournament.findUnique({
 		where: { id: tournamentId},
@@ -91,6 +96,36 @@ async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 						select: {
 							id: true,
 							displayName: true,
+							avatarUrl: true
+						}
+					}
+				}
+			}
+		}
+	})
+}
+
+async function findTournamentGames(prisma: PrismaClient, tournamentId: string) {
+	return prisma.game.findMany({
+		where: { tournamentId },
+		select: {
+			id: true,
+			tournamentId: true,
+			status: true,
+			type: true,
+			roundNumber: true,
+			matchNumber: true,
+			gameUsers: {
+				select: {
+					id: true,
+					score: true,
+					isWinner: true,
+					joinedAt: true,
+					user: {
+						select: {
+							id: true,
+							displayName: true,
+							isOnline: true,
 							avatarUrl: true
 						}
 					}
@@ -159,5 +194,7 @@ export const tournamentService = {
 	removePlayerFromTournament,
 	deletePendingTournament,
 	startTournament,
-	createTournamentGame
+	createTournamentGame,
+	findTournamentByParticipant,
+	findTournamentGames
 };

@@ -1,4 +1,4 @@
-import { AppContext, UserState } from "../types.js";
+import { AppContext, TournamentGame, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // import HTML components
@@ -7,12 +7,21 @@ import "../components/NavBar.js";
 // import styles
 import { tournamentApi } from "../api/tournamentApi.js";
 
-export function Tournament(ctx: AppContext): string {
+export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
 	//get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
 	
+	// secure if no params
+	if (!params || !params['id'])
+	{
+		console.log('no params available')
+		setTimeout(() => router.navigateTo('/home'), 0);
+		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+	}
+
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
+		const tournamentGames = await getTournamentGames(params['id']);
 		renderTournamentContent(currentUser!, currentTournament?.tournamentId!);
 		passContext(ctx);
 		setupTournamentEventListeners(ctx);
@@ -46,13 +55,22 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 	return content;
 }
 
+// ======== GET TOURNAMENT GAMES ============
+async function getTournamentGames(tournamentId: string): Promise<TournamentGame | null > {
+	try {
+		const tournamentGames = await tournamentApi.getTournamentGames(tournamentId);
+		return tournamentGames;
+	} catch(error) {
+		return null;
+	}
+}
+
 // ======== GET CURRENT TOURNAMENT ============
 async function getCurrentTournament(): Promise<{userId: string, tournamentId: string, type: string, token: string | null} | null> {
 	try {
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
 	} catch(error) {
-		console.log(error);
 		return null;
 	}
 }

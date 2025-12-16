@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { GameToken, TournamentData } from '../types';
+import { GameToken, TournamentData, TournamentGame } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/tournaments';
@@ -95,4 +95,15 @@ export const tournamentApi = {
 			throw buildApiError('quit / delete pending tournament', error);
 		}
 	},
+
+	getTournamentGames: async (tournamentId: string): Promise<TournamentGame> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/${tournamentId}/tournament-games`);
+			console.log('🎮 tournament games sucess ✅ ');
+			return response.data;
+		} catch (error) {
+			throw buildApiError('tournament games', error);
+		}
+	}
+	
 };

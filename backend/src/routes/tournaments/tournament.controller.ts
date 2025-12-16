@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import { Prisma } from '@prisma/client'
 import { tournamentService } from './tournament.service.js';
 import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
@@ -263,7 +264,7 @@ async function matchMakeTournamentHandler (request: FastifyRequest<{ Params: { i
 			});
 		}
 
-		await request.server.prisma.$transaction(async (tx) => {
+		await request.server.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const shuffled = [...tournament.participants];
 			for (let i = shuffled.length - 1; i > 0; i--) {
 				const j = Math.floor(Math.random() * (i + 1));
@@ -297,8 +298,24 @@ async function matchMakeTournamentHandler (request: FastifyRequest<{ Params: { i
 		});
 		return tournament;
 	} catch (error: any) {
-		console.log(error);
 		reply.code(500).send({ message: "Failed to match make tournament"});
+	}
+}
+
+async function getTournamentGamesHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const tournament = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId)
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		const games = await tournamentService.findTournamentGames(request.server.prisma, tournamentId);
+		return games;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to get tournament games"});
 	}
 }
 
@@ -326,5 +343,6 @@ export const tournamentController = {
 	removePlayerHandler,
 	deletePendingTournamentHandler,
 	startTournamentHandler,
-	matchMakeTournamentHandler
+	matchMakeTournamentHandler,
+	getTournamentGamesHandler,
 };

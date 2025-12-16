@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TournamentStatus, GameMode} from "@prisma/client";
+import { TournamentStatus, GameMode, GameStatus} from "@prisma/client";
 
 // =====================
 // Request Schemas
@@ -59,6 +59,31 @@ const getTournamentResponseSchema = z.object({
 	)
 })
 
+const getTournamentGames = z.array(
+	z.object({
+		id: z.string(),
+		tournamentId: z.string(),
+		status: z.enum(GameStatus),
+		type: z.enum(GameMode),
+		roundNumber: z.number().int(),
+		matchNumber: z.number().int(),
+		gameUsers: z.array(
+			z.object({
+				id: z.string(),
+				score: z.number(),
+				isWinner: z.boolean(),
+				joinedAt: z.date(),
+				user: z.object({
+					id: z.string(),
+					displayName: z.string(),
+					isOnline: z.boolean(),
+					avatarUrl: z.string(),
+				})
+			})
+		)
+	})
+)
+
 const getCurrentTournamentSchema = z.object({
 	userId: z.string(),
 	tournamentId: z.string(),
@@ -112,6 +137,7 @@ export const tournamentSchemas = {
 	currentTournament: getCurrentTournamentSchema,
 	generateToken: generateTournamentTokenResponseSchema,
 	joinTournament: joinTournamentResponseSchema,
-	startTournament: startTournamentResponseSchema
+	startTournament: startTournamentResponseSchema,
+	getTournamentGames: getTournamentGames
   },
 };

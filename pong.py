@@ -28,6 +28,7 @@ ASCII_BANNER = f"""pas
 BASE_URL = "http://localhost:3000/api/users"
 FRIENDS_URL = "http://localhost:3000/api/friends"
 GAME_URL = "http://localhost:3000/api/games"
+TOURNAMENT_URL = "http://localhost:3000/api/tournaments"
 
 class User:
     def __init__(self, email: str, password: str, name: str, surname: str, 
@@ -290,6 +291,169 @@ class User:
         except requests.exceptions.RequestException as e:
             print(f"{RED}✗{RESET} Network error while starting game: {e}")
             return None
+
+    # =====================
+    # Tournament Methods
+    # =====================
+
+    def create_tournament(self, number_players: int = 8, score_to_win: int = 10) -> Optional[dict]:
+        """Create a new tournament. Returns tournament data if successful."""
+        data = {
+            "numberPlayers": number_players,
+            "scoreToWin": score_to_win
+        }
+        
+        try:
+            resp = self.session.post(TOURNAMENT_URL, json=data, timeout=5)
+            if resp.status_code == 201:
+                tournament = resp.json()
+                print(f"{GREEN}✓{RESET} Tournament created by {self.display_name} (ID: {tournament.get('id', 'N/A')})")
+                return tournament
+            else:
+                print(f"{RED}✗{RESET} Failed to create tournament: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while creating tournament: {e}")
+            return None
+
+    def get_tournament(self, tournament_id: str) -> Optional[dict]:
+        """Get tournament details by ID. Returns tournament data if successful."""
+        try:
+            resp = self.session.get(f"{TOURNAMENT_URL}/{tournament_id}", timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+            elif resp.status_code == 404:
+                print(f"{YELLOW}⚠{RESET} Tournament not found")
+                return None
+            else:
+                print(f"{RED}✗{RESET} Failed to get tournament: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while fetching tournament: {e}")
+            return None
+
+    def generate_tournament_token(self, tournament_id: str) -> Optional[str]:
+        """Generate a token for a tournament. Returns token if successful."""
+        try:
+            resp = self.session.post(f"{TOURNAMENT_URL}/{tournament_id}/token", timeout=5)
+            if resp.status_code == 200:
+                tournament = resp.json()
+                token = tournament.get('token')
+                print(f"{GREEN}✓{RESET} Tournament token generated: {BOLD}{token}{RESET}")
+                return token
+            else:
+                print(f"{RED}✗{RESET} Failed to generate token: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while generating token: {e}")
+            return None
+
+    def join_tournament(self, token: str) -> Optional[dict]:
+        """Join a tournament using a token. Returns join data if successful."""
+        try:
+            resp = self.session.post(f"{TOURNAMENT_URL}/{token}/join", timeout=5)
+            if resp.status_code == 200:
+                result = resp.json()
+                print(f"{GREEN}✓{RESET} {self.display_name} joined the tournament")
+                return result
+            else:
+                print(f"{RED}✗{RESET} Failed to join tournament: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while joining tournament: {e}")
+            return None
+
+    def start_tournament(self, tournament_id: str) -> Optional[dict]:
+        """Start a tournament. Returns tournament data if successful."""
+        try:
+            resp = self.session.put(f"{TOURNAMENT_URL}/{tournament_id}/start", timeout=5)
+            if resp.status_code == 200:
+                tournament = resp.json()
+                print(f"{GREEN}✓{RESET} Tournament started by {self.display_name}")
+                return tournament
+            else:
+                print(f"{RED}✗{RESET} Failed to start tournament: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while starting tournament: {e}")
+            return None
+
+    def get_current_tournament(self) -> Optional[dict]:
+        """Get the current pending/active tournament for the user. Returns tournament data if successful."""
+        try:
+            resp = self.session.get(f"{TOURNAMENT_URL}/current", timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+            elif resp.status_code == 404:
+                print(f"{YELLOW}⚠{RESET} No current tournament")
+                return None
+            else:
+                print(f"{RED}✗{RESET} Failed to get current tournament: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while fetching current tournament: {e}")
+            return None
+
+    def delete_tournament(self, tournament_id: str) -> bool:
+        """Delete a pending tournament or quit it if user is not the creator. Returns True if successful."""
+        try:
+            resp = self.session.delete(f"{TOURNAMENT_URL}/{tournament_id}", timeout=5)
+            if resp.status_code == 204:
+                print(f"{GREEN}✓{RESET} Tournament deleted/quit by {self.display_name}")
+                return True
+            else:
+                print(f"{RED}✗{RESET} Failed to delete tournament: {resp.status_code} - {resp.text}")
+                return False
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while deleting tournament: {e}")
+            return False
+
+    def remove_tournament_player(self, tournament_id: str, player_id: str) -> bool:
+        """Remove a player from a pending tournament. Returns True if successful."""
+        data = {"playerId": player_id}
+        try:
+            resp = self.session.put(f"{TOURNAMENT_URL}/{tournament_id}/remove", json=data, timeout=5)
+            if resp.status_code in (200, 204):
+                print(f"{GREEN}✓{RESET} Player removed from tournament by {self.display_name}")
+                return True
+            else:
+                print(f"{RED}✗{RESET} Failed to remove player: {resp.status_code} - {resp.text}")
+                return False
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while removing player: {e}")
+            return False
+
+    def match_make_tournament(self, tournament_id: str) -> Optional[dict]:
+        """Match make a tournament. Returns tournament data if successful."""
+        try:
+            resp = self.session.post(f"{TOURNAMENT_URL}/{tournament_id}/match-make", timeout=5)
+            if resp.status_code == 200:
+                tournament = resp.json()
+                print(f"{GREEN}✓{RESET} Tournament match-making completed by {self.display_name}")
+                return tournament
+            else:
+                print(f"{RED}✗{RESET} Failed to match-make tournament: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while match-making tournament: {e}")
+            return None
+
+    def get_tournament_games(self, tournament_id: str) -> Optional[List[dict]]:
+        """Get all games in a tournament. Returns list of games if successful."""
+        try:
+            resp = self.session.get(f"{TOURNAMENT_URL}/{tournament_id}/tournament-games", timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+            elif resp.status_code == 404:
+                print(f"{YELLOW}⚠{RESET} No games found for tournament")
+                return []
+            else:
+                print(f"{RED}✗{RESET} Failed to get tournament games: {resp.status_code} - {resp.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"{RED}✗{RESET} Network error while fetching tournament games: {e}")
+            return None
+
 
 
 def generate_random_string(length: int = 8) -> str:
@@ -732,6 +896,86 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     
     print(f"\n{GREEN}✓{RESET} Games created successfully!\n")
     
+    # Create tournaments
+    print(f"{CYAN}Step 4: Creating tournaments...{RESET}")
+    
+    tournaments_data = []
+    
+    # Tournament 1: Alice creates a 4-player tournament, all players join, ready to start
+    print(f"{DIM}  Creating 4-player tournament: Alice (fully filled, ready to start){RESET}")
+    tournament1 = alice.create_tournament(4, 10)
+    if tournament1:
+        time.sleep(0.3)
+        token_t1 = alice.generate_tournament_token(tournament1['id'])
+        if token_t1:
+            time.sleep(0.3)
+            bob.join_tournament(token_t1)
+            time.sleep(0.3)
+            charlie.join_tournament(token_t1)
+            time.sleep(0.3)
+            diana.join_tournament(token_t1)
+            tournaments_data.append({
+                'id': tournament1['id'],
+                'status': 'PENDING',
+                'players': 4,
+                'joined': ['Alice', 'Bob', 'Charlie', 'Diana'],
+                'token': token_t1,
+                'scoreToWin': 10
+            })
+            time.sleep(0.3)
+    
+    # Tournament 2: Jack creates a 4-player tournament and generates token (waiting for players)
+    print(f"{DIM}  Creating 4-player tournament: Jack (waiting for players){RESET}")
+    tournament2 = jack.create_tournament(4, 7)
+    if tournament2:
+        time.sleep(0.3)
+        token_t2 = jack.generate_tournament_token(tournament2['id'])
+        tournaments_data.append({
+            'id': tournament2['id'],
+            'status': 'PENDING',
+            'players': 4,
+            'joined': ['Jack'],
+            'token': token_t2,
+            'scoreToWin': 7
+        })
+        time.sleep(0.3)
+    
+    # Tournament 3: Frank creates an 8-player tournament, multiple join, then he starts it
+    print(f"{DIM}  Creating 8-player tournament: Frank (fully filled and started){RESET}")
+    tournament3 = frank.create_tournament(8, 10)
+    if tournament3:
+        time.sleep(0.3)
+        token_t3 = frank.generate_tournament_token(tournament3['id'])
+        if token_t3:
+            time.sleep(0.3)
+            grace.join_tournament(token_t3)
+            time.sleep(0.3)
+            henry.join_tournament(token_t3)
+            time.sleep(0.3)
+            iris.join_tournament(token_t3)
+            time.sleep(0.3)
+            eve.join_tournament(token_t3)
+            time.sleep(0.3)
+            alice.join_tournament(token_t3)
+            time.sleep(0.3)
+            bob.join_tournament(token_t3)
+            time.sleep(0.3)
+            charlie.join_tournament(token_t3)
+            time.sleep(0.3)
+            # Now Frank starts the tournament
+            frank.start_tournament(tournament3['id'])
+            tournaments_data.append({
+                'id': tournament3['id'],
+                'status': 'IN_PROGRESS',
+                'players': 8,
+                'joined': ['Frank', 'Grace', 'Henry', 'Iris', 'Eve', 'Alice', 'Bob', 'Charlie'],
+                'token': None,
+                'scoreToWin': 10
+            })
+            time.sleep(0.3)
+    
+    print(f"\n{GREEN}✓{RESET} Tournaments created successfully!\n")
+    
     # Display summary
     print(f"{CYAN}{BOLD}Mock Scenario Summary:{RESET}")
     print(f"\n{GREEN}Active Friendships:{RESET}")
@@ -758,12 +1002,24 @@ def create_mock_scenario(users: List[User]) -> List[User]:
         if game['id']:
             print(f"     {DIM}Game ID: {game['id']}{RESET}")
     
-    print(f"\n{CYAN}Game Status Legend:{RESET}")
-    print(f"  {GREEN}IN_PROGRESS{RESET} - Game is currently being played")
-    print(f"  {YELLOW}PENDING{RESET} - Game is waiting to start")
-    print(f"\n{DIM}Tip: Use 'getgame' to view detailed game information")
-    print(f"     Use 'joingame' to join games with tokens")
-    print(f"     Use 'startgame' to start pending games with 2 players{RESET}")
+    print(f"\n{BLUE}Tournaments Created:{RESET}")
+    for i, tourney in enumerate(tournaments_data, 1):
+        status_color = GREEN if tourney['status'] == 'IN_PROGRESS' else YELLOW
+        joined_str = ', '.join(tourney['joined'])
+        token_str = f" | Token: {BOLD}{tourney['token']}{RESET}" if tourney['token'] else ""
+        print(f"  {i}. {status_color}{tourney['status']}{RESET} - {tourney['players']} players (Score: {tourney['scoreToWin']})")
+        print(f"     Joined: {joined_str} ({len(tourney['joined'])}/{tourney['players']}){token_str}")
+        if tourney['id']:
+            print(f"     {DIM}Tournament ID: {tourney['id']}{RESET}")
+    
+    print(f"\n{CYAN}Status Legend:{RESET}")
+    print(f"  {GREEN}IN_PROGRESS{RESET} - Game/Tournament is currently active")
+    print(f"  {YELLOW}PENDING{RESET} - Game/Tournament is waiting to start")
+    print(f"\n{DIM}Tips:")
+    print(f"  • Use 'getgame' / 'gettourney' to view detailed information")
+    print(f"  • Use 'joingame' / 'jointourney' to join with tokens")
+    print(f"  • Use 'startgame' / 'starttourney' to start pending matches")
+    print(f"  • Use 'tourneygames' to view all games in a tournament{RESET}")
     print()
     
     return users
@@ -794,6 +1050,36 @@ def display_game_info(game: dict) -> None:
     print(f"Started At: {game.get('startedAt', 'N/A')}")
     print(f"Completed At: {game.get('completedAt', 'N/A')}")
     print()
+
+def display_tournament_info(tournament: dict) -> None:
+    """Display detailed tournament information."""
+    print(f"\n{BOLD}Tournament Information{RESET}")
+    print("-" * 80)
+    print(f"Tournament ID: {tournament.get('id', 'N/A')}")
+    print(f"Status: {tournament.get('status', 'N/A')}")
+    print(f"Number of Players: {tournament.get('numberPlayers', 'N/A')}")
+    print(f"Total Rounds: {tournament.get('totalRounds', 'N/A')}")
+    print(f"Score to Win: {tournament.get('scoreToWin', 'N/A')}")
+    print(f"Token: {tournament.get('token', 'Not generated')}")
+    print(f"Created By: {tournament.get('createdBy', 'N/A')}")
+    print(f"Is Creator: {tournament.get('isCreator', False)}")
+    
+    participants = tournament.get('participants', [])
+    if participants:
+        print(f"\n{BOLD}Participants ({len(participants)}):{RESET}")
+        for p in participants:
+            user = p.get('user', {})
+            is_eliminated = p.get('isEliminated', False)
+            status_tag = f" {RED}[ELIMINATED]{RESET}" if is_eliminated else f" {GREEN}[ACTIVE]{RESET}"
+            avatar = user.get('avatarUrl', 'N/A')
+            print(f"  • {user.get('displayName', 'Unknown')}{status_tag}")
+            print(f"    User ID: {user.get('id', 'N/A')}")
+    
+    print(f"\nCreated At: {tournament.get('createdAt', 'N/A')}")
+    print(f"Started At: {tournament.get('startedAt', 'N/A')}")
+    print(f"Completed At: {tournament.get('completedAt', 'N/A')}")
+    print()
+
 
 def create_game_interactive(users: List[User]) -> None:
     """Interactive game creation."""
@@ -951,6 +1237,207 @@ def generate_token_interactive(users: List[User]) -> None:
         print(f"\n{BOLD}Share this token with other players:{RESET}")
         print(f"{CYAN}{BOLD}{token}{RESET}")
 
+def create_tournament_interactive(users: List[User]) -> None:
+    """Interactive tournament creation."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to create tournament:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    print(f"\n{CYAN}Tournament Players Options:{RESET}")
+    print("  Common values: 4, 8, 16, 32")
+    
+    num_players_input = input(f"Number of players (press Enter for default 8): ").strip()
+    number_players = 8
+    if num_players_input.isdigit():
+        num_players = int(num_players_input)
+        if num_players > 0:
+            number_players = num_players
+        else:
+            print(f"{RED}✗{RESET} Number of players must be positive")
+            return
+    
+    score_input = input(f"Score to win (1-10, press Enter for default 10): ").strip()
+    score_to_win = 10
+    if score_input.isdigit():
+        score = int(score_input)
+        if 1 <= score <= 10:
+            score_to_win = score
+        else:
+            print(f"{RED}✗{RESET} Score must be between 1 and 10")
+            return
+    
+    tournament = user.create_tournament(number_players, score_to_win)
+    if tournament:
+        display_tournament_info(tournament)
+
+def join_tournament_interactive(users: List[User]) -> None:
+    """Interactive tournament joining."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to join tournament:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    token = input(f"\nEnter tournament token: ").strip()
+    if not token:
+        print(f"{RED}✗{RESET} Token is required")
+        return
+    
+    result = user.join_tournament(token)
+    if result:
+        print(f"\n{GREEN}✓{RESET} Successfully joined tournament!")
+        print(f"Tournament ID: {result.get('tournamentId', 'N/A')}")
+
+def start_tournament_interactive(users: List[User]) -> None:
+    """Interactive tournament starting."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to start tournament:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    tournament_id = input(f"\nEnter tournament ID: ").strip()
+    if not tournament_id:
+        print(f"{RED}✗{RESET} Tournament ID is required")
+        return
+    
+    tournament = user.start_tournament(tournament_id)
+    if tournament:
+        display_tournament_info(tournament)
+
+def get_tournament_interactive(users: List[User]) -> None:
+    """Interactive tournament info retrieval."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to get tournament info:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    tournament_id = input(f"\nEnter tournament ID: ").strip()
+    if not tournament_id:
+        print(f"{RED}✗{RESET} Tournament ID is required")
+        return
+    
+    tournament = user.get_tournament(tournament_id)
+    if tournament:
+        display_tournament_info(tournament)
+
+def generate_tournament_token_interactive(users: List[User]) -> None:
+    """Interactive tournament token generation."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to generate tournament token:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    tournament_id = input(f"\nEnter tournament ID: ").strip()
+    if not tournament_id:
+        print(f"{RED}✗{RESET} Tournament ID is required")
+        return
+    
+    token = user.generate_tournament_token(tournament_id)
+    if token:
+        print(f"\n{BOLD}Share this token with other players:{RESET}")
+        print(f"{CYAN}{BOLD}{token}{RESET}")
+
+def get_tournament_games_interactive(users: List[User]) -> None:
+    """Interactive tournament games retrieval."""
+    if not users:
+        print(f"{YELLOW}⚠{RESET} No users available")
+        return
+    
+    display_users(users)
+    idx = get_int_input("User index to get tournament games:")
+    
+    if idx is None or not (0 <= idx < len(users)):
+        print(f"{RED}✗{RESET} Invalid user index")
+        return
+    
+    user = users[idx]
+    if not user.token:
+        print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+        user.login()
+    
+    tournament_id = input(f"\nEnter tournament ID: ").strip()
+    if not tournament_id:
+        print(f"{RED}✗{RESET} Tournament ID is required")
+        return
+    
+    games = user.get_tournament_games(tournament_id)
+    if games:
+        print(f"\n{BOLD}Tournament Games ({len(games)} total){RESET}")
+        print("-" * 80)
+        for game in games:
+            status_color = GREEN if game.get('status') == 'IN_PROGRESS' else YELLOW if game.get('status') == 'PENDING' else CYAN
+            print(f"\n{status_color}{game.get('status', 'N/A')}{RESET} - Round {game.get('roundNumber', 'N/A')}, Match {game.get('matchNumber', 'N/A')}")
+            print(f"  Game ID: {game.get('id', 'N/A')}")
+            print(f"  Type: {game.get('type', 'N/A')}")
+            
+            game_users = game.get('gameUsers', [])
+            if game_users:
+                print(f"  Players:")
+                for gu in game_users:
+                    user_data = gu.get('user', {})
+                    score = gu.get('score', 0)
+                    is_winner = gu.get('isWinner', False)
+                    winner_tag = f" {GREEN}[WINNER]{RESET}" if is_winner else ""
+                    online_status = f"{GREEN}●{RESET}" if user_data.get('isOnline') else f"{DIM}○{RESET}"
+                    print(f"    {online_status} {user_data.get('displayName', 'Unknown')} - Score: {score}{winner_tag}")
+        print()
+
+
 
 def main():
     clear_terminal()
@@ -965,6 +1452,7 @@ def main():
         print(f"\n{DIM}[{GREEN}new{RESET}{DIM} | {GREEN}random{RESET}{DIM} | {GREEN}mock{RESET}{DIM} | {GREEN}manuallogin{RESET}{DIM} | {CYAN}login{RESET}{DIM} | {CYAN}refresh{RESET}{DIM}]")
         print(f"{DIM}[{CYAN}friend{RESET}{DIM} | {CYAN}accept{RESET}{DIM} | {CYAN}reject{RESET}{DIM} | {CYAN}delete{RESET}{DIM} | {CYAN}friends{RESET}{DIM}]")
         print(f"{DIM}[{MAGENTA}creategame{RESET}{DIM} | {MAGENTA}joingame{RESET}{DIM} | {MAGENTA}startgame{RESET}{DIM} | {MAGENTA}getgame{RESET}{DIM} | {MAGENTA}gentoken{RESET}{DIM}]")
+        print(f"{DIM}[{BLUE}createtourney{RESET}{DIM} | {BLUE}jointourney{RESET}{DIM} | {BLUE}starttourney{RESET}{DIM} | {BLUE}gettourney{RESET}{DIM} | {BLUE}gentourneytoken{RESET}{DIM} | {BLUE}tourneygames{RESET}{DIM}]")
         print(f"{DIM}[{YELLOW}logout{RESET}{DIM} | {BLUE}display{RESET}{DIM} | {RED}clean{RESET}{DIM} | clear | exit]{RESET}")
         cmd = input(f"{CYAN}>{RESET} ").strip().lower()
         
@@ -1182,6 +1670,24 @@ def main():
             
         elif cmd == "gentoken":
             generate_token_interactive(users)
+            
+        elif cmd == "createtourney":
+            create_tournament_interactive(users)
+            
+        elif cmd == "jointourney":
+            join_tournament_interactive(users)
+            
+        elif cmd == "starttourney":
+            start_tournament_interactive(users)
+            
+        elif cmd == "gettourney":
+            get_tournament_interactive(users)
+            
+        elif cmd == "gentourneytoken":
+            generate_tournament_token_interactive(users)
+            
+        elif cmd == "tourneygames":
+            get_tournament_games_interactive(users)
             
         elif cmd == "logout":
             if not users:
