@@ -4,6 +4,7 @@ import { router } from "../main.js";
 // Import UI components
 import "../components/NavBar.js";
 import "../components/FriendList.js";
+import { friendshipApi } from "../api/friendshipApi.js";
 
 export function LiveChat(ctx: AppContext): string {
 	const currentUser: UserState | null = ctx.userStore.get();
@@ -19,7 +20,7 @@ export function LiveChat(ctx: AppContext): string {
 	setTimeout(() => {
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
-		// setupLiveChatEventListeners(ctx); // Handle form submission, etc.
+		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 	}, 0);
 
 	// 3. Return loading screen placeholder
@@ -30,6 +31,7 @@ export function LiveChat(ctx: AppContext): string {
 	`;
 }
 
+// ======== UPDATE CONTENT ========
 function renderLiveChatContent(ctx: AppContext) {
 	const content = document.getElementById("live-chat-content");
 	if (!content) return;
@@ -80,17 +82,7 @@ function renderLiveChatContent(ctx: AppContext) {
 	`;
 }
 
-
-
-
-// function setupLiveChatEventListeners(ctx: AppContext) {
-//   // Add send message logic, scroll behavior, etc.
-// }
-
-// function setLiveChatWebSockets(ctx: AppContext) {
-//   // Setup WebSocket logic (send/receive messages)
-// }
-
+// ======== PASS CONTEXT ========
 function passContext(ctx: AppContext) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
@@ -102,6 +94,62 @@ function passContext(ctx: AppContext) {
 	}
 }
 
+// ======== EVENT LISTENER ============
+function setupLiveChatEventListeners(ctx: AppContext) {
+	const friendListComponent = document.getElementById('friend-list-component') as any;
+
+	// **** DELETE FRIEND ****
+	friendListComponent?.addEventListener('event-delete-friend', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+
+		try {
+			if (data.friendshipId) {
+				await friendshipApi.delete(data.friendshipId);
+
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+			console.log('Error deleting friend (LiveChat):', error);
+		}
+	});
+
+	// **** BLOCK/UNBLOCK FRIEND ***
+	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+
+		try {
+			if (data.friendshipId) {
+				if (data.isBlocked) {
+					await friendshipApi.unblock(data.friendshipId);
+				} else {
+					await friendshipApi.block(data.friendshipId);
+				}
+
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+			console.log('Error blocking/unblocking friend (LiveChat):', error);
+		}
+	});
+
+}
+
+// function setLiveChatWebSockets(ctx: AppContext) {
+//   // Setup WebSocket logic (send/receive messages)
+// }
+
+
+
 // function cleanLiveChatWS() {
 //   // Cleanup logic for socket disconnection
 // }
+
+// implement the event listener
+// create a api method to block (/block) with friend id as payload - tournamentAPi.ts
+// then we create the backend method

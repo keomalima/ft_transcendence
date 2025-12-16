@@ -236,6 +236,29 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		}
 	});
 
+	// **** BLOCK/UNBLOCK FRIEND ***
+	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const data = customEvent.detail;
+		try {
+			if (data.friendshipId) {
+				if (data.isBlocked) {
+					await friendshipApi.unblock(data.friendshipId);
+				} else {
+					await friendshipApi.block(data.friendshipId);
+				}
+
+				// Refresh friend list after blocking/unblocking
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+				console.log('Error blocking/unblocking friend:', error);
+		}
+	});
+
+
 	// **** JOIN A GAME ****
 	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
 		const customEvent = e as CustomEvent;
