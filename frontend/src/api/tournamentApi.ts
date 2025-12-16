@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { GameToken, TournamentData } from '../types';
+import { GameToken, TournamentData, TournamentGame } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/tournaments';
@@ -25,6 +25,16 @@ export const tournamentApi = {
 			return response.data;
 		} catch (error) {
 			throw buildApiError('start tournament', error);
+		}
+	},
+
+	matchMaking: async (tournamentId: string): Promise<Partial<TournamentData>> => {
+		try {
+			const response = await httpCall.post<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/match-make`);
+			console.log('🎮 match making sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('match making', error);
 		}
 	},
 
@@ -85,4 +95,15 @@ export const tournamentApi = {
 			throw buildApiError('quit / delete pending tournament', error);
 		}
 	},
+
+	getTournamentGames: async (tournamentId: string): Promise<TournamentGame> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/${tournamentId}/tournament-games`);
+			console.log('🎮 tournament games sucess ✅ ');
+			return response.data;
+		} catch (error) {
+			throw buildApiError('tournament games', error);
+		}
+	}
+	
 };

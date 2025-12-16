@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import type { CreateTournamentInput } from "./tournament.schema.js";
+import type { CreateGameTournamentInput, CreateTournamentInput } from "./tournament.schema.js";
 
 // =====================
 // Tournament CRUD Operations
@@ -72,6 +72,20 @@ async function findTournamentByUserId(prisma: PrismaClient, userId: string, tour
 	});
 }
 
+async function findTournamentByParticipant(prisma: PrismaClient, userId: string, tournamentId: string) {
+	return prisma.tournamentPlayer.findUnique({
+		where: { 
+			tournamentId_userId: {
+				tournamentId,
+				userId
+			}
+		},
+		include: {
+			tournament: true
+		} 
+	})
+}
+
 async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 	return prisma.tournament.findUnique({
 		where: { id: tournamentId},
@@ -89,6 +103,40 @@ async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 			}
 		}
 	})
+}
+
+async function findTournamentGames(prisma: PrismaClient, tournamentId: string) {
+	return prisma.game.findMany({
+		where: { tournamentId },
+		select: {
+			id: true,
+			tournamentId: true,
+			status: true,
+			type: true,
+			roundNumber: true,
+			matchNumber: true,
+			gameUsers: {
+				select: {
+					id: true,
+					score: true,
+					isWinner: true,
+					joinedAt: true,
+					user: {
+						select: {
+							id: true,
+							displayName: true,
+							isOnline: true,
+							avatarUrl: true
+						}
+					}
+				}
+			}
+		}
+	})
+}
+
+async function createTournamentGame(prisma: PrismaClient, data: CreateGameTournamentInput) {
+	return prisma.game.create({ data: {type: "TOURNAMENT", ...data}})
 }
 
 async function generateToken(prisma: PrismaClient, tournamentId: string, token: string) {
@@ -125,7 +173,7 @@ async function startTournament(prisma: PrismaClient, tournamentId: string) {
 	return prisma.tournament.update({
 		where: { id: tournamentId },
 		data: {
-			status : "IN_PROGRESS"
+			status : "READY"
 		}
 	})
 }
@@ -145,5 +193,8 @@ export const tournamentService = {
 	joinUserToTournament,
 	removePlayerFromTournament,
 	deletePendingTournament,
-	startTournament
+	startTournament,
+	createTournamentGame,
+	findTournamentByParticipant,
+	findTournamentGames
 };

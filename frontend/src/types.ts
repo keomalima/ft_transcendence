@@ -106,6 +106,28 @@ export interface GameToken {
 	token: string | null;
 }
 
+//for tournamentGames
+export interface TournamentGame {
+  id: string;
+  tournamentId: string;
+  status: string | null;
+  type: string | null;
+  roundNumber: number;
+  matchNumber: number;
+  gameUsers: Array<{
+    id: string;
+    score: number;
+    isWinner: boolean;
+    joinedAt: Date;
+    user: {
+      id: string;
+      displayName: string;
+      isOnline: boolean;
+      avatarUrl: string;
+    };
+  }>;
+}
+
 
 import { UserStore } from "./store/userStore";
 import { GameStore } from "./store/gameStore"

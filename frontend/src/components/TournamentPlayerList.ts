@@ -68,7 +68,7 @@ export class TournamentPlayerList extends HTMLElement {
 					<div class='flex flex-1 flex-col mt-5 justify-center place-items-center gap-2'>
 						<button id='start-tournament-button'
 							${this._isCreator === false ? "hidden" : ""} 
-							${isFull ? "hidden" : ""} 
+							${!isFull ? "hidden" : ""} 
 							class=' w-full lg:w-1/3 min-w-30 place-items-center font-[Calistoga] px-3.5 py-2.5 rounded-full bg-black text-white outline outline-1 outline-black hover:shadow-md
 								disable:opacity-75
 								enabled:hover:font-semibold

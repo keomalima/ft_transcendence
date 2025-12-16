@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import { Prisma } from '@prisma/client'
 import { tournamentService } from './tournament.service.js';
-import type { CreateTournamentInput } from './tournament.schema.js';
+import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
 
@@ -226,11 +227,11 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 				message: "Cannot start tournament, tournament has already started or finished"
 			});
 		}
-		// if (tournament.participants.length < tournament.numberPlayers) {
-		// 	return reply.code(409).send({
-		// 		message: "Tournament is not yet full"
-		// 	});
-		// }
+		if (tournament.participants.length < tournament.numberPlayers) {
+			return reply.code(409).send({
+				message: "Tournament is not yet full"
+			});
+		}
 		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
 		WaintingRoomWsController.broadcasToRoom(tournament.id, {
 			type: 'start_game',
@@ -239,6 +240,82 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		return response;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to start tournament"});
+	}
+}
+
+async function matchMakeTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId)
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		if (tournament.status !== "READY") {
+			return reply.code(409).send({
+				message: "Cannot match make, tournament has already started or finished"
+			});
+		}
+		if (tournament.participants.length < tournament.numberPlayers) {
+			return reply.code(409).send({
+				message: "Tournament is not yet full"
+			});
+		}
+
+		await request.server.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			const shuffled = [...tournament.participants];
+			for (let i = shuffled.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				const temp = shuffled[i]!;
+				shuffled[i] = shuffled[j]!;
+				shuffled[j] = temp;
+			}
+
+			for (let i = 0; i < shuffled.length; i += 2) {
+				const first = shuffled[i];
+				const second = shuffled[i + 1];
+				if (!first || !second) {
+					throw new Error("Unexpected missing participant while pairing");
+				}
+				const game = await tx.game.create({ data: {
+					createdBy: userId, 
+					type: 'TOURNAMENT',
+					scoreToWin: tournament.scoreToWin,
+					tournamentId: tournament.id,
+					roundNumber: 1,
+					matchNumber: i/2 + 1,
+				}})
+				await tx.gamePlayer.createMany({
+					data: [
+						{ gameId: game.id, userId: first.userId },
+						{ gameId: game.id, userId: second.userId }
+					]
+				})
+			}
+			await tx.tournament.update({ where: { id: tournament.id}, data: { status: 'IN_PROGRESS' }})
+		});
+		return tournament;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to match make tournament"});
+	}
+}
+
+async function getTournamentGamesHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+		const tournament = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId)
+		if (!tournament) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		const games = await tournamentService.findTournamentGames(request.server.prisma, tournamentId);
+		return games;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to get tournament games"});
 	}
 }
 
@@ -265,5 +342,7 @@ export const tournamentController = {
 	joinTournamentHandler,
 	removePlayerHandler,
 	deletePendingTournamentHandler,
-	startTournamentHandler
+	startTournamentHandler,
+	matchMakeTournamentHandler,
+	getTournamentGamesHandler,
 };

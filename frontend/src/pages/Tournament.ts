@@ -1,20 +1,30 @@
-import { AppContext, UserState } from "../types.js";
+import { AppContext, TournamentData, TournamentGame, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // import HTML components
 import "../components/NavBar.js";
+import "../components/TournamentBracket.js";
 
 // import styles
 import { tournamentApi } from "../api/tournamentApi.js";
 
-export function Tournament(ctx: AppContext): string {
+export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
 	//get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
 	
+	// secure if no params
+	if (!params || !params['id'])
+	{
+		console.log('no params available')
+		setTimeout(() => router.navigateTo('/home'), 0);
+		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+	}
+
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
+		const tournamentGames = await getTournamentGames(params['id']);
 		renderTournamentContent(currentUser!, currentTournament?.tournamentId!);
-		passContext(ctx);
+		passContext(ctx, tournamentGames);
 		setupTournamentEventListeners(ctx);
 	}, 0);
 
@@ -40,10 +50,21 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 				<h1 class="text-5xl font-bold text-gray-800 mb-4">Tournaments</h1>
 				<p class="text-lg text-gray-600 max-w-2xl">
 					Tournament brackets comming soon
+					<tournament-bracket id='tournament-game-component'></tournament-bracket>
 				</p>
 			</div>
 	`
 	return content;
+}
+
+// ======== GET TOURNAMENT GAMES ============
+async function getTournamentGames(tournamentId: string): Promise<TournamentGame | null > {
+	try {
+		const tournamentGames = await tournamentApi.getTournamentGames(tournamentId);
+		return tournamentGames;
+	} catch(error) {
+		return null;
+	}
 }
 
 // ======== GET CURRENT TOURNAMENT ============
@@ -52,19 +73,24 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
 	} catch(error) {
-		console.log(error);
 		return null;
 	}
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext) {
+function passContext(ctx: AppContext, tournamentGames: TournamentGame | null) {
 
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
 	}
-
+	const tournamentGameComponent = document.getElementById('tournament-game-component') as any
+	if (tournamentGameComponent) {
+		tournamentGameComponent.ctx = ctx;
+		tournamentGameComponent.tournamentGamesData = tournamentGames;
+	} else {
+		console.error('❌ Tournament games component not found!');
+	}
 }
 
 // ======== EVENT LISTENER ============
