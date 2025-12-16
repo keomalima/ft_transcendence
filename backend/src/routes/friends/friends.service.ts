@@ -82,6 +82,27 @@ async function deleteRequest(prisma: PrismaClient, requestId: string) {
 	})
 }
 
+async function findFriendshipByFriendId(prisma: PrismaClient, userId: string, friendId: string) {
+	return prisma.friendship.findFirst({
+		where: {
+			 OR: [
+					{ requesterId: userId, addresseeId: friendId},
+					{ requesterId: friendId, addresseeId: userId },
+    		],
+		}
+	})
+}
+
+async function blockFriend(prisma: PrismaClient, friendshipId: string) {
+	return prisma.friendship.update({
+		where: { id: friendshipId },
+		data: {
+			status: 'BLOCKED',
+			deletedAt: new Date()
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -94,5 +115,7 @@ export const friendsService = {
   acceptRequest,
   findRequestById,
   findPendingRequests,
-  deleteRequest
+  deleteRequest,
+  findFriendshipByFriendId,
+  blockFriend
 };
