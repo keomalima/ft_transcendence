@@ -112,7 +112,7 @@ export class FriendList extends HTMLElement {
 		name.className = 'text-sm font-[Inter]'
 
 		const status = document.createElement('p');
-		status.innerText = `${friend.isOnline === true ? 'onilne' : 'offline'}`;
+		status.innerText = `${friend.isOnline === true ? 'online' : 'offline'}`;
 		status.className = `text-xs font-[Inter] ${friend.isOnline === true ? 'text-green-500' : 'text-red-500'}`
 		text.appendChild(name);
 		text.appendChild(status);
@@ -227,7 +227,7 @@ export class FriendList extends HTMLElement {
 		blockBtn.addEventListener('click', () => {
 			this.dispatchEvent(new CustomEvent('event-toggle-block', {
 				detail: {
-					friendshipId: friend.friendshipId as string,
+					friendId: friend.id as string,
 					isBlocked: friend.isBlocked === true
 				},
 				bubbles: true

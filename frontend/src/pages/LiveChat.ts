@@ -122,11 +122,11 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const data = customEvent.detail;
 
 		try {
-			if (data.friendshipId) {
+			if (data.friendId) {
 				if (data.isBlocked) {
-					await friendshipApi.unblock(data.friendshipId);
+					await friendshipApi.unblock(data.friendId);
 				} else {
-					await friendshipApi.block(data.friendshipId);
+					await friendshipApi.block(data.friendId);
 				}
 
 				if (friendListComponent.loadAndRender) {

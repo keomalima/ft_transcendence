@@ -26,6 +26,7 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 		    return {
 		        friendshipId: f.id,
 				isOnline: isOnlineCheck,
+				isBlocked: f.status === 'BLOCKED',
 		        ...safeFriend
 		    };
 		});
@@ -207,6 +208,28 @@ async function blockFriend(request: FastifyRequest<{Params: {id: string}}>, repl
 	}
 }
 
+async function unblockFriend(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const friendId = request.params.id;
+		const userId = request.user!.id;
+
+		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, userId, friendId);
+		if (!friendship) {
+			return reply.code(404).send({ message: "Friendship does not exist" });
+		}
+
+		if (friendship.status !== 'BLOCKED') {
+			return reply.code(404).send({ message: "Friend can not be blocked" });
+		}
+
+		const updated = await friendsService.unblockFriend(request.server.prisma, friendship.id);
+		return updated;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to unblock friend" });
+	}
+}
+
+
 // =====================
 // Helper Functions
 // =====================
@@ -231,5 +254,6 @@ export const friendsController = {
 	getPendingRequestsHandler,
 	rejectFriendHandler,
 	deleteFriendHandler,
-	blockFriend
+	blockFriend,
+	unblockFriend
 };

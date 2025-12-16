@@ -16,7 +16,7 @@ const sendRequestSchema = z.object({
 const blockFriendResponseSchema = z.object({
 	id: z.string(),
 	status: z.enum(FriendshipStatus),
-	deletedAt: z.date()
+	// deletedAt: z.date()
 })
 
 const getFriendsResponseSchema = z.object({
@@ -26,7 +26,8 @@ const getFriendsResponseSchema = z.object({
 	isOnline: z.boolean(),
 	name: z.string(),
 	surname: z.string(),
-	avatarUrl: z.string()
+	avatarUrl: z.string(),
+	isBlocked: z.boolean()
 })
 
 const friendsArraySchema = z.array(getFriendsResponseSchema);

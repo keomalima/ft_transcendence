@@ -249,11 +249,11 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
-			if (data.friendshipId) {
+			if (data.friendId) {
 				if (data.isBlocked) {
-					await friendshipApi.unblock(data.friendshipId);
+					await friendshipApi.unblock(data.friendId);
 				} else {
-					await friendshipApi.block(data.friendshipId);
+					await friendshipApi.block(data.friendId);
 				}
 
 				// Refresh friend list after blocking/unblocking

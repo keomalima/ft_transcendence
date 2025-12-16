@@ -14,19 +14,28 @@ async function findRequestById(prisma: PrismaClient, id: string) {
 async function findActiveFriends(prisma: PrismaClient, id: string) {
 	return prisma.friendship.findMany({
 		where: {
-			OR: [
-				{requesterId: id},
-				{addresseeId: id}
-			],
-			deletedAt: null,
-			status: 'ACCEPTED',
-		}, 
+			AND: [
+				{
+					OR: [
+						{ requesterId: id },
+						{ addresseeId: id }
+					]
+				},
+				{ deletedAt: null },
+				{
+					status: {
+						in: ['ACCEPTED', 'BLOCKED']
+					}
+				}
+			]
+		},
 		include: {
 			requester: true,
 			addressee: true,
 		}
 	})
 }
+
 
 async function findUserByDisplayName(prisma: PrismaClient, displayName: string){
 	return prisma.user.findUnique({
@@ -98,9 +107,17 @@ async function blockFriend(prisma: PrismaClient, friendshipId: string) {
 		where: { id: friendshipId },
 		data: {
 			status: 'BLOCKED',
-			deletedAt: new Date()
 		}
 	})
+}
+
+async function unblockFriend(prisma: PrismaClient, friendshipId: string) {
+	return prisma.friendship.update({
+		where: { id: friendshipId },
+		data: {
+			status: 'ACCEPTED'
+		}
+	});
 }
 
 // =====================
@@ -117,5 +134,6 @@ export const friendsService = {
   findPendingRequests,
   deleteRequest,
   findFriendshipByFriendId,
-  blockFriend
+  blockFriend,
+  unblockFriend
 };
