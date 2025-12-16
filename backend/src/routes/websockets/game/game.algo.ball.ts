@@ -1,7 +1,6 @@
-import { gameSchemas } from "../../game/game.schema.js";
 import { sleep, getRandom } from "./game.algo.utils.js";
 import type { GameSession, GameConfig, GameState, PlayerConnection } from "./game.types.js";
-import { notifyWonGame, notifyService } from "./game.ws.controller.js";
+import { gameWsNotification } from "./game.ws.notification.js";
 
 
 function initBall(gameSession: GameSession): void {
@@ -25,7 +24,7 @@ async function service(gameSession: GameSession) {
 
 	console.log(`🥎 ball centered : x=${ball.x} | y=${ball.y}`);
 
-	notifyService(gameSession);
+	gameWsNotification.notifyService(gameSession);
 
 	// Wait before serving
 	await sleep(4000);
@@ -41,7 +40,7 @@ async function service(gameSession: GameSession) {
 	ball.velocityX = (ball.velocityX / currentSpeed) * speed;
 	ball.velocityY = (ball.velocityY / currentSpeed) * speed;
 
-	// console.log(`🏓 service : velocityX=${ball.velocityX} | velocityY=${ball.velocityY}`);
+	console.log(`🏓 Service complete - Ball velocity: X=${ball.velocityX.toFixed(2)} | Y=${ball.velocityY.toFixed(2)}`);
 }
 
 function calculateWallCollision(ball: GameState['ball'], config: GameConfig) {
@@ -140,12 +139,17 @@ function setScore(gameSession: GameSession, playerObj: PlayerConnection, playerN
 
 function wonGame(gameSession: GameSession, config: GameConfig): boolean {
 	if (gameSession.gameState.score.playerA >= config.scoreToWin || gameSession.gameState.score.playerB >= config.scoreToWin) {
-		initBall(gameSession);
-		if (gameSession.gameState.score.playerA >= config.scoreToWin)
-			notifyWonGame(gameSession);
-		else
-			notifyWonGame(gameSession);
-		gameSession.gameState.status = 'finished';
+		// Only notify if we haven't already
+		if (!gameSession.winnerNotified) {
+			// Set status to finished FIRST to stop the game loop immediately
+			gameSession.gameState.status = 'finished';
+			gameSession.winnerNotified = true;
+			
+			initBall(gameSession);
+			gameWsNotification.notifyWonGame(gameSession);
+			console.log('🏆 Winner notified, game session marked as finished');
+		}
+		
 		return true;
 	}
 	return false;

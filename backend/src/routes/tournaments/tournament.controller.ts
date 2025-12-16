@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { tournamentService } from './tournament.service.js';
 import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
-import { WaintingRoomWsController } from '../websockets/waitingroom.ws.controller.js';
+import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
 
 // =====================
 // Tournament CRUD Handlers

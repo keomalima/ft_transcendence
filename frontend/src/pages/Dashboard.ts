@@ -1,6 +1,7 @@
 import { AppContext, UserState } from "../types.js";
 import { router } from "../main.js";
 import { friendshipApi } from "../api/friendshipApi.js";
+import { gameService } from "../services/GameService.js";
 
 // import HTML components
 import "../components/NavBar.js";
@@ -9,7 +10,6 @@ import "../components/MatchHistory.js";
 import "../components/FriendRequests.js";
 import "../components/AddFriend.js";
 import "../components/JoinGamePopUp.js";
-import { gameApi } from "../api/gameApi.js";
 import type { GameHistory } from "../types.js";
 
 export function Dashboard(ctx: AppContext): string{
@@ -17,9 +17,9 @@ export function Dashboard(ctx: AppContext): string{
     const currentUser: UserState | null = ctx.userStore.get();
 
 	setTimeout( async () => {
-		const currentGame = await getCurrentGame();
-		renderDashboardContent(currentUser!, currentGame?.gameId!);
-		const gameHistory: GameHistory[] = await gameApi.getHistory();
+		const currentGame = await getCurrentGame(ctx);
+		renderDashboardContent(currentUser!, currentGame);
+		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
 	}, 0);
@@ -33,8 +33,19 @@ export function Dashboard(ctx: AppContext): string{
 }
 
 // ======== UPDATE CONTENT ========
-function renderDashboardContent(currentUser: UserState, gameId: string | null) {
+function renderDashboardContent(currentUser: UserState, currentGame: {gameId: string, status: string, token: string | null, type: string, userId:string} | null) {
 	const content = document.getElementById('dashboard-content');
+
+	let link: string | null  = null;
+	if (currentGame) {
+		if (currentGame.type === 'LOCAL')
+			link = `/local-game/${currentGame.gameId}`;
+		else if (currentGame.status === 'PENDING')
+			link = `/game-room/${currentGame.gameId}`;
+		else if (currentGame.status === 'IN_PROGRESS')
+			link = `/game/${currentGame.gameId}`;
+	}
+
 	content!.innerHTML = /*html*/`
 
 		<header>
@@ -49,16 +60,17 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
 
-				${gameId ?
+				${currentGame?.gameId ?
 					`
-						<a data-link href='/game-room/${gameId}'class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+						<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
 							<p class='text-white' >You have a pending game</p>
 							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
 						</a>
 
-						<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
-							<h1>???</h1>
-						</div>
+						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
+						</a>
+
 					`
 					:
 					`
@@ -68,14 +80,12 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 						<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
 							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Join a game</p>
 						</a>
-						<div class="relative rounded-lg bg-white order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center">
-							<h1>???</h1>
-						</div>
+						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
+						</a>
+
 					`
 				}
-
-				
-
 
 				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white p-4 lg:p-10 order-4 lg:order-0">
 					<h1>Your achievements</h1>
@@ -104,9 +114,9 @@ function renderDashboardContent(currentUser: UserState, gameId: string | null) {
 }
 
 // ======== GET CURRENT GAME ============
-async function getCurrentGame(): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
+async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
 	try {
-		const currentGame = await gameApi.getCurrentGame();
+		const currentGame = await gameService.getCurrentGame(ctx);
 		return currentGame;
 	} catch(error) {
 		console.log(error);
@@ -234,13 +244,36 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		}
 	});
 
-	// **** JOIN A GAME ****
-	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
+	// **** BLOCK/UNBLOCK FRIEND ***
+	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
-			const result = await gameApi.joinGame(data);
-			router.navigateTo(`/game-room/${result.gameId}`);
+			if (data.friendshipId) {
+				if (data.isBlocked) {
+					await friendshipApi.unblock(data.friendshipId);
+				} else {
+					await friendshipApi.block(data.friendshipId);
+				}
+
+				// Refresh friend list after blocking/unblocking
+				if (friendListComponent.loadAndRender) {
+					await friendListComponent.loadAndRender();
+				}
+			}
+		} catch (error) {
+				console.log('Error blocking/unblocking friend:', error);
+		}
+	});
+
+
+	// **** JOIN A GAME ****
+	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const gameToken = customEvent.detail;
+		try {
+			const result = await gameService.joinGame(gameToken, ctx);
+			router.navigateTo(`/game-room/${result!.gameId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;
 			errorMsgJoinGame.className = 'mt-2 text-red-500'

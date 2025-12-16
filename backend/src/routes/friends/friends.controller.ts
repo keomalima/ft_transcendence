@@ -185,6 +185,28 @@ async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}
 	}
 }
 
+async function blockFriend(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const friendId = request.params.id;
+		const userId = request.user!.id;
+		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, userId, friendId);
+		if (!friendship) {
+			return reply.code(404).send({
+                message: "Friendship does not exist"
+            });
+		}
+		if (friendship.status != 'ACCEPTED') {
+			return reply.code(404).send({
+                message: "Friend can not be blocked"
+            });
+		}
+		const updateFriendship = await friendsService.blockFriend(request.server.prisma, friendship.id);
+		return updateFriendship;
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to block friend"});
+	}
+}
+
 // =====================
 // Helper Functions
 // =====================
@@ -208,5 +230,6 @@ export const friendsController = {
 	acceptFriendHandler,
 	getPendingRequestsHandler,
 	rejectFriendHandler,
-	deleteFriendHandler
+	deleteFriendHandler,
+	blockFriend
 };

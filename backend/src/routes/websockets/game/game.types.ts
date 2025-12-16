@@ -33,4 +33,12 @@ export interface GameSession {
 	players: Map<string, PlayerConnection>; //userID - playerConnection
 	gameState: GameState;
 	gameConfig: GameConfig;
+	gameLoop: NodeJS.Timeout | null;
+	winnerNotified: boolean;
+	isPaused: boolean;
+	pauseTimer: NodeJS.Timeout | null;
+	pausedByUserId: string | null;
+	disconnectTimer: NodeJS.Timeout | null;
+	disconnectedUserId: string | null;
+	abandonedNotified: boolean;
 }

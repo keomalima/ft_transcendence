@@ -1,12 +1,12 @@
 import type { AppContext, UserState, GameData, GameState } from "../types.js";
 import { router } from "../main.js";
-import { gameApi } from "../api/gameApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
 import type { PlayerList } from "../components/PlayersList.js";
 
 // import HTML components
 import "../components/NavBar.js";
 import "../components/PlayersList.js";
+import { gameService } from "../services/GameService.js";
 
 let isGenerated: boolean = false;
 let wsConnection: WaitingRoomConnection | null = null;
@@ -26,13 +26,13 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// Execute after the first rendering
 	setTimeout(async () => {
 		cleanWaitingRoomWS();
-		let gameData = await getGameData(params['id']);
+		let gameData = await getGameData(params['id'], ctx);
 		if (!gameData)
 			return;
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
 		
-		setGameRoomWebSockets(currentUser!, gameData);
+		setGameRoomWebSockets(currentUser!, gameData, ctx);
 
 		await setupGameRoomEventListeners(ctx, params['id']);
 	}, 0);
@@ -100,7 +100,7 @@ function renderGameRoomContent(gameData: GameData) {
 }
 
 // ======== SET WEBSOCKET CONNECTION ============
-async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData) {
+async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData, ctx: AppContext) {
 
 	// Create websocket with gameid
 	wsConnection = new WaitingRoomConnection();
@@ -108,7 +108,7 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData)
 		async (updateGameData) => {
 			if (updateGameData.message) {
 				console.log('🔔', updateGameData);
-				const newGameData = await getGameData(gameData.id!);
+				const newGameData = await getGameData(gameData.id!, ctx);
 				if (newGameData)
 					gameData = newGameData;
 				updatePlayerList(gameData);
@@ -138,9 +138,9 @@ export function cleanWaitingRoomWS() {
 }
 
 // ======== GET GAME DATA ============
-async function getGameData(id: string): Promise<GameData | null> {
+async function getGameData(id: string, ctx: AppContext): Promise<GameData | null> {
 	try {
-		const gameData: GameData | null = await gameApi.getGame(id);
+		const gameData: GameData | null = await gameService.getGame(id, ctx);
 		return gameData;
 	} catch(error) {
 		console.log(error);
@@ -182,7 +182,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		try {
 			let result = null;
 			if (isGenerated == false) {
-				result = await gameApi.generateToken(gameId);
+				result = await gameService.generateToken(gameId, ctx);
 				isGenerated = true;
 			}
 			if (result) {
@@ -225,7 +225,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail;
 		try {
-			await gameApi.startGame(gameId);
+			await gameService.startGame(gameId, ctx);
 			cleanWaitingRoomWS();
 			router.navigateTo(`/game/${gameId}`);
 		} catch (error) {
@@ -244,7 +244,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		if (!gameId)
 			return;
 		try {
-			await gameApi.quitPendingGame(gameId);
+			await gameService.quitPendingGame(gameId, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);
@@ -262,8 +262,8 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		if (!gameId || !playerId)
 			return;
 		try {
-			await gameApi.removePlayer(gameId, playerId);
-			const gameData = await getGameData(gameId);
+			await gameService.removePlayer(gameId, playerId, ctx);
+			const gameData = await getGameData(gameId, ctx);
 			updatePlayerList(gameData);
 		} catch (error) {
 			console.log(error);

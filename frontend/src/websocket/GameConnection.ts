@@ -3,8 +3,8 @@ import { API_BASE_URL } from '../config.js';
 export class GameConnection {
 	private ws: WebSocket | null = null;
 
-	connect(gameId: string, userId: string) {
-		const httpUrl = new URL(`/ws/game/${gameId}/${userId}`, API_BASE_URL);
+	connect(gameId: string, userId: string, scoreToWin: string) {
+		const httpUrl = new URL(`/ws/game/${gameId}/${userId}/${scoreToWin}`, API_BASE_URL);
 		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
 		this.ws = new WebSocket(httpUrl.href);
@@ -18,7 +18,7 @@ export class GameConnection {
 		}
 
 		this.ws.onclose = () => {
-			console.log('🎮 Disconnected from game');
+			// console.log('🎮 Disconnected from game');
 		}
 
 		this.ws.onmessage = (event) => {
@@ -33,7 +33,6 @@ export class GameConnection {
 					bubbles: true
 				}));
 			} if (data.type === 'update_game') {
-				// console.log(`🔃 update game [L:${left}, R:${right}]`);
 				document.dispatchEvent(new CustomEvent('event-update-game', {
 					detail: {
 						left: data.left,
@@ -54,11 +53,41 @@ export class GameConnection {
 				document.dispatchEvent(new CustomEvent('event-won-game', {
 					detail: {
 						iswinner: data.iswinner,
-						playerinfo: data.playerinfo
+						playerinfo: data.currentPlayer,
+						players: data.players
 					},
 					bubbles: true
 				}));
-				
+			} if (data.type === 'abandoned-game') {
+				document.dispatchEvent(new CustomEvent('event-abandoned-game', {
+					detail: {
+						iswinner: data.iswinner,
+						playerinfo: data.currentPlayer,
+						players: data.players
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'pause') {
+				document.dispatchEvent(new CustomEvent('event-pause-game', {
+					detail: {
+						status: data.status
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'player-disconnected') {
+				document.dispatchEvent(new CustomEvent('event-player-disconnected', {
+					detail: {
+						disconnectedUserId: data.disconnectedUserId
+					},
+					bubbles: true
+				}));
+			} if (data.type === 'player-reconnected') {
+				document.dispatchEvent(new CustomEvent('event-player-reconnected', {
+					detail: {
+						reconnectedUserId: data.reconnectedUserId
+					},
+					bubbles: true
+				}));
 			}
 		}
 	}
@@ -74,6 +103,7 @@ export class GameConnection {
 	disconnect() {
 		this.ws?.close();
 		this.ws = null;
+		console.log('🎮 Disconnected from game');
 	}
 
 }

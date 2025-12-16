@@ -6,6 +6,7 @@ export class FriendList extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<FriendData>[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
+	private _isLoading: boolean = false;
 	
 	constructor() {
 		super();
@@ -20,15 +21,20 @@ export class FriendList extends HTMLElement {
 	}
 
 	async connectedCallback() {
-		if (this._ctx) {
+		if (this._ctx && !this._isLoading) {
 			await this.loadAndRender();
 		}
 	}
 
 	public async loadAndRender() {
+		if (this._isLoading) return;
+		this._isLoading = true;
+		
 		await this.getFriendList();
 		this.render();
 		this.displayFriendCards();
+		
+		this._isLoading = false;
 	}
 
 	private render() {
@@ -83,7 +89,6 @@ export class FriendList extends HTMLElement {
 	}
 
 	private createFriendCard(friend: Partial<FriendData>): HTMLElement {
-
 		const card = document.createElement('div');
 		card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
 
@@ -115,6 +120,7 @@ export class FriendList extends HTMLElement {
 
 
 		// actions ===================
+		// === Delete button ===
 		const actions = document.createElement('div');
 		actions.className = 'flex flex-row justify-center items-center';
 		const deleteBtn = document.createElement('button');
@@ -125,6 +131,44 @@ export class FriendList extends HTMLElement {
 		`;
 		deleteBtn.id = `delete-${friend.id}`;
 		actions.appendChild(deleteBtn);
+
+		// === Block / Unblock button ===
+		const blockBtn = document.createElement('button');
+		if (friend.isBlocked === true) {
+			blockBtn.innerHTML = /*html*/`
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+					class="pointer-events-none size-7">
+					<path
+						d="M4 4h16v12H6l-2 2v-2H4z"
+						fill="white"
+						stroke="black"
+						stroke-width="1.5"
+						stroke-linejoin="round"
+					/>
+					<line x1="4" y1="4" x2="20" y2="20"
+						stroke="red" stroke-width="2"
+					/>
+				</svg>
+		`;
+		} else {
+			blockBtn.innerHTML = /*html*/`
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+					class="pointer-events-none size-7">
+					<path
+						d="M4 4h16v12H6l-2 2v-2H4z"
+						fill="white"
+						stroke="black"
+						stroke-width="1.5"
+						stroke-linejoin="round"
+					/>
+				</svg>
+		`;
+		}
+		blockBtn.title = friend.isBlocked ? "Unblock" : "Block";
+		blockBtn.id = `block-${friend.id}`;
+		blockBtn.className = 'ml-2';
+
+		actions.appendChild(blockBtn);
 		// ===========================
 
 		card.appendChild(avatar);
@@ -178,6 +222,16 @@ export class FriendList extends HTMLElement {
 					handleCancel();
 				}
 			});
+		});
+
+		blockBtn.addEventListener('click', () => {
+			this.dispatchEvent(new CustomEvent('event-toggle-block', {
+				detail: {
+					friendshipId: friend.friendshipId as string,
+					isBlocked: friend.isBlocked === true
+				},
+				bubbles: true
+			}));
 		});
 
 		
