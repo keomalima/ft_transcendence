@@ -40,19 +40,20 @@ function renderTournamentContent() {
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
-		<header>
-			<nav-bar id='nav-bar-component'></nav-bar>
-		</header>
-
-		<div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
-			<!-- Title Section -->
-			<div class="text-center mb-12">
-				<h1 class="text-5xl font-bold text-gray-800 mb-4">Tournaments</h1>
-				<p class="text-lg text-gray-600 max-w-2xl">
-					Tournament brackets comming soon
-					<tournament-bracket id='tournament-game-component'></tournament-bracket>
-				</p>
-			</div>
+	    <header>
+	        <nav-bar id='nav-bar-component'></nav-bar>
+	    </header>
+	
+	    <div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
+	        <div class="text-center mb-12">
+	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
+	        </div>
+	
+	        <div class="w-full">
+	            <tournament-bracket id='tournament-game-component'></tournament-bracket>
+	        </div>
+	    </div>
+	</div>
 	`
 	return content;
 }

@@ -35,36 +35,76 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private render() {
-		const rounds = this._tournamentData?.totalRounds ? (this._tournamentData.totalRounds * 2) - 1 : 1;
 		this.innerHTML = /*html*/`
-			<div class='h-full flex flex-col'>
-				<h1 class='mb-5'>Tournament state</h1>
-				<div id='match-cards' class='grid grid-cols-[repeat(${rounds ?? 1},_minmax(0,1fr))] gap-8'></div>
+			<div class="flex w-full overflow-x-auto py-8 font-sans">
+			  <div id='match-cards' class="mx-auto flex w-max items-center gap-10 px-4"> </div>
 			</div>
-
 		`;
 	}
 
 	private displayMatchCards(): void {
-		const matchCards = document.getElementById('match-cards');
-		const rounds = this._tournamentData?.totalRounds ?? 1;
-		
-		if (!matchCards || !this._tournamentGamesData || !this._tournamentData) {
-			return;
-		}
-		
-		for (let i = 1; i <= rounds; i++) {
-			const gamesInRound = Math.pow(2, rounds - i);
+		const matchCardsContainer = document.getElementById('match-cards');
+		if (!matchCardsContainer || !this._tournamentData ) return;
+
+		matchCardsContainer.innerHTML = '';
+		const totalRounds = this._tournamentData.totalRounds;
+		const visualColumns:HTMLElement[] = new Array((totalRounds * 2) - 1);
+
+		for (let currentRound = 1; currentRound <= totalRounds; currentRound++) {
+			const gamesInThisRound = Math.pow(2, totalRounds - currentRound);
+			const isFinal = currentRound === totalRounds;
 			
-			for (let j = 1; j <= gamesInRound; j++) {
-				const colNumber = this.getColumnIndex(j, i, gamesInRound);
-				const game = this.findGame(i, j);
-				
-				const card = game ? this.createMatchCard(game) : this.createEmptyCard();
-				card.style.gridColumn = `${colNumber}`;
-				matchCards.appendChild(card);
+			if (isFinal) {
+				const centerCol = document.createElement('div');
+				centerCol.className = 'relative z-10 scale-110 transform shadow-2xl flex flex-col justify-center';
+
+				const game = this.findGame(currentRound, 1);
+				if (game) {
+					centerCol.appendChild(this.createMatchCard(game));
+				} else {
+					centerCol.appendChild(this.createEmptyCard());
+				}
+				visualColumns[totalRounds - 1] = centerCol;
+			} else {
+				const [leftCol, rigthCol] = this.createCol(currentRound, gamesInThisRound);
+				const leftIndex = currentRound - 1;
+				const rightIndex = visualColumns.length - currentRound;
+
+				visualColumns[leftIndex] = leftCol;
+				visualColumns[rightIndex] = rigthCol;
 			}
 		}
+		visualColumns.forEach(col => {
+			if (col) matchCardsContainer.appendChild(col);
+		})
+	}
+
+	private createCol(currentRound: number, gamesInThisRound: number): HTMLElement[] {
+		let className = '';
+		
+		if (currentRound === 1) {
+			className = 'flex flex-col gap-8';
+		} else {
+			className = 'flex flex-col justify-around py-10';
+		}
+		const leftCol = document.createElement('div');
+		leftCol.className = className;
+
+		const rightCol = document.createElement('div');
+		rightCol.className = className;
+
+		for (let i = 1; i <= gamesInThisRound; i++) {
+			const game = this.findGame(currentRound, i);
+
+			if (i <= gamesInThisRound / 2) {
+				const card = game ? this.createMatchCard(game) : this.createEmptyCard();
+				leftCol.appendChild(card);
+			} else {
+				const card = game ? this.createMatchCard(game, true) : this.createEmptyCard();
+				rightCol.appendChild(card);
+			}
+		}
+		return [leftCol, rightCol]
 	}
 
 	private findGame(roundNbr: number, matchNbr: number): TournamentGame | undefined {
@@ -73,78 +113,96 @@ export class TournamentBracket extends HTMLElement {
 		);
 	}
 
-	private getColumnIndex(gameIndex: number, roundIndex: number, gamesInRound: number) : number {
-		const roundTotal = this._tournamentData? this._tournamentData.totalRounds : 1;
-		const totalColumns = (roundTotal * 2) - 1;
-
-		if (roundIndex === roundTotal) {
-			return roundTotal;
-		}
-
-		const gamesPerSide = gamesInRound/2;
-
-		if (gameIndex <= gamesPerSide) {
-			return roundIndex;
-		}
-		return totalColumns - roundIndex + 1;
-	}
-
-	private createMatchCard(game: TournamentGame): HTMLElement {
+	private createMatchCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
 		const card = document.createElement('div');
-		card.className = 'flex flex-col gap-4';
+		card.className = `w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-sm ${isMirrored ? 'text-right' : ''}`;
 
-		game.gameUsers.forEach((player) => {
-			const avatar = document.createElement('div');
-			avatar.className = 'shrink-0';
+		const innerContainer = document.createElement('div');
+		innerContainer.className = 'flex flex-col gap-2';
+
+		const [player1, player2] = game.gameUsers;
+		let winnerIndex = null;
+		if (player1.score > player2.score) winnerIndex = 0;
+		else if (player2.score > player1.score) winnerIndex = 1;
+		
+		game.gameUsers.forEach((player, idx) => {
+			const isWinner = idx === winnerIndex;
+
+			// row content ==============
+			const row = document.createElement('div');
+        	row.className = `flex items-center justify-between ${isMirrored ? 'flex-row-reverse' : ''}`;
+
+			// player content ==============
+			const playerInfo = document.createElement('div');
+			playerInfo.className = `flex items-center gap-2 ${isMirrored ? 'flex-row-reverse' : ''}`;
+
+			// avatar content ==============
+			const avatar = document.createElement('img');
+	        avatar.src = `${this._imageUrl}${player.user.avatarUrl}`;
+	        avatar.className = 'h-6 w-6 rounded-full object-cover';
+
+			// name content ==============
+	        const name = document.createElement('span');
+	        name.innerText = player.user.displayName;
+	        name.className = 'text-sm font-[Inter] text-gray-900 ' + (isWinner ? 'font-bold' : '');
+
+	        // score content  ==============
+	        const score = document.createElement('span');
+	        score.innerText = player.score.toString();
+	        score.className = 'text-sm font-[Inter] ' + (isWinner ? 'font-bold text-black' : 'text-gray-500');
+			
+	        playerInfo.appendChild(avatar);
+	        playerInfo.appendChild(name);
+	        row.appendChild(playerInfo);
+	        row.appendChild(score);
 	
-			const image = document.createElement('img');
-			image.src = `${this._imageUrl}${player.user.avatarUrl}`;
-			image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
-			avatar.appendChild(image);
-	
-			// text content ==============
-			const text = document.createElement('div');
-			text.className = 'min-w-0 flex-1 pl-3 text-[Inter]';
-	
-			const name = document.createElement('p');
-			name.innerText = `${player.user.displayName}`;
-			name.className = 'text-sm font-[Inter]'
-	
-			text.appendChild(name);
-			// ===========================
-	
-			card.appendChild(avatar);
-			card.appendChild(text);
+	        innerContainer.appendChild(row)
 		})
+
+		card.appendChild(innerContainer);
 		return card;
 	}
-	
-	private createEmptyCard(): HTMLElement {
-		const card = document.createElement('div');
-		card.className = 'flex flex-col gap-4';
 
-		for (let i = 0; i < 2; i++) {
+	private createEmptyCard(isMirrored: boolean = false): HTMLElement {
+		const card = document.createElement('div');
+    	card.className = `w-64 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-4 ${isMirrored ? 'text-right' : ''}`;
+	
+		const innerContainer = document.createElement('div');
+    	innerContainer.className = 'flex flex-col gap-2';
+		
+		for (let i = 0; i < 2; i++ ) {
+	
+			// row content ==============
+			const row = document.createElement('div');
+        	row.className = `flex items-center justify-between ${isMirrored ? 'flex-row-reverse' : ''}`;
+
+			// player content ==============
+			const playerInfo = document.createElement('div');
+			playerInfo.className = `flex items-center gap-2 ${isMirrored ? 'flex-row-reverse' : ''}`;
+
+			// avatar content ==============
 			const avatar = document.createElement('div');
-			avatar.className = 'shrink-0';
-	
-			const image = document.createElement('div');
-			image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
-			avatar.appendChild(image);
-	
-			// text content ==============
-			const text = document.createElement('div');
-			text.className = 'min-w-0 flex-1 pl-3 text-[Inter]';
-	
-			const name = document.createElement('p');
-			name.innerText = `player ${i}`;
-			name.className = 'text-sm font-[Inter]'
-	
-			text.appendChild(name);
-			// ===========================
-	
-			card.appendChild(avatar);
-			card.appendChild(text);
+	        avatar.className = 'h-6 w-6 rounded-full bg-gray-300';
+
+			// name content ==============
+	        const name = document.createElement('span');
+	        name.innerText = `player ${i}`;
+	        name.className = 'text-sm font-[Inter] text-gray-900 ';
+
+			// score content  ==============
+			const score = document.createElement('span');
+	        score.innerText = '-';
+	        score.className = 'text-sm text-gray-300';
+			
+	        playerInfo.appendChild(avatar);
+	        playerInfo.appendChild(name);
+	        row.appendChild(playerInfo);
+			row.appendChild(score);
+
+	        innerContainer.appendChild(row);
 		}
+
+		card.appendChild(innerContainer);
 		return card;
 	}
 }
