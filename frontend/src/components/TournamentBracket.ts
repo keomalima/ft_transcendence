@@ -1,4 +1,3 @@
-import { tournamentApi } from "../api/tournamentApi.js";
 import { AppContext, TournamentData, TournamentGame } from "../types.js";
 
 export class TournamentBracket extends HTMLElement {
@@ -46,41 +45,48 @@ export class TournamentBracket extends HTMLElement {
 		`;
 	}
 
-	// Total columns = (totalRounds × 2) - 1
-	// For 8 players (3 rounds): 5 columns
-	// Left bracket: columns 1, 2
-	// Final: column 3 (center)
-	// Right bracket: columns 4, 5 (mirrored)
-
-	// Divide games into three sections:
-	// Left bracket: Games from rounds 1 to (totalRounds - 1)
-	// Final: Game from round totalRounds
-	// Right bracket: Games from rounds (totalRounds - 1) down to 1
-	
-	// Column assignment:
-	// Left bracket: column = roundNumber
-	// Final: column = totalRounds
-	// Right bracket: column = (totalRounds × 2) - roundNumber
-	
-	// Row positioning (vertical spacing):
-	// Round 1: games are evenly spaced
-	// Round 2: games are centered between their parent games from round 1
-	// Each subsequent round: games are centered between pairs of games from the previous round
-	// Use increasing row gaps as rounds progress (e.g., gap = 2^(roundNumber-1))
-	// Game ordering within each round:
-	
-	// Use matchNumber to determine vertical position
-	// Calculate row offset based on round and match number
-
-	// card.style.gridColumn = `${columnNumber}`;
-
 	private displayMatchCards(): void {
 		const matchCards = document.getElementById('match-cards');
-		if (matchCards && this._tournamentGamesData && this._tournamentData) {
-			this._tournamentGamesData.forEach((game) => {
-				matchCards.appendChild(this.createMatchCard(game));
-			})
+		const rounds = this._tournamentData?.totalRounds ?? 1;
+		
+		if (!matchCards || !this._tournamentGamesData || !this._tournamentData) {
+			return;
 		}
+		
+		for (let i = 1; i <= rounds; i++) {
+			const gamesInRound = Math.pow(2, rounds - i);
+			
+			for (let j = 1; j <= gamesInRound; j++) {
+				const colNumber = this.getColumnIndex(j, i, gamesInRound);
+				const game = this.findGame(i, j);
+				
+				const card = game ? this.createMatchCard(game) : this.createEmptyCard();
+				card.style.gridColumn = `${colNumber}`;
+				matchCards.appendChild(card);
+			}
+		}
+	}
+
+	private findGame(roundNbr: number, matchNbr: number): TournamentGame | undefined {
+		return this._tournamentGamesData?.find(
+			game => game.roundNumber === roundNbr && game.matchNumber === matchNbr
+		);
+	}
+
+	private getColumnIndex(gameIndex: number, roundIndex: number, gamesInRound: number) : number {
+		const roundTotal = this._tournamentData? this._tournamentData.totalRounds : 1;
+		const totalColumns = (roundTotal * 2) - 1;
+
+		if (roundIndex === roundTotal) {
+			return roundTotal;
+		}
+
+		const gamesPerSide = gamesInRound/2;
+
+		if (gameIndex <= gamesPerSide) {
+			return roundIndex;
+		}
+		return totalColumns - roundIndex + 1;
 	}
 
 	private createMatchCard(game: TournamentGame): HTMLElement {
