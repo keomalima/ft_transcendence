@@ -49,7 +49,7 @@ function renderTournamentContent() {
 	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
 	        </div>
 	
-	        <div class="w-full">
+	        <div class="w-full overflow-x-auto">
 	            <tournament-bracket id='tournament-game-component'></tournament-bracket>
 	        </div>
 	    </div>

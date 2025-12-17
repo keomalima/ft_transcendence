@@ -42,42 +42,87 @@ export class TournamentBracket extends HTMLElement {
 		`;
 	}
 
+
 	private displayMatchCards(): void {
-		const matchCardsContainer = document.getElementById('match-cards');
-		if (!matchCardsContainer || !this._tournamentData ) return;
+    const matchCardsContainer = document.getElementById('match-cards');
+    if (!matchCardsContainer || !this._tournamentData) return;
 
-		matchCardsContainer.innerHTML = '';
-		const totalRounds = this._tournamentData.totalRounds;
-		const visualColumns:HTMLElement[] = new Array((totalRounds * 2) - 1);
+    matchCardsContainer.innerHTML = '';
+    
+    // Garante que o container seja uma linha simples
+	matchCardsContainer.className = 'flex flex-row gap-10 px-4 w-max mx-auto';
 
-		for (let currentRound = 1; currentRound <= totalRounds; currentRound++) {
-			const gamesInThisRound = Math.pow(2, totalRounds - currentRound);
-			const isFinal = currentRound === totalRounds;
-			
-			if (isFinal) {
-				const centerCol = document.createElement('div');
-				centerCol.className = 'relative z-10 scale-110 transform shadow-2xl flex flex-col justify-center';
+    const totalRounds = this._tournamentData.totalRounds;
 
-				const game = this.findGame(currentRound, 1);
-				if (game) {
-					centerCol.appendChild(this.createMatchCard(game));
-				} else {
-					centerCol.appendChild(this.createEmptyCard());
-				}
-				visualColumns[totalRounds - 1] = centerCol;
-			} else {
-				const [leftCol, rigthCol] = this.createCol(currentRound, gamesInThisRound);
-				const leftIndex = currentRound - 1;
-				const rightIndex = visualColumns.length - currentRound;
+    // Loop simples: da Rodada 1 até a última
+    for (let currentRound = 1; currentRound <= totalRounds; currentRound++) {
+        
+        const gamesInThisRound = Math.pow(2, totalRounds - currentRound);
+        
+        // CRIAÇÃO DA COLUNA
+        const column = document.createElement('div');
+        
+        // Lógica de Espaçamento:
+        // Rodada 1: Define a altura total (gap-8)
+        // Outras Rodadas: Se espalham para alinhar (justify-around)
+        if (currentRound === 1) {
+            column.className = 'flex flex-col gap-8';
+        } else {
+            column.className = 'flex flex-col justify-around py-10';
+        }
 
-				visualColumns[leftIndex] = leftCol;
-				visualColumns[rightIndex] = rigthCol;
-			}
-		}
-		visualColumns.forEach(col => {
-			if (col) matchCardsContainer.appendChild(col);
-		})
-	}
+        // PREENCHIMENTO DOS CARDS
+        // Não existe mais divisão "half". Todos os jogos vão na mesma coluna.
+        for (let i = 1; i <= gamesInThisRound; i++) {
+            const game = this.findGame(currentRound, i);
+            
+            // Sempre false, pois não há lado direito espelhado
+            const card = game ? this.createMatchCard(game, false) : this.createEmptyCard(false);
+            
+            column.appendChild(card);
+        }
+
+        // Adiciona a coluna diretamente ao container
+        matchCardsContainer.appendChild(column);
+    }
+}
+		// Mirrored brackets
+		// private displayMatchCards(): void {
+		// 	const matchCardsContainer = document.getElementById('match-cards');
+		// 	if (!matchCardsContainer || !this._tournamentData ) return;
+	
+		// 	matchCardsContainer.innerHTML = '';
+		// 	const totalRounds = this._tournamentData.totalRounds;
+		// 	const visualColumns:HTMLElement[] = new Array((totalRounds * 2) - 1);
+	
+		// 	for (let currentRound = 1; currentRound <= totalRounds; currentRound++) {
+		// 		const gamesInThisRound = Math.pow(2, totalRounds - currentRound);
+		// 		const isFinal = currentRound === totalRounds;
+				
+		// 		if (isFinal) {
+		// 			const centerCol = document.createElement('div');
+		// 			centerCol.className = 'relative z-10 scale-110 transform shadow-2xl flex flex-col justify-center';
+	
+		// 			const game = this.findGame(currentRound, 1);
+		// 			if (game) {
+		// 				centerCol.appendChild(this.createMatchCard(game));
+		// 			} else {
+		// 				centerCol.appendChild(this.createEmptyCard());
+		// 			}
+		// 			visualColumns[totalRounds - 1] = centerCol;
+		// 		} else {
+		// 			const [leftCol, rigthCol] = this.createCol(currentRound, gamesInThisRound);
+		// 			const leftIndex = currentRound - 1;
+		// 			const rightIndex = visualColumns.length - currentRound;
+	
+		// 			visualColumns[leftIndex] = leftCol;
+		// 			visualColumns[rightIndex] = rigthCol;
+		// 		}
+		// 	}
+		// 	visualColumns.forEach(col => {
+		// 		if (col) matchCardsContainer.appendChild(col);
+		// 	})
+		// }
 
 	private createCol(currentRound: number, gamesInThisRound: number): HTMLElement[] {
 		let className = '';
