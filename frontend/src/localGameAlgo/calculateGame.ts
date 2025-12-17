@@ -60,7 +60,7 @@ function calculatePaddleCollision(game: LocalGameData) {
 	// Left paddle collision
 	if (ball.x <= gap && ball.vx < 0) { // Ball x collision on left side and moving left
 		if (ball.y >= game.paddleL && ball.y <= game.paddleL + getGameValue.paddleHeight()) { // Ball y is within paddle range
-			console.log(`🏓 BALL HIT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
+			// console.log(`🏓 BALL HIT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
 
 			// Calculate relative hit position on paddle (0 to 1, where 0.5 is center)
 			const relativeHitY = (ball.y - game.paddleL) / getGameValue.paddleHeight();
@@ -85,7 +85,7 @@ function calculatePaddleCollision(game: LocalGameData) {
 	// Right paddle collision
 	if (ball.x >= getGameValue.arenaWidth() - gap  && ball.vx > 0) { // Ball x collision on right side and moving right
 		if (ball.y >= game.paddleR && ball.y <= game.paddleR + getGameValue.paddleHeight()) { // Ball y is within paddle range
-			console.log(`🏓 BALL HIT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
+			// console.log(`🏓 BALL HIT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
 			
 			// Calculate relative hit position on paddle (0 to 1, where 0.5 is center)
 			const relativeHitY = (ball.y - game.paddleR) / getGameValue.arenaHeight();
@@ -137,7 +137,10 @@ function wonGame(game: LocalGameData): boolean {
 	if (game.scoreL >= game.scoreToWin || game.scoreR >= game.scoreToWin) {
 		initBall(game);
 		game.status = 'finished';
-		console.log('🏆 Winner notified, game session marked as finished');
+		console.log('🏆 Game finished, status set to finished');
+		window.dispatchEvent(new CustomEvent('event-game-completed', {
+			detail: { finalGame: game }
+		}));
 		return true;
 	}
 	return false;
@@ -157,7 +160,7 @@ function initBall(game: LocalGameData) {
 	ball.style.top = `${game.ball.y}px`;
 }
 
-async function service(game: LocalGameData) {
+function service(game: LocalGameData) {
 
 	// Stop the ball immediately
 	game.ball.vx = 0;
@@ -167,33 +170,29 @@ async function service(game: LocalGameData) {
 	game.ball.x = getGameValue.arenaWidth() / 2;
 	game.ball.y = getGameValue.arenaHeight() / 2;
 
-	console.log(`🥎 ball centered : x=${game.ball.x} | y=${game.ball.y}`);
+	// console.log(`🥎 ball centered : x=${game.ball.x} | y=${game.ball.y}`);
 
 	// Wait before serving
-	await sleep(2000);
+	setTimeout(() => {
+		if (game.isPaused) {
+			return;
+		}
 
-	if (game.isPaused) {
-		return;
-	}
+		// Random direction
+		game.nextService === 'left' ? game.ball.vx = 1 : game.ball.vx = -1;
+		game.ball.vy = getRandom(-1, 1);
+		
+		// Normalize to constant speed
+		const speed = game.ball.speed;
+		const currentSpeed = Math.sqrt(game.ball.vx ** 2 + game.ball.vy ** 2);
+		game.ball.vx = (game.ball.vx / currentSpeed) * speed;
+		game.ball.vy = (game.ball.vy / currentSpeed) * speed;
 
-	// Random direction
-	game.nextService === 'left' ? game.ball.vx = 1 : game.ball.vx = -1;
-	game.ball.vy = getRandom(-1, 1);
-	
-	// Normalize to constant speed
-	const speed = game.ball.speed;
-	const currentSpeed = Math.sqrt(game.ball.vx ** 2 + game.ball.vy ** 2);
-	game.ball.vx = (game.ball.vx / currentSpeed) * speed;
-	game.ball.vy = (game.ball.vy / currentSpeed) * speed;
-
-	console.log(`🏓 Service complete - Ball velocity: X=${game.ball.vx.toFixed(2)} | Y=${game.ball.vy.toFixed(2)}`);
+		// console.log(`🏓 Service complete - Ball velocity: X=${game.ball.vx.toFixed(2)} | Y=${game.ball.vy.toFixed(2)}`);
+	}, 2000);
 }
 
 // ======== UTILS ============
-function sleep(ms: number) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function getRandom(min: number, max: number) {
 	return Math.random() * (max - min) + min;
 }

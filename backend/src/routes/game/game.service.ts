@@ -151,12 +151,43 @@ async function joinUserToGame(prisma: PrismaClient, gameId: string, userId: stri
 }
 
 async function startGame(prisma: PrismaClient, gameId: string) {
+	const game = await findGameById(prisma, gameId);
+	
+	if (game?.type === 'LOCAL') {
+		// Find or create the guest user for local games
+		let guestUser = await prisma.user.findUnique({
+			where: { email: 'guest@local.game' }
+		});
+		
+		if (!guestUser) {
+			guestUser = await prisma.user.create({
+				data: {
+					email: 'guest@local.game',
+					name: 'Guest',
+					displayName: 'Guest Player',
+					password: 'N/A',
+					salt: 'N/A',
+					avatarUrl: '/default-avatar.png'
+				}
+			});
+		}
+		
+		// Add guest as second player
+		await prisma.gamePlayer.create({
+			data: {
+				gameId,
+				userId: guestUser.id
+			}
+		});
+	}
+	
 	return prisma.game.update({
 		where: { id: gameId },
 		data: {
-			status : "IN_PROGRESS"
+			status: "IN_PROGRESS",
+			startedAt: new Date()
 		}
-	})
+	});
 }
 
 async function deletePendingGame(prisma: PrismaClient, gameId: string) {

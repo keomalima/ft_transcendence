@@ -26,6 +26,7 @@ async function getGameHandler (request: FastifyRequest<{ Body: UpdateGameInput, 
 		}
 		return response;
 	} catch (error: any) {
+		console.error('❌ Error in getGameHandler:', error);
 		reply.code(500).send({ message: "Failed to get game"});
 	}
 }
@@ -160,7 +161,7 @@ async function startGameHandler (request: FastifyRequest<{ Params: { id: string}
 				message: "Cannot start game, game has already started or finished"
 			});
 		}
-		if (game.gameUsers.length < 2) {
+		if (game.type != 'LOCAL' && game.gameUsers.length < 2) {
 			return reply.code(409).send({
 				message: "Game is not full"
 			});

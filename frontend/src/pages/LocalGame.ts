@@ -14,6 +14,7 @@ export interface MapKeys {
 }
 
 export interface LocalGameData {
+	id: string;
 	paddleL: number;
 	paddleR: number;
 	scoreL: number;
@@ -68,58 +69,37 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 			return check;
 		
 
-		// need to start the game (API) ===================================================================
+		// 1. Start the gane API
+		if (currentGame.status === 'PENDING') {
+			try {
+				await gameService.startGame(currentGame.id!, ctx);
+			} catch (error) {
+				console.log(error);
+			}
+		}
 
-		// try {
-		// 	await gameService.startGame(currentGame.id!, ctx);
-		// } catch (error) {
-		// 	console.log(error);
-		// }
+		// 2. Render the initial game (DOM must exist first)
+		renderGameContent(params['id'], currentGame!, currentUser);
 
-		// 1. Render the initial game (DOM must exist first)
-		renderGameContent(params['id'], currentGame!);
-
-		const game = initGame(currentGame.scoreToWin!);
+		// 3. Init the local game config and state
+		const game = initGame(currentGame.scoreToWin!, params['id']);
 		
-		// 2. Start listener for action up and down arrows (after DOM exists)
-		runGame(game, currentUser);
+		// 4. Start listener (after DOM exists)
+		setupLocalGameEventListeners(ctx, game, params['id']);
 
-		// try {
-		// 	// const data: FinishGameDto = {
-		// 	// 	status: 'COMPLETED',
-		// 	// 	gamePlayers: [
-		// 	// 		{
-		// 	// 			playerId: currentGame.gameUsers[0].id!,
-		// 	// 			score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
-		// 	// 		},
-		// 	// 		{
-		// 	// 			playerId: currentGame.gameUsers[1].id!,
-		// 	// 			score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
-		// 	// 		}
-		// 	// 	]
-		// 	// };
-		// 	// await gameService.finishGame(currentGame.id!, data, ctx);
-		// 	console.log('✅ Game finished successfully');
-		// 	router.navigateTo('/home');
-		// } catch (error) {
-		// 	console.log(error);
-		// }
-
-		// need to end the game (API) ===================================================================
-
-		setupLocalGameEventListeners(ctx, game);
-		
+		// 5. Start game loop + listener for actions
+		runGame(game, currentUser, ctx);
 	}, 0);
 
 	return (/*html*/`
-		<div id="game-content">
+		<div id="game-content" class="h-screen overflow-hidden">
 			<p class='flex items-center justify-center h-screen'>Loading Game ...</p>
 		</div>
 		`);
 }
 
 // ======== UPDDATE CONTENT ============
-function renderGameContent(gameId: string, currentGame: GameData) {
+function renderGameContent(gameId: string, currentGame: GameData, currentUser: UserState) {
 	if (!currentGame) {
 		console.log('❌ Missing current game');
 		return;
@@ -127,21 +107,21 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 	const content = document.getElementById('game-content');
 	content!.innerHTML = 
 	/*html*/`
-		<main class="flex flex-col gap-8 min-h-full w-screen place-items-center px-6 lg:py-32 lg:px-12">
+		<main class="flex flex-col gap-4 h-full w-screen place-items-center px-6 py-8 lg:py-12 lg:px-12 overflow-y-auto">
 			<div class="text-center">
 				<h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-7xl">Local game</h1>
 				<p>#${gameId}</p>
 			</div>
 			<div class='flex flex-row w-full px-12'>
 				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-xl'>player 1</p>
+					<p id='left-player' class='font-[Inter] text-xl'>${currentUser.displayName}</p>
 					<p id='left-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
 				</div>
 				<div class='flex-1 justify-items-center center'>
 					<p>vs</p>
 				</div>
 				<div class='flex-1 justify-items-center'>
-					<p id='right-player' class='font-[Inter] text-xl'>player 2</p>
+					<p id='right-player' class='font-[Inter] text-xl'>Guest</p>
 					<p id='right-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
 				</div>
 			</div>
@@ -228,9 +208,10 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 }
 
 // ======== INIT GAME ============
-function initGame(scoreToWin: number): LocalGameData {
+function initGame(scoreToWin: number, gameId: string): LocalGameData {
 
 	const game: LocalGameData = {
+		id: gameId,
 		paddleL: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
 		paddleR: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
 		scoreL: 0,
@@ -254,7 +235,7 @@ function initGame(scoreToWin: number): LocalGameData {
 }
 
 // ======== RUN GAME ============
-function runGame(game: LocalGameData, currentUser: UserState) {
+function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 	const mapKeys: MapKeys = {
 		s: false,
 		x: false,
@@ -268,8 +249,6 @@ function runGame(game: LocalGameData, currentUser: UserState) {
 	const ball = document.getElementById('ball') as HTMLDivElement;
 	const leftScore = document.getElementById('left-score') as HTMLParagraphElement;
 	const rightScore = document.getElementById('right-score') as HTMLParagraphElement;
-
-	
 
 	// Wait for next frame to ensure DOM is fully rendered with correct dimensions
 	requestAnimationFrame(() => {
@@ -298,9 +277,9 @@ function runGame(game: LocalGameData, currentUser: UserState) {
 			const winner = document.getElementById('winner') as HTMLParagraphElement;
 			
 			if (winner && wonGameOverlay) {
-				game.scoreL > game.scoreR ? winner.innerText = `${currentUser.displayName} won the game !` : 'Guest won the game!';
+				game.scoreL > game.scoreR ? winner.innerText = `${currentUser.displayName} won the game !` : winner.innerText = 'Guest won the game!';
 				wonGameOverlay.classList.remove('hidden');
-			}
+			}			
 			return;
 		}
 		
@@ -323,21 +302,33 @@ function gameActionListener(mapKeys: MapKeys) {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 's') mapKeys.s = true;
 		if (e.key === 'x') mapKeys.x = true;
-		if (e.key === 'ArrowUp') mapKeys.up = true;
-		if (e.key === 'ArrowDown') mapKeys.down = true;
+		if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			mapKeys.up = true;
+		}
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			mapKeys.down = true;
+		}
     });
 
     document.addEventListener('keyup', (e) => {
 		if (e.key === 's') mapKeys.s = false;
 		if (e.key === 'x') mapKeys.x = false;
-		if (e.key === 'ArrowUp') mapKeys.up = false;
-		if (e.key === 'ArrowDown') mapKeys.down = false;
+		if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			mapKeys.up = false;
+		}
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			mapKeys.down = false;
+		}
     });
 }
 
 
 // ======== EVENT LISTENER ============
-function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData) {
+function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, gameId: string) {
 	const playerPauseOverlay = document.querySelector('#pause-overlay') as HTMLDivElement;
 
 	// **** PAUSE ****
@@ -396,13 +387,35 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData) {
 		};
 		
 		// Handle confirm
-		const handleConfirm = () => {
+		const handleConfirm = async () => {
 			console.log('quit game trigger');
 			quitDialog.close();
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);
 			game.status = 'abandoned';
-			// need to end the game (API) ===================================================================
+			const currentGame = await gameService.getGame(gameId, ctx);
+			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2)
+				return;
+			try {
+				const data: FinishGameDto = {
+					status: 'ABANDONED',
+					gamePlayers: [
+						{
+							playerId: currentGame.gameUsers[0].id!,
+							score: currentGame.gameUsers[0].user?.id === ctx.userStore.get()?.id ? game.scoreL : game.scoreR
+						},
+						{
+							playerId: currentGame.gameUsers[1].id!,
+							score: currentGame.gameUsers[1].user?.id === ctx.userStore.get()?.id ? game.scoreR : game.scoreL
+						}
+					]
+				};
+				await gameService.finishGame(currentGame.id!, data, ctx);
+				console.log('✅ Game finished successfully');
+				router.navigateTo('/home');
+			} catch (error) {
+				console.log(error);
+			}
 			router.navigateTo('/home');
 		};
 
@@ -418,9 +431,50 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData) {
 		});
 	});
 
+	// **** WON GAME ****
+	window.addEventListener('event-game-completed', async (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const { finalGame } = customEvent.detail;
+		
+		try {
+			const currentGame = await gameService.getGame(finalGame.id, ctx);
+			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2)
+				return;
+			
+			// Find which gameUser is the current user and which is the guest
+			const currentUserId = ctx.userStore.get()?.id;
+			const currentUserGamePlayer = currentGame.gameUsers.find(gu => gu.user?.id === currentUserId);
+			const guestGamePlayer = currentGame.gameUsers.find(gu => gu.user?.id !== currentUserId);
+			
+			if (!currentUserGamePlayer || !guestGamePlayer) {
+				console.error('Failed to identify players');
+				return;
+			}
+			
+			const data: FinishGameDto = {
+				status: 'COMPLETED',
+				gamePlayers: [
+					{
+						playerId: currentUserGamePlayer.id!,
+						score: finalGame.scoreL
+					},
+					{
+						playerId: guestGamePlayer.id!,
+						score: finalGame.scoreR
+					}
+				]
+			};
+			await gameService.finishGame(currentGame.id!, data, ctx);
+			console.log('✅ Game finished successfully');
+		} catch (error) {
+			console.error('Failed to finish game:', error);
+		}
+	});
+
 	// **** BACK HOME ****
 	const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
 	backHomeBtn?.addEventListener('click', async () => {
+		
 		// need to end the game (API) ===================================================================
 		router.navigateTo('/home');
 	}, { once: true });
