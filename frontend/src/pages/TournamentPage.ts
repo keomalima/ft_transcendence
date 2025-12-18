@@ -56,7 +56,7 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 					<p class="text-gray-600 mb-6">
 						You have an ongoing tournament
 					</p>
-					<a data-link href='/tournament-room/${tournamentId}' 
+					<a data-link href='/tournament/${tournamentId}' 
 					   class='inline-block ${BUTTON_WHITE_CLASSES}'>
 						Continue
 					</a>

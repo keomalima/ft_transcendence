@@ -180,6 +180,28 @@ async function startTournament(prisma: PrismaClient, tournamentId: string) {
 	})
 }
 
+async function findOpponentByGameId(prisma: PrismaClient, gameId: string, userId: string) {
+	return prisma.gamePlayer.findFirst({
+		where: {
+			gameId,
+			NOT :{
+				userId
+			}
+		}
+	})
+}
+
+async function markPlayerReadyByGamePlayerId(prisma: PrismaClient, gamePlayerId: string) {
+	return prisma.gamePlayer.update({
+		where: {
+			id: gamePlayerId
+		},
+		data: {
+			isReady: true,
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -198,5 +220,7 @@ export const tournamentService = {
 	startTournament,
 	createTournamentGame,
 	findTournamentByParticipant,
-	findTournamentGames
+	findTournamentGames,
+	findOpponentByGameId,
+	markPlayerReadyByGamePlayerId
 };

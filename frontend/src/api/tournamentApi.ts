@@ -28,6 +28,17 @@ export const tournamentApi = {
 		}
 	},
 
+	startGame: async (gameId: string): Promise<Partial<TournamentData>> => {
+		try {
+			const response = await httpCall.put<Partial<TournamentData>>(`${BASE_URL}/${gameId}/start-game`);
+			console.log('🎮 start tournament game sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('start tournament game', error);
+		}
+	},
+
+
 	matchMaking: async (tournamentId: string): Promise<Partial<TournamentData>> => {
 		try {
 			const response = await httpCall.post<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/match-make`);

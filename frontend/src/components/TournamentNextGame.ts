@@ -138,7 +138,7 @@ export class TournamentNextGame extends HTMLElement {
 			e.preventDefault();
 			this.dispatchEvent(new CustomEvent('event-start-tournament-game', {
 				detail: {	
-					gameId: nextGame,
+					game: nextGame,
 					playerId: currentUser.id as string,
 				},
 				bubbles: true

@@ -45,17 +45,17 @@ function renderTournamentContent() {
 	    </header>
 	
 	    <div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
-	        <div class="text-center mb-12">
+	        <div class="text-center mb-2">
 	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
 	        </div>
 	
+			<div class="w-full overflow-x-auto">
+				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
+			</div>
 	        <div class="w-full overflow-x-auto">
 	            <tournament-bracket id='tournament-game-component'></tournament-bracket>
 	        </div>
 
-			<div class="w-full overflow-x-auto">
-				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
-			</div>
 	    </div>
 	</div>
 	`
@@ -115,10 +115,12 @@ function setupTournamentEventListeners(ctx: AppContext) {
 	tournamentGameComponent?.addEventListener('event-start-tournament-game', async (e: Event) => {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
+		const {id:gameId} = customEvent.detail.game;
 		try {
-			
+			const response = await tournamentApi.startGame(gameId);
+			console.log(response);
 		} catch (error) {
-			
+			console.log(error);
 		}
 	})
 }

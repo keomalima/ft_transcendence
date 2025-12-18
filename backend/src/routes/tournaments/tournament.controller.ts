@@ -4,6 +4,8 @@ import { tournamentService } from './tournament.service.js';
 import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
+import { getDefaultAutoSelectFamilyAttemptTimeout } from 'net';
+import { gameService } from '../game/game.service.js';
 
 // =====================
 // Tournament CRUD Handlers
@@ -320,6 +322,42 @@ async function getTournamentGamesHandler (request: FastifyRequest<{ Params: { id
 	}
 }
 
+async function startTournamentGameHandler (request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const gameId = request.params.id;
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT' || !game.gameUsers.some(user => user.user.id === userId)) {
+			return reply.code(404).send({
+				message: "Game not found or unauthorized"
+			});
+		}
+		const player = game.gameUsers.find(u => u.user.id === userId);
+		const opponent = game.gameUsers.find(u => u.user.id !== userId);
+		if (!opponent || !player) {
+			return reply.code(404).send({
+				message: "Game is not yet completed"
+			});
+		}
+
+		if (!player.isReady) {
+			await tournamentService.markPlayerReadyByGamePlayerId(request.server.prisma, player.id);
+		}
+
+		const updatedGame = await gameService.findGameById(request.server.prisma, gameId);
+		const updatedOpponent = updatedGame?.gameUsers.find(u => u.user.id !== userId);
+
+		if (updatedOpponent?.isReady) {
+			await gameService.startGame(request.server.prisma, gameId);
+		}
+		console.log(updatedGame);
+		return updatedGame;
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to start tournament game"});
+	}
+}
+
 // =====================
 // Tournament Helpers
 // =====================
@@ -346,4 +384,5 @@ export const tournamentController = {
 	startTournamentHandler,
 	matchMakeTournamentHandler,
 	getTournamentGamesHandler,
+	startTournamentGameHandler
 };

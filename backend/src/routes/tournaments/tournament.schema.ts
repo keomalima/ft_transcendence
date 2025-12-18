@@ -101,6 +101,30 @@ const startTournamentResponseSchema = z.object({
 	totalRounds: z.number().int(),
 })
 
+const startTournamentGameResponseSchema = z.object({
+	id: z.string(),
+	tournamentId: z.string(),
+	status: z.enum(GameStatus),
+	type: z.enum(GameMode),
+	roundNumber: z.number().int(),
+	matchNumber: z.number().int(),
+	gameUsers: z.array(
+		z.object({
+			id: z.string(),
+			score: z.number(),
+			isWinner: z.boolean(),
+			isReady: z.boolean(),
+			joinedAt: z.date(),
+			user: z.object({
+				id: z.string(),
+				displayName: z.string(),
+				isOnline: z.boolean().default(false),
+				avatarUrl: z.string(),
+			})
+		})
+	)
+})
+
 const generateTournamentTokenResponseSchema = z.object({
 	id: z.string(),
 	createdBy: z.string(),
@@ -140,6 +164,7 @@ export const tournamentSchemas = {
 	generateToken: generateTournamentTokenResponseSchema,
 	joinTournament: joinTournamentResponseSchema,
 	startTournament: startTournamentResponseSchema,
-	getTournamentGames: getTournamentGames
+	getTournamentGames: getTournamentGames,
+	startGame: startTournamentGameResponseSchema
   },
 };
