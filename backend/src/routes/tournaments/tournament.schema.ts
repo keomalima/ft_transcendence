@@ -72,6 +72,7 @@ const getTournamentGames = z.array(
 				id: z.string(),
 				score: z.number(),
 				isWinner: z.boolean(),
+				isReady: z.boolean(),
 				joinedAt: z.date(),
 				user: z.object({
 					id: z.string(),

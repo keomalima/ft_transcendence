@@ -122,6 +122,7 @@ async function findTournamentGames(prisma: PrismaClient, tournamentId: string) {
 					score: true,
 					isWinner: true,
 					joinedAt: true,
+					isReady: true,
 					user: {
 						select: {
 							id: true,

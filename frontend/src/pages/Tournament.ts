@@ -4,6 +4,7 @@ import { router } from "../main.js";
 // import HTML components
 import "../components/NavBar.js";
 import "../components/TournamentBracket.js";
+import "../components/TournamentNextGame.js";
 
 // import styles
 import { tournamentApi } from "../api/tournamentApi.js";
@@ -36,7 +37,6 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 }
 
 function renderTournamentContent() {
-
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
@@ -52,6 +52,10 @@ function renderTournamentContent() {
 	        <div class="w-full overflow-x-auto">
 	            <tournament-bracket id='tournament-game-component'></tournament-bracket>
 	        </div>
+
+			<div class="w-full overflow-x-auto">
+				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
+			</div>
 	    </div>
 	</div>
 	`
@@ -93,9 +97,28 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame | null, to
 	} else {
 		console.error('❌ Tournament games component not found!');
 	}
+
+	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as any
+	if (tournamentNextGameComponent) {
+		tournamentNextGameComponent.ctx = ctx;
+		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+		tournamentNextGameComponent.tournamentData = tournament;
+	} else {
+		console.error('❌ Tournament games component not found!');
+	}
 }
 
 // ======== EVENT LISTENER ============
 function setupTournamentEventListeners(ctx: AppContext) {
-
+	// Start tournament game
+	const tournamentGameComponent = document.getElementById('tournament-next-game-component') as any;
+	tournamentGameComponent?.addEventListener('event-start-tournament-game', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		try {
+			
+		} catch (error) {
+			
+		}
+	})
 }
