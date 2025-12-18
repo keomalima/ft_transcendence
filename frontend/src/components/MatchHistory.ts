@@ -66,12 +66,12 @@ export class MatchHistory extends HTMLElement {
 					<table class="w-full border-separate border-spacing-0">
 						<thead>
 							<tr>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">winner</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">opponent</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">score</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">winner</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white hidden lg:table-cell">duration</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">date</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">mode</th>
 							</tr>
 						</thead>
 						<tbody id='match-data'></tbody>
@@ -117,7 +117,7 @@ export class MatchHistory extends HTMLElement {
 		winner.innerHTML = `${match.isWinner? '⭐' : '-'}`;
 
 		const duration = document.createElement('td');
-		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap lg:table-cell text-center';
+		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap text-center hidden lg:table-cell';
 		duration.innerHTML = `${match.duration} min`;
 
 		const date = document.createElement('td');

@@ -33,15 +33,35 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
 			const player = gameSession.players.get(userId);
+			if (!player) {
+				console.log(`⚠️ Player ${userId} not found in game session`);
+				return;
+			}
 			if (message.action === 'up') {
-				player!.input.up = true;
-				player!.input.down = false;
+				player.input.up = true;
+				player.input.down = false;
 			} else if (message.action === 'down') {
-				player!.input.up = false;
-				player!.input.down = true;
+				player.input.up = false;
+				player.input.down = true;
 			} else if (message.action === 'stop') {
-				player!.input.up = false;
-				player!.input.down = false;
+				player.input.up = false;
+				player.input.down = false;
+			}
+		} if (message.type === 'position') {
+			// Direct position control for touch devices
+			const player = gameSession.players.get(userId);
+			if (!player) {
+				console.log(`⚠️ Player ${userId} not found in game session`);
+				return;
+			}
+			// message.position is expected to be a percentage (0-100)
+			if (typeof message.position === 'number' && message.position >= 0 && message.position <= 100) {
+				// Update the paddle position directly in game state
+				if (gameSession.gameState.paddleA.userId === userId) {
+					gameSession.gameState.paddleA.y = message.position;
+				} else if (gameSession.gameState.paddleB.userId === userId) {
+					gameSession.gameState.paddleB.y = message.position;
+				}
 			}
 		} if (message.type === 'pause') {
 			if (message.action === 'stop') {

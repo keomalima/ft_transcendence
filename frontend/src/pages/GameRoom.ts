@@ -179,6 +179,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
 	generateBtn?.addEventListener('click', async (e) => {
 		e.preventDefault();
+		console.log('click, is generated = ', isGenerated);
 		try {
 			let result = null;
 			if (isGenerated == false) {
@@ -227,6 +228,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		try {
 			await gameService.startGame(gameId, ctx);
 			cleanWaitingRoomWS();
+			isGenerated = false;
 			router.navigateTo(`/game/${gameId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
@@ -245,6 +247,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			return;
 		try {
 			await gameService.quitPendingGame(gameId, ctx);
+			isGenerated = false;
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);

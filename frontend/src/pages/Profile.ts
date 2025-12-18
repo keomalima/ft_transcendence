@@ -37,7 +37,7 @@ export function Profile(ctx: AppContext): string {
 
 			<!-- Match history -->
 			<div class="w-full mx-auto max-w-2xl lg:max-w-7xl mb-10">
-				<match-history id='match-history-component' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-150"></match-history>
+				<match-history id='match-history-component' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-[80vh] lg:max-h-[50vh]"></match-history>
 				<!-- <div id='match-history' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-150"> -->
 				</div>
 			</div>

@@ -107,33 +107,33 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 	const content = document.getElementById('game-content');
 	content!.innerHTML = 
 	/*html*/`
-		<main class="flex flex-col gap-4 h-full w-screen place-items-center px-6 py-8 lg:py-12 lg:px-12 overflow-y-auto">
-			<div class="text-center">
-				<h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-7xl">Local game</h1>
+		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
+			<div class="text-center flex-shrink-0">
+				<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Local Game</h1>
 			</div>
-			<div class='flex flex-row w-full px-12'>
+			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
 				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-xl'>${currentUser.displayName}</p>
-					<p id='left-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
+					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>${currentUser.displayName}</p>
+					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
-				<div class='flex-1 justify-items-center center'>
-					<p>vs</p>
+				<div class='flex-1 flex items-center justify-center'>
+					<p class="text-sm md:text-base">vs</p>
 				</div>
 				<div class='flex-1 justify-items-center'>
-					<p id='right-player' class='font-[Inter] text-xl'>Guest</p>
-					<p id='right-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
+					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>Guest</p>
+					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 			</div>
-			<div id="arena" class='w-full xl:w-[80%] mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl'>
+			<div id="arena" class='w-full max-w-[90vw] lg:max-w-[80vw] mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl flex-shrink min-h-0'>
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
 				<div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
 			</div>
-			<div class="text-center">
-				<div class="mt-10 flex items-center justify-center gap-x-6">
-					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES}'>pause</button>
-					<button id='quit-btn' type='click' class='${BUTTON_CREAM_CLASSES}'>give up</button>
+			<div class="text-center flex-shrink-0">
+				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
+					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button>
+					<button id='quit-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>give up</button>
 				</div>
 			</div>
 
@@ -214,13 +214,13 @@ function initGame(scoreToWin: number, gameId: string): LocalGameData {
 		paddleR: (getGameValue.arenaHeight() - getGameValue.paddleHeight()) / 2,
 		scoreL: 0,
 		scoreR: 0,
-		paddleSpeed: 10,
+		paddleSpeed: getGameValue.paddleSpeed(),
 		ball: {
 			x: getGameValue.arenaWidth() / 2,
 			y: getGameValue.arenaHeight() / 2,
 			vx: 0,
 			vy: 0,
-			speed: 10,
+			speed: getGameValue.ballSpeed(),
 			savedVx: 0,
 			savedVy: 0
 		},
@@ -240,7 +240,7 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 		up: false,
 		down: false
 	}
-	gameActionListener(mapKeys);
+	gameActionListener(mapKeys, game);
 
 	const paddleRight = document.getElementById('paddleRight') as HTMLDivElement;
 	const paddleLeft = document.getElementById('paddleLeft') as HTMLDivElement;
@@ -296,7 +296,8 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 
 
 // ======== GAME ACTION ============
-function gameActionListener(mapKeys: MapKeys) {
+function gameActionListener(mapKeys: MapKeys, game: LocalGameData) {
+	// Keyboard controls
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 's') mapKeys.s = true;
 		if (e.key === 'x') mapKeys.x = true;
@@ -322,6 +323,94 @@ function gameActionListener(mapKeys: MapKeys) {
 			mapKeys.down = false;
 		}
     });
+
+	// Touch controls for mobile - direct paddle control
+	let leftTouchId: number | null = null;
+	let rightTouchId: number | null = null;
+
+	const handleTouchStart = (e: TouchEvent) => {
+		const arena = document.getElementById('arena');
+		if (!arena) {
+			console.log('❌ Arena not found');
+			return;
+		}
+
+		const arenaRect = arena.getBoundingClientRect();
+		const paddleHeight = getGameValue.paddleHeight();
+
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const touch = e.changedTouches[i];
+			const touchX = touch.clientX;
+			const touchY = touch.clientY;
+			const screenWidth = window.innerWidth;
+
+			// Left half of screen controls left paddle
+			if (touchX < screenWidth / 2 && leftTouchId === null) {
+				leftTouchId = touch.identifier;
+				
+				// Calculate paddle position relative to arena
+				const relativeY = touchY - arenaRect.top;
+				const maxY = arenaRect.height - paddleHeight;
+				game.paddleL = Math.max(0, Math.min(maxY, relativeY - paddleHeight / 2));
+			}
+			// Right half of screen controls right paddle
+			else if (touchX >= screenWidth / 2 && rightTouchId === null) {
+				rightTouchId = touch.identifier;
+				
+				// Calculate paddle position relative to arena
+				const relativeY = touchY - arenaRect.top;
+				const maxY = arenaRect.height - paddleHeight;
+				game.paddleR = Math.max(0, Math.min(maxY, relativeY - paddleHeight / 2));
+			}
+		}
+	};
+
+	const handleTouchMove = (e: TouchEvent) => {
+		e.preventDefault(); // Prevent scrolling
+		const arena = document.getElementById('arena');
+		if (!arena) return;
+
+		const arenaRect = arena.getBoundingClientRect();
+		const paddleHeight = getGameValue.paddleHeight();
+
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const touch = e.changedTouches[i];
+			const touchY = touch.clientY;
+
+			// Update left paddle position
+			if (touch.identifier === leftTouchId) {
+				const relativeY = touchY - arenaRect.top;
+				const maxY = arenaRect.height - paddleHeight;
+				game.paddleL = Math.max(0, Math.min(maxY, relativeY - paddleHeight / 2));
+			}
+			// Update right paddle position
+			else if (touch.identifier === rightTouchId) {
+				const relativeY = touchY - arenaRect.top;
+				const maxY = arenaRect.height - paddleHeight;
+				game.paddleR = Math.max(0, Math.min(maxY, relativeY - paddleHeight / 2));
+			}
+		}
+	};
+
+	const handleTouchEnd = (e: TouchEvent) => {
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const touch = e.changedTouches[i];
+			
+			// Release left paddle
+			if (touch.identifier === leftTouchId) {
+				leftTouchId = null;
+			}
+			// Release right paddle
+			else if (touch.identifier === rightTouchId) {
+				rightTouchId = null;
+			}
+		}
+	};
+
+	document.addEventListener('touchstart', handleTouchStart, { passive: false });
+	document.addEventListener('touchmove', handleTouchMove, { passive: false });
+	document.addEventListener('touchend', handleTouchEnd);
+	document.addEventListener('touchcancel', handleTouchEnd);
 }
 
 

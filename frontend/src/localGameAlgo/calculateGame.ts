@@ -5,9 +5,11 @@ function calculatePaddle(game: LocalGameData, mapKeys: MapKeys) {
 	const paddleRight = document.getElementById('paddleRight') as HTMLDivElement;
 	const paddleLeft = document.getElementById('paddleLeft') as HTMLDivElement;
 
+	const paddleSpeed = getGameValue.paddleSpeed();
+
 	// --- LEFT PADDLE ---
-	if (mapKeys.s) game.paddleL -= game.paddleSpeed;
-	if (mapKeys.x) game.paddleL += game.paddleSpeed;
+	if (mapKeys.s) game.paddleL -= paddleSpeed;
+	if (mapKeys.x) game.paddleL += paddleSpeed;
 
 	if (game.paddleL < 0) game.paddleL = 0;
 	if (game.paddleL > getGameValue.bottomLimit()) game.paddleL = getGameValue.bottomLimit();
@@ -15,8 +17,8 @@ function calculatePaddle(game: LocalGameData, mapKeys: MapKeys) {
 	paddleLeft!.style.top = `${game.paddleL}px`;
 
 	// --- RIGHT PADDLE ---
-	if (mapKeys.up)   game.paddleR -= game.paddleSpeed;
-	if (mapKeys.down) game.paddleR += game.paddleSpeed;
+	if (mapKeys.up)   game.paddleR -= paddleSpeed;
+	if (mapKeys.down) game.paddleR += paddleSpeed;
 
 	if (game.paddleR < 0) game.paddleR = 0;
 	if (game.paddleR > getGameValue.bottomLimit()) game.paddleR = getGameValue.bottomLimit();
@@ -73,10 +75,11 @@ function calculatePaddleCollision(game: LocalGameData) {
 			// Reverse X direction
 			ball.vx = -ball.vx;
 			
-			// Normalize to maintain constant speed
+			// Normalize to maintain constant speed (use dynamic speed)
+			const speed = getGameValue.ballSpeed();
 			const currentSpeed = Math.sqrt(ball.vx ** 2 + ball.vy ** 2);
-			ball.vx = (ball.vx / currentSpeed) * ball.speed;
-			ball.vy = (ball.vy / currentSpeed) * ball.speed;
+			ball.vx = (ball.vx / currentSpeed) * speed;
+			ball.vy = (ball.vy / currentSpeed) * speed;
 
 			return;
 		}
@@ -98,10 +101,11 @@ function calculatePaddleCollision(game: LocalGameData) {
 			// Reverse X direction
 			ball.vx = -ball.vx;
 			
-			// Normalize to maintain constant speed
+			// Normalize to maintain constant speed (use dynamic speed)
+			const speed = getGameValue.ballSpeed();
 			const currentSpeed = Math.sqrt(ball.vx ** 2 + ball.vy ** 2);
-			ball.vx = (ball.vx / currentSpeed) * ball.speed;
-			ball.vy = (ball.vy / currentSpeed) * ball.speed;
+			ball.vx = (ball.vx / currentSpeed) * speed;
+			ball.vy = (ball.vy / currentSpeed) * speed;
 
 			return;
 		}
@@ -182,8 +186,8 @@ function service(game: LocalGameData) {
 		game.nextService === 'left' ? game.ball.vx = 1 : game.ball.vx = -1;
 		game.ball.vy = getRandom(-1, 1);
 		
-		// Normalize to constant speed
-		const speed = game.ball.speed;
+		// Normalize to constant speed (use dynamic speed)
+		const speed = getGameValue.ballSpeed();
 		const currentSpeed = Math.sqrt(game.ball.vx ** 2 + game.ball.vy ** 2);
 		game.ball.vx = (game.ball.vx / currentSpeed) * speed;
 		game.ball.vy = (game.ball.vy / currentSpeed) * speed;
