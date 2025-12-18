@@ -166,7 +166,7 @@ async function startGameHandler (request: FastifyRequest<{ Params: { id: string}
 				message: "Game is not full"
 			});
 		}
-		let response = await gameService.startGame(request.server.prisma, gameId);
+		let response = await gameService.startGame(request.server.prisma, gameId, userId);
 		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'start_game',
 			message: `Start game!`
@@ -189,7 +189,7 @@ async function gameHistoryHandler (request: FastifyRequest, reply: FastifyReply)
 			const opponent = gp.game.gameUsers.find((gu: typeof result[0])  => gu.userId !== userId);
 			let durationMs;
 			if (gp.game.completedAt && gp.game.startedAt)
-				durationMs = Math.round(new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000;
+				durationMs = Math.round((new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000);
 			else
 				durationMs = 0;
 			return {

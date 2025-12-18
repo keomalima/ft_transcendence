@@ -45,12 +45,10 @@ export class MatchHistory extends HTMLElement {
 				<div class="flex-1 overflow-auto min-h-0 flex items-center justify-center">
 					<div class="text-center py-12 px-4">
 						<!-- Icon/Illustration -->
-						<div class="w-24 h-24 mx-auto mb-6 text-gray-300">
-							<svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-							</svg>
-						</div>
+						<svg class="w-24 h-24 mx-auto mb-6 text-gray-400 size-7 stroke-1 stroke-gray-300 fill-none" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" 
+								d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+						</svg>
 						
 						<!-- Message -->
 						<h3 class="text-xl font-semibold text-gray-700 mb-2">No matches yet</h3>
@@ -120,7 +118,7 @@ export class MatchHistory extends HTMLElement {
 
 		const duration = document.createElement('td');
 		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap lg:table-cell text-center';
-		duration.innerHTML = `${match.duration}`;
+		duration.innerHTML = `${match.duration} min`;
 
 		const date = document.createElement('td');
 		date.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap text-center';

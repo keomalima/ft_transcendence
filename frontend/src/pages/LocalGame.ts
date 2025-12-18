@@ -110,7 +110,6 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 		<main class="flex flex-col gap-4 h-full w-screen place-items-center px-6 py-8 lg:py-12 lg:px-12 overflow-y-auto">
 			<div class="text-center">
 				<h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-7xl">Local game</h1>
-				<p>#${gameId}</p>
 			</div>
 			<div class='flex flex-row w-full px-12'>
 				<div class='flex-1 justify-items-center'>
@@ -165,7 +164,7 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 					<div class="flex flex-col items-center justify-center gap-6">
 						<p class="text-3xl font-[Calistoga] font-bold text-gray-500 tracking-wide">Finish Game</p>
 						<p class="text-5xl font-[Calistoga] font-black text-black" id="winner"></p>
-						<button id='won-back-home-btn' class='${BUTTON_WHITE_CLASSES}'>Back to home</button>
+						<a data-link href='/home' id='won-back-home-btn' class='${BUTTON_WHITE_CLASSES}'>Back to home</a>
 					</div>
 				</div>
 			</div>
@@ -203,7 +202,6 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 			`
 		)
 	}
-	console.log('user is authorized');
 	return null;
 }
 
@@ -412,11 +410,11 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 				};
 				await gameService.finishGame(currentGame.id!, data, ctx);
 				console.log('✅ Game finished successfully');
-				router.navigateTo('/home');
+				// router.navigateTo('/home');
 			} catch (error) {
 				console.log(error);
 			}
-			router.navigateTo('/home');
+			// router.navigateTo('/home');
 		};
 
 		// Attach event listeners
@@ -471,11 +469,5 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 		}
 	});
 
-	// **** BACK HOME ****
-	const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
-	backHomeBtn?.addEventListener('click', async () => {
-		
-		// need to end the game (API) ===================================================================
-		router.navigateTo('/home');
-	}, { once: true });
+
 }

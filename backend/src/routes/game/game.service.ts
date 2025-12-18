@@ -150,21 +150,21 @@ async function joinUserToGame(prisma: PrismaClient, gameId: string, userId: stri
 	return prisma.gamePlayer.create({ data: { gameId, userId}})
 }
 
-async function startGame(prisma: PrismaClient, gameId: string) {
+async function startGame(prisma: PrismaClient, gameId: string, userId: string) {
 	const game = await findGameById(prisma, gameId);
 	
 	if (game?.type === 'LOCAL') {
 		// Find or create the guest user for local games
 		let guestUser = await prisma.user.findUnique({
-			where: { email: 'guest@local.game' }
+			where: { displayName: `guest${userId}` }
 		});
 		
 		if (!guestUser) {
 			guestUser = await prisma.user.create({
 				data: {
-					email: 'guest@local.game',
+					email: `guest${userId}@local.game`,
 					name: 'Guest',
-					displayName: 'Guest Player',
+					displayName: `guest${userId}`,
 					password: 'N/A',
 					salt: 'N/A',
 					avatarUrl: '/default-avatar.png'
@@ -203,7 +203,7 @@ async function finishGame(prisma: PrismaClient, gameId: string, status: GameStat
 		where: { id: gameId },
 		data: {
 			status,
-			completedAt: status === "COMPLETED" ? new Date() : null
+			completedAt: status === "COMPLETED" || status === 'ABANDONED' ? new Date() : null
 		}
 	})
 	return prisma.game.findFirst({

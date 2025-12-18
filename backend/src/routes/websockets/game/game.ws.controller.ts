@@ -143,8 +143,8 @@ function createGameSession(gameId: string, userId: string, scoreToWin: number, s
 			arenawidth: arenaWidth, // = 200
 			paddleheight: paddleHeight, // = 20
 			paddlewidth: paddleWidth, // = 4
-			paddlespeed: 1,
-			ballspeed: 1,
+			paddlespeed: 2,
+			ballspeed: 2,
 			ballsize: 5,
 			scoreToWin: scoreToWin
 		},

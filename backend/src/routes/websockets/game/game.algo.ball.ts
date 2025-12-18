@@ -22,8 +22,6 @@ async function service(gameSession: GameSession) {
 	ball.x = config.arenawidth / 2;
 	ball.y = config.arenaheight / 2;
 
-	console.log(`🥎 ball centered : x=${ball.x} | y=${ball.y}`);
-
 	gameWsNotification.notifyService(gameSession);
 
 	// Wait before serving
@@ -40,7 +38,6 @@ async function service(gameSession: GameSession) {
 	ball.velocityX = (ball.velocityX / currentSpeed) * speed;
 	ball.velocityY = (ball.velocityY / currentSpeed) * speed;
 
-	console.log(`🏓 Service complete - Ball velocity: X=${ball.velocityX.toFixed(2)} | Y=${ball.velocityY.toFixed(2)}`);
 }
 
 function calculateWallCollision(ball: GameState['ball'], config: GameConfig) {
