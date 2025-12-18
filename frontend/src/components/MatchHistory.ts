@@ -41,7 +41,7 @@ export class MatchHistory extends HTMLElement {
 		if (this._gameHistory?.length == 0) {
 			this.innerHTML =
 			/*html*/`
-				<h1 class='flex-none'>Match history</h1>
+				<h1 class='flex-none'>Online and tournament match history</h1>
 				<div class="flex-1 overflow-auto min-h-0 flex items-center justify-center">
 					<div class="text-center py-12 px-4">
 						<!-- Icon/Illustration -->
@@ -86,7 +86,8 @@ export class MatchHistory extends HTMLElement {
 		const matchs = document.getElementById('match-data');
 
 		this._gameHistory?.forEach((match) => {
-			matchs?.appendChild(this.createMatchElem(match));
+			if (match.type === 'ONLINE' || match.type === 'TOURNAMENT')
+				matchs?.appendChild(this.createMatchElem(match));
 		})
 	}
 

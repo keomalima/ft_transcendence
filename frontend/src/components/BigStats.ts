@@ -40,6 +40,8 @@ export class BigStats extends HTMLElement {
 				if (currentStreak > maxStreak) {
 					maxStreak = currentStreak;
 				}
+			} else {
+				currentStreak = 0;
 			}
 			this._totalGamePlayed++;
 			this._totalPlayingTime += match.duration!;

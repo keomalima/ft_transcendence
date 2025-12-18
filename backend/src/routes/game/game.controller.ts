@@ -182,7 +182,7 @@ async function gameHistoryHandler (request: FastifyRequest, reply: FastifyReply)
 		const userId = request.user!.id;
 		const games = await gameService.getGamesByUserId(request.server.prisma, userId);
 		const filteredGames = games.filter((gp: typeof games[0]) => gp.game.gameUsers.length === 2 
-			&& gp.game.type !== "LOCAL" 
+			// && gp.game.type !== "LOCAL" 
 			&& (gp.game.status === "COMPLETED"
 			|| gp.game.status === "ABANDONED"));
 		const result = filteredGames.map((gp: typeof filteredGames[0]) => {

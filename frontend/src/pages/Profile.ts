@@ -7,6 +7,7 @@ import "../components/ProfileCard.js";
 import "../components/LatestMatch.js";
 import "../components/BigStats.js";
 import "../components/MatchHistory.js";
+import "../components/Statistics.js"
 import { gameService } from "../services/GameService.js";
 
 
@@ -35,19 +36,19 @@ export function Profile(ctx: AppContext): string {
 			<!-- big stats -->
 			<big-stats class="py-24 sm:py-32" id='big-stats-component'></big-stats>
 
+			<!-- Statistics -->
+			<div class="w-full mx-auto max-w-2xl lg:max-w-7xl mb-10 ">
+				<game-statistics class="flex flex-col bg-white p-10 shadow-sm rounded-lg" id='stats-component'></game-statistics>
+			</div>
+
 			<!-- Match history -->
 			<div class="w-full mx-auto max-w-2xl lg:max-w-7xl mb-10">
 				<match-history id='match-history-component' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-[80vh] lg:max-h-[50vh]"></match-history>
 				<!-- <div id='match-history' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-150"> -->
-				</div>
 			</div>
 
-			<!-- Statistics -->
-			<div class="w-full mx-auto mb-10 max-w-2xl px-6 lg:max-w-7xl lg:px-8">
-				<div class="bg-white p-10 shadow-sm rounded-lg">
-					<h1>Statistics</h1>
-				</div>
-			</div>
+
+
 		</div>
 	`;
 
@@ -67,6 +68,11 @@ function passContext(ctx: AppContext, gameHistory: GameHistory[]) {
 	if (bigStatsComponent) {
 		bigStatsComponent.ctx = ctx;
 		bigStatsComponent.gameHistory = gameHistory;
+	}
+	const statsComponent = document.getElementById('stats-component') as any;
+	if (statsComponent) {
+		statsComponent.ctx = ctx;
+		statsComponent.gameHistory = gameHistory;
 	}
 	const matchHistoryComponent = document.getElementById('match-history-component') as any;
 	if (matchHistoryComponent) {
