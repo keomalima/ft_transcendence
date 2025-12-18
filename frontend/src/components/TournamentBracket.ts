@@ -145,8 +145,55 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private createMatchCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
+		const status = (game as any).status || 'PENDING';
+		const currentUser = this._ctx?.userStore.get();
+		const isMyGame = currentUser?.id && game.gameUsers.some((p: any) => p.user.id === currentUser?.id);
+
+		let borderClass = 'border-gray-200';
+		let bgClass = 'bg-white';
+		let ringClass = '';
+		let shadowClass = 'shadow-sm';
+
+		if (status === 'IN_PROGRESS') {
+			borderClass = 'border-blue-400';
+			ringClass = 'ring-1 ring-blue-400';
+		} else if (status === 'ABANDONED') {
+			borderClass = 'border-red-200';
+			bgClass = 'bg-red-50/30';
+		} else if (status === 'COMPLETED') {
+			borderClass = 'border-gray-300';
+		}
+
+		if (isMyGame) {
+			borderClass = 'border-indigo-500';
+			ringClass = 'ring-2 ring-offset-2 ring-indigo-500';
+			shadowClass = 'shadow-lg';
+		}
+
 		const card = document.createElement('div');
-		card.className = `w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md ${isMirrored ? 'text-right' : ''}`;
+		card.className = `w-64 overflow-hidden rounded-xl border ${borderClass} ${bgClass} ${shadowClass} transition-all hover:shadow-md ${isMirrored ? 'text-right' : ''} ${ringClass}`;
+
+		if (status === 'IN_PROGRESS') {
+			const badge = document.createElement('div');
+			badge.className = 'bg-blue-50 px-2 py-1 text-center text-xs font-bold text-blue-600 border-b border-blue-100';
+			badge.innerText = 'LIVE';
+			card.appendChild(badge);
+		} else if (status === 'ABANDONED') {
+			const badge = document.createElement('div');
+			badge.className = 'bg-red-50 px-2 py-1 text-center text-xs font-bold text-red-600 border-b border-red-100';
+			badge.innerText = 'ABANDONED';
+			card.appendChild(badge);
+		} else if (status === 'PENDING') {
+		    const badge = document.createElement('div');
+		    badge.className = 'bg-yellow-50 px-2 py-1 text-center text-xs font-bold text-yellow-600 border-b border-yellow-100';
+		    badge.innerText = 'PENDING';
+		    card.appendChild(badge);
+		} else if (status === 'COMPLETED') {
+		    const badge = document.createElement('div');
+		    badge.className = 'bg-green-50 px-2 py-1 text-center text-xs font-bold text-green-600 border-b border-green-100';
+		    badge.innerText = 'FINISHED';
+		    card.appendChild(badge);
+		}
 
 		const innerContainer = document.createElement('div');
 		innerContainer.className = 'flex flex-col divide-y divide-gray-100';
