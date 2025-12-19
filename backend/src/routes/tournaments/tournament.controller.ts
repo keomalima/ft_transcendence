@@ -348,13 +348,18 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 
 		if (updatedOpponent?.isReady) {
 			await gameService.startGame(request.server.prisma, gameId);
+			WaintingRoomWsController.broadcasToRoom(game.id, {
+				type: 'start_game',
+				message: `${player.user.displayName} is starting the game!`,
+				game: updatedGame
+			})
+		} else {
+			WaintingRoomWsController.broadcasToRoom(game.id, {
+				type: 'room_update',
+				message: `${player.user.displayName} is ready for the game!`,
+				game: updatedGame
+			})
 		}
-
-		WaintingRoomWsController.broadcasToRoom(game.id, {
-			type: 'room_update',
-			message: `${player.user.displayName} is ready for the game!`,
-			game: updatedGame
-		})
 
 		return updatedGame;
 	} catch (error: any) {
