@@ -56,7 +56,7 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 					<p class="text-gray-600 mb-6">
 						You have an ongoing tournament
 					</p>
-					<a data-link href='/tournament/${tournamentId}' 
+					<a data-link href='/tournament-room/${tournamentId}' 
 					   class='inline-block ${BUTTON_WHITE_CLASSES}'>
 						Continue
 					</a>
@@ -156,7 +156,6 @@ function setupTournamentEventListeners(ctx: AppContext) {
 		const data = customEvent.detail;
 		try {
 			const result = await tournamentApi.joinTournament(data);
-			console.log(result);
 			router.navigateTo(`/tournament-room/${result.tournamentId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-tournament') as HTMLParagraphElement;

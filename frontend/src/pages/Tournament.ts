@@ -8,6 +8,10 @@ import "../components/TournamentNextGame.js";
 
 // import styles
 import { tournamentApi } from "../api/tournamentApi.js";
+import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
+import { TournamentNextGame } from "../components/TournamentNextGame.js";
+
+let wsConnection: WaitingRoomConnection | null = null;
 
 export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
 	//get user data from store
@@ -24,8 +28,14 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
 		const tournamentGames = await getTournamentGames(params['id']);
+		if (currentTournament?.status === 'REGISTRATION') {
+			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
+		}
 		renderTournamentContent();
 		passContext(ctx, tournamentGames, currentTournament);
+
+		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
+
 		setupTournamentEventListeners(ctx);
 	}, 0);
 
@@ -63,7 +73,7 @@ function renderTournamentContent() {
 }
 
 // ======== GET TOURNAMENT GAMES ============
-async function getTournamentGames(tournamentId: string): Promise<TournamentGame | null > {
+async function getTournamentGames(tournamentId: string): Promise<TournamentGame[] | null > {
 	try {
 		const tournamentGames = await tournamentApi.getTournamentGames(tournamentId);
 		return tournamentGames;
@@ -83,7 +93,7 @@ async function getCurrentTournament(): Promise<Partial< TournamentData | null>> 
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext, tournamentGames: TournamentGame | null, tournament: Partial<TournamentData | null>) {
+function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, tournament: Partial<TournamentData | null>) {
 
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
@@ -108,6 +118,61 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame | null, to
 	}
 }
 
+// ======== UPDATE PLAYER INFO ============
+function updatePlayerInfo(tournamentGames: TournamentGame[]) {
+
+	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
+	if (tournamentNextGameComponent && tournamentGames) {
+		// Update the nextGame component with the new data from websocket
+		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+	}
+}
+
+// ======== SET WEBSOCKET CONNECTION ============
+async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: TournamentGame[], ctx: AppContext) {
+
+	const gameIndex = tournamentGames.findIndex(game =>
+		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id)
+	)
+
+	if (gameIndex === -1) return;
+	
+	const gameData = tournamentGames[gameIndex];
+
+	// Create websocket with gameid
+	wsConnection = new WaitingRoomConnection();
+	wsConnection.connect(gameData.id!, currentUser.id!,
+		async (updateGameData) => {
+			if (updateGameData.message) {
+				tournamentGames[gameIndex] = updateGameData.game;
+				console.log('🔔', updateGameData.game);
+				updatePlayerInfo(tournamentGames);
+			}
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo('/home');
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo('/home');
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo(`/game/${gameData.id}`)
+		}
+	)
+}
+
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanWaitingRoomWS() {
+	if (wsConnection) {
+		wsConnection.disconnect();
+		wsConnection = null;
+	}
+}
+
+
 // ======== EVENT LISTENER ============
 function setupTournamentEventListeners(ctx: AppContext) {
 	// Start tournament game
@@ -118,7 +183,7 @@ function setupTournamentEventListeners(ctx: AppContext) {
 		const {id:gameId} = customEvent.detail.game;
 		try {
 			const response = await tournamentApi.startGame(gameId);
-			console.log(response);
+			console.log('start', response);
 		} catch (error) {
 			console.log(error);
 		}

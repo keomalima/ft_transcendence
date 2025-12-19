@@ -79,8 +79,9 @@ export class TournamentNextGame extends HTMLElement {
 		const card = document.createElement('div');
 		card.className = `flex w-[32rem] items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-md`;
 
-		const opponent = nextGame.gameUsers.find(user => user.id !== currentUser.id);
-		if (!opponent) return card;
+		const player = nextGame.gameUsers.find(game => game.user.id === currentUser.id);
+		const opponent = nextGame.gameUsers.find(game => game.user.id !== currentUser.id);
+		if (!opponent || !player) return card;
 
 		// Left Side: Opponent Info
 		const infoContainer = document.createElement('div');
@@ -124,12 +125,13 @@ export class TournamentNextGame extends HTMLElement {
 
 		const readyBtn = document.createElement('button');
 		readyBtn.innerText = 'Ready';
-		readyBtn.className = 'rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600';
+		readyBtn.disabled = player.isReady ? true : false;
+		readyBtn.className = 'rounded-lg bg-stone-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-700 disabled:bg-creamgrey disabled:text-medium disabled:cursor-not-allowed disabled:hover:bg-creamgrey';
 		actionContainer.appendChild(readyBtn);
 
 		const statusText = document.createElement('span');
 		statusText.innerText = 'Waiting opponent';
-		statusText.className = 'text-xs text-gray-500';
+		statusText.className = player.isReady ? 'text-xs text-gray-500' : 'hidden';
 		actionContainer.appendChild(statusText);
 
 		card.appendChild(actionContainer);

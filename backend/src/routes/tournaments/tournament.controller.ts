@@ -1,10 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { Prisma } from '@prisma/client'
 import { tournamentService } from './tournament.service.js';
-import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
+import type { CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
-import { getDefaultAutoSelectFamilyAttemptTimeout } from 'net';
 import { gameService } from '../game/game.service.js';
 
 // =====================
@@ -237,7 +236,7 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		}
 		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
 		WaintingRoomWsController.broadcasToRoom(tournament.id, {
-			type: 'start_game',
+			type: 'start_tournament',
 			message: `Start tournament!`
 		})
 		return response;
@@ -350,7 +349,13 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 		if (updatedOpponent?.isReady) {
 			await gameService.startGame(request.server.prisma, gameId);
 		}
-		console.log(updatedGame);
+
+		WaintingRoomWsController.broadcasToRoom(game.id, {
+			type: 'room_update',
+			message: `${player.user.displayName} is ready for the game!`,
+			game: updatedGame
+		})
+
 		return updatedGame;
 	} catch (error: any) {
 		console.log(error);

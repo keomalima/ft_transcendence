@@ -28,7 +28,7 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 		let tournamentData = await getTournamentData(params['id']);
 		if (!tournamentData)
 			return;
-		if (tournamentData.status != 'REGISTRATION') {
+		if (tournamentData.status !== 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament/${tournamentData.id}`), 0);
 		}
 		renderTournamentRoomContent(tournamentData);
@@ -124,7 +124,7 @@ async function setTournamentRoomWebSockets(currentUser: UserState, tournamentDat
 		},
 		() => {
 			cleanWaitingRoomWS();
-			router.navigateTo(`/game/${tournamentData.id}`)
+			router.navigateTo(`/tournament-room/${tournamentData.id}`)
 		}
 	)
 }

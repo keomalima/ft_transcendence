@@ -107,7 +107,7 @@ export const tournamentApi = {
 		}
 	},
 
-	getTournamentGames: async (tournamentId: string): Promise<TournamentGame> => {
+	getTournamentGames: async (tournamentId: string): Promise<TournamentGame[]> => {
 		try {
 			const response = await httpCall.get(`${BASE_URL}/${tournamentId}/tournament-games`);
 			console.log('🎮 tournament games sucess ✅ ');
