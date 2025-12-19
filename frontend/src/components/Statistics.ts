@@ -8,7 +8,6 @@ export class Statistics extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameHistory: GameHistory[] | null = null;
 	private _totalWonGame: number = 0;
-	private _winningStreak: number = 0;
 	private _totalGamePlayed: number = 0;
 	private _totalPlayingTime: number = 0;
 	private _amber = "#F2C533";
@@ -51,40 +50,15 @@ export class Statistics extends HTMLElement {
 			this._totalGamePlayed++;
 			this._totalPlayingTime += match.duration!;
 		});
-		this._winningStreak = maxStreak;
 	}
 
 	private async loadAndRender() {
 		this.calculate();
+		this.parseTimeGameHistory();
 		this.render();
 		this.chart();
 		// Add dropdown event listeners after rendering
 		setTimeout(() => this.setupDropdownListeners(), 0);
-	}
-	private setupDropdownListeners() {
-		const dropdownButton = this.querySelector('#dropdownLastDaysButton');
-		const dropdownMenu = this.querySelector('#LastDaysdropdown');
-		if (!dropdownButton || !dropdownMenu) return;
-
-		// Toggle dropdown visibility
-		dropdownButton.addEventListener('click', (e) => {
-			e.preventDefault();
-			dropdownMenu.classList.toggle('hidden');
-		});
-
-		// Add listeners to each option
-		dropdownMenu.querySelectorAll('a[data-range]').forEach((a) => {
-			a.addEventListener('click', (e) => {
-				e.preventDefault();
-				const type = (a as HTMLElement).getAttribute('data-range');
-				// Update button label
-				dropdownButton.childNodes[0].textContent = a.textContent;
-				// Hide dropdown
-				dropdownMenu.classList.add('hidden');
-				// Update chart (implement logic for each range)
-				this.timeChart(type);
-			});
-		});
 	}
 
 
@@ -149,6 +123,32 @@ export class Statistics extends HTMLElement {
 		}
 	}
 
+	private setupDropdownListeners() {
+		const dropdownButton = this.querySelector('#dropdownLastDaysButton');
+		const dropdownMenu = this.querySelector('#LastDaysdropdown');
+		if (!dropdownButton || !dropdownMenu) return;
+
+		// Toggle dropdown visibility
+		dropdownButton.addEventListener('click', (e) => {
+			e.preventDefault();
+			dropdownMenu.classList.toggle('hidden');
+		});
+
+		// Add listeners to each option
+		dropdownMenu.querySelectorAll('a[data-range]').forEach((a) => {
+			a.addEventListener('click', (e) => {
+				e.preventDefault();
+				const type = (a as HTMLElement).getAttribute('data-range');
+				// Update button label
+				dropdownButton.childNodes[0].textContent = a.textContent;
+				// Hide dropdown
+				dropdownMenu.classList.add('hidden');
+				// Update chart (implement logic for each range)
+				this.timeChart(type);
+			});
+		});
+	}
+
 	private chart() {
 		this.winLoseChart();
 		this.typesChart();
@@ -163,7 +163,7 @@ export class Statistics extends HTMLElement {
 		this._gameHistory.map((game) => {
 			const gameDate = new Date(game.date!);
 			const year = gameDate.getFullYear();
-			const month = gameDate.getMonth() + 1;
+			const month = gameDate.getMonth();
 			const day = gameDate.getDate();
 
 			if (!this._timeGameHistory.has(year)) {
@@ -179,6 +179,7 @@ export class Statistics extends HTMLElement {
 			}
 			monthMap.get(day)!.push(game);
 		})
+		console.log('📆 timeGameHistory ', this._timeGameHistory);
 	}
 
 	private getWeekGameHistory() {
@@ -218,100 +219,150 @@ export class Statistics extends HTMLElement {
 		return result;
 	}
 
+	private getYearGameHistory() {
+		const todayYear = new Date().getFullYear();
+		const currentYearGames = new Map<number, number>();
+		const lastYearGames = new Map<number, number>();
+	
+		const currentYearData = this._timeGameHistory.get(todayYear);
+		for (let month = 1; month <= 12; month++) {
+			let count = 0;
+			const monthMap = currentYearData?.get(month);
+			if (monthMap) {
+				monthMap.forEach((gamesArr) => {
+					count += gamesArr.length;
+				});
+			}
+			currentYearGames.set(month, count);
+		}
+
+		const lastYearData = this._timeGameHistory.get(todayYear - 1);
+		for (let month = 1; month <= 12; month++) {
+			let count = 0;
+			const monthMap = lastYearData?.get(month);
+			if (monthMap) {
+				monthMap.forEach((gamesArr) => {
+					count += gamesArr.length;
+				});
+			}
+			lastYearGames.set(month, count);
+		}
+		const data = [currentYearGames, lastYearGames];
+		console.log(data);
+		return data;
+	}
+	
 	private timeChart(type: string | null) {
 		if (!type)
 			type = 'week';
-		this.parseTimeGameHistory();
-		const weekGameHistory = this.getWeekGameHistory();
-		const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-		const currentData = dayLabels.map((label, i) => ({ x: label, y: weekGameHistory[0].get(i) || 0 }));
-		const lastData = dayLabels.map((label, i) => ({ x: label, y: weekGameHistory[1].get(i) || 0 }));
-		console.log('📆 timeGameHistory ', this._timeGameHistory);
-		const options = {
-			colors: [this._amber, this._cinnamon],
-			series: [
-			{ name: "last", color: this._ochre, data: lastData },
-			{ name: "current", color: this._amber, data: currentData },
-			],
-			chart: {
-			type: "bar",
-			height: "320px",
-			fontFamily: "Inter, sans-serif",
-			toolbar: {
-				show: false,
-			},
-			},
-			plotOptions: {
-			bar: {
-				horizontal: false,
-				columnWidth: "70%",
-				borderRadiusApplication: "end",
-				borderRadius: 8,
-			},
-			},
-			tooltip: {
-			shared: true,
-			intersect: false,
-			style: {
-				fontFamily: "Inter, sans-serif",
-			},
-			},
-			states: {
-			hover: {
-				filter: {
-				type: "darken",
-				value: 1,
-				},
-			},
-			},
-			stroke: {
-			show: true,
-			width: 0,
-			colors: ["transparent"],
-			},
-			grid: {
-			show: false,
-			strokeDashArray: 4,
-			padding: {
-				left: 2,
-				right: 2,
-				top: -14
-			},
-			},
-			dataLabels: {
-			enabled: false,
-			},
-			legend: {
-			show: false,
-			},
-			xaxis: {
-			floating: false,
-			labels: {
-				show: true,
-				style: {
-				fontFamily: "Inter, sans-serif",
-				cssClass: 'text-xs font-normal fill-body'
-				}
-			},
-			axisBorder: {
-				show: false,
-			},
-			axisTicks: {
-				show: false,
-			},
-			},
-			yaxis: {
-			show: false,
-			},
-			fill: {
-			opacity: 1,
-			},
+		let currentData = null;
+		let lastData = null;
+		if (type === 'week'){
+			const weekGameHistory = this.getWeekGameHistory();
+			const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+			currentData = dayLabels.map((label, i) => ({ x: label, y: weekGameHistory[0].get(i) || 0 }));
+			lastData = dayLabels.map((label, i) => ({ x: label, y: weekGameHistory[1].get(i) || 0 }));
+		} else if (type === 'year') {
+			const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			const yearGameHistory = this.getYearGameHistory();
+			currentData = monthLabels.map((label, i) => ({ x: label, y: yearGameHistory[0].get(i) || 0 }));
+			lastData = monthLabels.map((label, i) => ({ x: label, y: yearGameHistory[1].get(i) || 0 }));
 		}
+		
+		   const options = {
+			   colors: [this._amber, this._cinnamon],
+			   series: [
+				   { name: `last ${type}`, color: this._ochre, data: lastData },
+				   { name: `current ${type}`, color: this._amber, data: currentData },
+			   ],
+			   chart: {
+				   type: "bar",
+				   height: "320px",
+				   fontFamily: "Inter, sans-serif",
+				   toolbar: {
+					   show: false,
+				   },
+			   },
+			   plotOptions: {
+				   bar: {
+					   horizontal: false,
+					   columnWidth: type === 'year' ? "50%" : "70%",
+					   borderRadiusApplication: "end",
+					   borderRadius: type === 'year' ? "2" : "6",
+				   },
+			   },
+			   tooltip: {
+				   shared: true,
+				   intersect: false,
+				   style: {
+					   fontFamily: "Inter, sans-serif",
+				   },
+			   },
+			   states: {
+				   hover: {
+					   filter: {
+						   type: "darken",
+						   value: 1,
+					   },
+				   },
+			   },
+			   stroke: {
+				   show: true,
+				   width: 0,
+				   colors: ["transparent"],
+			   },
+			   grid: {
+				   show: false,
+				   strokeDashArray: 4,
+				   padding: {
+					   left: 2,
+					   right: 2,
+					   top: -14
+				   },
+			   },
+			   dataLabels: {
+				   enabled: false,
+			   },
+			   legend: {
+				   show: false,
+			   },
+			   xaxis: {
+				   floating: false,
+				   labels: {
+					   show: true,
+					   style: {
+						   fontFamily: "Inter, sans-serif",
+						   cssClass: 'text-xs font-normal fill-body'
+					   }
+				   },
+				   axisBorder: {
+					   show: false,
+				   },
+				   axisTicks: {
+					   show: false,
+				   },
+			   },
+			   yaxis: {
+				   show: false,
+			   },
+			   fill: {
+				   opacity: 1,
+			   },
+		   };
 
-		if(document.getElementById("time-chart") && typeof ApexCharts !== 'undefined') {
-			const chart = new ApexCharts(document.getElementById("time-chart"), options);
-			chart.render();
-		}
+		   // Remove previous chart instance if present
+		   const chartContainer = document.getElementById("time-chart");
+		   if (chartContainer) {
+			   // Remove all children (ApexCharts appends SVGs etc.)
+			   while (chartContainer.firstChild) {
+				   chartContainer.removeChild(chartContainer.firstChild);
+			   }
+		   }
+
+		   if(chartContainer && typeof ApexCharts !== 'undefined') {
+			   const chart = new ApexCharts(chartContainer, options);
+			   chart.render();
+		   }
 	}
 
 	private typesChart() {

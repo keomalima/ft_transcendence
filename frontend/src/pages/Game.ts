@@ -509,56 +509,58 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 
 	// **** ADANDONNED GAME ****
 	document.addEventListener('event-abandoned-game', async (e: Event) => {
-		e.preventDefault();
-		console.log('🏆 ABANDONED GAME');
-		
-		if (isFinishingGame) {
-			console.log('⏭️ Already finishing game, skipping...');
-			return;
-		}
-		isFinishingGame = true;
-		
-		const customEvent = e as CustomEvent;
-		const detail = customEvent.detail;
+		   e.preventDefault();
+		   console.log('🏆 ABANDONED GAME');
 
-		const currentGame = await gameService.getGame(gameId, ctx);
-		if (!currentGame) {
-			router.navigateTo('/home');
-			return;
-		}
-		
-		// For abandoned games, ANY player can finish (creator might have left)
-		// Skip if game is already finished (ABANDONED or COMPLETED)
-		if (currentGame.status !== 'ABANDONED' && currentGame.status !== 'COMPLETED') {
-			try {
-				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
-					console.error('❌ Missing game users data');
-					router.navigateTo('/home');
-					return;
-				}
+		   if (isFinishingGame) {
+			   console.log('⏭️ Already finishing game, skipping...');
+			   return;
+		   }
 
-				const data: FinishGameDto = {
-					status: 'ABANDONED',
-					gamePlayers: [
-						{
-							playerId: currentGame.gameUsers[0].id!,
-							score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
-						},
-						{
-							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
-						}
-					]
-				};
-				console.log('🎮 Finishing abandoned game...');
-				await gameService.finishGame(currentGame.id!, data, ctx);
-				console.log('✅ Game finished successfully');
-			} catch (error) {
-				console.error('❌ Error finishing game:', error);
-			}
-		} else {
-			console.log('👀 Game already finished, skipping finishGame API call');
-		}
+		   const customEvent = e as CustomEvent;
+		   const detail = customEvent.detail;
+
+		   const currentGame = await gameService.getGame(gameId, ctx);
+		   if (!currentGame) {
+			   router.navigateTo('/home');
+			   return;
+		   }
+
+		   // For abandoned games, ANY player can finish (creator might have left)
+		   // Skip if game is already finished (ABANDONED or COMPLETED)
+		   if (currentGame.status !== 'ABANDONED' && currentGame.status !== 'COMPLETED') {
+			   try {
+				   if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
+					   console.error('❌ Missing game users data');
+					   router.navigateTo('/home');
+					   return;
+				   }
+
+				   isFinishingGame = true;
+
+				   const data: FinishGameDto = {
+					   status: 'ABANDONED',
+					   gamePlayers: [
+						   {
+							   playerId: currentGame.gameUsers[0].id!,
+							   score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+						   },
+						   {
+							   playerId: currentGame.gameUsers[1].id!,
+							   score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+						   }
+					   ]
+				   };
+				   console.log('🎮 Finishing abandoned game...');
+				   await gameService.finishGame(currentGame.id!, data, ctx);
+				   console.log('✅ Game finished successfully');
+			   } catch (error) {
+				   console.error('❌ Error finishing game:', error);
+			   }
+		   } else {
+			   console.log('👀 Game already finished, skipping finishGame API call');
+			   isFinishingGame = true;
+		   }
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;
