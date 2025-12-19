@@ -38,7 +38,12 @@ export class MatchHistory extends HTMLElement {
 	}
 
 	private render() {
-		if (this._gameHistory?.length == 0) {
+		let onlineGames = 0;
+		this._gameHistory?.map((game) => {
+			if (game.type != 'LOCAL')
+				onlineGames++;
+		})
+		if (this._gameHistory?.length == 0 || onlineGames === 0) {
 			this.innerHTML =
 			/*html*/`
 				<h1 class='flex-none'>Online and tournament match history</h1>
@@ -53,7 +58,7 @@ export class MatchHistory extends HTMLElement {
 						<!-- Message -->
 						<h3 class="text-xl font-semibold text-gray-700 mb-2">No matches yet</h3>
 						<p class="text-gray-500 mb-6 max-w-sm mx-auto">
-							Start your journey by playing your first game! Your match history will appear here.
+							Start your journey by playing your first online game! Your match history will appear here.
 						</p>
 					</div>
 				</div>
@@ -61,7 +66,7 @@ export class MatchHistory extends HTMLElement {
 		} else {
 		this.innerHTML =
 			/*html*/`
-				<h1 class='flex-none'>Match history</h1>
+				<h1 class='flex-none'>Online and tournament match history</h1>
 				<div class="flex-1 overflow-auto min-h-0">
 					<table class="w-full border-separate border-spacing-0">
 						<thead>

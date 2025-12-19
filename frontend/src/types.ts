@@ -157,7 +157,6 @@ export interface GameHistory {
 		score: number | null;
 		isWinner: boolean | null;
 	} | null;
-
 }
 
 export interface TournamentParticipant {

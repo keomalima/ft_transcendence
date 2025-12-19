@@ -9,6 +9,9 @@ import { includes } from "zod";
 async function getGamesByUserId(prisma: PrismaClient, userId: string) {
 	return prisma.gamePlayer.findMany({
 		where: { userId },
+		orderBy: {
+			game: { startedAt: 'desc' }
+		},
 		include: {
 			game: {
 				include : {
