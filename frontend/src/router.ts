@@ -1,6 +1,8 @@
 import { AppContext } from "./types";
 import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
 import { cleanGameWS } from "./pages/Game.js";
+import { cleanLiveChatWS } from "./pages/LiveChat.js";
+
 
 // Define a new function type to make sure that the function sent to route is well designed
 // (here the function must take an AppContext parameter and return a string e.g. a HTML content)
@@ -59,6 +61,9 @@ export class Router {
 		}
 		if (currentPath.startsWith('/game')) {
 			cleanGameWS();
+		}
+		if (currentPath === '/live-chat') {
+			cleanLiveChatWS();
 		}
 		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;

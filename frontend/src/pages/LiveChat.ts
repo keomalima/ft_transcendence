@@ -21,7 +21,6 @@ export function LiveChat(ctx: AppContext): string {
 
 	// 2. Setup logic after render
 	setTimeout(() => {
-		cleanLiveChatWS();
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
@@ -150,9 +149,13 @@ function setLiveChatWebSocket(userId: string) {
 	chatConnection.connect(userId);
 }
 
-function cleanLiveChatWS() {
+export function cleanLiveChatWS() {
 	if (chatConnection) {
 		chatConnection.disconnect();
 		chatConnection = null;
 	}
 }
+
+// ======== CLEANUP HOOKS ==========
+// when close the tab/page, close the ws
+window.addEventListener("beforeunload", cleanLiveChatWS);
