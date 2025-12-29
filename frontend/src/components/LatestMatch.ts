@@ -1,16 +1,5 @@
 import { AppContext, GameHistory } from "../types.js";
 
-interface matchInfo {
-	id: number;
-	opponentName: string;
-	scoreUser: number;
-	scoreOpponent: number;
-	winner: boolean;
-	duration: number;
-	date: string;
-	mode: string;
-}
-
 export class LatestMatch extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameHistory: GameHistory[] | null = null;
@@ -85,8 +74,12 @@ export class LatestMatch extends HTMLElement {
 
 	private generateMatchCards() {
 		const scores = document.getElementById('last-match-scores');
+		let count = 20;
 		this._gameHistory?.forEach((match) => {
+			if (count <= 0)
+				return;
 			scores?.appendChild(this.createScoreCard(match));
+			count--;
 		})
 	}
 

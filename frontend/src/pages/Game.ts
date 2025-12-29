@@ -171,7 +171,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 			</div>
 
 			<!-- Confirmation Dialog -->
-			<dialog id="quit-game-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+			<dialog id="quit-game-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
 					<h2 class="text-xl font-semibold">Give up</h2>
 					<p id="delete-friend-message" class="text-gray-600">Are you sure to quit game?</p>

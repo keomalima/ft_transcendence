@@ -170,7 +170,7 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 			</div>
 
 			<!-- Confirmation Dialog -->
-			<dialog id="quit-game-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+			<dialog id="quit-game-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
 					<h2 class="text-xl font-semibold">Give up</h2>
 					<p id="delete-friend-message" class="text-gray-600">Are you sure to quit game?</p>
@@ -447,7 +447,6 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 			game.ball.savedVx = 0;
 			game.ball.savedVy = 0;
 		}
-		
 		game.paddleSpeed = 10;
 		playerPauseOverlay?.classList.add('hidden');
 	});
@@ -457,6 +456,14 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 	const quitBtn = document.getElementById('quit-btn');
 	quitBtn?.addEventListener('click', (e) => {
 		e.preventDefault();
+
+		// pause game 
+		game.isPaused = true;
+		game.ball.savedVx = game.ball.vx;
+		game.ball.savedVy = game.ball.vy;
+		game.ball.vx = 0;
+		game.ball.vy = 0;
+		game.paddleSpeed = 0;
 
 		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
 		if (!quitDialog)
@@ -471,6 +478,16 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 			quitDialog.close();
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);
+			// resume game
+			if (game.ball.savedVx === 0 && game.ball.savedVy === 0) {
+				calculateGame.service(game);
+			} else {
+				game.ball.vx = game.ball.savedVx;
+				game.ball.vy = game.ball.savedVy;
+				game.ball.savedVx = 0;
+				game.ball.savedVy = 0;
+			}
+			game.paddleSpeed = 10;
 		};
 		
 		// Handle confirm
@@ -493,17 +510,15 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 						},
 						{
 							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === ctx.userStore.get()?.id ? game.scoreR : game.scoreL
+							score: currentGame.gameUsers[1].user?.id === ctx.userStore.get()?.id ? game.scoreL : game.scoreR
 						}
 					]
 				};
 				await gameService.finishGame(currentGame.id!, data, ctx);
 				console.log('✅ Game finished successfully');
-				// router.navigateTo('/home');
 			} catch (error) {
 				console.log(error);
 			}
-			// router.navigateTo('/home');
 		};
 
 		// Attach event listeners

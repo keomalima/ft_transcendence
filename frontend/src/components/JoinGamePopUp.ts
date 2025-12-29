@@ -50,7 +50,7 @@ export class JoinGamePopUp extends HTMLElement {
 						<button type='submit' class='${BUTTON_BLACK_CLASSES}'>LET'S GO</button>
 					</div>
 				</form>
-				<p id='error-join'></p>
+				<p id='error-join-game'></p>
 			</div>
 
         `;

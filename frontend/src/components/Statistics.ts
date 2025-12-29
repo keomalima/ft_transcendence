@@ -3,7 +3,6 @@ import { AppContext, GameHistory } from "../types";
 // Declare ApexCharts as a global type
 declare const ApexCharts: any;
 
-let tmp
 export class Statistics extends HTMLElement {
 
 	private _ctx: AppContext | null = null;
@@ -64,18 +63,23 @@ export class Statistics extends HTMLElement {
 
 
 	private render() {
-		let onlineGames = 0;
-		this._gameHistory?.map((game) => {
-			if (game.type != 'LOCAL')
-				onlineGames++;
-		});
-		if (this._gameHistory?.length == 0 || onlineGames === 0) {
+		if (this._gameHistory?.length == 0) {	
 			this.innerHTML =
 			/*html*/`
 				<h1>Statistics</h1>
-				<div class='flex gap-10 justify-center'>
-					<div id="time-chart"></div>
-					<div>games played per day/week/month</div>
+				<div class="flex-1 overflow-auto min-h-0 flex items-center justify-center">
+					<div class="text-center py-12 px-4">
+						<!-- Icon/Illustration -->
+						<div class="w-20 h-20 mx-auto mb-6 text-gray-300">
+							<svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" 
+									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+							</svg>
+						</div>
+						
+						<!-- Message -->
+						<p class="text-gray-500 mb-6 max-w-sm mx-auto">No matches yet.</p>
+					</div>
 				</div>
 			`
 		} else {
@@ -95,25 +99,23 @@ export class Statistics extends HTMLElement {
 				<div class='flex flex-wrap gap-10 justify-center'>
 					<div id="win-lose-chart"></div>
 					<div id="types-chart"></div>
-					<div class="relative w-full" id="chart-parent">
+					<div class="relative w-full justify-center" id="time-chart-parent">
 						<div id="time-chart" class="w-full"></div>
-						<div class="grid grid-cols-1 items-center justify-between">
-							<div class="flex justify-between items-center pt-4 md:pt-6">
-								<!-- Button -->
-								<button id="dropdown-button" data-dropdown-toggle="LastDaysdropdown" data-dropdown-placement="bottom" class="text-sm font-medium text-body text-center inline-flex items-center" type="button">
-									Last weeks
-									<svg class="w-4 h-4 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
-								</button>
-								<!-- Overlay backdrop -->
-								<div id="dropdown-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-20 z-40"></div>
-								<!-- Dropdown menu -->
-								<div id="Dropdown" class="absolute left-0 top-full mt-2 z-50 hidden border border-default-medium rounded-base shadow-lg w-44 bg-white">
-									<ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdown-button">
-										<li time-chart-type="week" class="inline-flex items-center w-full p-2 hover:bg-stone-100 hover:font-semibold rounded">Last weeks</li>
-										<li time-chart-type="month" class="inline-flex items-center w-full p-2 hover:bg-stone-100 hover:font-semibold rounded">Last months</li>
-										<li time-chart-type="year" class="inline-flex items-center w-full p-2 hover:bg-stone-100 hover:font-semibold rounded">This year</li>
-									</ul>
-								</div>
+						<div class="flex justify-center items-center pt-4 md:pt-6">
+							<!-- Button -->
+							<button id="dropdown-button" data-dropdown-toggle="LastDaysdropdown" data-dropdown-placement="bottom" class="text-sm font-medium text-body text-center inline-flex items-center" type="button">
+								Last weeks
+								<svg class="w-4 h-4 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
+							</button>
+							<!-- Overlay backdrop -->
+							<div id="dropdown-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-20 z-40"></div>
+							<!-- Dropdown menu -->
+							<div id="dropdown" class="absolute left-0 top-full mt-2 z-50 hidden border border-default-medium rounded-base shadow-lg w-44 bg-white">
+								<ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdown-button">
+									<li time-chart-type="week" class="inline-flex items-center w-full p-2 hover:bg-stone-100 hover:font-semibold rounded">Last weeks</li>
+									<li time-chart-type="month" class="inline-flex items-center w-full p-2 hover:bg-stone-100 hover:font-semibold rounded">Last months</li>
+									<li time-chart-type="year" class="inline-flex items-center w-full p-2 hover:bg-stone-100 hover:font-semibold rounded">This year</li>
+								</ul>
 							</div>
 						</div>
 					</div>
@@ -124,7 +126,7 @@ export class Statistics extends HTMLElement {
 
 	private setupDropdownListeners() {
 		const dropdownButton = this.querySelector('#dropdown-button');
-		const dropdownMenu = this.querySelector('#Dropdown');
+		const dropdownMenu = this.querySelector('#dropdown');
 		const dropdownBackdrop = this.querySelector('#dropdown-backdrop');
 		if (!dropdownButton || !dropdownMenu || !dropdownBackdrop) return;
 
@@ -305,7 +307,9 @@ export class Statistics extends HTMLElement {
 	}
 	
 	private timeChart() {
-		console.log('Chart type displayed with', this._chartType);
+		const chartContainer = document.getElementById("time-chart");
+		if (!chartContainer)
+			return;
 		let currentData = null;
 		let lastData = null;
 		if (this._chartType === 'week'){
@@ -325,208 +329,114 @@ export class Statistics extends HTMLElement {
 			lastData = monthLabels.map((label, i) => ({ x: label, y: yearGameHistory[1].get(i) || 0 }));
 		}
 		
-		   const isMonth = this._chartType === 'month';
+		const isMonth = this._chartType === 'month';
 
-		   // Set max width for chart parent
-		   const chartParent = document.getElementById('chart-parent');
-		   if (chartParent) {
-			   if (isMonth) {
-				   chartParent.style.maxWidth = '400px';
-			   } else {
-				   chartParent.style.maxWidth = '320px';
-			   }
-		   }
+		// Set max width for chart parent
+		const chartParent = document.getElementById('time-chart-parent');
+		if (chartParent) {
+			if (isMonth) {
+				chartParent.style.maxWidth = '400px';
+			} else {
+				chartParent.style.maxWidth = '320px';
+			}
+		}
 
-		   const options = {
-			  chart: {
-				   height: "320px",
-				   width: "100%",
-				   type: isMonth ? "area" : "bar",
-				   fontFamily: "Inter, sans-serif",
-				   dropShadow: {
-					   enabled: false,
-				   },
-				   toolbar: {
-					   show: false,
-				   },
-			   },
-				tooltip: {
-					enabled: true,
-					x: {
-						show: false,
-					},
-				},
-				plotOptions: {
-					bar: {
-						horizontal: false,
-						columnWidth: this._chartType === 'year' ? "50%" : "70%",
-						borderRadiusApplication: "end",
-						borderRadius: this._chartType === 'year' ? "2" : "6",
-					},
-				},
-			   fill: isMonth
-					? {
-						type: "gradient",
-						gradient: {
-							opacityFrom: 0.55,
-							opacityTo: 0,
-							shade: this._amber,
-							gradientToColors: [this._amber],
-						},
-					}
-					: {
-						type: "solid",
-						opacity: 1,
-					},
-				dataLabels: {
+		const options = {
+			chart: {
+				height: "320px",
+				width: "100%",
+				type: isMonth ? "area" : "bar",
+				fontFamily: "Inter, sans-serif",
+				dropShadow: {
 					enabled: false,
 				},
-				stroke: isMonth
-					? { width: 2 }
-					: { width: 0 },
-				grid: {
-					show: false,
-					strokeDashArray: 4,
-					padding: {
-						left: 2,
-						right: 2,
-						top: 0
-					},
-				},
-				series: [
-					{ name: `last ${this._chartType}`, color: this._ochre, data: lastData },
-					{ name: `current ${this._chartType}`, color: this._amber, data: currentData },
-				],
-				xaxis: {
-					floating: false,
-					labels: {
-						show: true,
-						style: {
-							fontFamily: "Inter, sans-serif",
-							cssClass: 'text-xs font-normal fill-body'
-						},
-						formatter: isMonth
-							? function(value: string) {
-								const day = parseInt(value, 10);
-								return day % 2 != 0 ? value : '';
-							}
-							: undefined
-					},
-					axisBorder: {
-						show: false,
-					},
-					axisTicks: {
-						show: false,
-					},
-				},
-				yaxis: {
+				toolbar: {
 					show: false,
 				},
-		   }
+			},
+			tooltip: {
+				enabled: true,
+				x: {
+					show: false,
+				},
+			},
+			plotOptions: {
+				bar: {
+					horizontal: false,
+					columnWidth: this._chartType === 'year' ? "50%" : "70%",
+					borderRadiusApplication: "end",
+					borderRadius: this._chartType === 'year' ? "2" : "6",
+				},
+			},
+			fill: isMonth
+				? {
+					type: "gradient",
+					gradient: {
+						opacityFrom: 0.55,
+						opacityTo: 0,
+						shade: this._amber,
+						gradientToColors: [this._amber],
+					},
+				}
+				: {
+					type: "solid",
+					opacity: 1,
+				},
+			dataLabels: {
+				enabled: false,
+			},
+			stroke: isMonth
+				? { width: 2 }
+				: { width: 0 },
+			grid: {
+				show: false,
+				strokeDashArray: 4,
+				padding: {
+					left: 2,
+					right: 2,
+					top: 0
+				},
+			},
+			series: [
+				{ name: `last ${this._chartType}`, color: this._ochre, data: lastData },
+				{ name: `current ${this._chartType}`, color: this._amber, data: currentData },
+			],
+			xaxis: {
+				floating: false,
+				labels: {
+					show: true,
+					style: {
+						fontFamily: "Inter, sans-serif",
+						cssClass: 'text-xs font-normal fill-body'
+					},
+					formatter: isMonth
+						? function(value: string) {
+							const day = parseInt(value, 10);
+							return day % 2 != 0 ? value : '';
+						}
+						: undefined
+				},
+				axisBorder: {
+					show: false,
+				},
+				axisTicks: {
+					show: false,
+				},
+			},
+			yaxis: {
+				show: false,
+			},
+		}
 
-		// 	   series: [
-		// 		   { name: `last ${this._chartType}`, color: this._ochre, data: lastData },
-		// 		   { name: `current ${this._chartType}`, color: this._amber, data: currentData },
-		// 	   ],
-		// 	   chart: {
-		// 		   type: this._chartType === 'month' ? "area" : "bar",
-		// 		   height: "320px",
-		// 		   width: this._chartType === 'month' ? "400px" : "300px",
-		// 		   fontFamily: "Inter, sans-serif",
-		// 		   toolbar: {
-		// 			   show: false,
-		// 		   },
-		// 	   },
-		// 	   plotOptions: {
-		// 		   bar: {
-		// 			   horizontal: false,
-		// 			   columnWidth: this._chartType === 'year' ? "50%" : "70%",
-		// 			   borderRadiusApplication: "end",
-		// 			   borderRadius: this._chartType === 'year' ? "2" : "6",
-		// 		   },
-		// 	   },
-		// 	   tooltip: {
-		// 		   shared: true,
-		// 		   intersect: false,
-		// 		   style: {
-		// 			   fontFamily: "Inter, sans-serif",
-		// 		   },
-		// 	   },
-		// 	   states: {
-		// 		   hover: {
-		// 			   filter: {
-		// 				   type: "darken",
-		// 				   value: 1,
-		// 			   },
-		// 		   },
-		// 	   },
-		// 	   stroke: {
-		// 		   show: true,
-		// 		   width: 0,
-		// 		   colors: ["transparent"],
-		// 	   },
-		// 	   grid: {
-		// 		   show: false,
-		// 		   strokeDashArray: 4,
-		// 		   padding: {
-		// 			   left: 2,
-		// 			   right: 2,
-		// 			   top: -14
-		// 		   },
-		// 	   },
-		// 	   dataLabels: {
-		// 		   enabled: false,
-		// 	   },
-		// 	   legend: {
-		// 		   show: false,
-		// 	   },
-		// 	   xaxis: {
-		// 		   floating: false,
-		// 		   labels: {
-		// 			   show: true,
-		// 			   style: {
-		// 				   fontFamily: "Inter, sans-serif",
-		// 				   cssClass: 'text-xs font-normal fill-body'
-		// 			   },
-		// 			   formatter: this._chartType === 'month'
-		// 				   ? function(value: string) {
-		// 					   const day = parseInt(value, 10);
-		// 					   return day % 2 != 0 ? value : '';
-		// 				   }
-		// 				   : undefined
-		// 		   },
-		// 		   axisBorder: {
-		// 			   show: false,
-		// 		   },
-		// 		   axisTicks: {
-		// 			   show: false,
-		// 		   },
-		// 	   },
-		// 	   yaxis: {
-		// 		   show: false,
-		// 	   },
-		// 	   fill: {
-		// 			opacity: 1,
-		// 			// type: "gradient",
-		// 			// gradient: {
-		// 			// opacityFrom: 0.55,
-		// 			// opacityTo: 0,
-		// 			// shade: this._amber,
-		// 			// gradientToColors: [this._amber],
-		// 			// },
-		// 		},
-		//    };
+		// Remove previous chart instance if present
+		const parent = chartContainer?.parentElement;
+		if (chartContainer)
+			parent?.removeChild(chartContainer)
 
-		   // Remove previous chart instance if present
-			const chartContainer = document.getElementById("time-chart");
-			const parent = chartContainer?.parentElement;
-			if (chartContainer)
-				parent?.removeChild(chartContainer)
-
-			let tmp = document.createElement('div') as HTMLDivElement;
-			tmp.id = 'time-chart';
-			parent?.prepend(tmp);
-			new ApexCharts(tmp, options).render();
+		let tmp = document.createElement('div') as HTMLDivElement;
+		tmp.id = 'time-chart';
+		parent?.prepend(tmp);
+		new ApexCharts(tmp, options).render();
 	}
 
 	private typesChart() {
@@ -541,7 +451,7 @@ export class Statistics extends HTMLElement {
 				series[2]++;
 		});
 
-		const getChartOptions = () => {
+		const options = () => {
 			return {
  				series: series,
  				colors: [this._amber, this._cinnamon, this._ochre],
@@ -626,7 +536,7 @@ export class Statistics extends HTMLElement {
 		}
 
 		if (document.getElementById("types-chart") && typeof ApexCharts !== 'undefined') {
-			const chart = new ApexCharts(document.getElementById("types-chart"), getChartOptions());
+			const chart = new ApexCharts(document.getElementById("types-chart"), options());
 			chart.render();
 		}
 	}
@@ -641,7 +551,7 @@ export class Statistics extends HTMLElement {
 				series[1]++;
 		});
 
-		const getChartOptions = () => {
+		const options = () => {
 			return {
  				// The data for each segment of the donut chart
  				series: series,
@@ -730,7 +640,7 @@ export class Statistics extends HTMLElement {
 		}
 
 		if (document.getElementById("win-lose-chart") && typeof ApexCharts !== 'undefined') {
-			const chart = new ApexCharts(document.getElementById("win-lose-chart"), getChartOptions());
+			const chart = new ApexCharts(document.getElementById("win-lose-chart"), options());
 			chart.render();
 		}
 	}
