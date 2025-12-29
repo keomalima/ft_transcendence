@@ -5,22 +5,27 @@ import { router } from "../main.js";
 import "../components/NavBar.js";
 import "../components/FriendList.js";
 import { friendshipApi } from "../api/friendshipApi.js";
+import { ChatConnection } from "../websocket/ChatConnection.js";
+
+let chatConnection: ChatConnection | null = null;
 
 export function LiveChat(ctx: AppContext): string {
 	const currentUser: UserState | null = ctx.userStore.get();
 
 	// 1. Check user data
 	// If user not logged in, redirect to home
-	if (!currentUser) {
+	if (!currentUser || !currentUser.id) {
 		setTimeout(() => router.navigateTo('/'), 0);
 		return `<div class="flex items-center justify-center h-screen">Redirecting to home...</div>`;
 	}
 
 	// 2. Setup logic after render
 	setTimeout(() => {
+		cleanLiveChatWS();
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
+		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
 	}, 0);
 
 	// 3. Return loading screen placeholder
@@ -140,16 +145,14 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 }
 
-// function setLiveChatWebSockets(ctx: AppContext) {
-//   // Setup WebSocket logic (send/receive messages)
-// }
+function setLiveChatWebSocket(userId: string) {
+	chatConnection = new ChatConnection();
+	chatConnection.connect(userId);
+}
 
-
-
-// function cleanLiveChatWS() {
-//   // Cleanup logic for socket disconnection
-// }
-
-// implement the event listener
-// create a api method to block (/block) with friend id as payload - tournamentAPi.ts
-// then we create the backend method
+function cleanLiveChatWS() {
+	if (chatConnection) {
+		chatConnection.disconnect();
+		chatConnection = null;
+	}
+}
