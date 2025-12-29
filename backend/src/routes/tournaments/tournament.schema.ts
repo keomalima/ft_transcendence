@@ -18,6 +18,10 @@ const removePlayerRequestSchema = z.object({
 // Response Schemas
 // =====================
 
+const finishTournamentGameSchema = z.object({
+	id: z.string()
+})
+
 const createTournamentGame = z.object({
 	createdBy: z.string(),
 	scoreToWin: z.number().int().max(10).default(10),
@@ -165,6 +169,7 @@ export const tournamentSchemas = {
 	joinTournament: joinTournamentResponseSchema,
 	startTournament: startTournamentResponseSchema,
 	getTournamentGames: getTournamentGames,
-	startGame: startTournamentGameResponseSchema
+	startGame: startTournamentGameResponseSchema,
+	finishTournamentGame: finishTournamentGameSchema
   },
 };

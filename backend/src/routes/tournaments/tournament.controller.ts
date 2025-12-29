@@ -368,6 +368,24 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 	}
 }
 
+async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		// check if there's any matches finished
+		// if there's match finished, create a new one 
+
+		const games = await tournamentService.findTournamentGames(request.server.prisma, tournamentId);
+		if (games) {
+			
+		}
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to advance tournament"});
+	}
+}
+
 // =====================
 // Tournament Helpers
 // =====================
@@ -394,5 +412,6 @@ export const tournamentController = {
 	startTournamentHandler,
 	matchMakeTournamentHandler,
 	getTournamentGamesHandler,
-	startTournamentGameHandler
+	startTournamentGameHandler,
+	advanceTournamentHandler
 };

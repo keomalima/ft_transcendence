@@ -146,4 +146,17 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen,
 		handler: tournamentController.getTournamentGamesHandler
 	})
+
+	fastify.post('/:id/advance-tournament', {
+		schema: {
+			params: z.object({ id: z.string()}),
+			response: {200: tournamentSchemas.response.finishTournamentGame },
+			tags: ['Tournament'],
+			description: 'Finish tournament game',
+			summary: 'Finish tournament game',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: tournamentController.advanceTournamentHandler
+	})
 }

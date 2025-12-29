@@ -4,6 +4,7 @@ import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
 import { FinishGameDto } from "../api/gameApi.js";
+import { tournamentApi } from "../api/tournamentApi.js";
 
 
 let gameConnection: GameConnection | null = null;
@@ -355,6 +356,20 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			}
 		});
 	});
+
+
+	const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
+	const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
+	
+	wonGameOverlay.classList.remove('hidden');
+	backHomeBtn?.addEventListener('click', async () => {
+		console.log(currentGame);
+		cleanGameWS();
+		if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+			await tournamentApi.advanceTournament(currentGame.tournamentId!);
+		else
+			router.navigateTo('/home');
+	}, { once: true });
 	
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
@@ -401,6 +416,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 				};
 				console.log('🎮 Creator finishing game...');
 				await gameService.finishGame(currentGame.id!, data, ctx);
+				await tournamentApi.advanceTournament(currentGame.tournamentId!);
 				console.log('✅ Game finished successfully');
 			} catch (error) {
 				console.error('❌ Error finishing game:', error);
