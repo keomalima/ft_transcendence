@@ -121,6 +121,7 @@ class GameService {
 		return await gameApi.getHistory();
 	}
 
+	// finish game
 	async finishGame(gameId: string, data: FinishGameDto, ctx: AppContext): Promise<FinishGameResp | null> {
 		const result = await gameApi.finishGame(gameId, data);
 

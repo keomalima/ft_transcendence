@@ -501,16 +501,26 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2)
 				return;
 			try {
+				const leftPlayer = currentGame.gameUsers.find(gu => gu.user?.id === ctx.userStore.get()?.id);
+				const rightPlayer = currentGame.gameUsers.find(gu => gu.user?.id !== ctx.userStore.get()?.id);
+				if (!leftPlayer || !rightPlayer) {
+					console.error('Could not determine left/right player');
+					return;
+				}
+				const winnerId: string = game.scoreL >= game.scoreR ? leftPlayer.user?.id! : rightPlayer.user?.id!;
 				const data: FinishGameDto = {
 					status: 'ABANDONED',
+					winnerId,
 					gamePlayers: [
 						{
-							playerId: currentGame.gameUsers[0].id!,
-							score: currentGame.gameUsers[0].user?.id === ctx.userStore.get()?.id ? game.scoreL : game.scoreR
+							userId: leftPlayer.user?.id!,
+							playerId: leftPlayer.id!,
+							score: game.scoreL
 						},
 						{
-							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === ctx.userStore.get()?.id ? game.scoreL : game.scoreR
+							userId: rightPlayer.user?.id!,
+							playerId: rightPlayer.id!,
+							score: game.scoreR
 						}
 					]
 				};
@@ -552,15 +562,18 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 				console.error('Failed to identify players');
 				return;
 			}
-			
+			const winnerId: string = game.scoreL >= game.scoreR ? currentUserGamePlayer.user?.id! : guestGamePlayer.user?.id!;
 			const data: FinishGameDto = {
 				status: 'COMPLETED',
+				winnerId,
 				gamePlayers: [
 					{
+						userId: currentUserGamePlayer.user?.id!,
 						playerId: currentUserGamePlayer.id!,
 						score: finalGame.scoreL
 					},
 					{
+						userId: guestGamePlayer.user?.id!,
 						playerId: guestGamePlayer.id!,
 						score: finalGame.scoreR
 					}

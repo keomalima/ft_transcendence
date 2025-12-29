@@ -18,8 +18,6 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 	const userId = request.params.userId;
 	const scoreToWin = request.params.scoreToWin;
 
-	console.log(`➡️ User ${userId} connected to game ${gameId}`);
-
 	let gameSession = gameSessions.get(gameId);
 
 	if (!gameSession) {

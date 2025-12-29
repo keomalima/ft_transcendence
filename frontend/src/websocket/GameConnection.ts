@@ -53,15 +53,21 @@ export class GameConnection {
 				document.dispatchEvent(new CustomEvent('event-won-game', {
 					detail: {
 						iswinner: data.iswinner,
+						winnerId: data.winnerId,
 						playerinfo: data.currentPlayer,
 						players: data.players
 					},
 					bubbles: true
 				}));
 			} if (data.type === 'abandoned-game') {
+				if (!data.winnerId) {
+					console.log(`🚨 winnerId undefined`);
+					return;
+				}
 				document.dispatchEvent(new CustomEvent('event-abandoned-game', {
 					detail: {
 						iswinner: data.iswinner,
+						winnerId: data.winnerId,
 						playerinfo: data.currentPlayer,
 						players: data.players
 					},

@@ -10,6 +10,7 @@ export interface CreateGameDto {
 }
 
 interface FinishGamePlayerDto {
+	userId: string;
 	playerId: string;
 	score: number;
 }
@@ -17,6 +18,7 @@ interface FinishGamePlayerDto {
 export interface FinishGameDto {
 	status: Exclude<GameState['status'], null>;
 	gamePlayers: [FinishGamePlayerDto, FinishGamePlayerDto];
+	winnerId: string
 }
 
 // response when creating a new game

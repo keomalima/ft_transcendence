@@ -115,12 +115,21 @@ function notifyWonGame(gameSession: GameSession): void {
 		position: player.position,
 		score: player.score
 	}));
+
+	let winnerId: string | null = null;
+	gameSession.players.forEach((player) => {
+		if (player.score >= gameSession.gameConfig.scoreToWin) {
+			winnerId = player.userId;
+			return;
+		}
+	})
 	
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
 				type: 'won-game',
 				iswinner: player.score >= gameSession.gameConfig.scoreToWin,
+				winnerId,
 				currentPlayer: {
 					userId: player.userId,
 					isCreator: player.isCreator,
@@ -155,12 +164,26 @@ function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void 
 		position: player.position,
 		score: player.score
 	}));
+
+	let winnerId: string | null = null;
+	gameSession.players.forEach((player) => {
+		if (player.userId !== looserId) {
+			winnerId = player.userId;
+			return;
+		}
+	})
+
+	if (!winnerId) {
+		console.log(`🚨 winnerId undefined`);
+		return;
+	}
 	
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
 				type: 'abandoned-game',
 				iswinner: looserId !== player.userId,
+				winnerId,
 				currentPlayer: {
 					userId: player.userId,
 					isCreator: player.isCreator,

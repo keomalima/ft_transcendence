@@ -62,7 +62,6 @@ function calculatePaddleCollision(game: LocalGameData) {
 	// Left paddle collision
 	if (ball.x <= gap && ball.vx < 0) { // Ball x collision on left side and moving left
 		if (ball.y >= game.paddleL && ball.y <= game.paddleL + getGameValue.paddleHeight()) { // Ball y is within paddle range
-			// console.log(`🏓 BALL HIT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
 
 			// Calculate relative hit position on paddle (0 to 1, where 0.5 is center)
 			const relativeHitY = (ball.y - game.paddleL) / getGameValue.paddleHeight();
@@ -88,7 +87,6 @@ function calculatePaddleCollision(game: LocalGameData) {
 	// Right paddle collision
 	if (ball.x >= getGameValue.arenaWidth() - gap  && ball.vx > 0) { // Ball x collision on right side and moving right
 		if (ball.y >= game.paddleR && ball.y <= game.paddleR + getGameValue.paddleHeight()) { // Ball y is within paddle range
-			// console.log(`🏓 BALL HIT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
 			
 			// Calculate relative hit position on paddle (0 to 1, where 0.5 is center)
 			const relativeHitY = (ball.y - game.paddleR) / getGameValue.arenaHeight();
