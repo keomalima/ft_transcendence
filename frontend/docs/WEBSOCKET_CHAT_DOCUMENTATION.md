@@ -84,7 +84,7 @@ Live Chat WebSocket
   - old socket is gone
   - new WebSocket is created
   - backend stores the new connection again
-
+!!! check with Lytha: for Game: if close the tab, whether the WS is closed like the ChatRoom
 
 ------------------------------------------------
 
