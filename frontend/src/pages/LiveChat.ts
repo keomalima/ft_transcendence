@@ -39,14 +39,14 @@ function renderLiveChatContent(ctx: AppContext) {
 	content.innerHTML = `
 		<nav-bar id="nav-bar-component"></nav-bar>
 
-		<div class="flex h-[90vh] px-4 py-6 gap-6">
+		<div class="grid h-[90vh] gap-4 px-4 py-6 grid-rows-[auto_1fr_auto] lg:grid-cols-4 lg:grid-rows-1">
 			<!-- Left: Friends list -->
-			<div class="w-1/4 bg-white rounded-lg shadow overflow-y-auto p-4">
+			<div class="order-1 lg:order-1 lg:col-span-1 bg-white rounded-lg shadow p-4 h-[50vh] min-h-[300px] lg:h-auto overflow-y-auto">
 				<friend-list id="friend-list-component"></friend-list>
 			</div>
 
 			<!-- Right: Chat box -->
-			<div class="flex-1 bg-white rounded-lg shadow flex flex-col">
+			<div class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex flex-col h-[50vh] min-h-[300px] lg:h-auto overflow-hidden">
 				<!-- Header -->
 				<div class="flex justify-between items-center p-4 border-b">
 					<div>
