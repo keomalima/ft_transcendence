@@ -272,6 +272,7 @@ function startGame() {
 // ======== EVENT LISTENER ============
 function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
 
+	console.log(currentGame);
 	if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers.length < 2) {
 		console.log('❌ Missing current game');
 		return;
@@ -354,7 +355,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			}
 		});
 	});
-
+	
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
 		e.preventDefault();
@@ -426,8 +427,12 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		wonGameOverlay.classList.remove('hidden');
 		
 		backHomeBtn?.addEventListener('click', async () => {
+			console.log(currentGame);
 			cleanGameWS();
-			router.navigateTo('/home');
+			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
+			else
+				router.navigateTo('/home');
 		}, { once: true });
 
 	}, { once: true });

@@ -329,12 +329,10 @@ async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInpu
 				});
 			}
 			const finishedGame = await gameService.finishGame(request.server.prisma, game.id, status);
-			console.log(finishedGame);
 			return reply.code(200).send(finishedGame);
 		}
 		return reply.code(400).send({ message: "Player does not belong to the game"});
 	} catch (error: any) {
-		console.log(error);
 		reply.code(500).send({ message: "Failed to finish game"});
 	}
 }
