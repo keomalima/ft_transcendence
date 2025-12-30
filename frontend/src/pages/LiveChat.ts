@@ -8,6 +8,7 @@ import { friendshipApi } from "../api/friendshipApi.js";
 import { ChatConnection } from "../websocket/ChatConnection.js";
 
 let chatConnection: ChatConnection | null = null;
+let _selectedFriend: any = null;
 
 export function LiveChat(ctx: AppContext): string {
 	const currentUser: UserState | null = ctx.userStore.get();
@@ -49,39 +50,17 @@ function renderLiveChatContent(ctx: AppContext) {
 				<friend-list id="friend-list-component"></friend-list>
 			</div>
 
-			<!-- Right: Chat box -->
-			<div class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex flex-col h-[50vh] min-h-[300px] lg:h-auto overflow-hidden">
-				<!-- Header -->
-				<div class="flex justify-between items-center p-4 border-b">
-					<div>
-						<p class="font-bold text-lg">user1</p>
-						<p class="text-gray-500 text-sm">Offline - Last seen today</p>
-					</div>
-					<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
-						See Profile
-					</button>
-				</div>
-
-				<!-- Messages -->
-				<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
-					<div class="max-w-xs bg-gray-200 text-sm p-2 rounded-lg">Hello!</div>
-					<div class="text-right">
-						<div class="inline-block max-w-xs bg-beige text-sm p-2 rounded-lg">Fine, you?</div>
-						<div class="text-xs text-gray-400 mt-1">2 days ago - 10:00pm</div>
-					</div>
-				</div>
-
-				<!-- Input -->
-				<form id="chat-form" class="flex items-center p-4 border-t gap-2">
-					<input
-						type="text"
-						id="chat-input"
-						placeholder="Type your message here"
-						class="flex-grow border rounded px-3 py-2"
-					/>
-					<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
-				</form>
+			<!-- Right: Chat box (dynamic) -->
+			<div id="chat-right"
+				class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex flex-col h-[50vh] min-h-[300px] lg:h-auto overflow-hidden hidden">
 			</div>
+
+			<!-- Right: Empty state (shown when no friend selected / no friends) -->
+			<div id="chat-empty"
+				class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex items-center justify-center h-[50vh] min-h-[300px] lg:h-auto">
+				<p class="text-gray-500">Loading friend list ......</p>
+			</div>
+
 		</div>
 	`;
 }
@@ -101,6 +80,68 @@ function passContext(ctx: AppContext) {
 // ======== EVENT LISTENER ============
 function setupLiveChatEventListeners(ctx: AppContext) {
 	const friendListComponent = document.getElementById('friend-list-component') as any;
+ 
+	// **** FRIEND LIST LOADED ****
+	friendListComponent?.addEventListener('friends-loaded', (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const friends = customEvent.detail as any[];
+
+		const chatRight = document.getElementById('chat-right');
+		const chatEmpty = document.getElementById('chat-empty');
+
+		if (!chatRight || !chatEmpty) return;
+
+		if (friends.length === 0) {
+			// No friends → show empty panel
+			chatRight.classList.add('hidden');
+			chatEmpty.classList.remove('hidden');
+
+			const chatEmptyMessage = chatEmpty.querySelector('p');
+			if (chatEmptyMessage) {
+				chatEmptyMessage.textContent = "You have no friends yet. Add some to start chatting!";
+			}
+		} else {
+			// Select and store first friend
+			_selectedFriend = friends[0];
+
+			// Fill chat-right with the selected friend's info
+			chatRight.innerHTML = `
+				<!-- Header -->
+				<div class="flex justify-between items-center p-4 border-b">
+					<div>
+						<p class="font-bold text-lg">${_selectedFriend.displayName}</p>
+						<p class="text-gray-500 text-sm">
+							${_selectedFriend.isOnline ? 'Online' : 'Offline'}
+						</p>
+					</div>
+					<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
+						See Profile
+					</button>
+				</div>
+
+				<!-- Messages -->
+				<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+					<!-- message list will go here later -->
+				</div>
+
+				<!-- Input -->
+				<form id="chat-form" class="flex items-center p-4 border-t gap-2">
+					<input
+						type="text"
+						id="chat-input"
+						placeholder="Type your message here"
+						class="flex-grow border rounded px-3 py-2"
+					/>
+					<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
+				</form>
+			`;
+
+			// ✅ Show the chat box
+			chatEmpty.classList.add('hidden');
+			chatRight.classList.remove('hidden');
+
+		}
+	});
 
 	// **** DELETE FRIEND ****
 	friendListComponent?.addEventListener('event-delete-friend', async (e: Event) => {
@@ -141,6 +182,51 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			console.log('Error blocking/unblocking friend (LiveChat):', error);
 		}
 	});
+
+	// **** When user clicks a friend ****
+	friendListComponent?.addEventListener('friend-selected', (e: Event) => {
+		const customEvent = e as CustomEvent;
+		const friend = customEvent.detail;
+
+		// Save the new selected friend
+		_selectedFriend = friend;
+
+		// Update the chat box UI
+		const chatRight = document.getElementById('chat-right');
+		if (!chatRight) return;
+
+		chatRight.innerHTML = `
+			<!-- Header -->
+			<div class="flex justify-between items-center p-4 border-b">
+				<div>
+					<p class="font-bold text-lg">${_selectedFriend.displayName}</p>
+					<p class="text-gray-500 text-sm">
+						${_selectedFriend.isOnline ? 'Online' : 'Offline'}
+					</p>
+				</div>
+				<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
+					See Profile
+				</button>
+			</div>
+
+			<!-- Messages -->
+			<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+				<!-- message list will go here later -->
+			</div>
+
+			<!-- Input -->
+			<form id="chat-form" class="flex items-center p-4 border-t gap-2">
+				<input
+					type="text"
+					id="chat-input"
+					placeholder="Type your message here"
+					class="flex-grow border rounded px-3 py-2"
+				/>
+				<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
+			</form>
+		`;
+	});
+
 
 }
 

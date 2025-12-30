@@ -33,6 +33,14 @@ export class FriendList extends HTMLElement {
 		await this.getFriendList();
 		this.render();
 		this.displayFriendCards();
+
+		// announce that friends are loaded
+		this.dispatchEvent(
+			new CustomEvent('friends-loaded', {
+				detail: this._list ?? [],
+				bubbles: true
+			})
+		);
 		
 		this._isLoading = false;
 	}
@@ -234,6 +242,13 @@ export class FriendList extends HTMLElement {
 			}));
 		});
 
+		// Dispatch event when user clicks this friend
+		card.addEventListener('click', () => {
+			this.dispatchEvent(new CustomEvent('friend-selected', {
+				detail: friend,
+				bubbles: true
+			}));
+		});
 		
 		return card;
 	}
