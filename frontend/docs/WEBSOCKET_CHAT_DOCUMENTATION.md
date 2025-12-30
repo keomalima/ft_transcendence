@@ -117,3 +117,146 @@ Live Chat WebSocket
   - multiple users
 
 ==============================
+
+## 💬 Live Chat Architecture – WebSocket + HTTP Message Flow
+
+This system follows real-world messaging logic used by Discord, WhatsApp, etc.
+
+### 🔄 Protocol roles
+
+- **WebSocket**: used only for real-time **delivery**
+- **HTTP**: used for sending messages and handling all **business logic**
+
+---
+
+### 📡 1. WebSocket Setup (Client ↔ Server)
+
+```ts
+// Client (browser)
+const socket = new WebSocket("wss://your-app.com/ws/chat/:userId");
+
+// Server (Fastify WS route)
+const chatConnections = new Map<string, SocketStream>();
+
+export const ChatWsController = {
+	async chatHandler(
+		connection: SocketStream,
+		request: FastifyRequest<{ Params: { userId: string } }>
+	) {
+		const userId = request.params.userId;
+		console.log(`User ${userId} connected to chat.`);
+
+		// Store this user's connection
+		chatConnections.set(userId, connection);
+
+		// Send connection confirmation
+		connection.send(JSON.stringify({
+			type: "connected",
+			message: "Chat WebSocket connection established"
+		}));
+
+		// Optional: handle socket close (clean up)
+		connection.on('close', () => {
+			chatConnections.delete(userId);
+			console.log(`User ${userId} disconnected from chat.`);
+		});
+	}
+};
+```
+
+- Each user has 1 open WebSocket
+- Server stores each connection in a `Map<userId, socket>`
+
+---
+
+### 📨 2. User Sends Message (HTTP Request)
+
+```http
+POST /chat/message
+Content-Type: application/json
+
+{
+  "toUserId": 42,
+  "content": "hello world!"
+}
+```
+
+**Server-side handling:**
+```ts
+POST /chat/message {
+  // Extract sender from auth/session
+  const sender = req.user.id;
+  const { toUserId, content } = req.body;
+
+  // ✅ Check: sender is authenticated
+  // ✅ Check: message content length, valid JSON
+  // ✅ Check: sender is not blocked by receiver
+  // ✅ Save message to DB (for history)
+
+  // ✅ If receiver is online(WS open), push via WebSocket:
+  const receiverSocket = onlineUsers.get(toUserId);
+  if (receiverSocket) {
+    receiverSocket.send(JSON.stringify({
+      from: sender,
+      content,
+      timestamp: Date.now()
+    }));
+  }
+
+  return res.status(200).send({ success: true });
+}
+```
+
+---
+
+### ⚡ 3. Receiver Gets Message (WebSocket Push)
+
+```ts
+// Client WebSocket listener
+socket.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  displayMessage(message); // render to chat window
+};
+```
+
+---
+
+### ✅ Why this architecture?
+
+| Protocol | Purpose |
+|----------|---------|
+| **HTTP** | Authenticated message creation, validation, storage |
+| **WebSocket** | Real-time delivery if recipient is online |
+
+- Messages are always **safe** (validated once via HTTP)
+- Delivery is always **fast** (pushed via WebSocket if possible)
+- No need to reinvent protocol logic over raw WebSocket
+
+---
+## 📨 Message Flow
+
+```text
+------------------------------------------------------------------------------
+| Step | Who      | What                                                      |
+|------|----------|-----------------------------------------------------------|
+| 1    | Sender   | HTTP POST to `/chat/message`                              |
+| 2    | Server   | Save message to DB with status = `"sent"`                 |
+| 3    | Server   | If receiver's WebSocket is open → push via WS             |
+| 4    | Server   | Update message status to `"delivered"`                    |
+| 5    | Receiver | Receives message via WebSocket (shows in chat box)        |
+| 6    | Receiver | If visible, sends `message_read` event via WebSocket      |
+| 7    | Server   | Update DB: status = `"read"`                              |
+| 8    | Server   | If sender is online → push `"message_read"` to sender     |
+| 9    | Sender   | Updates UI to show `"✓✓ read"` (e.g. blue double tick)    |
+------------------------------------------------------------------------------
+```
+
+### ✅ Visual Status Mapping
+
+| Tick Icon   | Message Status | Description                         |
+|-------------|----------------|-------------------------------------|
+| `✓`         | `"sent"`        | Message saved to DB                 |
+| `✓✓` (grey) | `"delivered"`   | Delivered via WebSocket to receiver |
+| `✓✓` (blue) | `"read"`        | Receiver saw the message            |
+
+
