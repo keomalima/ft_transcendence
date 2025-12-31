@@ -192,7 +192,17 @@ async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}
                 message: "Can not delete a request that was not accepted"
             });
 		}
-		reply.code(204).send(await friendsService.deleteRequest(request.server.prisma, requestId));
+
+		const deleted = await friendsService.deleteRequest(  request.server.prisma, requestId );
+
+		if (!deleted) {
+			return reply.code(404).send({
+				message: "Friendship does not exist"
+			});
+		}
+
+		return reply.code(204).send();
+
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete request"});
 	}
@@ -206,6 +216,12 @@ async function blockFriend(request: FastifyRequest<{Params: {id: string}}>, repl
 		// extra safe check that cannot self-block
 		if (friendId === userId) {
 			return reply.code(400).send({ message: "Cannot block yourself" });
+		}
+
+		// check friendship exist
+		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, userId, friendId);
+		if (!friendship) {
+			return reply.code(404).send({ message: "Friendship does not exist" });
 		}
 
 		const block = await friendsService.blockFriend(request.server.prisma, userId, friendId);
@@ -227,6 +243,12 @@ async function unblockFriend(request: FastifyRequest<{ Params: { id: string } }>
 		// extra safe check that cannot self-unblock
 		if (friendId === userId) {
 			return reply.code(400).send({ message: "Cannot unblock yourself" });
+		}
+
+		// check friendship exist
+		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, userId, friendId);
+		if (!friendship) {
+			return reply.code(404).send({ message: "Friendship does not exist" });
 		}
 
 		const success = await friendsService.unblockFriend(request.server.prisma, userId, friendId);

@@ -87,10 +87,33 @@ async function acceptRequest(prisma: PrismaClient, requestId: string) {
 }
 
 async function deleteRequest(prisma: PrismaClient, requestId: string) {
+	// 1. Fetch friendship, robust check for db
+	const friendship = await prisma.friendship.findUnique({
+		where: { id: requestId }
+	});
+
+	if (!friendship) {
+		return null;
+	}
+
+	const { requesterId, addresseeId } = friendship;
+
+	// 2. Clear block status both directions
+	await prisma.blockStatus.deleteMany({
+		where: {
+			OR: [
+				{ blockerId: requesterId, blockedId: addresseeId },
+				{ blockerId: addresseeId, blockedId: requesterId }
+			]
+		}
+	});
+
+	// 3. Delete friendship
 	return prisma.friendship.delete({
 		where: { id: requestId }
-	})
+	});
 }
+
 
 
 async function blockFriend(prisma: PrismaClient, blockerId: string, blockedId: string) {
@@ -136,7 +159,16 @@ async function findUsersWhoBlockedMe(prisma: PrismaClient, myId: string) {
 	});
 }
 
-
+async function findFriendshipByFriendId(prisma: PrismaClient, userId: string, friendId: string) {
+	return prisma.friendship.findFirst({
+		where: {
+			 OR: [
+					{ requesterId: userId, addresseeId: friendId},
+					{ requesterId: friendId, addresseeId: userId },
+    		],
+		}
+	})
+}
 
 
 // =====================
@@ -155,5 +187,6 @@ export const friendsService = {
   blockFriend,
   unblockFriend,
   findMyBlockedUsers,
-  findUsersWhoBlockedMe
+  findUsersWhoBlockedMe,
+  findFriendshipByFriendId
 };
