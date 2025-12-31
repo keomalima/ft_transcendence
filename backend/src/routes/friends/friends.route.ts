@@ -38,7 +38,7 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 	fastify.put('/unblock/:id', {
 		schema: {
 			params: z.object({ id: z.string() }),
-			response: { 200: friendsSchemas.response.blockFriend },
+			response: { 200: friendsSchemas.response.unblockFriend },
 			tags: ['Friends'],
 			description: 'Unblocks a friend',
 			summary: 'Unblocks a friend',

@@ -17,6 +17,17 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const requesterId = request.user!.id;
 		const friendships = await friendsService.findActiveFriends(request.server.prisma, requesterId);
+		const blocked = await friendsService.findMyBlockedUsers(request.server.prisma, requesterId);
+		const blockedBy = await friendsService.findUsersWhoBlockedMe(request.server.prisma, requesterId);
+		
+		const blockedIds = new Set(
+			blocked.map((b: { blockedId: string }) => b.blockedId)
+		);
+
+		const blockedByIds = new Set(
+			blockedBy.map((b: { blockerId: string }) => b.blockerId)
+		);
+
 
 		const friends = friendships.map((f: typeof friendships[0]) => {
 		    const friend = f.requesterId === requesterId ? f.addressee : f.requester;
@@ -26,7 +37,8 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 		    return {
 		        friendshipId: f.id,
 				isOnline: isOnlineCheck,
-				isBlocked: f.status === 'BLOCKED',
+				isBlocked: blockedIds.has(friend.id),
+				isBlockedBy: blockedByIds.has(friend.id),
 		        ...safeFriend
 		    };
 		});
@@ -190,42 +202,42 @@ async function blockFriend(request: FastifyRequest<{Params: {id: string}}>, repl
 	try {
 		const friendId = request.params.id;
 		const userId = request.user!.id;
-		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, userId, friendId);
-		if (!friendship) {
-			return reply.code(404).send({
-                message: "Friendship does not exist"
-            });
+
+		// extra safe check that cannot self-block
+		if (friendId === userId) {
+			return reply.code(400).send({ message: "Cannot block yourself" });
 		}
-		if (friendship.status != 'ACCEPTED') {
-			return reply.code(404).send({
-                message: "Friend can not be blocked"
-            });
+
+		const block = await friendsService.blockFriend(request.server.prisma, userId, friendId);
+		if (!block) {
+			return reply.code(409).send({ message: "Your friend is already blocked" });
 		}
-		const updateFriendship = await friendsService.blockFriend(request.server.prisma, friendship.id);
-		return updateFriendship;
+		return reply.code(200).send(block);
+
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to block friend"});
 	}
 }
 
-async function unblockFriend(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+async function unblockFriend(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
 	try {
 		const friendId = request.params.id;
 		const userId = request.user!.id;
 
-		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, userId, friendId);
-		if (!friendship) {
-			return reply.code(404).send({ message: "Friendship does not exist" });
+		// extra safe check that cannot self-unblock
+		if (friendId === userId) {
+			return reply.code(400).send({ message: "Cannot unblock yourself" });
 		}
 
-		if (friendship.status !== 'BLOCKED') {
-			return reply.code(404).send({ message: "Friend can not be blocked" });
+		const success = await friendsService.unblockFriend(request.server.prisma, userId, friendId);
+		if (!success) {
+			return reply.code(404).send({ message: "Your friend is not blocked yet" });
 		}
 
-		const updated = await friendsService.unblockFriend(request.server.prisma, friendship.id);
-		return updated;
+		return reply.code(200).send({ success: true });
+
 	} catch (error: any) {
-		reply.code(500).send({ message: "Failed to unblock friend" });
+		return reply.code(500).send({ message: "Failed to unblock friend" });
 	}
 }
 
