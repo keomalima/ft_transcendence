@@ -98,6 +98,9 @@ export class FriendList extends HTMLElement {
 
 	private createFriendCard(friend: Partial<FriendData>): HTMLElement {
 		const card = document.createElement('div');
+		const userBlocked = friend.isBlocked;    // user blocked the friend
+		const userBeBlocked = friend.isBlockedBy; // user be blocked by the friend
+
 		card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
 
 		// profile picture ===========
@@ -140,43 +143,50 @@ export class FriendList extends HTMLElement {
 		deleteBtn.id = `delete-${friend.id}`;
 		actions.appendChild(deleteBtn);
 
-		// === Block / Unblock button ===
+		// === Block / Unblock Button ===
 		const blockBtn = document.createElement('button');
-		if (friend.isBlocked === true) {
-			blockBtn.innerHTML = /*html*/`
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-					class="pointer-events-none size-7">
-					<path
-						d="M4 4h16v12H6l-2 2v-2H4z"
-						fill="white"
-						stroke="black"
-						stroke-width="1.5"
-						stroke-linejoin="round"
-					/>
-					<line x1="4" y1="4" x2="20" y2="20"
-						stroke="red" stroke-width="2"
-					/>
-				</svg>
-		`;
-		} else {
-			blockBtn.innerHTML = /*html*/`
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-					class="pointer-events-none size-7">
-					<path
-						d="M4 4h16v12H6l-2 2v-2H4z"
-						fill="white"
-						stroke="black"
-						stroke-width="1.5"
-						stroke-linejoin="round"
-					/>
-				</svg>
-		`;
-		}
-		blockBtn.title = friend.isBlocked ? "Unblock" : "Block";
 		blockBtn.id = `block-${friend.id}`;
 		blockBtn.className = 'ml-2';
+		blockBtn.title = userBlocked
+			? "Unblock your friend"
+			: "Block your friend";
 
+		blockBtn.innerHTML = /*html*/`
+		<div class="relative w-8 h-8">
+			<!-- Down-left arrow -->
+			<svg viewBox="0 0 24 24" class="w-8 h-8 text-blue-600 rotate-[-30deg]">
+				<path fill="currentColor" d="M12 21c-.39 0-.77-.15-1.06-.44l-6.5-6.5a1.5 1.5 0 1 1 2.12-2.12L11 16.88V3a1.5 1.5 0 1 1 3 0v13.88l4.44-4.44a1.5 1.5 0 1 1 2.12 2.12l-6.5 6.5c-.29.29-.67.44-1.06.44z"/>
+			</svg>
+			<!-- ✅ or ❌ badge -->
+			<span class="absolute -bottom-0.5 -right-0.5 rounded-full w-2 h-2 ${userBlocked ? 'bg-red-500' : 'bg-green-500'}">
+			</span>
+		</div>
+		`;
 		actions.appendChild(blockBtn);
+
+
+		// === Blocked-by Status Icon ===
+		const blockedStatus = document.createElement('div');
+		blockedStatus.className = 'ml-2';
+		blockedStatus.title = userBeBlocked
+			? "You are blocked by this friend"
+			: "You can message this friend";
+
+		blockedStatus.innerHTML = /*html*/`
+		<div class="relative w-8 h-8">
+			<!-- Up-right arrow -->
+			<svg viewBox="0 0 24 24" class="w-8 h-8 text-blue-600 rotate-[30deg]">
+				<path fill="currentColor" d="M12 3c.39 0 .77.15 1.06.44l6.5 6.5a1.5 1.5 0 1 1-2.12 2.12L13 7.12V21a1.5 1.5 0 1 1-3 0V7.12l-4.44 4.44a1.5 1.5 0 1 1-2.12-2.12l6.5-6.5c.29-.29.67-.44 1.06-.44z"/>
+			</svg>
+			<!-- ✅ or ❌ badge -->
+			<span class="absolute -bottom-0.5 -right-0.5 rounded-full w-2 h-2 ${userBeBlocked ? 'bg-red-500' : 'bg-green-500'}">
+			</span>
+		</div>
+		`;
+		actions.appendChild(blockedStatus);
+
+
+
 		// ===========================
 
 		card.appendChild(avatar);
@@ -232,16 +242,6 @@ export class FriendList extends HTMLElement {
 			});
 		});
 
-		blockBtn.addEventListener('click', () => {
-			this.dispatchEvent(new CustomEvent('event-toggle-block', {
-				detail: {
-					friendId: friend.id as string,
-					isBlocked: friend.isBlocked === true
-				},
-				bubbles: true
-			}));
-		});
-
 		// Dispatch event when user clicks this friend
 		card.addEventListener('click', () => {
 			this.dispatchEvent(new CustomEvent('friend-selected', {
@@ -250,6 +250,18 @@ export class FriendList extends HTMLElement {
 			}));
 		});
 		
+		blockBtn?.addEventListener('click', (e) => {
+			e.stopPropagation(); // prevent triggering card click
+
+			this.dispatchEvent(new CustomEvent('event-toggle-block', {
+				detail: {
+					friendId: friend.id as string,
+					isBlocked: userBlocked
+				},
+				bubbles: true
+			}));
+		});
+
 		return card;
 	}
 }

@@ -71,6 +71,7 @@ export interface FriendData {
 	isOnline: boolean;
 	avatarUrl: string | null;
 	isBlocked: boolean;
+	isBlockedBy: boolean;
 }
 
 // for game data
