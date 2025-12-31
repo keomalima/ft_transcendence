@@ -35,7 +35,6 @@ enum GameMode {
 enum FriendshipStatus {
 	PENDING
 	ACCEPTED
-	BLOCKED
 }
 
 model User {
@@ -59,6 +58,9 @@ model User {
 	tournamentsCreated      Tournament[] @relation("CreatedTournaments")
   	tournamentsWon      	Tournament[] @relation("TournamentWinner")
   	tournamentParticipation TournamentPlayer[]
+	blockedUsers			BlockStatus[] @relation("Blocker")
+	blockedBy				BlockStatus[] @relation("Blocked")
+
 }
 
 model Session {
@@ -147,4 +149,15 @@ model Friendship {
 	deletedAt DateTime?
 
 	@@unique([requesterId, addresseeId])
+}
+
+model BlockStatus {
+  id         String   @id @default(uuid())
+  blockerId  String
+  blocker    User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId  String
+  blocked    User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
 }
