@@ -125,15 +125,23 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				</div>
 
 				<!-- Input -->
-				<form id="chat-form" class="flex items-center p-4 border-t gap-2">
-					<input
-						type="text"
-						id="chat-input"
-						placeholder="Type your message here"
-						class="flex-grow border rounded px-3 py-2"
-					/>
-					<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
-				</form>
+				${_selectedFriend.isBlockedBy ? `
+					<div class="p-4 border-t text-center text-red-500 font-semibold">
+						${_selectedFriend.displayName} has blocked you. You cannot send messages.
+					</div>
+				` : `
+
+					<form id="chat-form" class="flex items-center p-4 border-t gap-2">
+						<input
+							type="text"
+							id="chat-input"
+							placeholder="Type your message here"
+							class="flex-grow border rounded px-3 py-2"
+						/>
+						<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
+					</form>
+				`}
+
 			`;
 
 			// ✅ Show the chat box
@@ -215,15 +223,23 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			</div>
 
 			<!-- Input -->
-			<form id="chat-form" class="flex items-center p-4 border-t gap-2">
-				<input
-					type="text"
-					id="chat-input"
-					placeholder="Type your message here"
-					class="flex-grow border rounded px-3 py-2"
-				/>
-				<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
-			</form>
+			${_selectedFriend.isBlockedBy ? `
+				<div class="p-4 border-t text-center text-red-500 font-semibold">
+					${_selectedFriend.displayName} has blocked you. You cannot send messages.
+				</div>
+			` : `
+
+				<form id="chat-form" class="flex items-center p-4 border-t gap-2">
+					<input
+						type="text"
+						id="chat-input"
+						placeholder="Type your message here"
+						class="flex-grow border rounded px-3 py-2"
+					/>
+					<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
+				</form>
+			`}
+
 		`;
 	});
 
