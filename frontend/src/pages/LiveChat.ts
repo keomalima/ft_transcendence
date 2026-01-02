@@ -1,4 +1,4 @@
-import type { AppContext, ChatMessage, UserState } from "../types.js";
+import type { AppContext, ChatMessage, FriendData, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // Import UI components
@@ -132,26 +132,28 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			console.log('Error deleting friend (LiveChat):', error);
 		}
 	});
-
+	
 	// **** BLOCK/UNBLOCK FRIEND ***
 	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
-		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
+		const { friendId, isBlocked } = (e as CustomEvent).detail;
+		const friend = friendListComponent._list?.find((f: Partial<FriendData>) => f.id === friendId);
+		const displayName = friend?.displayName ?? 'Friend';
 
 		try {
-			if (data.friendId) {
-				if (data.isBlocked) {
-					await friendshipApi.unblock(data.friendId);
-				} else {
-					await friendshipApi.block(data.friendId);
+			if (friendId) {
+				if (isBlocked === true) {
+					await friendshipApi.unblock(friendId);
+					showToast(`Unblocked: ${displayName}`, 'unblock');
+				} else if (isBlocked === false) {
+					await friendshipApi.block(friendId);
+					showToast(`Blocked: ${displayName}`, 'block');
 				}
 
-				if (friendListComponent.loadAndRender) {
-					await friendListComponent.loadAndRender();
-				}
+				await friendListComponent.loadAndRender();
 			}
 		} catch (error) {
-			console.log('Error blocking/unblocking friend (LiveChat):', error);
+			console.log('Error blocking/unblocking friend:', error);
+			showToast('Action failed', 'block');
 		}
 	});
 
@@ -178,6 +180,26 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 		renderChatBox(_selectedFriend, ctx);
 	});
+
+	// **** Show msg for block/unblock at left-up corner ***
+	function showToast(message: string, type: 'block' | 'unblock') {
+		const toast = document.createElement('div');
+		toast.textContent = message;
+
+		toast.className = `
+			fixed top-4 left-4 z-50
+			min-w-[200px] text-center
+			px-4 py-2 rounded shadow-lg
+			text-white font-medium
+			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
+		`;
+
+		document.body.appendChild(toast);
+
+		setTimeout(() => {
+			toast.remove();
+		}, 2000);
+	}
 
 
 }
