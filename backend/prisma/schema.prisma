@@ -60,7 +60,8 @@ model User {
   	tournamentParticipation TournamentPlayer[]
 	blockedUsers			BlockStatus[] @relation("Blocker")
 	blockedBy				BlockStatus[] @relation("Blocked")
-
+	messagesSent  		    Message[] @relation("MessageSender")
+    messagesReceived 		Message[] @relation("MessageReceiver") 
 }
 
 model Session {
@@ -160,4 +161,19 @@ model BlockStatus {
   createdAt  DateTime @default(now())
 
   @@unique([blockerId, blockedId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  
+  receiverId String
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  
+  content    String
+  sentAt     DateTime @default(now())
+
+  // Status: "sent" | "delivered"
+  status     String   @default("sent")
 }
