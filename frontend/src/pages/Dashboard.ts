@@ -268,6 +268,10 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		}
 	});
 
+	// **** Click FRIEND ***
+	friendListComponent.addEventListener('friend-selected', async () => {
+		await friendListComponent.loadAndRender(); // update card visuals
+	});
 
 
 	// **** JOIN A GAME ****

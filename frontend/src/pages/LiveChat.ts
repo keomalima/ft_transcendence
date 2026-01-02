@@ -80,9 +80,15 @@ function passContext(ctx: AppContext) {
 // ======== EVENT LISTENER ============
 function setupLiveChatEventListeners(ctx: AppContext) {
 	const friendListComponent = document.getElementById('friend-list-component') as any;
+	let manualClick = false;
  
 	// **** FRIEND LIST LOADED ****
 	friendListComponent?.addEventListener('friends-loaded', (e: Event) => {
+		if (manualClick)
+		{
+			manualClick = false;
+			return;
+		}
 		const customEvent = e as CustomEvent;
 		const friends = customEvent.detail as any[];
 
@@ -104,50 +110,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			// Select and store first friend
 			_selectedFriend = friends[0];
 
-			// Fill chat-right with the selected friend's info
-			chatRight.innerHTML = `
-				<!-- Header -->
-				<div class="flex justify-between items-center p-4 border-b">
-					<div>
-						<p class="font-bold text-lg">${_selectedFriend.displayName}</p>
-						<p class="text-gray-500 text-sm">
-							${_selectedFriend.isOnline ? 'Online' : 'Offline'}
-						</p>
-					</div>
-					<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
-						See Profile
-					</button>
-				</div>
-
-				<!-- Messages -->
-				<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
-					<!-- message list will go here later -->
-				</div>
-
-				<!-- Input -->
-				${_selectedFriend.isBlockedBy ? `
-					<div class="p-4 border-t text-center text-red-500 font-semibold">
-						${_selectedFriend.displayName} has blocked you. You cannot send messages.
-					</div>
-				` : `
-
-					<form id="chat-form" class="flex items-center p-4 border-t gap-2">
-						<input
-							type="text"
-							id="chat-input"
-							placeholder="Type your message here"
-							class="flex-grow border rounded px-3 py-2"
-						/>
-						<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
-					</form>
-				`}
-
-			`;
-
-			// ✅ Show the chat box
-			chatEmpty.classList.add('hidden');
-			chatRight.classList.remove('hidden');
-
+			renderChatBox(_selectedFriend);
 		}
 	});
 
@@ -192,58 +155,76 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 	});
 
 	// **** When user clicks a friend ****
-	friendListComponent?.addEventListener('friend-selected', (e: Event) => {
-		const customEvent = e as CustomEvent;
-		const friend = customEvent.detail;
+	friendListComponent?.addEventListener('friend-selected', async (e: Event) => {
+		manualClick = true;
 
-		// Save the new selected friend
-		_selectedFriend = friend;
+		const customEvent = e as CustomEvent;
+		const clickedFriend = customEvent.detail;
+
+		// 1. Re-fetch updated friend list
+		await friendListComponent.loadAndRender();
+		const updatedList = friendListComponent._list;
+
+		// 2. Get the latest status of the clicked friend
+		const updatedFriend = updatedList?.find((f: any) => f.id === clickedFriend.id);
+		if (!updatedFriend) return;
+
+		_selectedFriend = updatedFriend;
 
 		// Update the chat box UI
 		const chatRight = document.getElementById('chat-right');
 		if (!chatRight) return;
 
-		chatRight.innerHTML = `
-			<!-- Header -->
-			<div class="flex justify-between items-center p-4 border-b">
-				<div>
-					<p class="font-bold text-lg">${_selectedFriend.displayName}</p>
-					<p class="text-gray-500 text-sm">
-						${_selectedFriend.isOnline ? 'Online' : 'Offline'}
-					</p>
-				</div>
-				<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
-					See Profile
-				</button>
-			</div>
-
-			<!-- Messages -->
-			<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
-				<!-- message list will go here later -->
-			</div>
-
-			<!-- Input -->
-			${_selectedFriend.isBlockedBy ? `
-				<div class="p-4 border-t text-center text-red-500 font-semibold">
-					${_selectedFriend.displayName} has blocked you. You cannot send messages.
-				</div>
-			` : `
-
-				<form id="chat-form" class="flex items-center p-4 border-t gap-2">
-					<input
-						type="text"
-						id="chat-input"
-						placeholder="Type your message here"
-						class="flex-grow border rounded px-3 py-2"
-					/>
-					<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
-				</form>
-			`}
-
-		`;
+		renderChatBox(_selectedFriend);
 	});
 
 
+}
+
+function renderChatBox(friend: any) {
+	const chatRight = document.getElementById('chat-right');
+	const chatEmpty = document.getElementById('chat-empty');
+	if (!chatRight || !chatEmpty) return;
+
+	chatRight.innerHTML = `
+		<!-- Header -->
+		<div class="flex justify-between items-center p-4 border-b">
+			<div>
+				<p class="font-bold text-lg">${friend.displayName}</p>
+				<p class="text-gray-500 text-sm">
+					${friend.isOnline ? 'Online' : 'Offline'}
+				</p>
+			</div>
+			<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
+				See Profile
+			</button>
+		</div>
+
+		<!-- Messages -->
+		<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+			<!-- message list will go here later -->
+		</div>
+
+		<!-- Input -->
+		${friend.isBlockedBy ? `
+			<div class="p-4 border-t text-center text-red-500 font-semibold">
+				${friend.displayName} has blocked you. You cannot send messages.
+			</div>
+		` : `
+			<form id="chat-form" class="flex items-center p-4 border-t gap-2">
+				<input
+					type="text"
+					id="chat-input"
+					placeholder="Type your message here"
+					class="flex-grow border rounded px-3 py-2"
+				/>
+				<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
+			</form>
+		`}
+	`;
+
+	chatEmpty.classList.add('hidden');
+	chatRight.classList.remove('hidden');
 }
 
 function setLiveChatWebSocket(userId: string) {
