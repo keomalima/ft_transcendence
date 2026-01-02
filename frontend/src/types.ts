@@ -191,3 +191,9 @@ export interface TournamentData {
     participants: TournamentParticipant[];
     games: GameData[];
 }
+
+export interface ChatMessage {
+	senderId: string;
+	receiverId: string;
+	content: string;
+}

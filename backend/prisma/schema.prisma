@@ -173,7 +173,4 @@ model Message {
   
   content    String
   sentAt     DateTime @default(now())
-
-  // Status: "sent" | "delivered"
-  status     String   @default("sent")
 }

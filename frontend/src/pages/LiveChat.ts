@@ -1,4 +1,4 @@
-import type { AppContext, UserState } from "../types.js";
+import type { AppContext, ChatMessage, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // Import UI components
@@ -6,6 +6,7 @@ import "../components/NavBar.js";
 import "../components/FriendList.js";
 import { friendshipApi } from "../api/friendshipApi.js";
 import { ChatConnection } from "../websocket/ChatConnection.js";
+import { chatApi } from "../api/chatApi.js";
 
 let chatConnection: ChatConnection | null = null;
 let _selectedFriend: any = null;
@@ -110,7 +111,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			// Select and store first friend
 			_selectedFriend = friends[0];
 
-			renderChatBox(_selectedFriend);
+			renderChatBox(_selectedFriend, ctx);
 		}
 	});
 
@@ -175,16 +176,30 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const chatRight = document.getElementById('chat-right');
 		if (!chatRight) return;
 
-		renderChatBox(_selectedFriend);
+		renderChatBox(_selectedFriend, ctx);
 	});
 
 
 }
 
-function renderChatBox(friend: any) {
+async function renderChatBox(friend: any, ctx: AppContext) {
 	const chatRight = document.getElementById('chat-right');
 	const chatEmpty = document.getElementById('chat-empty');
 	if (!chatRight || !chatEmpty) return;
+
+	const currentUserId = ctx.userStore.get()?.id;
+	if (!currentUserId) {
+		console.error('❌ No currentUserId found, cannot render chat box.');
+		return;
+	}
+
+	// ===== Fetch chat history =====
+	let messages: ChatMessage[] = [];
+	try {
+		messages = await chatApi.fetchChatHistory(friend.id);
+	} catch (error) {
+		console.error('❌ Failed to load chat history:', error);
+	}
 
 	chatRight.innerHTML = `
 		<!-- Header -->
@@ -202,7 +217,10 @@ function renderChatBox(friend: any) {
 
 		<!-- Messages -->
 		<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
-			<!-- message list will go here later -->
+			${messages.length === 0
+				? `<p class="text-gray-400 text-center mt-4">No messages yet. Say hi 👋 to your friend!</p>`
+				: renderMessageBubbles(messages, currentUserId)
+			}
 		</div>
 
 		<!-- Input -->
@@ -238,6 +256,25 @@ export function cleanLiveChatWS() {
 		chatConnection = null;
 	}
 }
+
+function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): string {
+	if (!Array.isArray(messages)) return '';
+
+	return messages
+		.filter(msg => msg && msg.senderId && msg.content && msg.receiverId)
+		.map(msg => {
+			const isSender = msg.senderId === currentUserId;
+
+			return `
+				<div class="flex ${isSender ? 'justify-end' : 'justify-start'}">
+					<div class="px-4 py-2 rounded-lg ${isSender ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'} max-w-xs">
+						${msg.content}
+					</div>
+				</div>
+			`;
+		}).join('');
+}
+
 
 // ======== CLEANUP HOOKS ==========
 // when close the tab/page, close the ws
