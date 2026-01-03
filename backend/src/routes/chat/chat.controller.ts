@@ -54,6 +54,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 			return reply.status(400).send({
 				status: "error",
 				reason: "You cannot send messages to yourself",
+				code: "SELF",
 			});
 		}
 
@@ -62,6 +63,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 			return reply.status(403).send({
 				status: "error",
 				reason: "You are not friends with this user",
+				code: "NOT_FRIEND",
 			});
 		}
 
@@ -72,6 +74,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 			return reply.status(403).send({
 				status: "error",
 				reason: "You are blocked by this user",
+				code: "BLOCKED",
 			});
 		}
 
@@ -92,6 +95,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 		return reply.status(500).send({
 			status: "error",
 			reason: "Internal server error",
+			code: "UNKNOWN",
 		});
 	}
 }

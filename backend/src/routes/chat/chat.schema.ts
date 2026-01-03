@@ -22,7 +22,9 @@ const sendMessageSuccessResponseSchema = z.object({
 const sendMessageErrorResponseSchema = z.object({
 	status: z.literal("error"),
 	reason: z.string(),
+	code: z.enum(["BLOCKED", "SELF", "NOT_FRIEND", "UNKNOWN"]),
 });
+
 
 const sendMessageResponseSchema = z.union([
 	sendMessageSuccessResponseSchema,

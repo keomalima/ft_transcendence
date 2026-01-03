@@ -212,3 +212,18 @@ export interface ConnectedPayload {
 
 export type ChatWsMessage = ChatMessagePayload | ConnectedPayload;
 
+export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
+
+export interface SendMessageSuccess {
+	status: "ok";
+	messageId: string;
+	sentAt: string;
+}
+
+export interface SendMessageError {
+	status: "error";
+	reason: string;
+	code: ChatErrorCode;
+}
+
+export type SendMessageResponse = SendMessageSuccess | SendMessageError;
