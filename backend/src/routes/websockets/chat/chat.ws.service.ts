@@ -18,3 +18,14 @@ export async function removeChatConnectionAndUpdateTime(userId: string, prisma: 
 		});
 	}	
 }
+
+export function sendMessageToUser(userId: string, payload: ChatWsMessage): void {
+	const connection = chatConnections.get(userId);
+	if (!connection) return;
+
+	try {
+		connection.send(JSON.stringify(payload));
+	} catch (err) {
+		console.error(`❌ Failed to send message to user ${userId}:`, err);
+	}
+}
