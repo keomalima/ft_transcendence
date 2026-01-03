@@ -210,7 +210,16 @@ export interface ConnectedPayload {
 	message: string;
 }
 
-export type ChatWsMessage = ChatMessagePayload | ConnectedPayload;
+export interface NewMessagesPayload {
+	type: "new-messages";
+	fromUserIds: string[];
+}
+
+
+export type ChatWsMessage =
+	| ChatMessagePayload
+	| ConnectedPayload
+	| NewMessagesPayload;
 
 export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
 
