@@ -31,7 +31,25 @@ async function getChatHistory(prisma: PrismaClient, userId: string, friendId: st
 	});
 }
 
+async function isBlockedBy(prisma: PrismaClient, senderId: string, receiverId: string) {
+	return prisma.blockStatus.findFirst({
+		where: {
+			blockerId: receiverId,
+			blockedId: senderId,
+		},
+	});
+}
 
+async function saveMessage(prisma: PrismaClient, fromUserId: string, toUserId: string, content: string) {
+	return prisma.message.create({
+		data: {
+			senderId: fromUserId,
+			receiverId: toUserId,
+			content,
+		}
+	});
+
+}
 
 // =====================
 // Export Chat Service Object
@@ -40,5 +58,6 @@ async function getChatHistory(prisma: PrismaClient, userId: string, friendId: st
 export const chatService = {
 	findFriendshipBetween,
 	getChatHistory,
-	
+	isBlockedBy,
+	saveMessage,
 };

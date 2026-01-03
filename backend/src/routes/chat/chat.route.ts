@@ -21,5 +21,19 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen,
 		handler: chatController.getChatHistoryHandler
 	});
+
+	fastify.post('/send', {
+		schema: {
+			body: chatSchemas.request.sendMessage,
+			response: { 200: chatSchemas.response.sendMessage },
+			tags: ['Chat'],
+			description: 'Send message to a friend',
+			summary: 'Send chat message',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.sendMessageHandler
+	});
+
 }
  

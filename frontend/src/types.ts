@@ -197,3 +197,18 @@ export interface ChatMessage {
 	receiverId: string;
 	content: string;
 }
+
+export interface ChatMessagePayload {
+	type: "chat-message";
+	fromUserId: string;
+	content: string;
+	sentAt: string;
+}
+
+export interface ConnectedPayload {
+	type: "connected";
+	message: string;
+}
+
+export type ChatWsMessage = ChatMessagePayload | ConnectedPayload;
+

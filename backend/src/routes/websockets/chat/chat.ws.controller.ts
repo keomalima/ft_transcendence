@@ -1,9 +1,13 @@
 import type { FastifyRequest } from "fastify";
 import type { SocketStream } from "@fastify/websocket";
+import { registerChatConnection, removeChatConnection } from "./chat.ws.service.js";
+import type { ChatWsMessage } from "./chat.ws.types.js";
 
 
-// Store active chat connections by userId
-const chatConnections = new Map<string, SocketStream>();
+const payload: ChatWsMessage = {
+	type: "connected",
+	message: "Chat WebSocket connection established"
+};
 
 export const ChatWsController = {
 	async chatHandler(
@@ -14,17 +18,14 @@ export const ChatWsController = {
 		console.log(`User ${userId} connected to chat.`);
 
 		// Store this user's connection
-		chatConnections.set(userId, connection);
+		registerChatConnection(userId, connection);
 
 		// Send connection confirmation
-		connection.send(JSON.stringify({
-			type: "connected",
-			message: "Chat WebSocket connection established"
-		}));
+		connection.send(JSON.stringify(payload));
 
 		// Optional: handle socket close (clean up)
 		connection.on('close', () => {
-			chatConnections.delete(userId);
+			removeChatConnection(userId);
 			console.log(`User ${userId} disconnected from chat.`);
 		});
 	}
