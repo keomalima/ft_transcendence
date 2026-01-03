@@ -1,6 +1,6 @@
 import type { FastifyRequest } from "fastify";
 import type { SocketStream } from "@fastify/websocket";
-import { registerChatConnection, removeChatConnection } from "./chat.ws.service.js";
+import { registerChatConnection, removeChatConnectionAndUpdateTime } from "./chat.ws.service.js";
 import type { ChatWsMessage } from "./chat.ws.types.js";
 
 
@@ -25,7 +25,7 @@ export const ChatWsController = {
 
 		// Optional: handle socket close (clean up)
 		connection.on('close', () => {
-			removeChatConnection(userId);
+			removeChatConnectionAndUpdateTime(userId, request.server.prisma);
 			console.log(`User ${userId} disconnected from chat.`);
 		});
 	}
