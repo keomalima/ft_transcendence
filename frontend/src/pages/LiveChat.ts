@@ -90,6 +90,12 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			manualClick = false;
 			return;
 		}
+
+		if (friendListComponent.skipAutoSelect) {
+			friendListComponent.skipAutoSelect = false;
+			return;
+		}
+		
 		const customEvent = e as CustomEvent;
 		const friends = customEvent.detail as any[];
 
@@ -183,6 +189,48 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		if (!chatRight) return;
 		renderChatBox(_selectedFriend, ctx);
 	});
+
+	// WS message event: receive chat from a friend
+	window.addEventListener("ws-new-message", async (e: Event) => {
+		const currentUserId = ctx.userStore.get()?.id;
+		if (!currentUserId) return;
+
+		const { fromUserId, content} = (e as CustomEvent).detail;
+
+		// CASE 1: If the friend is currently selected, show the bubble
+		if (_selectedFriend?.id === fromUserId) {
+			const chatBox = document.getElementById("chat-messages");
+			if (chatBox) {
+				const bubble = document.createElement("div");
+				bubble.className = "flex justify-start";
+				bubble.innerHTML = `
+					<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
+						${content}
+					</div>
+				`;
+				chatBox.appendChild(bubble);
+				chatBox.scrollTop = chatBox.scrollHeight;
+			}
+			return;
+		}
+
+		// CASE 2: Otherwise, save in unread set and refresh FriendList
+		const key = `chat_unread_${currentUserId}`;
+		let unreadSet = new Set<string>();
+		const raw = localStorage.getItem(key);
+		if (raw) unreadSet = new Set(JSON.parse(raw));
+
+		unreadSet.add(fromUserId);
+		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+
+		// Refresh FriendList to show blue dot
+		const friendList = document.getElementById("friend-list-component") as any;
+		if (friendList?.loadAndRender) {
+			friendList.skipAutoSelect = true;
+			await friendList.loadAndRender();
+		}
+	});
+
 }
 
 async function renderChatBox(friend: any, ctx: AppContext) {

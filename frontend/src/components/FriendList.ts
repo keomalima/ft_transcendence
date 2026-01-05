@@ -7,6 +7,8 @@ export class FriendList extends HTMLElement {
 	private _list: Partial<FriendData>[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
 	private _isLoading: boolean = false;
+
+	public skipAutoSelect: boolean = false; // for Live Chat logic
 	
 	constructor() {
 		super();
