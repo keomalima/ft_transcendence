@@ -64,7 +64,7 @@ export class FriendList extends HTMLElement {
 				</div>
 				
 				<!-- Confirmation Dialog -->
-				<dialog id="delete-friend-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+				<dialog id="delete-friend-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 					<div class="flex flex-col gap-4">
 						<h2 class="text-xl font-semibold">Delete Friend</h2>
 						<p id="delete-friend-message" class="text-gray-600">Are you sure you want to remove this friend?</p>
@@ -88,6 +88,23 @@ export class FriendList extends HTMLElement {
 
 	private displayFriendCards(): void {
 		const friendCards = document.getElementById('friend-cards');
+		if (!friendCards)
+			return;
+
+		// Check if there are no friend
+		if (!this._list || this._list.length === 0) {
+			friendCards.innerHTML = /*html*/`
+				<div class='flex flex-col items-center justify-center h-full gap-4'>
+					<svg class="w-16 h-16 text-gray-400 size-7 stroke-1 stroke-gray-300 fill-none" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" 
+							d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+					</svg>
+					<p class="text-gray-600 text-lg text-center">No friend for the moment.<br>Don't be shy! Let's add some friends.</p>
+				</div>
+			`;
+			return;
+		}
+
 		if (friendCards && this._list)
 		{
 			this._list.forEach((friend) => {

@@ -22,12 +22,10 @@ async function service(gameSession: GameSession) {
 	ball.x = config.arenawidth / 2;
 	ball.y = config.arenaheight / 2;
 
-	console.log(`🥎 ball centered : x=${ball.x} | y=${ball.y}`);
-
-	gameWsNotification.notifyService(gameSession);
+	// gameWsNotification.notifyService(gameSession);
 
 	// Wait before serving
-	await sleep(4000);
+	await sleep(2000);
 
 
 	// Random direction
@@ -40,7 +38,6 @@ async function service(gameSession: GameSession) {
 	ball.velocityX = (ball.velocityX / currentSpeed) * speed;
 	ball.velocityY = (ball.velocityY / currentSpeed) * speed;
 
-	console.log(`🏓 Service complete - Ball velocity: X=${ball.velocityX.toFixed(2)} | Y=${ball.velocityY.toFixed(2)}`);
 }
 
 function calculateWallCollision(ball: GameState['ball'], config: GameConfig) {
@@ -58,7 +55,6 @@ function calculateWallCollision(ball: GameState['ball'], config: GameConfig) {
 }
 
 function calculLeftPaddleCollision(ball: GameState['ball'], leftPaddle: {y: number}, config: GameConfig) {
-	console.log(`🏓 BALL HIT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
 			
 	// Calculate relative hit position on paddle (0 to 1, where 0.5 is center)
 	const relativeHitY = (ball.y - leftPaddle.y) / config.paddleheight;
@@ -79,7 +75,6 @@ function calculLeftPaddleCollision(ball: GameState['ball'], leftPaddle: {y: numb
 }
 
 function calculRightPaddleCollision(ball: GameState['ball'], rightPaddle: {y: number}, config: GameConfig) {
-	console.log(`🏓 BALL HIT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
 			
 	// Calculate relative hit position on paddle (0 to 1, where 0.5 is center)
 	const relativeHitY = (ball.y - rightPaddle.y) / config.paddleheight;

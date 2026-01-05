@@ -7,10 +7,15 @@ import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES
 import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
+let homeListenersAttached = false;
+
 export function Home(ctx: AppContext): string {
 	setTimeout(() => {
 		passContext(ctx);
-		setupHomeEventListeners(ctx);
+		if (!homeListenersAttached) {
+			setupHomeEventListeners(ctx);
+			homeListenersAttached = true;
+		}
 	}, 0);
 
 	const content:string = /*html*/`
@@ -99,7 +104,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 		}
 		if (learnBtn)
 			learnBtn.style.display = 'none';
-	});
+	}, { once: true });
 
 
 	// **** SIGN IN ****
@@ -123,7 +128,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
-	});
+	}, { once: true });
 
 
 	// **** CREATE NEW ACCOUNT ****
@@ -131,6 +136,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		try {
+			console.log('🌐 Calling createUser API');
 			await userService.createUser({
 				email: data.email,
 				name: data.firstName,
@@ -148,6 +154,6 @@ function setupHomeEventListeners(ctx: AppContext) {
 			const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
 			displayError.innerText = `${error}`;
 		}
-	});
+	}, { once: true });
 
 }

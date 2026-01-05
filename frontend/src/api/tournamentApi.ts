@@ -28,6 +28,17 @@ export const tournamentApi = {
 		}
 	},
 
+	startGame: async (gameId: string): Promise<Partial<TournamentData>> => {
+		try {
+			const response = await httpCall.put<Partial<TournamentData>>(`${BASE_URL}/${gameId}/start-game`);
+			console.log('🎮 start tournament game sucess ✅ ', response.data);
+			return response.data;
+		} catch (error) {
+			throw buildApiError('start tournament game', error);
+		}
+	},
+
+
 	matchMaking: async (tournamentId: string): Promise<Partial<TournamentData>> => {
 		try {
 			const response = await httpCall.post<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/match-make`);
@@ -48,9 +59,9 @@ export const tournamentApi = {
 		}
 	},
 
-	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null }> => {
+	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number }> => {
 		try {
-			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null }>(`${BASE_URL}/current`);
+			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number }>(`${BASE_URL}/current`);
 			console.log('🎮 getCurrentTournament sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
@@ -96,7 +107,7 @@ export const tournamentApi = {
 		}
 	},
 
-	getTournamentGames: async (tournamentId: string): Promise<TournamentGame> => {
+	getTournamentGames: async (tournamentId: string): Promise<TournamentGame[]> => {
 		try {
 			const response = await httpCall.get(`${BASE_URL}/${tournamentId}/tournament-games`);
 			console.log('🎮 tournament games sucess ✅ ');
@@ -104,6 +115,13 @@ export const tournamentApi = {
 		} catch (error) {
 			throw buildApiError('tournament games', error);
 		}
-	}
-	
+	},
+
+	advanceTournament: async (tournamentId: string): Promise<void> => {
+		try {
+			await httpCall.post(`${BASE_URL}/${tournamentId}/advance-tournament`)
+		} catch (error) {
+			throw buildApiError('advance tournament', error);
+		}
+	}	
 };

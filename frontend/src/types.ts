@@ -97,6 +97,7 @@ export interface GameUsers {
 	user: Pick<UserState, 'id' | 'displayName' | 'avatarUrl'> | null;
 	score: string | null;
 	isWinner: boolean;
+	isReady: boolean;
 }
 
 // for gameToken
@@ -120,6 +121,7 @@ export interface TournamentGame {
     score: number;
     isWinner: boolean;
     joinedAt: Date;
+	isReady: boolean;
     user: {
       id: string;
       displayName: string;
@@ -158,7 +160,6 @@ export interface GameHistory {
 		score: number | null;
 		isWinner: boolean | null;
 	} | null;
-
 }
 
 export interface TournamentParticipant {

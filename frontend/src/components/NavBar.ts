@@ -35,7 +35,6 @@ export class NavBar extends HTMLElement {
 					<div class="hidden lg:flex lg:gap-x-12">
 					<a data-link href="/home" class="${window.location.pathname === '/home' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >home</a>
 					<a data-link href="/profile" class="${window.location.pathname === '/profile' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >profile</a>
-					<a data-link href="/create-game" class="${window.location.pathname === '/create-game' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >game</a>
 					<a data-link href="/tournament" class="${window.location.pathname === '/tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
 					<a data-link href="/live-chat" class="${window.location.pathname === '/live-chat' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}">live chat</a>
 					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">Log out</a>
@@ -59,7 +58,6 @@ export class NavBar extends HTMLElement {
 						<div class="space-y-2 py-6">
 							<a data-link href="/home" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">home</a>
 							<a data-link href="/profile" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">profile</a>
-							<a data-link href="/create-game" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">game</a>
 							<a data-link href="/tournament" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">tournament</a>
 							<a data-link href="/live-chat" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">live chat</a>
 						</div>
@@ -72,6 +70,18 @@ export class NavBar extends HTMLElement {
 				</div>
 				</dialog>
 			</el-dialog>
+
+			<!-- Confirmation Dialog -->
+			<dialog id="logout-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+				<div class="flex flex-col gap-4">
+					<h2 class="text-xl font-semibold">Logout</h2>
+					<p id="logout-message" class="text-gray-600">Are you sure you want to leave?</p>
+					<div class="flex gap-3 justify-end">
+						<button id="logout-cancel-delete-btn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
+						<button id="logout-confirm-delete-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Delete</button>
+					</div>
+				</div>
+			</dialog>
 		`
 	}
 	
@@ -79,18 +89,48 @@ export class NavBar extends HTMLElement {
 	
 	private attachEventListener(ctx: AppContext) {
 	
+		const logoutDialog = this.querySelector("#logout-dialog") as HTMLDialogElement;
+		const logoutCancelBtn = this.querySelector('#logout-cancel-delete-btn') as HTMLButtonElement;
+		const logoutConfirmBtn = this.querySelector('#logout-confirm-delete-btn') as HTMLButtonElement;
+
 		// Logout listener
 		const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
 		logoutBtn.addEventListener('click', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 
-			try {
-				await userService.logoutUser(ctx); // Ensure logout is awaited
-				router.navigateTo('/');
-			} catch (error) {
-				console.log(error);
-			}
+			logoutDialog.showModal();
+
+			// Handle cancel
+			const handleCancel = () => {
+				logoutDialog.close();
+				logoutCancelBtn?.removeEventListener('click', handleCancel);
+				logoutConfirmBtn?.removeEventListener('click', handleConfirm);
+			};
+			
+			// Handle confirm
+			const handleConfirm = async () => {
+				logoutDialog.close();
+				try {
+					await userService.logoutUser(ctx);
+					logoutCancelBtn?.removeEventListener('click', handleCancel);
+					logoutConfirmBtn?.removeEventListener('click', handleConfirm);
+					router.navigateTo('/');
+				} catch (error) {
+					console.log(error);
+				}				
+			};
+			
+			// Attach event listeners
+			logoutCancelBtn?.addEventListener('click', handleCancel);
+			logoutConfirmBtn?.addEventListener('click', handleConfirm);
+			
+			// Close on backdrop click
+			logoutDialog.addEventListener('click', (e) => {
+				if (e.target === logoutDialog) {
+					handleCancel();
+				}
+			});
 		});
 
 		const logoutBtn2 = document.getElementById('logout-btn-2') as HTMLElement;
@@ -98,14 +138,39 @@ export class NavBar extends HTMLElement {
 			e.preventDefault();
 			e.stopPropagation();
 
-			try {
-				await userService.logoutUser(ctx); // Ensure logout is awaited
-				router.navigateTo('/');
-			} catch (error) {
-				console.log(error);
-			}
-		});
+			logoutDialog.showModal();
 
+			// Handle cancel
+			const handleCancel = () => {
+				logoutDialog.close();
+				logoutCancelBtn?.removeEventListener('click', handleCancel);
+				logoutConfirmBtn?.removeEventListener('click', handleConfirm);
+			};
+			
+			// Handle confirm
+			const handleConfirm = async () => {
+				logoutDialog.close();
+				try {
+					await userService.logoutUser(ctx);
+					logoutCancelBtn?.removeEventListener('click', handleCancel);
+					logoutConfirmBtn?.removeEventListener('click', handleConfirm);
+					router.navigateTo('/');
+				} catch (error) {
+					console.log(error);
+				}				
+			};
+			
+			// Attach event listeners
+			logoutCancelBtn?.addEventListener('click', handleCancel);
+			logoutConfirmBtn?.addEventListener('click', handleConfirm);
+			
+			// Close on backdrop click
+			logoutDialog.addEventListener('click', (e) => {
+				if (e.target === logoutDialog) {
+					handleCancel();
+				}
+			});
+		});
 	}
 }
 

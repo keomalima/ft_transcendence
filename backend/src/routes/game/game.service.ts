@@ -9,6 +9,9 @@ import { includes } from "zod";
 async function getGamesByUserId(prisma: PrismaClient, userId: string) {
 	return prisma.gamePlayer.findMany({
 		where: { userId },
+		orderBy: {
+			game: { startedAt: 'desc' }
+		},
 		include: {
 			game: {
 				include : {
@@ -150,13 +153,44 @@ async function joinUserToGame(prisma: PrismaClient, gameId: string, userId: stri
 	return prisma.gamePlayer.create({ data: { gameId, userId}})
 }
 
-async function startGame(prisma: PrismaClient, gameId: string) {
+async function startGame(prisma: PrismaClient, gameId: string, userId: string) {
+	const game = await findGameById(prisma, gameId);
+	
+	if (game?.type === 'LOCAL') {
+		// Find or create the guest user for local games
+		let guestUser = await prisma.user.findUnique({
+			where: { displayName: `guest${userId}` }
+		});
+		
+		if (!guestUser) {
+			guestUser = await prisma.user.create({
+				data: {
+					email: `guest${userId}@local.game`,
+					name: 'Guest',
+					displayName: `guest${userId}`,
+					password: 'N/A',
+					salt: 'N/A',
+					avatarUrl: '/default-avatar.png'
+				}
+			});
+		}
+		
+		// Add guest as second player
+		await prisma.gamePlayer.create({
+			data: {
+				gameId,
+				userId: guestUser.id
+			}
+		});
+	}
+	
 	return prisma.game.update({
 		where: { id: gameId },
 		data: {
-			status : "IN_PROGRESS"
+			status: "IN_PROGRESS",
+			startedAt: new Date()
 		}
-	})
+	});
 }
 
 async function deletePendingGame(prisma: PrismaClient, gameId: string) {
@@ -172,7 +206,7 @@ async function finishGame(prisma: PrismaClient, gameId: string, status: GameStat
 		where: { id: gameId },
 		data: {
 			status,
-			completedAt: status === "COMPLETED" ? new Date() : null
+			completedAt: status === "COMPLETED" || status === 'ABANDONED' ? new Date() : null
 		}
 	})
 	return prisma.game.findFirst({

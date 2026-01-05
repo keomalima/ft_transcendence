@@ -135,6 +135,7 @@ model GamePlayer {
 	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 	score Int @default(0)
 	isWinner Boolean @default(false)
+	isReady Boolean @default(false)
 	joinedAt DateTime @default(now())
 	
 	@@unique([gameId, userId])

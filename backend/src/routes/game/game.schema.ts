@@ -22,8 +22,10 @@ const removePlayerRequestSchema = z.object({
 
 const finishGameReqSchema = z.object({
     status: z.enum(GameStatus),
+	winnerId: z.string(),
     gamePlayers: z.array(
         z.object({
+			userId: z.string(),
             playerId: z.string(),
             score: z.number().int().nonnegative()
         })
@@ -68,6 +70,7 @@ const getGameResponseSchema = z.object({
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
 	token: z.string().nullable(),
+	tournamentId: z.string().nullable(),
 	scoreToWin: z.number().int(),
 	createdAt: z.date(),
 	updatedAt: z.date().nullable(),

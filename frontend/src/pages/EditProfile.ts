@@ -122,6 +122,18 @@ export function EditProfile(ctx: AppContext) : string {
 				<button id="delete" type="click" class="${BUTTON_BLACK_CLASSES}">Yes, delete my account</button>
 			</form>
 			</div>
+
+			<!-- Confirmation Dialog -->
+			<dialog id="delete-account-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+				<div class="flex flex-col gap-4">
+					<h2 class="text-xl font-semibold">Delete Account</h2>
+					<p id="delete-account-message" class="text-gray-600">Are you sure you want to delete your account?</p>
+					<div class="flex gap-3 justify-end">
+						<button id="cancel-delete-account-btn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
+						<button id="confirm-delete-account-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Delete</button>
+					</div>
+				</div>
+			</dialog>
 		</div>
 	`
 
@@ -137,12 +149,11 @@ function passContext(ctx: AppContext) {
 }
 
 
-// Setup event listeners after DOM is ready
 function setupEditEventListeners(ctx: AppContext) {
 
 	let selectedAvatarFile: File | null;
 
-	// Get the avatar image
+	// **** CHANGE AVATAR ****
 	const avatarInput = document.getElementById('avatar-input') as HTMLInputElement;
 	const avatarLabel = document.getElementById('change-avatar-label') as HTMLLabelElement;
 	avatarInput?.addEventListener('change', async (e) =>  {
@@ -177,7 +188,7 @@ function setupEditEventListeners(ctx: AppContext) {
 
 	})
 
-	// update user data
+	// **** UPDATE USER DATA ****
 	const updatePersonnalInfo = document.getElementById('personnal-info-form') as HTMLFormElement;
 	updatePersonnalInfo.addEventListener('submit', async(e) => {
 		e.preventDefault();
@@ -196,17 +207,52 @@ function setupEditEventListeners(ctx: AppContext) {
 		}
 	})
 
-	// delete user
+	// **** DELETE USER ****
 	const deleteProfile = document.getElementById('delete') as HTMLElement;
-	deleteProfile.addEventListener('click', async (e) => {
+	deleteProfile.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		try {
-			const user = await userService.deleteUser(ctx);
-			router.navigateTo('/');
-		} catch (error) {
-			console.log(error);
-		}
+
+		// Get dialog elements
+		const dialog = document.querySelector('#delete-account-dialog') as HTMLDialogElement;
+		const cancelBtn = document.querySelector('#cancel-delete-account-btn') as HTMLButtonElement;
+		const confirmBtn = document.querySelector('#confirm-delete-account-btn') as HTMLButtonElement;
+		
+		if (!dialog) return;
+		
+		// Show dialog
+		dialog.showModal();
+		
+		// Handle cancel
+		const handleCancel = () => {
+			dialog.close();
+			cancelBtn?.removeEventListener('click', handleCancel);
+			confirmBtn?.removeEventListener('click', handleConfirm);
+		};
+		
+		// Handle confirm
+		const handleConfirm = async () => {
+			dialog.close();
+			try {
+				const user = await userService.deleteUser(ctx);
+				router.navigateTo('/');
+			} catch (error) {
+				console.log(error);
+			}
+			cancelBtn?.removeEventListener('click', handleCancel);
+			confirmBtn?.removeEventListener('click', handleConfirm);
+		};
+		
+		// Attach event listeners
+		cancelBtn?.addEventListener('click', handleCancel);
+		confirmBtn?.addEventListener('click', handleConfirm);
+		
+		// Close on backdrop click
+		dialog.addEventListener('click', (e) => {
+			if (e.target === dialog) {
+				handleCancel();
+			}
+		});
 	});
 
 }

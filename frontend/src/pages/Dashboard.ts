@@ -96,12 +96,12 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="my-10 grid gap-4 lg:gap-6 lg:grid-cols-3 grid-rows-1">
 				<div class="max-h-200 lg:col-span-2 min-w-0 order-3 lg:order-0">
-					<match-history id='match-component' class="bg-white p-4 lg:p-10 shadow-sm rounded-lg h-full flex flex-col gap-3"></match-history>
+					<match-history id='match-component' class="bg-white p-4 lg:p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-[80vh] lg:max-h-[50vh]"></match-history>
 				</div>
 				<div class='flex flex-col col-span-1 gap-5 min-h-full'>
-					<requests-list id='requests-component' class="p-4 lg:p-10 rounded-lg bg-white order-first lg:order-0 lg:col-start-3 lg:row-start-1"></requests-list>
+					<requests-list id='requests-component' class="p-4 lg:p-10 rounded-lg bg-white order-first lg:order-0 lg:col-start-3 lg:row-start-1 max-h-[30vh] lg:max-h-[50vh]"></requests-list>
 					<add-friend id='add-friend-component' class="p-4 lg:p-10 rounded-lg bg-white order-0 lg:order-0 lg:col-start-3 lg:row-start-2"></add-friend>
-					<friend-list id='friend-list-component' class="grow rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3"></friend-list>
+					<friend-list id='friend-list-component' class="grow rounded-lg bg-white shadow-sm p-4 lg:p-10 order-2 lg:order-0 lg:col-start-3 lg:row-start-3 lg:row-span-3 max-h-[30vh] lg:max-h-[50vh]"></friend-list>
 				</div>
 			</div>
 		</div>

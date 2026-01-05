@@ -38,24 +38,27 @@ export class MatchHistory extends HTMLElement {
 	}
 
 	private render() {
-		if (this._gameHistory?.length == 0) {
+		let onlineGames = 0;
+		this._gameHistory?.map((game) => {
+			if (game.type != 'LOCAL')
+				onlineGames++;
+		})
+		if (this._gameHistory?.length == 0 || onlineGames === 0) {
 			this.innerHTML =
 			/*html*/`
-				<h1 class='flex-none'>Match history</h1>
+				<h1 class='flex-none'>Online and tournament match history</h1>
 				<div class="flex-1 overflow-auto min-h-0 flex items-center justify-center">
 					<div class="text-center py-12 px-4">
 						<!-- Icon/Illustration -->
-						<div class="w-24 h-24 mx-auto mb-6 text-gray-300">
-							<svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-							</svg>
-						</div>
+						<svg class="w-24 h-24 mx-auto mb-6 text-gray-400 size-7 stroke-1 stroke-gray-300 fill-none" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" 
+								d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+						</svg>
 						
 						<!-- Message -->
 						<h3 class="text-xl font-semibold text-gray-700 mb-2">No matches yet</h3>
 						<p class="text-gray-500 mb-6 max-w-sm mx-auto">
-							Start your journey by playing your first game! Your match history will appear here.
+							Start your journey by playing your first online game! Your match history will appear here.
 						</p>
 					</div>
 				</div>
@@ -63,17 +66,17 @@ export class MatchHistory extends HTMLElement {
 		} else {
 		this.innerHTML =
 			/*html*/`
-				<h1 class='flex-none'>Match history</h1>
+				<h1 class='flex-none'>Online and tournament match history</h1>
 				<div class="flex-1 overflow-auto min-h-0">
 					<table class="w-full border-separate border-spacing-0">
 						<thead>
 							<tr>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">opponent</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">score</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">winner</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">duration</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">date</th>
-							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium backdrop-blur-sm backdrop-filter sm:table-cell">mode</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">opponent</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">score</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">winner</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white hidden lg:table-cell">duration</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">date</th>
+							<th scope="col" class="sticky top-0 z-10 border-b border-medium px-3 py-3.5 text-center text-sm text-medium bg-white sm:table-cell">mode</th>
 							</tr>
 						</thead>
 						<tbody id='match-data'></tbody>
@@ -88,7 +91,8 @@ export class MatchHistory extends HTMLElement {
 		const matchs = document.getElementById('match-data');
 
 		this._gameHistory?.forEach((match) => {
-			matchs?.appendChild(this.createMatchElem(match));
+			if (match.type === 'ONLINE' || match.type === 'TOURNAMENT')
+				matchs?.appendChild(this.createMatchElem(match));
 		})
 	}
 
@@ -119,8 +123,8 @@ export class MatchHistory extends HTMLElement {
 		winner.innerHTML = `${match.isWinner? '⭐' : '-'}`;
 
 		const duration = document.createElement('td');
-		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap lg:table-cell text-center';
-		duration.innerHTML = `${match.duration}`;
+		duration.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap text-center hidden lg:table-cell';
+		duration.innerHTML = `${match.duration} min`;
 
 		const date = document.createElement('td');
 		date.className = 'border-b border-creamgrey px-3 py-4 text-sm whitespace-nowrap text-center';

@@ -4,6 +4,7 @@ import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
 import { FinishGameDto } from "../api/gameApi.js";
+import { tournamentApi } from "../api/tournamentApi.js";
 
 
 let gameConnection: GameConnection | null = null;
@@ -74,34 +75,34 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 	const content = document.getElementById('game-content');
 	content!.innerHTML = 
 	/*html*/`
-		<main class="flex flex-col gap-8 min-h-full w-screen place-items-center px-6 lg:py-32 lg:px-12">
-			<div class="text-center">
-				<h1 class="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-7xl">Game</h1>
-				<p>#${gameId}</p>
+		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
+			<div class="text-center flex-shrink-0">
+				<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Game</h1>
+				<p class="text-xs md:text-sm hidden portrait:block landscape:md:block">#${gameId}</p>
 			</div>
-			<div class='flex flex-row w-full px-12'>
+			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
 				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-xl'>player 1</p>
-					<p id='left-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
+					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>player 1</p>
+					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
-				<div class='flex-1 justify-items-center center'>
-					<p>vs</p>
+				<div class='flex-1 flex items-center justify-center'>
+					<p class="text-sm md:text-base">vs</p>
 				</div>
 				<div class='flex-1 justify-items-center'>
-					<p id='right-player' class='font-[Inter] text-xl'>player 2</p>
-					<p id='right-score' class='font-[Calistoga] text-5xl mt-5'>0</p>
+					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>player 2</p>
+					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 			</div>
-			<div id="arena" class='w-full xl:w-[80%] mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl'>
+			<div id="arena" class='w-full max-w-[90vw] lg:max-w-[80vw] mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl flex-shrink min-h-0'>
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
 				<div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
 			</div>
-			<div class="text-center">
-				<div class="mt-10 flex items-center justify-center gap-x-6">
-					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES}'>pause</button>
-					<button id='quit-btn' type='click' class='${BUTTON_CREAM_CLASSES}'>give up</button>
+			<div class="text-center flex-shrink-0">
+				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
+					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button>
+					<button id='quit-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>give up</button>
 				</div>
 			</div>
 
@@ -171,7 +172,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 			</div>
 
 			<!-- Confirmation Dialog -->
-			<dialog id="quit-game-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+			<dialog id="quit-game-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
 					<h2 class="text-xl font-semibold">Give up</h2>
 					<p id="delete-friend-message" class="text-gray-600">Are you sure to quit game?</p>
@@ -226,20 +227,90 @@ export function cleanGameWS() {
 
 // ======== GAME ACTION ============
 function gameActionListener() {
-
+	// Keyboard controls
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'ArrowUp') {
+			e.preventDefault();
 			gameConnection?.send({ type: 'input', action: 'up' });
 		} else if (e.key === 'ArrowDown') {
+			e.preventDefault();
 			gameConnection?.send({ type: 'input', action: 'down' });
 		}
 	});
 
 	document.addEventListener('keyup', (e) => {
 		if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+			e.preventDefault();
 			gameConnection?.send({ type: 'input', action: 'stop' });
 		}
 	});
+
+	// Touch controls for mobile - paddle follows finger position
+	let touchId: number | null = null;
+
+	const handleTouchStart = (e: TouchEvent) => {
+		if (touchId !== null) return; // Already tracking a touch
+		
+		const touch = e.changedTouches[0];
+		touchId = touch.identifier;
+		
+		// Start tracking immediately
+		updatePaddlePosition(touch.clientY);
+	};
+
+	const handleTouchMove = (e: TouchEvent) => {
+		e.preventDefault(); // Prevent scrolling
+		
+		// Find the touch we're tracking
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const touch = e.changedTouches[i];
+			
+			if (touch.identifier === touchId) {
+				updatePaddlePosition(touch.clientY);
+				break;
+			}
+		}
+	};
+
+	const handleTouchEnd = (e: TouchEvent) => {
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const touch = e.changedTouches[i];
+			
+			if (touch.identifier === touchId) {
+				touchId = null;
+				break;
+			}
+		}
+	};
+
+	function updatePaddlePosition(touchY: number) {
+		const arena = document.getElementById('arena');
+		if (!arena) return;
+
+		const arenaRect = arena.getBoundingClientRect();
+		const paddleHeight = arenaRect.height * 0.2; // 20% of arena height (matches h-1/5 in HTML)
+		
+		// Calculate touch position relative to arena
+		const relativeY = touchY - arenaRect.top;
+		
+		// Calculate paddle position (centered on finger)
+		let paddlePosition = relativeY - (paddleHeight / 2);
+		
+		// Clamp to arena bounds
+		const maxY = arenaRect.height - paddleHeight;
+		paddlePosition = Math.max(0, Math.min(maxY, paddlePosition));
+		
+		// Convert to percentage (0-100)
+		const positionPercent = (paddlePosition / arenaRect.height) * 100;
+		
+		// Send position to server
+		gameConnection?.send({ type: 'position', position: positionPercent });
+	}
+
+	document.addEventListener('touchstart', handleTouchStart, { passive: false });
+	document.addEventListener('touchmove', handleTouchMove, { passive: false });
+	document.addEventListener('touchend', handleTouchEnd);
+	document.addEventListener('touchcancel', handleTouchEnd);
 }
 
 // ======== START ============
@@ -272,6 +343,7 @@ function startGame() {
 // ======== EVENT LISTENER ============
 function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
 
+	console.log(currentGame);
 	if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers.length < 2) {
 		console.log('❌ Missing current game');
 		return;
@@ -355,6 +427,19 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		});
 	});
 
+	// const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
+	// const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
+	
+	// wonGameOverlay.classList.remove('hidden');
+	// backHomeBtn?.addEventListener('click', async () => {
+	// 	console.log(currentGame);
+	// 	cleanGameWS();
+	// 	if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+	// 		await tournamentApi.advanceTournament(currentGame.tournamentId!);
+	// 	else
+	// 		router.navigateTo('/home');
+	// }, { once: true });
+	
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
 		e.preventDefault();
@@ -369,43 +454,51 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
 
-		const currentGame = await gameService.getGame(gameId, ctx);
-		if (!currentGame) {
-			router.navigateTo('/home');
-			return;
-		}
-		
-		// Only the game creator should finish the game to avoid race condition
-		if (currentGame.isCreator && currentGame.status !== 'ABANDONED' || currentGame.status !== 'COMPLETED') {	//not sure abut this condition
-			try {
-				// Build game players data from currentGame.gameUsers
-				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
-					console.error('❌ Missing game users data');
-					router.navigateTo('/home');
-					return;
+		// Only the creator should call the API to finish the game
+		if (currentGame.isCreator) {
+			const currentGame = await gameService.getGame(gameId, ctx);
+			if (!currentGame) {
+				router.navigateTo('/home');
+				return;
+			}
+			
+			// Check if game is already finished
+			if (currentGame.status !== 'IN_PROGRESS') {
+				console.log('👀 Game already finished, skipping finishGame API call');
+			} else {
+				try {
+					// Build game players data from currentGame.gameUsers
+					if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
+						console.error('❌ Missing game users data');
+						router.navigateTo('/home');
+						return;
+					}
+					console.log(`Winner id = ${detail.winnerId}`);
+					const data: FinishGameDto = {
+						status: 'COMPLETED',
+						winnerId: detail.winnerId,
+						gamePlayers: [
+							{
+								userId: currentGame.gameUsers[0].user?.id!,
+								playerId: currentGame.gameUsers[0].id!,
+								score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+							},
+							{
+								userId: currentGame.gameUsers[1].user?.id!,
+								playerId: currentGame.gameUsers[1].id!,
+								score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+							}
+						]
+					};
+					console.log('🎮 Creator finishing game...');
+					await gameService.finishGame(currentGame.id!, data, ctx);
+					console.log('✅ Game finished successfully');
+				} catch (error) {
+					console.error('❌ Error finishing game:', error);
 				}
-
-				const data: FinishGameDto = {
-					status: 'COMPLETED',
-					gamePlayers: [
-						{
-							playerId: currentGame.gameUsers[0].id!,
-							score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
-						},
-						{
-							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
-						}
-					]
-				};
-				console.log('🎮 Creator finishing game...');
-				await gameService.finishGame(currentGame.id!, data, ctx);
-				console.log('✅ Game finished successfully');
-			} catch (error) {
-				console.error('❌ Error finishing game:', error);
 			}
 		} else {
-			console.log('👀 Non-creator or game already finished, skipping finishGame API call');
+			console.log('👀 Non-creator, skipping finishGame API call');
 		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
@@ -426,8 +519,12 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		wonGameOverlay.classList.remove('hidden');
 		
 		backHomeBtn?.addEventListener('click', async () => {
+			console.log(currentGame);
 			cleanGameWS();
-			router.navigateTo('/home');
+			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
+			else
+				router.navigateTo('/home');
 		}, { once: true });
 
 	}, { once: true });
@@ -436,25 +533,23 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 	document.addEventListener('event-abandoned-game', async (e: Event) => {
 		e.preventDefault();
 		console.log('🏆 ABANDONED GAME');
-		
+
 		if (isFinishingGame) {
 			console.log('⏭️ Already finishing game, skipping...');
 			return;
 		}
 		isFinishingGame = true;
-		
+
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
-
 		const currentGame = await gameService.getGame(gameId, ctx);
 		if (!currentGame) {
 			router.navigateTo('/home');
 			return;
 		}
-		
+
 		// For abandoned games, ANY player can finish (creator might have left)
-		// Skip if game is already finished (ABANDONED or COMPLETED)
-		if (currentGame.status !== 'ABANDONED' && currentGame.status !== 'COMPLETED') {
+		if (currentGame.status === 'IN_PROGRESS') {
 			try {
 				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
 					console.error('❌ Missing game users data');
@@ -462,14 +557,19 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 					return;
 				}
 
+				console.log(`🚨 Abandoned game -> winner Id = ${detail.winnerId}`);
+				
 				const data: FinishGameDto = {
 					status: 'ABANDONED',
+					winnerId: detail.winnerId,
 					gamePlayers: [
 						{
-							playerId: currentGame.gameUsers[0].id!,
-							score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+								userId: currentGame.gameUsers[0].user?.id!,
+								playerId: currentGame.gameUsers[0].id!,
+								score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
 						},
 						{
+								userId: currentGame.gameUsers[1].user?.id!,
 							playerId: currentGame.gameUsers[1].id!,
 							score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
 						}
@@ -483,6 +583,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			}
 		} else {
 			console.log('👀 Game already finished, skipping finishGame API call');
+			isFinishingGame = true;
 		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
