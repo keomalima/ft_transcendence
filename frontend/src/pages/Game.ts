@@ -427,19 +427,18 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		});
 	});
 
-
-	const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
-	const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
+	// const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
+	// const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
 	
-	wonGameOverlay.classList.remove('hidden');
-	backHomeBtn?.addEventListener('click', async () => {
-		console.log(currentGame);
-		cleanGameWS();
-		if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
-			await tournamentApi.advanceTournament(currentGame.tournamentId!);
-		else
-			router.navigateTo('/home');
-	}, { once: true });
+	// wonGameOverlay.classList.remove('hidden');
+	// backHomeBtn?.addEventListener('click', async () => {
+	// 	console.log(currentGame);
+	// 	cleanGameWS();
+	// 	if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+	// 		await tournamentApi.advanceTournament(currentGame.tournamentId!);
+	// 	else
+	// 		router.navigateTo('/home');
+	// }, { once: true });
 	
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
