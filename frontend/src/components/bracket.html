@@ -1,0 +1,91 @@
+private displayMatchCards(): void {
+    const matchCardsContainer = document.getElementById('match-cards');
+    if (!matchCardsContainer || !this._tournamentData) return;
+
+    matchCardsContainer.innerHTML = ''; // Clear previous content
+
+    const totalRounds = this._tournamentData.totalRounds;
+    
+    // We need an array to hold the columns in the correct visual order.
+    // Size = (TotalRounds * 2) - 1. Example: 3 rounds = 5 columns.
+    const visualColumns: HTMLElement[] = new Array((totalRounds * 2) - 1);
+
+    for (let currentRound = 1; currentRound <= totalRounds; currentRound++) {
+        const gamesInThisRound = Math.pow(2, totalRounds - currentRound); // 4, 2, 1...
+        
+        // 1. Identify if this is the Final Round
+        const isFinal = currentRound === totalRounds;
+
+        if (isFinal) {
+            // === CREATE CENTER COLUMN (The Final) ===
+            const centerCol = document.createElement('div');
+            // Your custom class for the final
+            centerCol.className = 'relative z-10 scale-110 transform shadow-2xl flex flex-col justify-center'; 
+            
+            // Get the single game for the final
+            const game = this.findGame(currentRound, 1);
+            if (game) {
+                 // No mirroring needed for center usually, or pass false
+                centerCol.appendChild(this.createMatchCard(game, false));
+            }
+
+            // Place in the exact middle of the array
+            visualColumns[totalRounds - 1] = centerCol;
+
+        } else {
+            // === STANDARD ROUNDS (LEFT & RIGHT) ===
+            
+            // DYNAMIC CLASS LOGIC:
+            // Round 1: 'gap-8' (Defines the height/density of the bracket)
+            // Round 2 to N-1: 'justify-around' (Spreads cards out evenly to match Round 1's height)
+            let className = '';
+            
+            if (currentRound === 1) {
+                // The outermost layer. Tight spacing.
+                className = 'flex flex-col gap-8'; 
+            } else {
+                // Intermediate layers. 
+                // 'justify-around' is the magic: it spreads 2 cards to align with the 4 cards next to them
+                className = 'flex flex-col justify-around py-10'; 
+            }
+
+            const leftCol = document.createElement('div');
+            leftCol.className = className;
+
+            const rightCol = document.createElement('div');
+            rightCol.className = className;
+
+            // Distribute Games
+            const half = gamesInThisRound / 2;
+
+            for (let i = 1; i <= gamesInThisRound; i++) {
+                const game = this.findGame(currentRound, i);
+                
+                // Logic: First half goes Left, Second half goes Right
+                if (i <= half) {
+                    const card = game ? this.createMatchCard(game, false) : this.createEmptyCard();
+                    leftCol.appendChild(card);
+                } else {
+                    // Pass 'true' for isMirrored
+                    const card = game ? this.createMatchCard(game, true) : this.createEmptyCard();
+                    rightCol.appendChild(card);
+                }
+            }
+
+            // Assign to visual array
+            // Round 1: Index 0 and Last
+            // Round 2: Index 1 and Last-1
+            // ...
+            const leftIndex = currentRound - 1;
+            const rightIndex = visualColumns.length - currentRound;
+
+            visualColumns[leftIndex] = leftCol;
+            visualColumns[rightIndex] = rightCol;
+        }
+    }
+
+    // Finally, append all columns to the DOM in order
+    visualColumns.forEach(col => {
+        if (col) matchCardsContainer.appendChild(col);
+    });
+}

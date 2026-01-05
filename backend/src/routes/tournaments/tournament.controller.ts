@@ -1,9 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { Prisma } from '@prisma/client'
 import { tournamentService } from './tournament.service.js';
-import type { CreateGameTournamentInput, CreateTournamentInput } from './tournament.schema.js';
+import type { CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
+import { gameService } from '../game/game.service.js';
 
 // =====================
 // Tournament CRUD Handlers
@@ -146,7 +147,8 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 			userId: tournament.userId,
 			tournamentId: tournament.tournamentId,
 			status: tournament.tournament.status,
-			token: tournament.tournament.token
+			token: tournament.tournament.token,
+			totalRounds: tournament.tournament.totalRounds
 		}
 	} catch (error:any) {
 		reply.code(500).send({ message: "Failed to fetch current tournament"});
@@ -234,7 +236,7 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		}
 		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
 		WaintingRoomWsController.broadcasToRoom(tournament.id, {
-			type: 'start_game',
+			type: 'start_tournament',
 			message: `Start tournament!`
 		})
 		return response;
@@ -319,6 +321,71 @@ async function getTournamentGamesHandler (request: FastifyRequest<{ Params: { id
 	}
 }
 
+async function startTournamentGameHandler (request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const gameId = request.params.id;
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT' || !game.gameUsers.some(user => user.user.id === userId)) {
+			return reply.code(404).send({
+				message: "Game not found or unauthorized"
+			});
+		}
+		const player = game.gameUsers.find(u => u.user.id === userId);
+		const opponent = game.gameUsers.find(u => u.user.id !== userId);
+		if (!opponent || !player) {
+			return reply.code(404).send({
+				message: "Game is not yet completed"
+			});
+		}
+
+		if (!player.isReady) {
+			await tournamentService.markPlayerReadyByGamePlayerId(request.server.prisma, player.id);
+		}
+
+		const updatedGame = await gameService.findGameById(request.server.prisma, gameId);
+		const updatedOpponent = updatedGame?.gameUsers.find(u => u.user.id !== userId);
+
+		if (updatedOpponent?.isReady) {
+			await gameService.startGame(request.server.prisma, gameId);
+			WaintingRoomWsController.broadcasToRoom(game.id, {
+				type: 'start_game',
+				message: `${player.user.displayName} is starting the game!`,
+				game: updatedGame
+			})
+		} else {
+			WaintingRoomWsController.broadcasToRoom(game.id, {
+				type: 'room_update',
+				message: `${player.user.displayName} is ready for the game!`,
+				game: updatedGame
+			})
+		}
+
+		return updatedGame;
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to start tournament game"});
+	}
+}
+
+async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		// check if there's any matches finished
+		// if there's match finished, create a new one 
+
+		const games = await tournamentService.findTournamentGames(request.server.prisma, tournamentId);
+		if (games) {
+			
+		}
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to advance tournament"});
+	}
+}
+
 // =====================
 // Tournament Helpers
 // =====================
@@ -345,4 +412,6 @@ export const tournamentController = {
 	startTournamentHandler,
 	matchMakeTournamentHandler,
 	getTournamentGamesHandler,
+	startTournamentGameHandler,
+	advanceTournamentHandler
 };

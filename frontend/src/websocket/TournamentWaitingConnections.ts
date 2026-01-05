@@ -27,11 +27,11 @@ export class TournamentWaitingRoomConnection {
 				console.log('🚫 You have been removed from the tournament');
 				onRemoved();
 			}
-			if (data.type === 'game_closed') {
+			if (data.type === 'tournament_closed') {
 				console.log('🚫 The tournament has been closed');
 				onTournamentClosed();
 			}
-			if (data.type === 'start_game') {
+			if (data.type === 'start_tournament') {
 				console.log('🎮 Tournament is starting!');
 				onStartTournament();
 			}

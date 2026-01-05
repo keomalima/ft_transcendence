@@ -28,6 +28,9 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 		let tournamentData = await getTournamentData(params['id']);
 		if (!tournamentData)
 			return;
+		if (tournamentData.status !== 'REGISTRATION') {
+			setTimeout(() => router.navigateTo(`/tournament/${tournamentData.id}`), 0);
+		}
 		renderTournamentRoomContent(tournamentData);
 		passContext(ctx, tournamentData, tournamentData.isCreator);
 
@@ -121,14 +124,13 @@ async function setTournamentRoomWebSockets(currentUser: UserState, tournamentDat
 		},
 		() => {
 			cleanWaitingRoomWS();
-			router.navigateTo(`/game/${tournamentData.id}`)
+			router.navigateTo(`/tournament-room/${tournamentData.id}`)
 		}
 	)
 }
 
 // ======== GET TOURNAMENT DATA ============
 async function getTournamentData(id: string): Promise<TournamentData | null> {
-
 	try {
 		const tournamentData: TournamentData | null = await tournamentApi.getTournament(id);
 		return tournamentData;

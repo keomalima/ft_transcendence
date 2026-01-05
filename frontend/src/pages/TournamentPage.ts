@@ -156,7 +156,6 @@ function setupTournamentEventListeners(ctx: AppContext) {
 		const data = customEvent.detail;
 		try {
 			const result = await tournamentApi.joinTournament(data);
-			console.log(result);
 			router.navigateTo(`/tournament-room/${result.tournamentId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-tournament') as HTMLParagraphElement;
