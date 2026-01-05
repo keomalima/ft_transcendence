@@ -7,6 +7,7 @@ import { AppContext } from "../types.js";
 export class RegisterPopUp extends HTMLElement {
 	private selectedAvatarFile: File | null = null;
 	private _ctx: AppContext | null = null;
+	private listenersAttached: boolean = false;
 
 	constructor() {
 		super();
@@ -15,7 +16,10 @@ export class RegisterPopUp extends HTMLElement {
 
 	set ctx(value: AppContext) {
 		this._ctx = value;
-		this.attachEventListener(this._ctx);
+		if (!this.listenersAttached) {
+			this.attachEventListener(this._ctx);
+			this.listenersAttached = true;
+		}
 	}
 
 	private render() {
@@ -29,7 +33,7 @@ export class RegisterPopUp extends HTMLElement {
 			</div>
 			<div class="px-6 py-12 sm:rounded-lg sm:px-12">
 				<h1 class="mb-10 text-xl">Create a new account</h1>
-				<form action="/" method="POST" id='create-new-account-form' class="md:col-span-2">
+				<form id='create-new-account-form' class="md:col-span-2">
 					<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
 						<div class="col-span-full flex items-center gap-x-8">
 							<img id="avatar-preview" src="/src/images/defaultProfile.webp" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
@@ -123,7 +127,7 @@ export class RegisterPopUp extends HTMLElement {
 				saveBtn.className = 'btn-primary bg-white hover:bg-black';
 				saveBtn.textContent = 'Save';
 			}
-		})
+		}, { once: true });
 
 
 		// **** CREATE NEW ACCOUNT ****
@@ -160,7 +164,7 @@ export class RegisterPopUp extends HTMLElement {
 					},
 					bubbles: true
 				}))
-			});
+			}, { once: true });
 		}
 	}
 

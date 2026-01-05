@@ -22,8 +22,10 @@ const removePlayerRequestSchema = z.object({
 
 const finishGameReqSchema = z.object({
     status: z.enum(GameStatus),
+	winnerId: z.string(),
     gamePlayers: z.array(
         z.object({
+			userId: z.string(),
             playerId: z.string(),
             score: z.number().int().nonnegative()
         })

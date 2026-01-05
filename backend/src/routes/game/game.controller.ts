@@ -26,6 +26,7 @@ async function getGameHandler (request: FastifyRequest<{ Body: UpdateGameInput, 
 		}
 		return response;
 	} catch (error: any) {
+		console.error('❌ Error in getGameHandler:', error);
 		reply.code(500).send({ message: "Failed to get game"});
 	}
 }
@@ -160,12 +161,12 @@ async function startGameHandler (request: FastifyRequest<{ Params: { id: string}
 				message: "Cannot start game, game has already started or finished"
 			});
 		}
-		if (game.gameUsers.length < 2) {
+		if (game.type != 'LOCAL' && game.gameUsers.length < 2) {
 			return reply.code(409).send({
 				message: "Game is not full"
 			});
 		}
-		let response = await gameService.startGame(request.server.prisma, gameId);
+		let response = await gameService.startGame(request.server.prisma, gameId, userId);
 		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'start_game',
 			message: `Start game!`
@@ -181,14 +182,14 @@ async function gameHistoryHandler (request: FastifyRequest, reply: FastifyReply)
 		const userId = request.user!.id;
 		const games = await gameService.getGamesByUserId(request.server.prisma, userId);
 		const filteredGames = games.filter((gp: typeof games[0]) => gp.game.gameUsers.length === 2 
-			&& gp.game.type !== "LOCAL" 
+			// && gp.game.type !== "LOCAL" 
 			&& (gp.game.status === "COMPLETED"
 			|| gp.game.status === "ABANDONED"));
 		const result = filteredGames.map((gp: typeof filteredGames[0]) => {
 			const opponent = gp.game.gameUsers.find((gu: typeof result[0])  => gu.userId !== userId);
 			let durationMs;
 			if (gp.game.completedAt && gp.game.startedAt)
-				durationMs = Math.round(new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000;
+				durationMs = Math.round((new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000);
 			else
 				durationMs = 0;
 			return {
@@ -295,7 +296,7 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
 async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInput, Params: { id: string}} >, reply: FastifyReply) {
 	try {
 		const gameId = request.params.id;
-		const { gamePlayers, status } = request.body;
+		const { gamePlayers, status, winnerId } = request.body;
 		const [player1, player2] = gamePlayers;
 
 		if (!player1 || !player2) {
@@ -312,10 +313,13 @@ async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInpu
             	message: "Can not finish a game that is not in progress"
         	});
 		}
+		if (winnerId != player1.userId && winnerId != player2.userId) {
+			return reply.code(400).send({ message: "Winner does not belong to the game"});
+		}
 		const gamePlayer1 = await gameService.findGamePlayerById(request.server.prisma, player1.playerId);
 		const gamePlayer2 = await gameService.findGamePlayerById(request.server.prisma, player2.playerId);
 		if (gameId === gamePlayer1?.gameId && gameId === gamePlayer2?.gameId) {
-			const player1Winner = player1.score >= player2.score;
+			const player1Winner = player1.userId === winnerId;
 			const updatePlayer1 = await gameService.updatePlayer(request.server.prisma, player1, player1Winner);
 			if (!updatePlayer1) {
 				return reply.code(404).send({

@@ -32,11 +32,24 @@ function ballSize(): number {
 	return (ball!.clientWidth);
 }
 
+function ballSpeed(): number {
+	// Ball takes approximately 2 seconds to cross the arena at 60fps
+	// speed = arenaWidth / (targetSeconds * fps)
+	return arenaWidth() / (2 * 60);
+}
+
+function paddleSpeed(): number {
+	// Paddle can move from top to bottom in approximately 1.5 seconds at 60fps
+	return arenaHeight() / (1.5 * 60);
+}
+
 export const getGameValue = {
 	arenaHeight,
 	arenaWidth,
 	paddleHeight,
 	paddleWidth,
 	bottomLimit,
-	ballSize
+	ballSize,
+	ballSpeed,
+	paddleSpeed
 }

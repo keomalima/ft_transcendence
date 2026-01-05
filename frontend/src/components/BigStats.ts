@@ -40,6 +40,8 @@ export class BigStats extends HTMLElement {
 				if (currentStreak > maxStreak) {
 					maxStreak = currentStreak;
 				}
+			} else {
+				currentStreak = 0;
 			}
 			this._totalGamePlayed++;
 			this._totalPlayingTime += match.duration!;
@@ -55,6 +57,18 @@ export class BigStats extends HTMLElement {
 
 
 	private render() {
+
+		let playingTime: string;
+		if (this._totalPlayingTime >= 60) {
+			const hour = Math.floor(this._totalPlayingTime / 60);
+			const min = this._totalPlayingTime % 60;
+			playingTime = `${hour}h`;
+			if (min != 0)
+				playingTime += `${min}`;
+		} else {
+			playingTime = `${this._totalPlayingTime}'`;
+		}
+
 		this.innerHTML =
 		/*html*/`
 			<div class="mx-auto max-w-7xl px-6 lg:px-8 ">
@@ -73,7 +87,7 @@ export class BigStats extends HTMLElement {
 					</div>
 					<div class="mx-auto flex max-w-xs flex-col gap-y-1">
 						<dt class="text-base/7 text-black">Total playing time </dt>
-						<dd class="font-[Calistoga] order-first text-5xl tracking-tight text-black sm:text-8xl">${this._totalPlayingTime}''</dd>
+						<dd class="font-[Calistoga] order-first text-5xl tracking-tight text-black sm:text-8xl">${playingTime}</dd>
 					</div>
 				</dl>
 			</div>

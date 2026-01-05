@@ -5,7 +5,7 @@ import { router } from "../main.js";
 import "../components/NavBar.js";
 
 // import styles
-import { RADIO_LABEL, BUTTON_CREAM_CLASSES } from "../styles/tailwindStyles.js";
+import { RADIO_LABEL, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
 
 
@@ -24,50 +24,69 @@ export function CreateGame(ctx: AppContext): string{
 			<nav-bar id='nav-bar-component'></nav-bar>
 		</header>
 
-		<div class="flex-1 flex flex-col items-center justify-center h-full">
-			<!-- Select mode -->
-			<h1 class='text-3xl'>Game settings</h1>
+		<div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
+			<!-- Title Section -->
+			<div class="text-center mb-8">
+				<h1 class='text-4xl font-bold text-gray-800 mb-2'>Game Settings</h1>
+				<p class="text-gray-600">Configure your game</p>
+			</div>
 
-			<form id='game-settings'class='flex flex-col gap-10 items-center justify-center mt-20 h-full'>
-				<fieldset class="flex flex-row mt-5 gap-8 justify-between">
-					<legend class="w-full text-center mb-4 text-xl font-[Calistoga] font-medium">Select playing mode</legend>
-					<div class="flex-1 h-10">
-						<input
-						type="radio"
-						id="remote-mode"
-						name="playing_mode"
-						value="ONLINE"
-						class="hidden peer h-full" 
-						checked />
-						<label for="remote-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
-						Online
-						</label>
+			<!-- Form Card -->
+			<div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-8 md:p-12 max-w-2xl w-full border border-gray-300">
+				<form id='game-settings' class='flex flex-col gap-8'>
+					<fieldset class="flex flex-col">
+						<legend class="w-full text-center mb-6 text-2xl font-[Calistoga] font-medium">Select Playing Mode</legend>
+						<div class="flex flex-row gap-4 justify-center">
+							<div class="flex-1 h-12">
+								<input
+								type="radio"
+								id="remote-mode"
+								name="playing_mode"
+								value="ONLINE"
+								class="hidden peer h-full w-full" 
+								checked />
+								<label for="remote-mode" class="${RADIO_LABEL} h-full w-full flex items-center justify-center text-xl">
+								Online
+								</label>
+							</div>
+							<div class="flex-1 h-12">
+								<input
+								type="radio"
+								id="local-mode"
+								name="playing_mode"
+								value="LOCAL"
+								class="hidden peer h-full w-full"
+								/>
+								<label for="local-mode" class="${RADIO_LABEL} h-full w-full flex items-center justify-center text-xl">
+								Local
+								</label>
+							</div>
+						</div>
+					</fieldset>
+
+					<hr class="w-full border-t border-gray-300">
+
+					<div class='flex flex-col items-center justify-center'>
+						<label for="score-to-win" class='w-full text-center mb-4 text-2xl font-[Calistoga] font-medium'>Score to Win</label>
+						<p class="text-gray-600 text-sm mb-4">First player to reach this score wins the match</p>
+						<input type="number" id="score-to-win" name='score_to_win'
+						value="3"
+						min="3"
+						max="10"
+						class="w-32 px-4 py-3 bg-white border-2 border-gray-300 text-xl text-center font-semibold rounded-full focus:border-gray-500 focus:outline-none" required />
 					</div>
-					<div class="flex-1 h-10">
-						<input
-						type="radio"
-						id="local-mode"
-						name="playing_mode"
-						value="LOCAL"
-						class="hidden peer h-full"
-						/>
-						<label for="local-mode" class="${RADIO_LABEL} h-full flex items-center justify-center">
-						Local
-						</label>
+
+					<hr class="w-full border-t border-gray-300">
+
+					<div class="flex flex-col gap-3">
+						<button type='submit' class='${BUTTON_WHITE_CLASSES} w-full text-lg py-3'>CREATE GAME</button>
+						<a data-link href='/home' type='button' id='back-btn' class='w-full px-6 py-3 border-2 border-gray-300 rounded-full font-medium hover:bg-gray-100 transition-colors text-center'>
+							← Back
+						</a>
+						<p id='error-create-game' class='text-center'></p>
 					</div>
-				</fieldset>
-				<div class='flex flex-col items-center justify-center'>
-					<label for="score-to-win" class='w-full text-center mb-4 text-xl font-[Calistoga] font-medium'>Score to win</label>
-					<input type="number" id="score-to-win" name='score_to_win'
-					value="3"
-					min="3"
-      				max="20"
-					class="w-1/2 min-w-20 px-3 py-2.5 bg-white border border-black text-lg rounded-full placeholder:text-body" placeholder="score" required />
-				</div>
-				<hr class="w-full h-px border-0 bg-medium">
-				<button type='submit' class='${BUTTON_CREAM_CLASSES}'>CREATE GAME</button>
-				<p id='error-create-game'></p>
-			</form>
+				</form>
+			</div>
 
 		</div>
 	</div>
@@ -95,6 +114,13 @@ function setupGameEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		const selectedMode = (document.querySelector('input[name="playing_mode"]:checked') as HTMLInputElement)?.value;
 		const scoreToWin = (document.querySelector('input[name="score_to_win"]') as HTMLInputElement)?.value;
+		const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;
+		errorMsgCreateGame.className = 'text-red-500'
+
+		if (!scoreToWin || parseInt(scoreToWin) < 3 || parseInt(scoreToWin) > 10) {
+			errorMsgCreateGame.innerText = "Score must be between 3 and 10.";
+			return;
+		}
 
 		try {
 			const result = await gameService.createGame({
@@ -106,8 +132,6 @@ function setupGameEventListeners(ctx: AppContext) {
 			else
 				router.navigateTo(`/game-room/${result!.id}`);
 		} catch (error) {
-			const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;
-			errorMsgCreateGame.className = 'text-red-500'
 			errorMsgCreateGame.innerText = error as string;
 			console.log(error);
 		}
