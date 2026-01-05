@@ -211,16 +211,9 @@ export interface ConnectedPayload {
 	message: string;
 }
 
-export interface NewMessagesPayload {
-	type: "new-messages";
-	fromUserIds: string[];
-}
-
-
 export type ChatWsMessage =
 	| ChatMessagePayload
-	| ConnectedPayload
-	| NewMessagesPayload;
+	| ConnectedPayload;
 
 export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
 

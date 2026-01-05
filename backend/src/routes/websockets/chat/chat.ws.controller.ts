@@ -18,22 +18,10 @@ export const ChatWsController = {
 		const userId = request.params.userId;
 		console.log(`User ${userId} connected to chat.`);
 
-		// Store this user's connection
 		registerChatConnection(userId, connection);
 
-		// 1. Send connection confirmation
 		connection.send(JSON.stringify(payload));
 
-		// 2. Check for unread messages
-		const newSenders = await chatService.getFriendsWithNewMessages(request.server.prisma, userId);
-		if (newSenders.length > 0) {
-			connection.send(JSON.stringify({
-				type: "new-messages",
-				fromUserIds: newSenders,
-			}));
-		}
-
-		// Optional: handle socket close (clean up)
 		connection.on('close', () => {
 			removeChatConnectionAndUpdateTime(userId, request.server.prisma);
 			console.log(`User ${userId} disconnected from chat.`);

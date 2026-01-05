@@ -244,36 +244,6 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		}
 	});
 
-	// **** BLOCK/UNBLOCK FRIEND ***
-	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
-		const { friendId, isBlocked } = (e as CustomEvent).detail;
-		const friend = friendListComponent._list?.find((f: Partial<FriendData>) => f.id === friendId);
-		const displayName = friend?.displayName ?? 'Friend';
-
-		try {
-			if (friendId) {
-				if (isBlocked === true) {
-					await friendshipApi.unblock(friendId);
-					showToast(`Unblocked: ${displayName}`, 'unblock');
-				} else if (isBlocked === false) {
-					await friendshipApi.block(friendId);
-					showToast(`Blocked: ${displayName}`, 'block');
-				}
-
-				await friendListComponent.loadAndRender();
-			}
-		} catch (error) {
-			console.log('Error blocking/unblocking friend:', error);
-			showToast('Action failed', 'block');
-		}
-	});
-
-	// **** Click FRIEND ***
-	friendListComponent.addEventListener('friend-selected', async () => {
-		await friendListComponent.loadAndRender(); // update card visuals
-	});
-
-
 	// **** JOIN A GAME ****
 	joinGameComponent?.addEventListener('event-join-game', async (e: Event) => {
 		const customEvent = e as CustomEvent;

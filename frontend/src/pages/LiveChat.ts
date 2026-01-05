@@ -84,7 +84,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 	let manualClick = false;
  
 	// **** FRIEND LIST LOADED ****
-	friendListComponent?.addEventListener('friends-loaded', (e: Event) => {
+	friendListComponent?.addEventListener('friends-loaded', async (e: Event) => {
 		if (manualClick)
 		{
 			manualClick = false;
@@ -108,9 +108,24 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				chatEmptyMessage.textContent = "You have no friends yet. Add some to start chatting!";
 			}
 		} else {
-			// Select and store first friend
-			_selectedFriend = friends[0];
+			const currentUserId = ctx.userStore.get()?.id;
+			if (currentUserId) {
+				// REMOVE FIRST FRIEND from unread
+				const key = `chat_unread_${currentUserId}`;
+				try {
+					const raw = localStorage.getItem(key);
+					if (raw) {
+						const unreadSet = new Set<string>(JSON.parse(raw));
+						unreadSet.delete(friends[0].id);
+						localStorage.setItem(key, JSON.stringify([...unreadSet]));
+					}
+				} catch (err) {
+					console.error("Failed to update unread list in localStorage", err);
+				}
+			}
+			await friendListComponent.loadAndRender();
 
+			_selectedFriend = friends[0];
 			renderChatBox(_selectedFriend, ctx);
 		}
 	});
@@ -132,30 +147,6 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			console.log('Error deleting friend (LiveChat):', error);
 		}
 	});
-	
-	// **** BLOCK/UNBLOCK FRIEND ***
-	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
-		const { friendId, isBlocked } = (e as CustomEvent).detail;
-		const friend = friendListComponent._list?.find((f: Partial<FriendData>) => f.id === friendId);
-		const displayName = friend?.displayName ?? 'Friend';
-
-		try {
-			if (friendId) {
-				if (isBlocked === true) {
-					await friendshipApi.unblock(friendId);
-					showToast(`Unblocked: ${displayName}`, 'unblock');
-				} else if (isBlocked === false) {
-					await friendshipApi.block(friendId);
-					showToast(`Blocked: ${displayName}`, 'block');
-				}
-
-				await friendListComponent.loadAndRender();
-			}
-		} catch (error) {
-			console.log('Error blocking/unblocking friend:', error);
-			showToast('Action failed', 'block');
-		}
-	});
 
 	// **** When user clicks a friend ****
 	friendListComponent?.addEventListener('friend-selected', async (e: Event) => {
@@ -164,44 +155,34 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const clickedFriend = customEvent.detail;
 
-		// 1. Re-fetch updated friend list
+		// STEP 1: Remove from localStorage unread set
+		const currentUserId = ctx.userStore.get()?.id;
+		const key = `chat_unread_${currentUserId}`;
+		try {
+			const raw = localStorage.getItem(key);
+			if (raw) {
+				const unreadSet = new Set<string>(JSON.parse(raw));
+				unreadSet.delete(clickedFriend.id);
+				localStorage.setItem(key, JSON.stringify([...unreadSet]));
+			}
+		} catch (err) {
+			console.error("❌ Failed to update unread set after friend click:", err);
+		}
+
+		// STEP 2: Reload friend list (to refresh red ! badges)
 		await friendListComponent.loadAndRender();
 		const updatedList = friendListComponent._list;
 
-		// 2. Get the latest status of the clicked friend
+		// STEP 3: Find and set selected friend
 		const updatedFriend = updatedList?.find((f: any) => f.id === clickedFriend.id);
 		if (!updatedFriend) return;
-
 		_selectedFriend = updatedFriend;
 
-		// Update the chat box UI
+		// STEP 4: Render chat box
 		const chatRight = document.getElementById('chat-right');
 		if (!chatRight) return;
-
 		renderChatBox(_selectedFriend, ctx);
 	});
-
-	// **** Show msg for block/unblock at left-up corner ***
-	function showToast(message: string, type: 'block' | 'unblock') {
-		const toast = document.createElement('div');
-		toast.textContent = message;
-
-		toast.className = `
-			fixed top-4 left-4 z-50
-			min-w-[200px] text-center
-			px-4 py-2 rounded shadow-lg
-			text-white font-medium
-			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
-		`;
-
-		document.body.appendChild(toast);
-
-		setTimeout(() => {
-			toast.remove();
-		}, 2000);
-	}
-
-
 }
 
 async function renderChatBox(friend: any, ctx: AppContext) {
@@ -228,14 +209,24 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 		<div class="flex justify-between items-center p-4 border-b">
 			<div>
 				<p class="font-bold text-lg">${friend.displayName}</p>
-				<p class="text-gray-500 text-sm">
-					${friend.isOnline ? 'Online' : 'Offline'}
-				</p>
+				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
 			</div>
-			<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
-				See Profile
-			</button>
+			<div class="flex gap-2">
+				<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
+					See Profile
+				</button>
+				<button id="block-toggle-btn"
+					class="${friend.isBlocked 
+						? 'bg-green-600 text-white hover:bg-green-700' 
+						: 'bg-red-600 text-white hover:bg-red-700'} 
+						rounded-full px-3 py-1 transition font-semibold"
+				>
+					${friend.isBlocked ? 'Unblock your friend' : 'Block your friend'}
+				</button>
+
+			</div>
 		</div>
+
 
 		<!-- Messages -->
 		<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
@@ -262,6 +253,55 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			</form>
 		`}
 	`;
+	
+	const blockBtn = document.getElementById('block-toggle-btn');
+	if (blockBtn) {
+		blockBtn.addEventListener('click', async () => {
+			try {
+				if (friend.isBlocked) {
+					await friendshipApi.unblock(friend.id);
+					showToast(`Unblocked: ${friend.displayName}`, 'unblock');
+				} else {
+					await friendshipApi.block(friend.id);
+					showToast(`Blocked: ${friend.displayName}`, 'block');
+				}
+
+				// Refresh list and UI after block change
+				await (document.getElementById('friend-list-component') as any)?.loadAndRender();
+
+				// Re-fetch friend object from updated list
+				const list = (document.getElementById('friend-list-component') as any)._list;
+				const updated = list?.find((f: any) => f.id === friend.id);
+				if (updated) {
+					_selectedFriend = updated;
+					renderChatBox(updated, ctx);
+				}
+			} catch (error) {
+				console.error('Error block/unblock:', error);
+				showToast('Action failed', 'block');
+			}
+		});
+	}
+
+	// **** Show msg for block/unblock at left-up corner ***
+	function showToast(message: string, type: 'block' | 'unblock') {
+		const toast = document.createElement('div');
+		toast.textContent = message;
+
+		toast.className = `
+			fixed top-4 left-4 z-50
+			min-w-[200px] text-center
+			px-4 py-2 rounded shadow-lg
+			text-white font-medium
+			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
+		`;
+
+		document.body.appendChild(toast);
+
+		setTimeout(() => {
+			toast.remove();
+		}, 2000);
+	}
 
 	chatEmpty.classList.add('hidden');
 	chatRight.classList.remove('hidden');
@@ -286,10 +326,12 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 		.filter(msg => msg && msg.senderId && msg.content && msg.receiverId)
 		.map(msg => {
 			const isSender = msg.senderId === currentUserId;
+			const bubbleColor = isSender ? 'bg-blue-100' : 'bg-green-100';
+			const textColor = 'text-black';
 
 			return `
 				<div class="flex ${isSender ? 'justify-end' : 'justify-start'}">
-					<div class="px-4 py-2 rounded-lg ${isSender ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'} max-w-xs">
+					<div class="px-4 py-2 rounded-lg ${bubbleColor} ${textColor} max-w-xs break-words">
 						${msg.content}
 					</div>
 				</div>
