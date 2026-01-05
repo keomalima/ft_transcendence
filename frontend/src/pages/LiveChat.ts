@@ -22,10 +22,11 @@ export function LiveChat(ctx: AppContext): string {
 	}
 
 	// 2. Setup logic after render
-	setTimeout(() => {
+	setTimeout(async () => {
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
+		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
 	}, 0);
 
@@ -95,7 +96,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			friendListComponent.skipAutoSelect = false;
 			return;
 		}
-		
+
 		const customEvent = e as CustomEvent;
 		const friends = customEvent.detail as any[];
 
@@ -301,6 +302,14 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			</form>
 		`}
 	`;
+
+	// Auto scroll to bottom after inserting messages
+	const chatBox = document.getElementById("chat-messages");
+	if (chatBox) {
+		requestAnimationFrame(() => {
+			chatBox.scrollTop = chatBox.scrollHeight;
+		});
+	}
 	
 	const blockBtn = document.getElementById('block-toggle-btn');
 	if (blockBtn) {
@@ -428,6 +437,31 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 				</div>
 			`;
 		}).join('');
+}
+
+async function fetchUnreadSendersFromBackend(ctx: AppContext) {
+	const currentUserId = ctx.userStore.get()?.id;
+	if (!currentUserId) return;
+
+	try {
+		const senderIds: string[] = await chatApi.getFriendsWithNewMessages();
+		if (!senderIds || senderIds.length === 0) return;
+
+		const key = `chat_unread_${currentUserId}`;
+		const raw = localStorage.getItem(key);
+		const unreadSet = new Set<string>(raw ? JSON.parse(raw) : []);
+		senderIds.forEach((id) => unreadSet.add(id));
+		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+
+		// Re-render FriendList to show updated blue dots
+		const friendList = document.getElementById("friend-list-component") as any;
+		if (friendList?.loadAndRender) {
+			friendList.skipAutoSelect = true;
+			await friendList.loadAndRender();
+		}
+	} catch (err) {
+		console.error("❌ Failed to fetch unread senders from backend:", err);
+	}
 }
 
 
