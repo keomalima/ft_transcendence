@@ -131,15 +131,15 @@ async function joinGameHandler (request: FastifyRequest<{ Params: { token: strin
 				});
 			}
 		}
+		const updatedGame = await gameService.joinUserToGame(request.server.prisma, game.id, userId);
+		const completeGame = await gameService.getGamesByUserId(request.server.prisma, userId);
 
 		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'room_update',
 			message: `${joinedUser.displayName} joined the game!`,
-			userId,
-			displayName: joinedUser.displayName,
-			avatarUrl: joinedUser.avatarUrl
+			game: completeGame
 		})
-		return  await gameService.joinUserToGame(request.server.prisma, game.id, userId);
+		return  updatedGame;
 	} catch (error: any) {
 		console.error(error);
 		reply.code(500).send({ message: "Failed to join"});
@@ -333,12 +333,10 @@ async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInpu
 				});
 			}
 			const finishedGame = await gameService.finishGame(request.server.prisma, game.id, status);
-			console.log(finishedGame);
 			return reply.code(200).send(finishedGame);
 		}
 		return reply.code(400).send({ message: "Player does not belong to the game"});
 	} catch (error: any) {
-		console.log(error);
 		reply.code(500).send({ message: "Failed to finish game"});
 	}
 }

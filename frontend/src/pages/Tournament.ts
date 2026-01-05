@@ -4,9 +4,14 @@ import { router } from "../main.js";
 // import HTML components
 import "../components/NavBar.js";
 import "../components/TournamentBracket.js";
+import "../components/TournamentNextGame.js";
 
 // import styles
 import { tournamentApi } from "../api/tournamentApi.js";
+import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
+import { TournamentNextGame } from "../components/TournamentNextGame.js";
+
+let wsConnection: WaitingRoomConnection | null = null;
 
 export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
 	//get user data from store
@@ -23,8 +28,14 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
 		const tournamentGames = await getTournamentGames(params['id']);
-		renderTournamentContent(currentUser!, currentTournament?.tournamentId!);
-		passContext(ctx, tournamentGames);
+		if (currentTournament?.status === 'REGISTRATION') {
+			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
+		}
+		renderTournamentContent();
+		passContext(ctx, tournamentGames, currentTournament);
+
+		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
+
 		setupTournamentEventListeners(ctx);
 	}, 0);
 
@@ -35,30 +46,34 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	`);
 }
 
-function renderTournamentContent(currentUser: UserState, tournamentId: string | null) {
-
+function renderTournamentContent() {
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
-		<header>
-			<nav-bar id='nav-bar-component'></nav-bar>
-		</header>
-
-		<div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
-			<!-- Title Section -->
-			<div class="text-center mb-12">
-				<h1 class="text-5xl font-bold text-gray-800 mb-4">Tournaments</h1>
-				<p class="text-lg text-gray-600 max-w-2xl">
-					Tournament brackets comming soon
-					<tournament-bracket id='tournament-game-component'></tournament-bracket>
-				</p>
+	    <header>
+	        <nav-bar id='nav-bar-component'></nav-bar>
+	    </header>
+	
+	    <div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
+	        <div class="text-center mb-2">
+	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
+	        </div>
+	
+			<div class="w-full overflow-x-auto">
+				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
 			</div>
+	        <div class="w-full overflow-x-auto">
+	            <tournament-bracket id='tournament-game-component'></tournament-bracket>
+	        </div>
+
+	    </div>
+	</div>
 	`
 	return content;
 }
 
 // ======== GET TOURNAMENT GAMES ============
-async function getTournamentGames(tournamentId: string): Promise<TournamentGame | null > {
+async function getTournamentGames(tournamentId: string): Promise<TournamentGame[] | null > {
 	try {
 		const tournamentGames = await tournamentApi.getTournamentGames(tournamentId);
 		return tournamentGames;
@@ -68,7 +83,7 @@ async function getTournamentGames(tournamentId: string): Promise<TournamentGame 
 }
 
 // ======== GET CURRENT TOURNAMENT ============
-async function getCurrentTournament(): Promise<{userId: string, tournamentId: string, type: string, token: string | null} | null> {
+async function getCurrentTournament(): Promise<Partial< TournamentData | null>> {
 	try {
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
@@ -78,7 +93,7 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext, tournamentGames: TournamentGame | null) {
+function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, tournament: Partial<TournamentData | null>) {
 
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
@@ -88,12 +103,89 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame | null) {
 	if (tournamentGameComponent) {
 		tournamentGameComponent.ctx = ctx;
 		tournamentGameComponent.tournamentGamesData = tournamentGames;
+		tournamentGameComponent.tournamentData = tournament;
+	} else {
+		console.error('❌ Tournament games component not found!');
+	}
+
+	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as any
+	if (tournamentNextGameComponent) {
+		tournamentNextGameComponent.ctx = ctx;
+		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+		tournamentNextGameComponent.tournamentData = tournament;
 	} else {
 		console.error('❌ Tournament games component not found!');
 	}
 }
 
+// ======== UPDATE PLAYER INFO ============
+function updatePlayerInfo(tournamentGames: TournamentGame[]) {
+
+	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
+	if (tournamentNextGameComponent && tournamentGames) {
+		// Update the nextGame component with the new data from websocket
+		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+	}
+}
+
+// ======== SET WEBSOCKET CONNECTION ============
+async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: TournamentGame[], ctx: AppContext) {
+
+	const gameIndex = tournamentGames.findIndex(game =>
+		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id)
+	)
+
+	if (gameIndex === -1) return;
+	
+	const gameData = tournamentGames[gameIndex];
+
+	// Create websocket with gameid
+	wsConnection = new WaitingRoomConnection();
+	wsConnection.connect(gameData.id!, currentUser.id!,
+		async (updateGameData) => {
+			if (updateGameData.message) {
+				tournamentGames[gameIndex] = updateGameData.game;
+				console.log('🔔', updateGameData.game);
+				updatePlayerInfo(tournamentGames);
+			}
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo('/home');
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo('/home');
+		},
+		() => {
+			cleanWaitingRoomWS();
+			router.navigateTo(`/game/${gameData.id}`)
+		}
+	)
+}
+
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanWaitingRoomWS() {
+	if (wsConnection) {
+		wsConnection.disconnect();
+		wsConnection = null;
+	}
+}
+
+
 // ======== EVENT LISTENER ============
 function setupTournamentEventListeners(ctx: AppContext) {
-
+	// Start tournament game
+	const tournamentGameComponent = document.getElementById('tournament-next-game-component') as any;
+	tournamentGameComponent?.addEventListener('event-start-tournament-game', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const {id:gameId} = customEvent.detail.game;
+		try {
+			const response = await tournamentApi.startGame(gameId);
+			console.log('start', response);
+		} catch (error) {
+			console.log(error);
+		}
+	})
 }

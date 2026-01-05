@@ -70,6 +70,7 @@ const getGameResponseSchema = z.object({
 	type: z.enum(GameMode),
 	status: z.enum(GameStatus),
 	token: z.string().nullable(),
+	tournamentId: z.string().nullable(),
 	scoreToWin: z.number().int(),
 	createdAt: z.date(),
 	updatedAt: z.date().nullable(),
