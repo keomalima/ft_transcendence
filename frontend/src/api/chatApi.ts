@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { ChatMessage } from '../types.js';
+import { ChatMessage, SendMessageError, SendMessageResponse } from '../types.js';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/chat';
@@ -25,6 +25,26 @@ export const chatApi = {
 		} catch (error: unknown) {
 			throw buildApiError('get unread message friends', error);
 		}
+	},
+
+	sendMessage: async (data: { toUserId: string; content: string }): Promise<SendMessageResponse> => {
+		try {
+			const response = await httpCall.post(`${BASE_URL}/send`, data);
+			return response.data;
+		} catch (error: any) {
+			if (error.response?.data?.status === "error") {
+				return error.response.data as SendMessageError;
+			}
+
+			return {
+				status: "error",
+				reason: "Unknown error",
+				code: "UNKNOWN"
+			};
+		}
 	}
+
+
+
 
 };

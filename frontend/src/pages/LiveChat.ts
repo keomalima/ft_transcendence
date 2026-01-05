@@ -279,6 +279,53 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 		});
 	}
 
+	const chatForm = document.getElementById("chat-form") as HTMLFormElement | null;
+	const chatInput = document.getElementById("chat-input") as HTMLInputElement | null;
+
+	if (chatForm && chatInput) {
+		chatForm.addEventListener("submit", async (e) => {
+			e.preventDefault();
+
+			const content = chatInput.value.trim();
+			if (!content || !_selectedFriend) return;
+
+			const res = await chatApi.sendMessage({
+				toUserId: _selectedFriend.id,
+				content,
+			});
+
+			if (res.status === "ok") {
+				const chatBox = document.getElementById("chat-messages");
+				if (chatBox) {
+					const bubble = document.createElement("div");
+					bubble.className = "flex justify-end";
+					bubble.innerHTML = `
+						<div class="px-4 py-2 rounded-lg bg-blue-100 text-black max-w-xs break-words">
+							${content}
+						</div>
+					`;
+					chatBox.appendChild(bubble);
+					chatBox.scrollTop = chatBox.scrollHeight;
+				}
+				chatInput.value = "";
+
+			} else if (res.code === "BLOCKED") {
+				showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
+
+				const updatedFriendList = await friendshipApi.getList();
+				const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
+				if (updated) {
+					_selectedFriend = updated;
+					renderChatBox(_selectedFriend, ctx);
+				}
+			} else {
+				alert(`Failed to send message: ${res.reason}`);
+			}
+		});
+
+	}
+
+
 	// **** Show msg for block/unblock at left-up corner ***
 	function showToast(message: string, type: 'block' | 'unblock') {
 		const toast = document.createElement('div');
