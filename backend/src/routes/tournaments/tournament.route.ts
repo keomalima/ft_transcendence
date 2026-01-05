@@ -150,7 +150,7 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 	fastify.post('/:id/advance-tournament', {
 		schema: {
 			params: z.object({ id: z.string()}),
-			response: {200: tournamentSchemas.response.finishTournamentGame },
+			response: {200: tournamentSchemas.response.advanceTournament },
 			tags: ['Tournament'],
 			description: 'Finish tournament game',
 			summary: 'Finish tournament game',

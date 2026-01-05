@@ -22,6 +22,10 @@ const finishTournamentGameSchema = z.object({
 	id: z.string()
 })
 
+const advanceTournamentSchema = z.object({
+	message: z.string()
+})
+
 const createTournamentGame = z.object({
 	createdBy: z.string(),
 	scoreToWin: z.number().int().max(10).default(10),
@@ -170,6 +174,7 @@ export const tournamentSchemas = {
 	startTournament: startTournamentResponseSchema,
 	getTournamentGames: getTournamentGames,
 	startGame: startTournamentGameResponseSchema,
-	finishTournamentGame: finishTournamentGameSchema
+	finishTournamentGame: finishTournamentGameSchema,
+	advanceTournament: advanceTournamentSchema
   },
 };

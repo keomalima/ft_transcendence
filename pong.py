@@ -950,7 +950,7 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     
     # Tournament 3: Frank creates an 8-player tournament, multiple join, then he starts it
     print(f"{DIM}  Creating 8-player tournament: Frank (fully filled and started){RESET}")
-    tournament3 = frank.create_tournament(8, 10)
+    tournament3 = frank.create_tournament(8, 3)
     if tournament3:
         time.sleep(0.3)
         token_t3 = frank.generate_tournament_token(tournament3['id'])

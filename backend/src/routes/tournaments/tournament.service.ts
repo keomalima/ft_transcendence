@@ -202,6 +202,16 @@ async function markPlayerReadyByGamePlayerId(prisma: PrismaClient, gamePlayerId:
 	})
 }
 
+async function findGameByRoundNMatch(prisma: PrismaClient, tournamentId: string, roundNumber: number, matchNumber: number) {
+	return prisma.game.findFirst({
+		where: {
+			tournamentId,
+			roundNumber,
+			matchNumber
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -222,5 +232,6 @@ export const tournamentService = {
 	findTournamentByParticipant,
 	findTournamentGames,
 	findOpponentByGameId,
-	markPlayerReadyByGamePlayerId
+	markPlayerReadyByGamePlayerId,
+	findGameByRoundNMatch
 };

@@ -135,7 +135,6 @@ export class TournamentPlayerList extends HTMLElement {
 		removeBtn.className = 'font-[Inter] rounded-full px-2 py-1 text-xs text-red-500 outline outline-1 outline-red-500 hover:bg-red-500 hover:text-white';
 		removeBtn.innerText = 'remove';
 		removeBtn.id = `remove-${participant.user.id}`;
-		console.log('Participant ', participant);
 		if (this._isCreator === true && this._ctx?.userStore.get()?.id != participant.user.id) {
 			actions.appendChild(removeBtn);
 		}

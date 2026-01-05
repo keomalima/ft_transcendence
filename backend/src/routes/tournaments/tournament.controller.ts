@@ -347,7 +347,7 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 		const updatedOpponent = updatedGame?.gameUsers.find(u => u.user.id !== userId);
 
 		if (updatedOpponent?.isReady) {
-			await gameService.startGame(request.server.prisma, gameId);
+			await gameService.startGame(request.server.prisma, gameId, userId);
 			WaintingRoomWsController.broadcasToRoom(game.id, {
 				type: 'start_game',
 				message: `${player.user.displayName} is starting the game!`,
@@ -373,13 +373,49 @@ async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: s
 		const userId = request.user!.id;
 		const tournamentId = request.params.id;
 
-		// check if there's any matches finished
-		// if there's match finished, create a new one 
-
+		// get all the tournament games
 		const games = await tournamentService.findTournamentGames(request.server.prisma, tournamentId);
-		if (games) {
-			
+		if (!games) return ;
+		// filter games that have COMPLETED/ABANDONED status
+		const finishedGames = games.filter((game: typeof games[0]) => game.status === 'ABANDONED' || game.status === 'COMPLETED');
+
+		// find if the correspondant game of the bracket is also finished
+		for (const game of finishedGames) {
+			const pairMatchNumber = game.matchNumber % 2 === 0 ? game.matchNumber - 1 : game.matchNumber + 1;
+			const pairGame = finishedGames.find((nextGame: typeof finishedGames[0]) => 
+				nextGame.roundNumber === game.roundNumber && nextGame.matchNumber === pairMatchNumber);
+			if (!pairGame) return;
+
+			const nextRound = game.roundNumber + 1;
+			const nextMatch = Math.ceil(game.matchNumber / 2);
+
+			const existingNextGame = await tournamentService.findGameByRoundNMatch(request.server.prisma, tournamentId, nextRound, nextMatch);
+			if (existingNextGame) continue;
+
+			const winner1 = game.gameUsers.find((winner: typeof game.gameUsers[0]) => winner.isWinner);
+			const winner2 = pairGame.gameUsers.find((winner: typeof game.gameUsers[0]) => winner.isWinner);
+
+			if (!winner1 || !winner2) return;
+
+			await request.server.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+				const newGame = await tx.game.create({ data: {
+					createdBy: userId, 
+					type: 'TOURNAMENT',
+					scoreToWin: pairGame.scoreToWin,
+					tournamentId,
+					roundNumber: nextRound,
+					matchNumber: nextMatch,
+				}})
+				
+				await tx.gamePlayer.createMany({
+					data: [
+						{ gameId: newGame.id, userId: winner1.user.id },
+						{ gameId: newGame.id, userId: winner2.user.id }
+					]
+				})
+			});
 		}
+		reply.code(200).send({ message: "Tournament advanced successfully"});
 	} catch (error: any) {
 		console.log(error);
 		reply.code(500).send({ message: "Failed to advance tournament"});
