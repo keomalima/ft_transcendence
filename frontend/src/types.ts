@@ -71,6 +71,7 @@ export interface FriendData {
 	isOnline: boolean;
 	avatarUrl: string | null;
 	isBlocked: boolean;
+	isBlockedBy: boolean;
 }
 
 // for game data
@@ -191,3 +192,48 @@ export interface TournamentData {
     participants: TournamentParticipant[];
     games: GameData[];
 }
+
+export interface ChatMessage {
+	senderId: string;
+	receiverId: string;
+	content: string;
+}
+
+export interface ChatMessagePayload {
+	type: "chat-message";
+	fromUserId: string;
+	content: string;
+	sentAt: string;
+}
+
+export interface ConnectedPayload {
+	type: "connected";
+	message: string;
+}
+
+export interface NewMessagesPayload {
+	type: "new-messages";
+	fromUserIds: string[];
+}
+
+
+export type ChatWsMessage =
+	| ChatMessagePayload
+	| ConnectedPayload
+	| NewMessagesPayload;
+
+export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
+
+export interface SendMessageSuccess {
+	status: "ok";
+	messageId: string;
+	sentAt: string;
+}
+
+export interface SendMessageError {
+	status: "error";
+	reason: string;
+	code: ChatErrorCode;
+}
+
+export type SendMessageResponse = SendMessageSuccess | SendMessageError;

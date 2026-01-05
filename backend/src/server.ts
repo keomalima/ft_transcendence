@@ -20,6 +20,8 @@ import { tournamentPrivateRoutes } from './routes/tournaments/tournament.route.j
 import { wsPrivateRoutes } from './routes/websockets/ws.routes.js';
 import type { FastifyCookieOptions } from '@fastify/cookie'
 import cookie from '@fastify/cookie'
+import { chatPrivateRoutes } from './routes/chat/chat.route.js';
+
 
 const fastify = Fastify({
   logger: true
@@ -70,6 +72,8 @@ fastify.register(async (protectedRoutes) => {
 	protectedRoutes.register(gamePrivateRoutes, { prefix: "/api/games" })
 	protectedRoutes.register(tournamentPrivateRoutes, { prefix: "/api/tournaments" })
 	protectedRoutes.register(friendsPrivateRoutes, { prefix: "/api/friends" })
+	protectedRoutes.register(chatPrivateRoutes, { prefix: "/api/chat" })
+
 	//WebSocket routes
 	fastify.register(wsPrivateRoutes, { prefix: "/ws"})
 });

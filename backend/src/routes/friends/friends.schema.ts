@@ -15,8 +15,13 @@ const sendRequestSchema = z.object({
 
 const blockFriendResponseSchema = z.object({
 	id: z.string(),
-	status: z.enum(FriendshipStatus),
-	deletedAt: z.date()
+	blockerId: z.string(),
+	blockedId: z.string(),
+	createdAt: z.date()
+})
+
+const unblockFriendResponseSchema = z.object({
+	success: z.boolean()
 })
 
 const getFriendsResponseSchema = z.object({
@@ -26,7 +31,9 @@ const getFriendsResponseSchema = z.object({
 	isOnline: z.boolean(),
 	name: z.string(),
 	surname: z.string(),
-	avatarUrl: z.string()
+	avatarUrl: z.string(),
+	isBlocked: z.boolean(),
+	isBlockedBy: z.boolean()
 })
 
 const friendsArraySchema = z.array(getFriendsResponseSchema);
@@ -77,6 +84,7 @@ export const friendsSchemas = {
 	sendRequest: sendRequestResponseSchema,
 	acceptRequest: sendRequestResponseSchema,
 	pendingRquest: friendsRequestArraySchema,
-	blockFriend: blockFriendResponseSchema
+	blockFriend: blockFriendResponseSchema,
+	unblockFriend: unblockFriendResponseSchema
   },
 };

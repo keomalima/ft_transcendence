@@ -5,6 +5,7 @@ import { WaintingRoomWsController } from "./gameroom/waitingroom.ws.controller.j
 import { GameWsController } from "./game/game.ws.controller.js";
 import { ClientRequest, get, Server } from "http";
 import { Http2ServerRequest } from "http2";
+import { ChatWsController } from "./chat/chat.ws.controller.js";
 
 // =====================
 // Private Routes (Authentication Required)
@@ -18,4 +19,6 @@ export async function wsPrivateRoutes(fastify: FastifyInstance) {
 	// game websocket
 	fastify.get('/game/:gameId/:userId/:scoreToWin', { websocket: true }, GameWsController.gameHandler);
 
+	// chat websocket
+	fastify.get('/chat/:userId', { websocket: true }, ChatWsController.chatHandler);
 }

@@ -72,24 +72,24 @@ export const friendshipApi = {
 		}
 	},
 
-	block: async (id: string | null): Promise<void> => {
-		if (id == null)
-			throw new Error('Friendship ID is required');
+	block: async (friendId: string | null): Promise<void> => {
+		if (friendId == null)
+			throw new Error('Friend ID is required');
 
 		try {
-			await httpCall.put(`${BASE_URL}/block/${id}`);
+			await httpCall.put(`${BASE_URL}/block/${friendId}`);
 			console.log('🧑‍🤝‍🧑 blockFriend success ✅');
 		} catch (error: unknown) {
 			throw buildApiError('block friend', error);
 		}
 	},
 
-	unblock: async (id: string | null): Promise<void> => {
-		if (id == null)
-			throw new Error('Friendship ID is required');
+	unblock: async (friendId: string | null): Promise<void> => {
+		if (friendId == null)
+			throw new Error('Friend ID is required');
 
 		try {
-			await httpCall.put(`${BASE_URL}/unblock/${id}`);
+			await httpCall.put(`${BASE_URL}/unblock/${friendId}`);
 			console.log('🧑‍🤝‍🧑 unblockFriend success ✅');
 		} catch (error: unknown) {
 			throw buildApiError('unblock friend', error);

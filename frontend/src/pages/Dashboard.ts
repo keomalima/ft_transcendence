@@ -10,7 +10,7 @@ import "../components/MatchHistory.js";
 import "../components/FriendRequests.js";
 import "../components/AddFriend.js";
 import "../components/JoinGamePopUp.js";
-import type { GameHistory } from "../types.js";
+import type { FriendData, GameHistory } from "../types.js";
 
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
@@ -246,24 +246,31 @@ function setupDashboardEventListeners(ctx: AppContext) {
 
 	// **** BLOCK/UNBLOCK FRIEND ***
 	friendListComponent?.addEventListener('event-toggle-block', async (e: Event) => {
-		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
+		const { friendId, isBlocked } = (e as CustomEvent).detail;
+		const friend = friendListComponent._list?.find((f: Partial<FriendData>) => f.id === friendId);
+		const displayName = friend?.displayName ?? 'Friend';
+
 		try {
-			if (data.friendshipId) {
-				if (data.isBlocked) {
-					await friendshipApi.unblock(data.friendshipId);
-				} else {
-					await friendshipApi.block(data.friendshipId);
+			if (friendId) {
+				if (isBlocked === true) {
+					await friendshipApi.unblock(friendId);
+					showToast(`Unblocked: ${displayName}`, 'unblock');
+				} else if (isBlocked === false) {
+					await friendshipApi.block(friendId);
+					showToast(`Blocked: ${displayName}`, 'block');
 				}
 
-				// Refresh friend list after blocking/unblocking
-				if (friendListComponent.loadAndRender) {
-					await friendListComponent.loadAndRender();
-				}
+				await friendListComponent.loadAndRender();
 			}
 		} catch (error) {
-				console.log('Error blocking/unblocking friend:', error);
+			console.log('Error blocking/unblocking friend:', error);
+			showToast('Action failed', 'block');
 		}
+	});
+
+	// **** Click FRIEND ***
+	friendListComponent.addEventListener('friend-selected', async () => {
+		await friendListComponent.loadAndRender(); // update card visuals
 	});
 
 
@@ -281,5 +288,25 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			console.log(error);
 		}
 	})
+
+	// **** Show msg for block/unblock at left-up corner ***
+	function showToast(message: string, type: 'block' | 'unblock') {
+		const toast = document.createElement('div');
+		toast.textContent = message;
+
+		toast.className = `
+			fixed top-4 left-4 z-50
+			min-w-[200px] text-center
+			px-4 py-2 rounded shadow-lg
+			text-white font-medium
+			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
+		`;
+
+		document.body.appendChild(toast);
+
+		setTimeout(() => {
+			toast.remove();
+		}, 2000);
+	}
 
 }
