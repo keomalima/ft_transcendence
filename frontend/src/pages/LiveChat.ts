@@ -266,19 +266,15 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 					showToast(`Blocked: ${friend.displayName}`, 'block');
 				}
 
-				// Refresh list and UI after block change
-				await (document.getElementById('friend-list-component') as any)?.loadAndRender();
-
-				// Re-fetch friend object from updated list
-				const list = (document.getElementById('friend-list-component') as any)._list;
-				const updated = list?.find((f: any) => f.id === friend.id);
+				const updatedFriendList = await friendshipApi.getList();
+				const updated = updatedFriendList.find((f) => f.id === friend.id);
 				if (updated) {
 					_selectedFriend = updated;
-					renderChatBox(updated, ctx);
+					renderChatBox(_selectedFriend, ctx);
 				}
-			} catch (error) {
-				console.error('Error block/unblock:', error);
-				showToast('Action failed', 'block');
+				} catch (error) {
+					console.error('Error block/unblock:', error);
+					showToast('Action failed', 'block');
 			}
 		});
 	}
