@@ -522,7 +522,6 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 			console.log(currentGame);
 			cleanGameWS();
 			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId) {
-				await tournamentApi.advanceTournament(currentGame.tournamentId!);
 				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
 			}
 			else

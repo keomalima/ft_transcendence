@@ -326,7 +326,7 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 		const userId = request.user!.id;
 		const gameId = request.params.id;
 		const game = await gameService.findGameById(request.server.prisma, gameId);
-		if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT' || !game.gameUsers.some(user => user.user.id === userId)) {
+		if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT' || !game.gameUsers.some((user: typeof game.GameUsers[0]) => user.user.id === userId)) {
 			return reply.code(404).send({
 				message: "Game not found or unauthorized"
 			});

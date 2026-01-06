@@ -6,10 +6,11 @@
 - Help me understand **why** something works or doesn't work
 - Explain **concepts, patterns, and algorithms** behind the code
 - Guide me through the **thought process** rather than giving complete solutions
+- Try being as brief as possible for the explanations
 
 ## When I Ask About Code Issues
 
-1. Explain what's happening in the code
+1. Explain briefly what's happening in the code
 2. Describe why the issue occurs
 3. Discuss the underlying concepts
 4. Suggest approaches and strategies
