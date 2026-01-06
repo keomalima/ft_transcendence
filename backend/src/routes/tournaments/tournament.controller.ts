@@ -139,7 +139,6 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 	try {
 		const userId = request.user!.id;
 		const tournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, userId);
-		console.log(tournament);
 		if (!tournament) 
 			return reply.code(204).send();
 
@@ -148,7 +147,8 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 			tournamentId: tournament.tournamentId,
 			status: tournament.tournament.status,
 			token: tournament.tournament.token,
-			totalRounds: tournament.tournament.totalRounds
+			totalRounds: tournament.tournament.totalRounds,
+			currentRound: tournament.tournament.currentRound
 		}
 	} catch (error:any) {
 		reply.code(500).send({ message: "Failed to fetch current tournament"});

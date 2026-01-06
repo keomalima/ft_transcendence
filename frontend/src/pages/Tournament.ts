@@ -31,7 +31,7 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
 		}
-		renderTournamentContent();
+		renderTournamentContent(currentTournament);
 		passContext(ctx, tournamentGames, currentTournament);
 
 		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
@@ -46,7 +46,7 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	`);
 }
 
-function renderTournamentContent() {
+function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
@@ -57,6 +57,7 @@ function renderTournamentContent() {
 	    <div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
 	        <div class="text-center mb-2">
 	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
+				<h3 class=" text-gray-500 mb-4">Round ${tournament?.currentRound}</h3>
 	        </div>
 	
 			<div class="w-full overflow-x-auto">
