@@ -24,7 +24,13 @@ export function LiveChat(ctx: AppContext): string {
 
 	// 2. Setup logic after render
 	setTimeout(async () => {
-		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory("aeed7f34-cb33-458d-a73e-5ca09f10c319");
+// =========================================================== -->
+// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+// =========================================================== -->
+		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory("247aa2b2-fc6c-4c73-9232-cf1d655eccbd");
+// =========================================================== -->
+// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+// =========================================================== -->
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx, friendHistory);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
@@ -69,12 +75,12 @@ function renderLiveChatContent(ctx: AppContext) {
 <!-- =========================================================== -->
 			<a onclick="document.getElementById('friend-profile-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
 				<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Show friend profile</p>
-			</a>
+			</a> 
 
 			<!-- Dialog for friend profile -->
-			<dialog id="friend-profile-dialog"  class="self-center m-auto w-[90vw] h-fit lg:w-[80vw]  max-h-[80vh] p-0 rounded-lg bg-cream backdrop:bg-black backdrop:bg-opacity-50">
+ 			<dialog id="friend-profile-dialog"  class="self-center m-auto w-[90vw] h-fit lg:w-[80vw]  max-h-[80vh] p-0 rounded-lg bg-cream backdrop:bg-black backdrop:bg-opacity-50">
 				<friend-profile-pop-up id="friend-profile-component" class="w-full h-full overflow-y-auto"></friend-profile-pop-up>
-			</dialog>
+			</dialog>  
 <!-- =========================================================== -->
 <!-- =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
 <!-- =========================================================== -->
@@ -104,7 +110,7 @@ function passContext(ctx: AppContext, friendHistory: GameHistory[]) {
 		FriendPofileComponent.friend = {avatarUrl: "/uploads/avatars/default.jpg",
 										displayName: "BobJohnson",
 										friendshipId: "7334178a-6011-4a85-8379-c818af0464ee",
-										id: "aeed7f34-cb33-458d-a73e-5ca09f10c319",
+										id: "247aa2b2-fc6c-4c73-9232-cf1d655eccbd",
 										isBlocked: false,
 										isBlockedBy: false,
 										isOnline: false,
