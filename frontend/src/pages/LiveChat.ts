@@ -135,6 +135,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		}
 	});
 
+	
 	// **** DELETE FRIEND ****
 	friendListComponent?.addEventListener('event-delete-friend', async (e: Event) => {
 		const customEvent = e as CustomEvent;
