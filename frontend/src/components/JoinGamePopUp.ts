@@ -1,9 +1,7 @@
-import { router } from "../main.js";
 import { INPUT_CLASSES, BUTTON_BLACK_CLASSES } from "../styles/tailwindStyles.js";
 import { AppContext } from "../types.js";
 
 export class JoinGamePopUp extends HTMLElement {
-	private selectedAvatarFile: File | null = null;
 	private _ctx: AppContext | null = null;
 	private _type: 'game' | 'tournament' = 'game'; // Default to game
 

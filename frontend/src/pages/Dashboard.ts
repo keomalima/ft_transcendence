@@ -105,7 +105,6 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 				</div>
 			</div>
 		</div>
-
 		<!-- Dialog for join game -->
 		<dialog id="join-game-dialog" class="place-self-center">
 			<join-game-pop-up id="join-game-component"></join-game-pop-up>

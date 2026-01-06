@@ -21,6 +21,18 @@ export async function friendsPrivateRoutes(fastify: FastifyInstance) {
 		handler: friendsController.getFriendsHandler
 	});
 
+	fastify.get('/history/:id', {
+		schema: {
+			response: { 200: friendsSchemas.response.getFriendHistory },
+			tags: ['Friends'],
+			description: 'Get the match history of a friend',
+			summary: 'Get the match history of a friend',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: friendsController.getFriendHistoryHandler
+	});
+
 	fastify.put('/block/:id', {
 		schema: {
 			params: z.object({id: z.string()}),

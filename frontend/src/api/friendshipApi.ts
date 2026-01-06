@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { FriendData } from '../types';
+import type { FriendData, GameHistory } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/friends';
@@ -9,10 +9,20 @@ export const friendshipApi = {
 	getList: async (): Promise<Partial<FriendData>[]> => {
 		try {
 			const response = await httpCall.get<Partial<FriendData>[]>(`${BASE_URL}`);
-			console.log('🧑‍🤝‍🧑 getFriendList sucess ✅ ', response.data);
+			console.log('🧑‍🤝‍🧑 getFriendsList sucess ✅ ', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('get list of friends', error);
+		}
+	},
+
+	getFriendHistory: async (friendId: string): Promise<GameHistory[]> => {
+		try {
+			const response = await httpCall.get<GameHistory[]>(`${BASE_URL}/history/${friendId}`);
+			console.log('🧑‍🤝‍🧑 getFriendHistory sucess ✅ ', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('get friend history', error);
 		}
 	},
 
