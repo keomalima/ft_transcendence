@@ -12,6 +12,9 @@ import { chatApi } from "../api/chatApi.js";
 let chatConnection: ChatConnection | null = null;
 let _selectedFriend: any = null;
 let paginationMap: FriendPaginationMap = {};
+let wsListenerAttached = false;
+
+
 
 
 export function LiveChat(ctx: AppContext): string {
@@ -26,15 +29,8 @@ export function LiveChat(ctx: AppContext): string {
 
 	// 2. Setup logic after render
 	setTimeout(async () => {
-// =========================================================== -->
-// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
-// =========================================================== -->
-		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory("247aa2b2-fc6c-4c73-9232-cf1d655eccbd");
-// =========================================================== -->
-// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
-// =========================================================== -->
 		renderLiveChatContent(ctx);       // Build and insert the layout
-		passContext(ctx, friendHistory);                 // Pass ctx to components like <friend-list>
+		passContext(ctx);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
@@ -73,27 +69,17 @@ function renderLiveChatContent(ctx: AppContext) {
 				<p class="text-gray-500">Loading friend list ......</p>
 			</div>
 
-<!-- =========================================================== -->
-<!-- =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
-<!-- =========================================================== -->
-			<a onclick="document.getElementById('friend-profile-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
-				<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Show friend profile</p>
-			</a> 
-
 			<!-- Dialog for friend profile -->
  			<dialog id="friend-profile-dialog"  class="self-center m-auto w-[90vw] h-fit lg:w-[80vw]  max-h-[80vh] p-0 rounded-lg bg-cream backdrop:bg-black backdrop:bg-opacity-50">
 				<friend-profile-pop-up id="friend-profile-component" class="w-full h-full overflow-y-auto"></friend-profile-pop-up>
 			</dialog>  
-<!-- =========================================================== -->
-<!-- =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
-<!-- =========================================================== -->
 
 		</div>
 	`;
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext, friendHistory: GameHistory[]) {
+function passContext(ctx: AppContext) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
@@ -102,27 +88,6 @@ function passContext(ctx: AppContext, friendHistory: GameHistory[]) {
 	if (friendListComponent) {
 		friendListComponent.ctx = ctx;
 	}
-// =========================================================== -->
-// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
-// =========================================================== -->
-	const FriendPofileComponent = document.getElementById('friend-profile-component') as any;
-	if (FriendPofileComponent) {
-		FriendPofileComponent.ctx = ctx;
-		FriendPofileComponent.friendHistory = friendHistory;
-		// here have to pass the right friend
-		FriendPofileComponent.friend = {avatarUrl: "/uploads/avatars/default.jpg",
-										displayName: "BobJohnson",
-										friendshipId: "7334178a-6011-4a85-8379-c818af0464ee",
-										id: "247aa2b2-fc6c-4c73-9232-cf1d655eccbd",
-										isBlocked: false,
-										isBlockedBy: false,
-										isOnline: false,
-										name: "Bob",
-										surname: "Johnson"};
-	}
-// =========================================================== -->
-// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
-// =========================================================== -->
 }
 
 // ======== EVENT LISTENER ============
@@ -228,6 +193,15 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		if (!updatedFriend) return;
 		_selectedFriend = updatedFriend;
 
+		// STEP 4: get the selected friend history
+		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory(_selectedFriend.id);
+
+		const FriendPofileComponent = document.getElementById('friend-profile-component') as any;
+		if (FriendPofileComponent) {
+			FriendPofileComponent.ctx = ctx;
+			FriendPofileComponent.friendHistory = friendHistory;
+			FriendPofileComponent.friend = _selectedFriend;
+		}
 		// STEP 4: Render chat box
 		const chatRight = document.getElementById('chat-right');
 		if (!chatRight) return;
@@ -235,45 +209,48 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 	});
 
 	// WS message event: receive chat from a friend
-	window.addEventListener("ws-new-message", async (e: Event) => {
-		const currentUserId = ctx.userStore.get()?.id;
-		if (!currentUserId) return;
+	if (!wsListenerAttached) {
+		window.addEventListener("ws-new-message", async (e: Event) => {
+			const currentUserId = ctx.userStore.get()?.id;
+			if (!currentUserId) return;
 
-		const { fromUserId, content} = (e as CustomEvent).detail;
+			const { fromUserId, content } = (e as CustomEvent).detail;
 
-		// CASE 1: If the friend is currently selected, show the bubble
-		if (_selectedFriend?.id === fromUserId) {
-			const chatBox = document.getElementById("chat-messages");
-			if (chatBox) {
-				const bubble = document.createElement("div");
-				bubble.className = "flex justify-start";
-				bubble.innerHTML = `
-					<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-						${content}
-					</div>
-				`;
-				chatBox.appendChild(bubble);
-				chatBox.scrollTop = chatBox.scrollHeight;
+			// CASE 1: If the friend is currently selected, show the bubble
+			if (_selectedFriend?.id === fromUserId) {
+				const chatBox = document.getElementById("chat-messages");
+				if (chatBox) {
+					const bubble = document.createElement("div");
+					bubble.className = "flex justify-start";
+					bubble.innerHTML = `
+						<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
+							${content}
+						</div>
+					`;
+					chatBox.appendChild(bubble);
+					chatBox.scrollTop = chatBox.scrollHeight;
+				}
+				return;
 			}
-			return;
-		}
 
-		// CASE 2: Otherwise, save in unread set and refresh FriendList
-		const key = `chat_unread_${currentUserId}`;
-		let unreadSet = new Set<string>();
-		const raw = localStorage.getItem(key);
-		if (raw) unreadSet = new Set(JSON.parse(raw));
+			// CASE 2: Otherwise, save in unread set and refresh FriendList
+			const key = `chat_unread_${currentUserId}`;
+			let unreadSet = new Set<string>();
+			const raw = localStorage.getItem(key);
+			if (raw) unreadSet = new Set(JSON.parse(raw));
 
-		unreadSet.add(fromUserId);
-		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+			unreadSet.add(fromUserId);
+			localStorage.setItem(key, JSON.stringify([...unreadSet]));
 
-		// Refresh FriendList to show blue dot
-		const friendList = document.getElementById("friend-list-component") as any;
-		if (friendList?.loadAndRender) {
-			friendList.skipAutoSelect = true;
-			await friendList.loadAndRender();
-		}
-	});
+			const friendList = document.getElementById("friend-list-component") as any;
+			if (friendList?.loadAndRender) {
+				friendList.skipAutoSelect = true;
+				await friendList.loadAndRender();
+			}
+		});
+
+		wsListenerAttached = true;
+	}
 
 }
 
@@ -319,15 +296,25 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				<p class="font-bold text-lg">${friend.displayName}</p>
 				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
 			</div>
-			<div class="flex gap-2">
-				<button class="border border-black rounded-full px-3 py-1 hover:bg-black hover:text-white transition">
-					See Profile
+			<div class="flex gap-2 items-center">
+				<button
+					id="see-profile-btn"
+					class="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-shadow shadow-sm hover:shadow-md"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.57 0 4.947.723 6.879 1.96M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+					</svg>
+					<span>See Profile</span>
 				</button>
 				<button id="block-toggle-btn"
-					class="${friend.isBlocked 
+					class="
+					rounded-full px-4 py-1.5
+					text-sm font-medium
+					transition-shadow shadow-sm hover:shadow-md
+					${friend.isBlocked 
 						? 'bg-green-600 text-white hover:bg-green-700' 
-						: 'bg-red-600 text-white hover:bg-red-700'} 
-						rounded-full px-3 py-1 transition font-semibold"
+						: 'bg-red-600 text-white hover:bg-red-700'}
+				"
 				>
 					${friend.isBlocked ? 'Unblock your friend' : 'Block your friend'}
 				</button>
@@ -429,6 +416,14 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 					console.error('Error block/unblock:', error);
 					showToast('Action failed', 'block');
 			}
+		});
+	}
+
+	const seeProfileBtn = document.getElementById('see-profile-btn');
+	if (seeProfileBtn) {
+		seeProfileBtn.addEventListener('click', () => {
+			const profileDialog = document.getElementById('friend-profile-dialog') as HTMLDialogElement | null;
+			if (profileDialog) profileDialog.showModal();
 		});
 	}
 
