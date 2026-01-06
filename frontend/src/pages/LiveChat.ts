@@ -112,28 +112,24 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 			const chatEmptyMessage = chatEmpty.querySelector('p');
 			if (chatEmptyMessage) {
-				chatEmptyMessage.textContent = "You have no friends yet. Add some to start chatting!";
-			}
-		} else {
-			const currentUserId = ctx.userStore.get()?.id;
-			if (currentUserId) {
-				// REMOVE FIRST FRIEND from unread
-				const key = `chat_unread_${currentUserId}`;
-				try {
-					const raw = localStorage.getItem(key);
-					if (raw) {
-						const unreadSet = new Set<string>(JSON.parse(raw));
-						unreadSet.delete(friends[0].id);
-						localStorage.setItem(key, JSON.stringify([...unreadSet]));
+				chatEmptyMessage.innerHTML = `
+							<span class="text-gray-900 text-xl font-semibold italic text-center block">
+								🫤 You have no friends yet. Add some to start chatting!
+							</span>
+						`;			
 					}
-				} catch (err) {
-					console.error("Failed to update unread list in localStorage", err);
-				}
-			}
-			await friendListComponent.loadAndRender();
+		} else {
+			chatRight.classList.add('hidden');
+			chatEmpty.classList.remove('hidden');
 
-			_selectedFriend = friends[0];
-			renderChatBox(_selectedFriend, ctx);
+			const chatEmptyMessage = chatEmpty.querySelector('p');
+			if (chatEmptyMessage) {
+				chatEmptyMessage.innerHTML = `
+					<span class="text-gray-900 text-xl font-semibold italic text-center block">
+						👈 Select a friend to start chatting!
+					</span>
+				`;
+			}
 		}
 	});
 
