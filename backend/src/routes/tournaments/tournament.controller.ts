@@ -331,8 +331,8 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 				message: "Game not found or unauthorized"
 			});
 		}
-		const player = game.gameUsers.find(u => u.user.id === userId);
-		const opponent = game.gameUsers.find(u => u.user.id !== userId);
+		const player = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.user.id === userId);
+		const opponent = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.user.id !== userId);
 		if (!opponent || !player) {
 			return reply.code(404).send({
 				message: "Game is not yet completed"
