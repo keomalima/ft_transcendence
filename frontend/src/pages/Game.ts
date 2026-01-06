@@ -78,18 +78,17 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
 			<div class="text-center flex-shrink-0">
 				<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Game</h1>
-				<p class="text-xs md:text-sm hidden portrait:block landscape:md:block">#${gameId}</p>
 			</div>
 			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
 				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>player 1</p>
+					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>-</p>
 					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 				<div class='flex-1 flex items-center justify-center'>
 					<p class="text-sm md:text-base">vs</p>
 				</div>
 				<div class='flex-1 justify-items-center'>
-					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>player 2</p>
+					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>-</p>
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 			</div>

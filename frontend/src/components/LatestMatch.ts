@@ -1,4 +1,4 @@
-import { AppContext, GameHistory } from "../types.js";
+import type { AppContext, GameHistory, UserState } from "../types.js";
 
 export class LatestMatch extends HTMLElement {
 	private _ctx: AppContext | null = null;
@@ -13,6 +13,7 @@ export class LatestMatch extends HTMLElement {
 		if (this.isConnected && this._ctx && this._gameHistory)
 			this.loadAndRender();
 	}
+	
 	set gameHistory(value: GameHistory[]) {
 		this._gameHistory = value;
 		if (this.isConnected && this._ctx && this._gameHistory)
@@ -73,6 +74,7 @@ export class LatestMatch extends HTMLElement {
 	}
 
 	private generateMatchCards() {
+		console.log('generate latest match', this._gameHistory);
 		const scores = document.getElementById('last-match-scores');
 		let count = 20;
 		this._gameHistory?.forEach((match) => {
@@ -86,7 +88,6 @@ export class LatestMatch extends HTMLElement {
 	private createScoreCard(match: GameHistory) : HTMLElement {
 
 		const textColor : string = match.isWinner ? 'bg-black text-white font-semibold' : 'bg-white';
-		// const bgColor : string = match.score! === match.opponent?.score! ? 'bg-gray-400' : '';
 
 		const card = document.createElement('span');
 		card.className = 'inline-grid grid-cols-1 grid-rows-3 mx-2 rounded-xl text-center';
