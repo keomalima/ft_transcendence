@@ -1,4 +1,4 @@
-import type { AppContext, ChatMessage, FriendData, UserState } from "../types.js";
+import type { AppContext, ChatMessage, FriendData, FriendPaginationMap, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // Import UI components
@@ -10,6 +10,8 @@ import { chatApi } from "../api/chatApi.js";
 
 let chatConnection: ChatConnection | null = null;
 let _selectedFriend: any = null;
+let paginationMap: FriendPaginationMap = {};
+
 
 export function LiveChat(ctx: AppContext): string {
 	const currentUser: UserState | null = ctx.userStore.get();
@@ -241,13 +243,29 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 		return;
 	}
 
-	// ===== Fetch chat history =====
+	// ===== Fetch first 30 chat history =====
 	let messages: ChatMessage[] = [];
 	try {
 		messages = await chatApi.fetchChatHistory(friend.id);
+		if (messages.length > 0) {
+			paginationMap[friend.id] = {
+				oldestMessageId: messages[0].id,
+				hasMoreMessages: messages.length === 30,
+			};
+		} else {
+			paginationMap[friend.id] = {
+				oldestMessageId: null,
+				hasMoreMessages: false,
+			};
+		}
 	} catch (error) {
 		console.error('❌ Failed to load chat history:', error);
+		paginationMap[friend.id] = {
+			oldestMessageId: null,
+			hasMoreMessages: false,
+		};
 	}
+
 
 	chatRight.innerHTML = `
 		<!-- Header -->
@@ -302,10 +320,47 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 	// Auto scroll to bottom after inserting messages
 	const chatBox = document.getElementById("chat-messages");
 	if (chatBox) {
+
+		// Scroll to bottom on first render
 		requestAnimationFrame(() => {
 			chatBox.scrollTop = chatBox.scrollHeight;
 		});
+		chatBox.addEventListener("scroll", async () => {
+			const state = paginationMap[_selectedFriend.id];
+			if (chatBox.scrollTop === 0 && state?.hasMoreMessages && state.oldestMessageId && _selectedFriend) {
+				console.log("🔼 Scrolled to top — loading older messages...");
+
+				const olderMessages = await chatApi.fetchChatHistory(_selectedFriend.id, state.oldestMessageId);				
+				if (olderMessages.length === 0) {
+					paginationMap[_selectedFriend.id].hasMoreMessages = false;
+					console.log("🛑 No more older messages.");
+					return;
+				}
+
+				if (olderMessages.length < 30) {
+					paginationMap[_selectedFriend.id].hasMoreMessages = false;
+				}
+
+				// Update oldest ID
+				paginationMap[_selectedFriend.id].oldestMessageId = olderMessages[0].id;
+
+				// Save scroll height before inserting
+				const previousHeight = chatBox.scrollHeight;
+
+				// Render new messages and prepend
+				const tempDiv = document.createElement("div");
+				tempDiv.innerHTML = renderMessageBubbles(olderMessages, ctx.userStore.get()?.id || "");
+				chatBox.prepend(...Array.from(tempDiv.children));
+
+				// Restore scroll position
+				requestAnimationFrame(() => {
+					const newHeight = chatBox.scrollHeight;
+					chatBox.scrollTop = newHeight - previousHeight;
+				});
+			}
+		});
 	}
+
 	
 	const blockBtn = document.getElementById('block-toggle-btn');
 	if (blockBtn) {

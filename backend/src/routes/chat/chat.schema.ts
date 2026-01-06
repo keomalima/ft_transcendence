@@ -32,9 +32,11 @@ const sendMessageResponseSchema = z.union([
 ]);
 
 const chatMessageSchema = z.object({
+	id: z.string(),
 	senderId: z.string(),
 	receiverId: z.string(),
 	content: z.string(),
+	sentAt: z.string(),
 });
 
 const getChatHistoryResponseSchema = z.array(chatMessageSchema);

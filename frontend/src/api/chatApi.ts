@@ -5,18 +5,24 @@ import { buildApiError } from './apiError.js';
 const BASE_URL = '/chat';
 
 export const chatApi = {
-	fetchChatHistory: async (friendId: string): Promise<ChatMessage[]> => {
+	fetchChatHistory: async (friendId: string, beforeMessageId?: string): Promise<ChatMessage[]> => {
 		if (!friendId)
 			throw new Error("Friend ID is required");
 
 		try {
-			const response = await httpCall.get(`${BASE_URL}/history/${friendId}`);
+			let url = `${BASE_URL}/history/${friendId}?limit=30`;
+			if (beforeMessageId) {
+				url += `&before=${beforeMessageId}`;
+			}
+
+			const response = await httpCall.get(url);
 			console.log("💬 fetchChatHistory success ✅", response.data);
-			return response.data; // array of messages
+			return response.data || []; // defensive: return [] if data is undefined
 		} catch (error: unknown) {
 			throw buildApiError('fetch chat history', error);
 		}
 	},
+
 
 	getFriendsWithNewMessages: async (): Promise<string[]> => {
 		try {

@@ -194,9 +194,11 @@ export interface TournamentData {
 }
 
 export interface ChatMessage {
+	id: string;
 	senderId: string;
 	receiverId: string;
 	content: string;
+	sentAt: string;
 }
 
 export interface ChatMessagePayload {
@@ -230,3 +232,10 @@ export interface SendMessageError {
 }
 
 export type SendMessageResponse = SendMessageSuccess | SendMessageError;
+
+export type FriendPaginationState = {
+	oldestMessageId: string | null;
+	hasMoreMessages: boolean;
+};
+
+export type FriendPaginationMap = Record<string, FriendPaginationState>;

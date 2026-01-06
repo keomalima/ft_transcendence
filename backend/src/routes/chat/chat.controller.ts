@@ -23,22 +23,35 @@ type SendMessageRequest = FastifyRequest<{
 // Chat Handlers
 // =====================
 
-async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendId: string } }>, reply: FastifyReply) {
+async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendId: string }, Querystring: { limit?: string, before?: string } }>, reply: FastifyReply) {
 	try {
 		const userId = request.user!.id;
 		const friendId = request.params.friendId;
+
+		const limit = request.query.limit ? parseInt(request.query.limit, 10) : 30;
+		const beforeId = request.query.before || null;
 
 		if (userId === friendId) {
 			return reply.code(400).send({ message: "Cannot chat with yourself" });
 		}
 
-		const friendship = await chatService.findFriendshipBetween(request.server.prisma, userId, friendId);
+		if (isNaN(limit) || limit < 1 || limit > 100) {
+			return reply.code(400).send({ message: "Invalid limit" });
+		}
+
+		const friendship = await chatService.findFriendshipBetween(request.server.prisma, userId, friendId,);
 		if (!friendship) {
 			return reply.code(403).send({ message: "You are not friends with this user" });
 		}
 
-		const messages = await chatService.getChatHistory(request.server.prisma, userId, friendId);
-		return reply.code(200).send(messages);
+		const messages = await chatService.getChatHistory(request.server.prisma, userId, friendId, limit, beforeId);
+		return reply.code(200).send(messages.map(m => ({
+			id: m.id,
+			senderId: m.senderId,
+			receiverId: m.receiverId,
+			content: m.content,
+			sentAt: m.sentAt.toISOString(),
+		})));
 
 	} catch (error: any) {
 		return reply.code(500).send({ message: "Failed to get chat history" });
