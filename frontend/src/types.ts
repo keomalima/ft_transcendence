@@ -194,9 +194,11 @@ export interface TournamentData {
 }
 
 export interface ChatMessage {
+	id: string;
 	senderId: string;
 	receiverId: string;
 	content: string;
+	sentAt: string;
 }
 
 export interface ChatMessagePayload {
@@ -211,16 +213,9 @@ export interface ConnectedPayload {
 	message: string;
 }
 
-export interface NewMessagesPayload {
-	type: "new-messages";
-	fromUserIds: string[];
-}
-
-
 export type ChatWsMessage =
 	| ChatMessagePayload
-	| ConnectedPayload
-	| NewMessagesPayload;
+	| ConnectedPayload;
 
 export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
 
@@ -237,3 +232,10 @@ export interface SendMessageError {
 }
 
 export type SendMessageResponse = SendMessageSuccess | SendMessageError;
+
+export type FriendPaginationState = {
+	oldestMessageId: string | null;
+	hasMoreMessages: boolean;
+};
+
+export type FriendPaginationMap = Record<string, FriendPaginationState>;

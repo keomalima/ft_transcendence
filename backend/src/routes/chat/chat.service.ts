@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import type { Message } from '@prisma/client';
 
 // =====================
 // Chat Service Functions
@@ -17,18 +18,25 @@ async function findFriendshipBetween(prisma: PrismaClient, userId: string, frien
 	});
 }
 
-async function getChatHistory(prisma: PrismaClient, userId: string, friendId: string) {
-	return prisma.message.findMany({
-		where: {
-			OR: [
-				{ senderId: userId, receiverId: friendId },
-				{ senderId: friendId, receiverId: userId },
-			],
-		},
-		orderBy: {
-			sentAt: 'asc',
-		},
-	});
+async function getChatHistory(prisma: PrismaClient, userId: string, friendId: string, limit: number,beforeMessageId?: string): Promise<Message[]> {
+
+	const messages = await prisma.message.findMany({
+   		where: {
+      		OR: [
+       			{ senderId: userId, receiverId: friendId },
+        		{ senderId: friendId, receiverId: userId },
+     		],
+    	},
+   	 	orderBy: {
+    		sentAt: 'desc',
+    	},
+   	 	cursor: beforeMessageId ? { id: beforeMessageId } : undefined,
+    	skip: beforeMessageId ? 1 : 0,
+    	take: limit,
+  	});
+
+	// Reverse so frontend always gets oldest → newest
+	return messages.reverse();
 }
 
 async function isBlockedBy(prisma: PrismaClient, senderId: string, receiverId: string) {

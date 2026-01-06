@@ -7,6 +7,8 @@ export class FriendList extends HTMLElement {
 	private _list: Partial<FriendData>[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
 	private _isLoading: boolean = false;
+
+	public skipAutoSelect: boolean = false; // for Live Chat logic
 	
 	constructor() {
 		super();
@@ -31,6 +33,7 @@ export class FriendList extends HTMLElement {
 		this._isLoading = true;
 		
 		await this.getFriendList();
+
 		this.render();
 		this.displayFriendCards();
 
@@ -115,8 +118,6 @@ export class FriendList extends HTMLElement {
 
 	private createFriendCard(friend: Partial<FriendData>): HTMLElement {
 		const card = document.createElement('div');
-		const userBlocked = friend.isBlocked;    // user blocked the friend
-		const userBeBlocked = friend.isBlockedBy; // user be blocked by the friend
 
 		card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
 
@@ -125,6 +126,27 @@ export class FriendList extends HTMLElement {
 		avatar.className = 'shrink-0';
 
 		const image = document.createElement('img');
+
+		// === Blue dot for new message (only in LiveChat)
+		const isLiveChatPage = window.location.pathname === '/live-chat';
+		if (isLiveChatPage) {
+			const currentUserId = this._ctx?.userStore.get()?.id;
+			const key = `chat_unread_${currentUserId}`;
+			try {
+				const raw = localStorage.getItem(key);
+				if (raw) {
+					const unreadList: string[] = JSON.parse(raw);
+					if (friend.id && unreadList.includes(friend.id)) {
+						const dot = document.createElement('span');
+						dot.className = 'absolute top-1 left-1 w-2 h-2 rounded-full bg-blue-500';
+						avatar.appendChild(dot);
+					}
+				}
+			} catch (e) {
+				console.error("❌ Failed to read unread list from localStorage", e);
+			}
+		}
+
 		image.src = `${this._uploadsUrl}${friend.avatarUrl}`;
 		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
 		avatar.appendChild(image);
@@ -160,50 +182,6 @@ export class FriendList extends HTMLElement {
 		deleteBtn.id = `delete-${friend.id}`;
 		actions.appendChild(deleteBtn);
 
-		// === Block / Unblock Button ===
-		const blockBtn = document.createElement('button');
-		blockBtn.id = `block-${friend.id}`;
-		blockBtn.className = 'ml-2';
-		blockBtn.title = userBlocked
-			? "Unblock your friend"
-			: "Block your friend";
-
-		blockBtn.innerHTML = /*html*/`
-		<div class="relative w-8 h-8">
-			<!-- Down-left arrow -->
-			<svg viewBox="0 0 24 24" class="w-8 h-8 text-blue-600 rotate-[-30deg]">
-				<path fill="currentColor" d="M12 21c-.39 0-.77-.15-1.06-.44l-6.5-6.5a1.5 1.5 0 1 1 2.12-2.12L11 16.88V3a1.5 1.5 0 1 1 3 0v13.88l4.44-4.44a1.5 1.5 0 1 1 2.12 2.12l-6.5 6.5c-.29.29-.67.44-1.06.44z"/>
-			</svg>
-			<!-- ✅ or ❌ badge -->
-			<span class="absolute -bottom-0.5 -right-0.5 rounded-full w-2 h-2 ${userBlocked ? 'bg-red-500' : 'bg-green-500'}">
-			</span>
-		</div>
-		`;
-		actions.appendChild(blockBtn);
-
-
-		// === Blocked-by Status Icon ===
-		const blockedStatus = document.createElement('div');
-		blockedStatus.className = 'ml-2';
-		blockedStatus.title = userBeBlocked
-			? "You are blocked by this friend"
-			: "You can message this friend";
-
-		blockedStatus.innerHTML = /*html*/`
-		<div class="relative w-8 h-8">
-			<!-- Up-right arrow -->
-			<svg viewBox="0 0 24 24" class="w-8 h-8 text-blue-600 rotate-[30deg]">
-				<path fill="currentColor" d="M12 3c.39 0 .77.15 1.06.44l6.5 6.5a1.5 1.5 0 1 1-2.12 2.12L13 7.12V21a1.5 1.5 0 1 1-3 0V7.12l-4.44 4.44a1.5 1.5 0 1 1-2.12-2.12l6.5-6.5c.29-.29.67-.44 1.06-.44z"/>
-			</svg>
-			<!-- ✅ or ❌ badge -->
-			<span class="absolute -bottom-0.5 -right-0.5 rounded-full w-2 h-2 ${userBeBlocked ? 'bg-red-500' : 'bg-green-500'}">
-			</span>
-		</div>
-		`;
-		actions.appendChild(blockedStatus);
-
-
-
 		// ===========================
 
 		card.appendChild(avatar);
@@ -211,6 +189,7 @@ export class FriendList extends HTMLElement {
 		card.appendChild(actions);
 
 		deleteBtn.addEventListener('click', (e) => {
+			 e.stopPropagation(); // prevent selecting friend when deleting
 			// Get dialog elements
 			const dialog = this.querySelector('#delete-friend-dialog') as HTMLDialogElement;
 			const message = this.querySelector('#delete-friend-message') as HTMLElement;
@@ -267,18 +246,6 @@ export class FriendList extends HTMLElement {
 			}));
 		});
 		
-		blockBtn?.addEventListener('click', (e) => {
-			e.stopPropagation(); // prevent triggering card click
-
-			this.dispatchEvent(new CustomEvent('event-toggle-block', {
-				detail: {
-					friendId: friend.id as string,
-					isBlocked: userBlocked
-				},
-				bubbles: true
-			}));
-		});
-
 		return card;
 	}
 }

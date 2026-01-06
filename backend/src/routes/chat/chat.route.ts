@@ -12,6 +12,7 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 	fastify.get('/history/:friendId', {
 		schema: {
 			params: z.object({ friendId: z.string() }),
+			querystring: z.object({ limit: z.string().optional(), before: z.string().optional(),}),
 			response: { 200: chatSchemas.response.getChatHistory },
 			tags: ['Chat'],
 			description: 'Get chat history with a friend',
@@ -34,6 +35,19 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen,
 		handler: chatController.sendMessageHandler
 	});
+
+	fastify.get('/unread', {
+		schema: {
+			response: { 200: z.array(z.string()), },
+			tags: ['Chat'],
+			description: 'Get list of friend IDs with unread messages',
+			summary: 'Unread message friends',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.getFriendsWithNewMessagesHandler
+	});
+
 
 }
  
