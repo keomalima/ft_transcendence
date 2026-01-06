@@ -132,7 +132,7 @@ function updatePlayerInfo(tournamentGames: TournamentGame[]) {
 async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: TournamentGame[], ctx: AppContext) {
 
 	const gameIndex = tournamentGames.findIndex(game =>
-		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id)
+		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id && game.status === 'PENDING')
 	)
 
 	if (gameIndex === -1) return;
@@ -148,6 +148,7 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 				console.log('🔔', updateGameData.game);
 				updatePlayerInfo(tournamentGames);
 			}
+			console.log('websocket called')
 		},
 		() => {
 			cleanWaitingRoomWS();

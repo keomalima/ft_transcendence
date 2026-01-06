@@ -13,6 +13,7 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 	const userId = request.params.userId;
 	const identifiedSocket = socket as WebSocket & { userId?: string};
 
+	console.log('----adding new socket for game id----', gameId);
 	identifiedSocket.userId = userId;
 	console.log(`===== User ${identifiedSocket.userId} connected to game room: ${gameId} =====`);
 
@@ -37,9 +38,11 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 
 function broadcasToRoom(gameId: string, message: any) {
 	const sockets = gameRooms.get(gameId);
+	console.log('----trying to broadcast message for gameId room----', gameId);
 	if (sockets) {
 		sockets.forEach(socket => {
 			if (socket.readyState === WebSocket.OPEN) {
+				console.log('---socket---', socket);
 				socket.send(JSON.stringify(message));
 			}
 		})

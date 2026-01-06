@@ -455,7 +455,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		const detail = customEvent.detail;
 
 		// Only the creator should call the API to finish the game
-		if (currentGame.isCreator) {
+		if (currentGame.isCreator || currentGame.tournamentId) {
 			const currentGame = await gameService.getGame(gameId, ctx);
 			if (!currentGame) {
 				router.navigateTo('/home');
@@ -481,12 +481,12 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 							{
 								userId: currentGame.gameUsers[0].user?.id!,
 								playerId: currentGame.gameUsers[0].id!,
-								score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+								score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
 							},
 							{
 								userId: currentGame.gameUsers[1].user?.id!,
 								playerId: currentGame.gameUsers[1].id!,
-								score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+								score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
 							}
 						]
 					};
@@ -521,8 +521,9 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		backHomeBtn?.addEventListener('click', async () => {
 			console.log(currentGame);
 			cleanGameWS();
-			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId) {
 				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
+			}
 			else
 				router.navigateTo('/home');
 		}, { once: true });
@@ -566,12 +567,12 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 						{
 								userId: currentGame.gameUsers[0].user?.id!,
 								playerId: currentGame.gameUsers[0].id!,
-								score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+								score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
 						},
 						{
 								userId: currentGame.gameUsers[1].user?.id!,
 							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+							score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
 						}
 					]
 				};
