@@ -1,9 +1,10 @@
-import type { AppContext, ChatMessage, FriendData, FriendPaginationMap, UserState } from "../types.js";
+import type { AppContext, ChatMessage, FriendData, FriendPaginationMap, UserState, GameHistory } from "../types.js";
 import { router } from "../main.js";
 
 // Import UI components
 import "../components/NavBar.js";
 import "../components/FriendList.js";
+import "../components/FriendProfilePopUp.js";
 import { friendshipApi } from "../api/friendshipApi.js";
 import { ChatConnection } from "../websocket/ChatConnection.js";
 import { chatApi } from "../api/chatApi.js";
@@ -25,8 +26,15 @@ export function LiveChat(ctx: AppContext): string {
 
 	// 2. Setup logic after render
 	setTimeout(async () => {
+// =========================================================== -->
+// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+// =========================================================== -->
+		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory("247aa2b2-fc6c-4c73-9232-cf1d655eccbd");
+// =========================================================== -->
+// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+// =========================================================== -->
 		renderLiveChatContent(ctx);       // Build and insert the layout
-		passContext(ctx);                 // Pass ctx to components like <friend-list>
+		passContext(ctx, friendHistory);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
@@ -45,7 +53,7 @@ function renderLiveChatContent(ctx: AppContext) {
 	const content = document.getElementById("live-chat-content");
 	if (!content) return;
 
-	content.innerHTML = `
+	content.innerHTML = /*html*/`
 		<nav-bar id="nav-bar-component"></nav-bar>
 
 		<div class="grid h-[90vh] gap-4 px-4 py-6 grid-rows-[auto_1fr_auto] lg:grid-cols-4 lg:grid-rows-1">
@@ -65,12 +73,27 @@ function renderLiveChatContent(ctx: AppContext) {
 				<p class="text-gray-500">Loading friend list ......</p>
 			</div>
 
+<!-- =========================================================== -->
+<!-- =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+<!-- =========================================================== -->
+			<a onclick="document.getElementById('friend-profile-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
+				<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Show friend profile</p>
+			</a> 
+
+			<!-- Dialog for friend profile -->
+ 			<dialog id="friend-profile-dialog"  class="self-center m-auto w-[90vw] h-fit lg:w-[80vw]  max-h-[80vh] p-0 rounded-lg bg-cream backdrop:bg-black backdrop:bg-opacity-50">
+				<friend-profile-pop-up id="friend-profile-component" class="w-full h-full overflow-y-auto"></friend-profile-pop-up>
+			</dialog>  
+<!-- =========================================================== -->
+<!-- =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+<!-- =========================================================== -->
+
 		</div>
 	`;
 }
 
 // ======== PASS CONTEXT ========
-function passContext(ctx: AppContext) {
+function passContext(ctx: AppContext, friendHistory: GameHistory[]) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
@@ -79,6 +102,27 @@ function passContext(ctx: AppContext) {
 	if (friendListComponent) {
 		friendListComponent.ctx = ctx;
 	}
+// =========================================================== -->
+// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+// =========================================================== -->
+	const FriendPofileComponent = document.getElementById('friend-profile-component') as any;
+	if (FriendPofileComponent) {
+		FriendPofileComponent.ctx = ctx;
+		FriendPofileComponent.friendHistory = friendHistory;
+		// here have to pass the right friend
+		FriendPofileComponent.friend = {avatarUrl: "/uploads/avatars/default.jpg",
+										displayName: "BobJohnson",
+										friendshipId: "7334178a-6011-4a85-8379-c818af0464ee",
+										id: "247aa2b2-fc6c-4c73-9232-cf1d655eccbd",
+										isBlocked: false,
+										isBlockedBy: false,
+										isOnline: false,
+										name: "Bob",
+										surname: "Johnson"};
+	}
+// =========================================================== -->
+// =========== HERE IS THE FRIEND PROFILE FOR JOEY =========== -->
+// =========================================================== -->
 }
 
 // ======== EVENT LISTENER ============

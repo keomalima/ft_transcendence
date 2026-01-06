@@ -25,6 +25,7 @@ export class TournamentNextGame extends HTMLElement {
 	set tournamentData(value: TournamentData | null) {
 		this._tournamentData = value;
 		if (value) {
+			console.log('valueeee', value);
 			this.loadAndRender();
 		}
 	}

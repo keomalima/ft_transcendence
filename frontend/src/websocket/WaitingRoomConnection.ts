@@ -20,6 +20,7 @@ export class WaitingRoomConnection {
 
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
+			console.log('---event on websocket---', data);
 			if (data.type === 'room_update') {
 				onUpdate(data);
 			}

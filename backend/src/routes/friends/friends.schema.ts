@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FriendshipStatus } from "@prisma/client";
+import { GameStatus, GameMode } from "@prisma/client";
 
 // =====================
 // Request Schemas
@@ -62,6 +63,25 @@ const getFriendsRequestResponseSchema = z.object({
 
 const friendsRequestArraySchema = z.array(getFriendsRequestResponseSchema)
 
+const getFriendHistoryRequestResponseSchema = z.array (
+	z.object({
+		gameId: z.string(),
+		score: z.number().int(),
+		isWinner: z.boolean(),
+		duration: z.number().int(),
+		type: z.enum(GameMode),
+		status: z.enum(GameStatus),
+		date: z.date(),
+		opponent: z.object({
+			id: z.string(),
+			avatarUrl: z.string(),
+			name: z.string(),
+			score: z.number().int(),
+			isWinner: z.boolean()
+		})
+	})
+)
+
 // =====================
 // Type Exports
 // =====================
@@ -73,18 +93,19 @@ export type FriendsRequestInput = z.infer<typeof sendRequestSchema>;
 // =====================
 
 export const friendsSchemas = {
-  // Request schemas
-  request: {
-	sendRequest: sendRequestSchema
-  },
-  
-  // Response schemas
-  response: {
-	getFriends: friendsArraySchema,
-	sendRequest: sendRequestResponseSchema,
-	acceptRequest: sendRequestResponseSchema,
-	pendingRquest: friendsRequestArraySchema,
-	blockFriend: blockFriendResponseSchema,
-	unblockFriend: unblockFriendResponseSchema
-  },
+	// Request schemas
+	request: {
+		sendRequest: sendRequestSchema
+	},
+	
+	// Response schemas
+	response: {
+		getFriends: friendsArraySchema,
+		sendRequest: sendRequestResponseSchema,
+		acceptRequest: sendRequestResponseSchema,
+		pendingRquest: friendsRequestArraySchema,
+		blockFriend: blockFriendResponseSchema,
+		unblockFriend: unblockFriendResponseSchema,
+		getFriendHistory: getFriendHistoryRequestResponseSchema
+	},
 };

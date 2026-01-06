@@ -22,6 +22,10 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/requests HTTP/1.1
 Authorization: Bearer {{token}}
 
+### GET FRIEND HISTORY
+GET {{baseUrl}}/history/ HTTP/1.1
+Authorization: Bearer {{token}}
+
 ### SENDS A FRIENDSHIP REQUEST
 POST {{baseUrl}}/ HTTP/1.1
 Authorization: Bearer {{token}}

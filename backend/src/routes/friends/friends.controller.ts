@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { FriendsRequestInput } from './friends.schema.js';
 import { friendsService } from './friends.service.js'
+import { gameService } from '../game/game.service.js';
 import type { User } from '@prisma/client';
 
 // =====================
@@ -45,6 +46,51 @@ async function getFriendsHandler(request: FastifyRequest, reply: FastifyReply) {
 		return friends
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to find friends"});
+	}
+}
+
+async function getFriendHistoryHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {
+		const requesterId = request.user!.id;
+		const friendId = request.params.id;
+
+		// check if friendship between requester and friend
+		const friendship = await friendsService.findFriendshipByFriendId(request.server.prisma, requesterId, friendId);
+		if (!friendship) {
+			return reply.code(404).send({ message: "Friendship does not exist" });
+		}
+
+		const games = await gameService.getGamesByUserId(request.server.prisma, friendId);
+		const filteredGames = games.filter((gp: typeof games[0]) => gp.game.gameUsers.length === 2
+			&& (gp.game.status === "COMPLETED"
+			|| gp.game.status === "ABANDONED"));
+		const result = filteredGames.map((gp: typeof filteredGames[0]) => {
+			const opponent = gp.game.gameUsers.find((gu: typeof result[0])  => gu.userId !== friendId);
+			let durationMs;
+			if (gp.game.completedAt && gp.game.startedAt)
+				durationMs = Math.round((new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000);
+			else
+				durationMs = 0;
+			return {
+				gameId: gp.gameId,
+				score: gp.score,
+				isWinner: gp.isWinner, 
+				duration: durationMs,
+				type: gp.game.type,
+				status: gp.game.status,
+				date: gp.game.createdAt,
+				opponent: {
+					id: opponent.userId,
+					avatarUrl: opponent.user.avatarUrl,
+					name: opponent.user.displayName,
+					score: opponent.score,
+					isWinner: opponent.isWinner,
+				}
+			}
+		})
+		return reply.code(200).send(result)
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to fetch friend game history"});
 	}
 }
 
@@ -283,6 +329,7 @@ function isFriendOnline (date: Date | null): boolean {
 
 export const friendsController = {
 	getFriendsHandler,
+	getFriendHistoryHandler,
 	sendRequestHandler,
 	acceptFriendHandler,
 	getPendingRequestsHandler,

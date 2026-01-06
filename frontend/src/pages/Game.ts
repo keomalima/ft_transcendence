@@ -78,18 +78,17 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
 			<div class="text-center flex-shrink-0">
 				<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Game</h1>
-				<p class="text-xs md:text-sm hidden portrait:block landscape:md:block">#${gameId}</p>
 			</div>
 			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
 				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>player 1</p>
+					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>-</p>
 					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 				<div class='flex-1 flex items-center justify-center'>
 					<p class="text-sm md:text-base">vs</p>
 				</div>
 				<div class='flex-1 justify-items-center'>
-					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>player 2</p>
+					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>-</p>
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 			</div>
@@ -455,7 +454,7 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		const detail = customEvent.detail;
 
 		// Only the creator should call the API to finish the game
-		if (currentGame.isCreator) {
+		if (currentGame.isCreator || currentGame.tournamentId) {
 			const currentGame = await gameService.getGame(gameId, ctx);
 			if (!currentGame) {
 				router.navigateTo('/home');
@@ -481,12 +480,12 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 							{
 								userId: currentGame.gameUsers[0].user?.id!,
 								playerId: currentGame.gameUsers[0].id!,
-								score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+								score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
 							},
 							{
 								userId: currentGame.gameUsers[1].user?.id!,
 								playerId: currentGame.gameUsers[1].id!,
-								score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+								score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
 							}
 						]
 					};
@@ -521,8 +520,9 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 		backHomeBtn?.addEventListener('click', async () => {
 			console.log(currentGame);
 			cleanGameWS();
-			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId) {
 				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
+			}
 			else
 				router.navigateTo('/home');
 		}, { once: true });
@@ -566,12 +566,12 @@ function setupGameEventListeners(currentUser: UserState, currentGame: GameData, 
 						{
 								userId: currentGame.gameUsers[0].user?.id!,
 								playerId: currentGame.gameUsers[0].id!,
-								score: currentGame.gameUsers[0].user?.id === detail.players[0].id ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
+								score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
 						},
 						{
 								userId: currentGame.gameUsers[1].user?.id!,
 							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === detail.players[1].id ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
+							score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
 						}
 					]
 				};

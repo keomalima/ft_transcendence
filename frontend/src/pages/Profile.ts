@@ -1,4 +1,5 @@
-import { AppContext, GameHistory } from "../types.js";
+import { AppContext, GameHistory, UserState } from "../types.js";
+import { friendshipApi } from "../api/friendshipApi.js";
 import { router } from "../main.js";
 
 // import HTML components
@@ -14,7 +15,8 @@ import { gameService } from "../services/GameService.js";
 export function Profile(ctx: AppContext): string {
 	setTimeout( async () => {
 		const gameHistory: GameHistory[] = await gameService.getHistory();
-		passContext(ctx, gameHistory);
+		const currentUser: UserState | null = ctx.userStore.get();
+		passContext(ctx, gameHistory, currentUser);
 	}, 0);
 
 	const content: string =
@@ -46,16 +48,14 @@ export function Profile(ctx: AppContext): string {
 				<match-history id='match-history-component' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-[80vh] lg:max-h-[50vh]"></match-history>
 				<!-- <div id='match-history' class="bg-white p-10 shadow-sm rounded-lg h-full flex flex-col gap-3 max-h-150"> -->
 			</div>
-
-
-
 		</div>
+		
 	`;
 
 	return content;
 }
 
-function passContext(ctx: AppContext, gameHistory: GameHistory[]) {
+function passContext(ctx: AppContext, gameHistory: GameHistory[], currentUser: UserState | null) {
 	const navBarComponent = document.getElementById('nav-bar-component') as any;
 	if (navBarComponent) {
 		navBarComponent.ctx = ctx;
@@ -63,6 +63,7 @@ function passContext(ctx: AppContext, gameHistory: GameHistory[]) {
 	const profileCardComponent = document.getElementById('profile-card-component') as any;
 	if (profileCardComponent) {
 		profileCardComponent.ctx = ctx;
+		profileCardComponent.user = currentUser;
 	}
 	const bigStatsComponent = document.getElementById('big-stats-component') as any;
 	if (bigStatsComponent) {
@@ -84,4 +85,5 @@ function passContext(ctx: AppContext, gameHistory: GameHistory[]) {
 		latestMatchComponent.ctx = ctx;
 		latestMatchComponent.gameHistory = gameHistory;
 	}
+
 }
