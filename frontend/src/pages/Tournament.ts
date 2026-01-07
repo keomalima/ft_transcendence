@@ -122,10 +122,14 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 // ======== UPDATE PLAYER INFO ============
 function updatePlayerInfo(tournamentGames: TournamentGame[]) {
 
+	console.log('🔄 updatePlayerInfo called with:', tournamentGames);
+
 	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
+	console.log('🎯 Component found:', !!tournamentNextGameComponent);
 	if (tournamentNextGameComponent && tournamentGames) {
-		// Update the nextGame component with the new data from websocket
-		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+		console.log('💾 Setting tournamentGamesData...');
+        tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+        console.log('✅ tournamentGamesData set');
 	}
 }
 
@@ -144,10 +148,14 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	wsConnection = new WaitingRoomConnection();
 	wsConnection.connect(gameData.id!, currentUser.id!,
 		async (updateGameData) => {
+			console.log('🔔 WebSocket received:', updateGameData);
+       		console.log('📦 Game data:', updateGameData.game);
+        	console.log('👥 GameUsers:', updateGameData.game?.gameUsers);
 			if (updateGameData.message) {
 				tournamentGames[gameIndex] = updateGameData.game;
-				console.log('🔔', updateGameData.game);
-				updatePlayerInfo(tournamentGames);
+				console.log('✅ Updated tournamentGames[' + gameIndex + ']:', tournamentGames[gameIndex]);
+            	console.log('📊 Full array:', [...tournamentGames]);
+				updatePlayerInfo([...tournamentGames]);
 			}
 			console.log('websocket called')
 		},

@@ -1,6 +1,7 @@
 import { GameStatus, Prisma, PrismaClient } from "@prisma/client";
 import type { CreateGameInput, FinishGameInput, UpdateGameInput } from "./game.schema.js";
 import { includes } from "zod";
+import { WaintingRoomWsController } from "../websockets/gameroom/waitingroom.ws.controller.js";
 
 // =====================
 // Game CRUD Operations
@@ -271,6 +272,7 @@ async function tryAdvanceTournament(prisma: PrismaClient,
 		matchNumber: number
 		gameUsers: Array<{
 			userId: string,
+			displayName: string,
 			isWinner: boolean
     	}>
 		}
@@ -286,14 +288,36 @@ async function tryAdvanceTournament(prisma: PrismaClient,
 			tournamentId: game.tournamentId,
 			roundNumber: game.roundNumber + 1,
 			matchNumber: Math.ceil(game.matchNumber / 2)
-		}
+		},
 	})
 	if (!nextGame) return;
 
 	await prisma.gamePlayer.create({
 		data:
 			{ gameId: nextGame.id, userId: winner.userId }
-		
+	})
+
+	const updatedNextGame = await prisma.game.findUnique({
+		where: { id: nextGame.id },
+		include: {
+			gameUsers: {
+				include: {
+					user: {
+						select: {
+							id: true,
+							displayName: true,
+							avatarUrl: true
+						}
+					}
+				}
+			}
+		}
+	})
+
+	WaintingRoomWsController.broadcasToRoom(nextGame.id, {
+		type: 'room_update',
+		message: `${winner.displayName} joined the game!`,
+		game: updatedNextGame
 	})
 
 	const remainingGamesInRound = await prisma.game.count({

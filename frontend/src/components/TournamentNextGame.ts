@@ -18,6 +18,7 @@ export class TournamentNextGame extends HTMLElement {
 	set tournamentGamesData(value : TournamentGame[] | null) {
 		this._tournamentGamesData = value;
 		if (value){
+			console.log('🎬 Triggering loadAndRender...');
 			this.loadAndRender();
 		}
 	}
@@ -45,7 +46,10 @@ export class TournamentNextGame extends HTMLElement {
 	private displayNextGameCard(): void {
 		const currentUser = this._ctx?.userStore.get();
 		const nextMatchCardContainer = document.getElementById('next-game');
-		if (!nextMatchCardContainer || !this._tournamentData || !currentUser) return;
+		
+		if (!nextMatchCardContainer || !this._tournamentData || !currentUser) {
+			return;
+		}
 	
 		nextMatchCardContainer.innerHTML = '';
 		nextMatchCardContainer.className = 'flex flex-row gap-10 px-4 w-max mx-auto';
@@ -53,7 +57,7 @@ export class TournamentNextGame extends HTMLElement {
 		const column = document.createElement('div');
 		column.className = 'flex flex-col gap-8';
 		const nextGame = this.findNextGame(currentUser);
-		if (nextGame) {
+		if (nextGame && nextGame.gameUsers.length === 2) {
 			const card = this.createNextMatchCard(nextGame, currentUser);
 			column.append(card);
 		} else {
@@ -65,13 +69,15 @@ export class TournamentNextGame extends HTMLElement {
 
 	private findNextGame(currentUser: UserState): TournamentGame | undefined {
 		let nextGame: TournamentGame | undefined;
-	    this._tournamentGamesData?.forEach(game => {
+		this._tournamentGamesData?.forEach((game, index) => {
 			if (!nextGame && game.status === 'PENDING') {
 				if (game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id)) {
+					console.log('   ✅ Match found!');
 					nextGame = game; 
 				}
 			}
 		});
+		
 		return nextGame;
 	}
 

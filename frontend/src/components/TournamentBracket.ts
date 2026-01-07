@@ -179,14 +179,21 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private createEmptyCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
-		console.log('Game', game.gameUsers);
+		const hasPlayers = game.gameUsers.length;
+		const isSinglePlayer = hasPlayers === 1;
+
+		const borderClass = isSinglePlayer ? 'border-indigo-300' : 'border-gray-200';
+		const bgClass = isSinglePlayer ? 'bg-indigo-50/20' : 'bg-gray-50/50';
+		const containerOpacity = isSinglePlayer ? '' : 'opacity-50';
+
 		const card = document.createElement('div');
-    	card.className = `w-64 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-4 ${isMirrored ? 'text-right' : ''}`;
+    	card.className = `w-64 rounded-xl border-2 border-dashed ${borderClass} ${bgClass} p-4 ${isMirrored ? 'text-right' : ''}`;
 	
 		const innerContainer = document.createElement('div');
-    	innerContainer.className = 'flex flex-col gap-3 opacity-50';
+    	innerContainer.className = `flex flex-col gap-3 ${containerOpacity}`;
 	
 		for (let i = 0; i < 2; i++ ) {
+			const user = game.gameUsers[i];
 	
 			// row content ==============
 			const row = document.createElement('div');
@@ -194,23 +201,30 @@ export class TournamentBracket extends HTMLElement {
 
 			// player content ==============
 			const playerInfo = document.createElement('div');
-			playerInfo.className = `flex items-center gap-3 ${isMirrored ? 'flex-row-reverse' : ''}`;
+			playerInfo.className = `flex items-center gap-3 ${isMirrored ? 'flex-row-reverse' : ''} ${!user && isSinglePlayer ? 'opacity-50' : ''}`;
 
 			// avatar content ==============
-			const avatar = document.createElement('div');
-	        avatar.className = 'h-8 w-8 rounded-full bg-gray-200';
+			if (user) {
+				const avatar = document.createElement('img');
+				avatar.src = `${this._imageUrl}${user.user.avatarUrl}`;
+				avatar.className = 'h-8 w-8 rounded-full object-cover ring-2 ring-indigo-100';
+				playerInfo.appendChild(avatar);
+			} else {
+				const avatar = document.createElement('div');
+				avatar.className = 'h-8 w-8 rounded-full bg-gray-200';
+				playerInfo.appendChild(avatar);
+			}
 
 			// name content ==============
 	        const name = document.createElement('span');
-	        name.innerText = game.gameUsers[i] ? game.gameUsers[i].user.displayName : 'TBD';
-	        name.className = 'text-sm font-medium text-gray-400';
+	        name.innerText = user ? user.user.displayName : 'TBD';
+	        name.className = `text-sm font-medium ${user ? 'text-indigo-900' : 'text-gray-400'}`;
 
 			// score content  ==============
 			const score = document.createElement('span');
-	        score.innerText = '-';
-	        score.className = 'font-mono text-lg text-gray-300';
+	        score.innerText = user ? user.score.toString() : '-';
+	        score.className = `font-mono text-lg ${user ? 'text-indigo-600' : 'text-gray-300'}`;
 			
-	        playerInfo.appendChild(avatar);
 	        playerInfo.appendChild(name);
 	        row.appendChild(playerInfo);
 			row.appendChild(score);
