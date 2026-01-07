@@ -145,6 +145,7 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private createMatchCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
+		console.log('Game', game.gameUsers);
 		const status = (game as any).status || 'PENDING';
 		const currentUser = this._ctx?.userStore.get();
 		const isMyGame = currentUser?.id && game.gameUsers.some((p: any) => p.user.id === currentUser?.id);
