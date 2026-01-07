@@ -153,6 +153,7 @@ const joinTournamentResponseSchema = z.object({
 
 export type CreateTournamentInput = z.infer<typeof createTournamentSchema>;
 export type CreateGameTournamentInput = z.infer<typeof createTournamentGame>;
+export type Tournament = z.infer<typeof getTournamentResponseSchema >
 
 // =====================
 // Schema Objects Export

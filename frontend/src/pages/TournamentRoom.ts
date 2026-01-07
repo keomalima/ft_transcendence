@@ -229,7 +229,6 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 		const tournamentId = customEvent.detail;
 		try {
 			await tournamentApi.startTournament(tournamentId);
-			await tournamentApi.matchMaking(tournamentId);
 			cleanWaitingRoomWS();
 			router.navigateTo(`/tournament/${tournamentId}`);
 		} catch (error) {
