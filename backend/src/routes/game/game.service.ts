@@ -264,94 +264,53 @@ async function finishGame(prisma: PrismaClient, gameId: string, status: GameStat
 	})
 }
 
-async function tryAdvanceTournament(
-	prisma: PrismaClient, 
-	finishedGame: {
-		id: string
+async function tryAdvanceTournament(prisma: PrismaClient,
+	game: {
 		tournamentId: string | null
 		roundNumber: number
 		matchNumber: number
-		scoreToWin: number
-		createdBy: string
 		gameUsers: Array<{
-			userId: string
+			userId: string,
 			isWinner: boolean
     	}>
 		}
 	) {
-	console.log(`🔄 Attempting tournament advancement for Tournament ${finishedGame.tournamentId}`);
-	if (!finishedGame.tournamentId) return;
 
-	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-		const pairMatchNumber = finishedGame.matchNumber % 2 === 0
-		? finishedGame.matchNumber - 1
-		: finishedGame.matchNumber + 1;
+	if (!game) return;
 
-		console.log(`🔍 Looking for pair game: Round ${finishedGame.roundNumber}, Match ${pairMatchNumber}`);
-		const pairGame = await tx.game.findFirst({
-			where: {
-				tournamentId: finishedGame.tournamentId,
-				roundNumber: finishedGame.roundNumber,
-				matchNumber: pairMatchNumber,
-				status: { in: ['COMPLETED', 'ABANDONED']}
-			},
-			include: {
-				gameUsers: { select: {userId: true, isWinner: true }}
-			}
-		})
-		
-		if (!pairGame){
-			console.log(`⏳ Pair game not finished yet - waiting for Match ${pairMatchNumber} to complete`);
-			return;
+	const winner = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.isWinner);
+	if (!winner) return;
+
+	const nextGame = await prisma.game.findFirst({
+		where: {
+			tournamentId: game.tournamentId,
+			roundNumber: game.roundNumber + 1,
+			matchNumber: Math.ceil(game.matchNumber / 2)
 		}
-
-		console.log(`✅ Pair game found (${pairGame.id}) - both games complete`);
-		const nextRound = finishedGame.roundNumber + 1;
-		const nextMatch = Math.ceil(finishedGame.matchNumber / 2);
-
-		console.log(`➡️ Checking for existing game in Round ${nextRound}, Match ${nextMatch}`);
-		const existingGame = await tx.game.findFirst({
-			where: {
-				tournamentId: finishedGame.tournamentId, 
-				roundNumber: nextRound,
-				matchNumber: nextMatch
-			}
-		})
-
-		if (existingGame) {
-			console.log(`⏭️ Next round game already exists (${existingGame.id}) - skipping creation`)
-			return;
-		}
-
-		const winner1 = finishedGame.gameUsers.find((u: typeof finishedGame.gameUsers[0]) => u.isWinner);
-  		const winner2 = pairGame.gameUsers.find((u: typeof pairGame.gameUsers[0]) => u.isWinner);
-
-		if (!winner1 || !winner2) return;
-
-		console.log(`👥 Creating next round game with winners: ${winner1.userId} vs ${winner2.userId}`);
-		const newGame = await tx.game.create({ data: {
-			createdBy: finishedGame.createdBy, 
-			type: 'TOURNAMENT',
-			scoreToWin: finishedGame.scoreToWin || pairGame.scoreToWin,
-			tournamentId: finishedGame.tournamentId,
-			roundNumber: nextRound,
-			matchNumber: nextMatch,
-		}})
-		
-		await tx.gamePlayer.createMany({
-			data: [
-				{ gameId: newGame.id, userId: winner1.userId },
-				{ gameId: newGame.id, userId: winner2.userId }
-			]
-		})
-
-		await tx.tournament.update({
-			where: {id: finishedGame.tournamentId},
-			data: { currentRound: nextRound }
-		})
-		console.log(`🎉 Successfully created next round game: ${newGame.id} (Round ${nextRound}, Match ${nextMatch})`);
-		console.log(`📊 Updated tournament to Round ${nextRound}`);
 	})
+	if (!nextGame) return;
+
+	await prisma.gamePlayer.create({
+		data:
+			{ gameId: nextGame.id, userId: winner.userId }
+		
+	})
+
+	const remainingGamesInRound = await prisma.game.count({
+		where: {
+			tournamentId: game.tournamentId,
+			roundNumber: game.roundNumber,
+			status: { not: 'COMPLETED' }
+		}
+	});
+
+	if (remainingGamesInRound === 0) {
+		await prisma.tournament.update({
+			where: { id: game.tournamentId },
+			data: { currentRound: game.roundNumber + 1 }
+		});
+	}
+
 }
 
 type FinishGamePlayer = FinishGameInput["gamePlayers"][number];

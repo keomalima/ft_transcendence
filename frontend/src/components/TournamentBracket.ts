@@ -81,7 +81,6 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private createMatchCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
-		console.log('Game', game.gameUsers);
 		const status = (game as any).status || 'PENDING';
 		const currentUser = this._ctx?.userStore.get();
 		const isMyGame = currentUser?.id && game.gameUsers.some((p: any) => p.user.id === currentUser?.id);
@@ -180,6 +179,7 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private createEmptyCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
+		console.log('Game', game.gameUsers);
 		const card = document.createElement('div');
     	card.className = `w-64 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-4 ${isMirrored ? 'text-right' : ''}`;
 	

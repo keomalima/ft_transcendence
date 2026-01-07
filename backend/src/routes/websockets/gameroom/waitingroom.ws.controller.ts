@@ -13,9 +13,7 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 	const userId = request.params.userId;
 	const identifiedSocket = socket as WebSocket & { userId?: string};
 
-	console.log('----adding new socket for game id----', gameId);
 	identifiedSocket.userId = userId;
-	console.log(`===== User ${identifiedSocket.userId} connected to game room: ${gameId} =====`);
 
 	if (!gameRooms.has(gameId)) {
 		gameRooms.set(gameId, new Set());
@@ -42,7 +40,6 @@ function broadcasToRoom(gameId: string, message: any) {
 	if (sockets) {
 		sockets.forEach(socket => {
 			if (socket.readyState === WebSocket.OPEN) {
-				console.log('---socket---', socket);
 				socket.send(JSON.stringify(message));
 			}
 		})
