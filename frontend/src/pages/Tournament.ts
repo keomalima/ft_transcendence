@@ -10,8 +10,10 @@ import "../components/TournamentNextGame.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
 import { TournamentNextGame } from "../components/TournamentNextGame.js";
+import { TournamentWsConnection } from "../websocket/TournamentConnection.js";
 
 let wsConnection: WaitingRoomConnection | null = null;
+let tournamentWsConnection: TournamentWsConnection | null = null;
 
 export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
 	//get user data from store
@@ -144,17 +146,33 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	
 	const gameData = tournamentGames[gameIndex];
 
+	// Create Tournament Websocket
+	tournamentWsConnection = new TournamentWsConnection();
+	tournamentWsConnection.connect(gameData.tournamentId!, currentUser.id!,
+		async (tournamentData) => {
+			console.log('--Tournament Ws--', tournamentData);
+			if (tournamentData.message) {
+				console.log('--Tournament WS--', tournamentData.data)
+				// tournamentGames[gameIndex] = tournamentData.game;
+				// updatePlayerInfo([...tournamentGames]);
+			}
+		},
+		() => {
+			cleantTournamentWs()
+			router.navigateTo('/home');
+		},
+		() => {
+			cleantTournamentWs()
+			router.navigateTo('/home');
+		},
+	)
+
 	// Create websocket with gameid
 	wsConnection = new WaitingRoomConnection();
 	wsConnection.connect(gameData.id!, currentUser.id!,
 		async (updateGameData) => {
-			console.log('🔔 WebSocket received:', updateGameData);
-       		console.log('📦 Game data:', updateGameData.game);
-        	console.log('👥 GameUsers:', updateGameData.game?.gameUsers);
 			if (updateGameData.message) {
 				tournamentGames[gameIndex] = updateGameData.game;
-				console.log('✅ Updated tournamentGames[' + gameIndex + ']:', tournamentGames[gameIndex]);
-            	console.log('📊 Full array:', [...tournamentGames]);
 				updatePlayerInfo([...tournamentGames]);
 			}
 			console.log('websocket called')
@@ -179,6 +197,13 @@ export function cleanWaitingRoomWS() {
 	if (wsConnection) {
 		wsConnection.disconnect();
 		wsConnection = null;
+	}
+}
+
+export function cleantTournamentWs() {
+	if (tournamentWsConnection) {
+		tournamentWsConnection.disconnect();
+		tournamentWsConnection = null;
 	}
 }
 

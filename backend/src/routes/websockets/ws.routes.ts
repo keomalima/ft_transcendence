@@ -6,6 +6,7 @@ import { GameWsController } from "./game/game.ws.controller.js";
 import { ClientRequest, get, Server } from "http";
 import { Http2ServerRequest } from "http2";
 import { ChatWsController } from "./chat/chat.ws.controller.js";
+import { TournamentWsController } from "./tournament/tournament.ws.controller.js";
 
 // =====================
 // Private Routes (Authentication Required)
@@ -21,4 +22,7 @@ export async function wsPrivateRoutes(fastify: FastifyInstance) {
 
 	// chat websocket
 	fastify.get('/chat/:userId', { websocket: true }, ChatWsController.chatHandler);
+
+	// tournament websocket
+	fastify.get('/tournament/:tournamentId/:userId', {websocket: true}, TournamentWsController.tournamentBracketHandler)
 }

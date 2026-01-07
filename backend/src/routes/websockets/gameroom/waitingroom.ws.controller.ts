@@ -1,5 +1,4 @@
 import type { FastifyRequest } from 'fastify'
-import { checkServerIdentity } from 'tls';
 import { WebSocket } from 'ws';
 
 // =====================
@@ -36,7 +35,6 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 
 function broadcasToRoom(gameId: string, message: any) {
 	const sockets = gameRooms.get(gameId);
-	console.log('----trying to broadcast message for gameId room----', gameId);
 	if (sockets) {
 		sockets.forEach(socket => {
 			if (socket.readyState === WebSocket.OPEN) {

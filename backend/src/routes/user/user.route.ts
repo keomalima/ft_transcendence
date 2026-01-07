@@ -55,6 +55,11 @@ export async function userPublicRoutes(fastify: FastifyInstance){
         try {
             // Delete in correct order to respect foreign key constraints
             // 1. Delete GamePlayers first (has FK to both Game and User)
+
+			await prisma.message.deleteMany();
+
+			await prisma.blockStatus.deleteMany();
+			
             await prisma.gamePlayer.deleteMany();
             
             // 2. Delete Games (has FK to User)

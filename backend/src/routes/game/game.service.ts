@@ -2,6 +2,7 @@ import { GameStatus, Prisma, PrismaClient } from "@prisma/client";
 import type { CreateGameInput, FinishGameInput, UpdateGameInput } from "./game.schema.js";
 import { includes } from "zod";
 import { WaintingRoomWsController } from "../websockets/gameroom/waitingroom.ws.controller.js";
+import { TournamentWsController } from "../websockets/tournament/tournament.ws.controller.js";
 
 // =====================
 // Game CRUD Operations
@@ -318,6 +319,12 @@ async function tryAdvanceTournament(prisma: PrismaClient,
 		type: 'room_update',
 		message: `${winner.displayName} joined the game!`,
 		game: updatedNextGame
+	})
+
+	TournamentWsController.broadcasToRoom(nextGame.tournamentId!, {
+		type: 'tournament_update',
+		message: `Tournament update`,
+		data: updatedNextGame
 	})
 
 	const remainingGamesInRound = await prisma.game.count({
