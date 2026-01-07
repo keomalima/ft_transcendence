@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import type { CreateGameTournamentInput, CreateTournamentInput } from "./tournament.schema.js";
+import { Prisma, PrismaClient } from "@prisma/client";
+import type { CreateGameTournamentInput, CreateTournamentInput, Tournament } from "./tournament.schema.js";
 
 // =====================
 // Tournament CRUD Operations
@@ -213,6 +213,61 @@ async function findGameByRoundNMatch(prisma: PrismaClient, tournamentId: string,
 	})
 }
 
+async function matchMakeGames(prisma: PrismaClient, userId: string, tournament: Tournament) {
+	return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		const shuffled = [...tournament.participants];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			const temp = shuffled[i]!;
+			shuffled[i] = shuffled[j]!;
+			shuffled[j] = temp;
+		}
+
+		for (let i = 0; i < shuffled.length; i += 2) {
+			const first = shuffled[i];
+			const second = shuffled[i + 1];
+			if (!first || !second) {
+				throw new Error("Unexpected missing participant while pairing");
+			}
+			const game = await tx.game.create({ data: {
+				createdBy: userId, 
+				type: 'TOURNAMENT',
+				scoreToWin: tournament.scoreToWin,
+				tournamentId: tournament.id,
+				roundNumber: 1,
+				matchNumber: i/2 + 1,
+			}})
+			await tx.gamePlayer.createMany({
+				data: [
+					{ gameId: game.id, userId: first.user.id },
+					{ gameId: game.id, userId: second.user.id }
+				]
+			})
+		}
+		await tx.tournament.update({ where: { id: tournament.id}, data: { status: 'IN_PROGRESS' }})
+	})
+}
+
+async function createEmptyGames(prisma: PrismaClient, userId: string, tournament: Tournament) {
+	return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		const totalParticipants = tournament.participants.length;
+
+		for (let i = 2; i <= tournament.totalRounds; i++) {
+			const gamesInRound = totalParticipants / Math.pow(2, i);
+			for (let j = 1; j <= gamesInRound; j++) {
+				await tx.game.create({ data: {
+					createdBy: userId,
+					type: 'TOURNAMENT',
+					scoreToWin: tournament.scoreToWin,
+					tournamentId: tournament.id,
+					roundNumber: i,
+					matchNumber: j
+				}})
+			}
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -234,5 +289,7 @@ export const tournamentService = {
 	findTournamentGames,
 	findOpponentByGameId,
 	markPlayerReadyByGamePlayerId,
-	findGameByRoundNMatch
+	findGameByRoundNMatch,
+	matchMakeGames,
+	createEmptyGames
 };
