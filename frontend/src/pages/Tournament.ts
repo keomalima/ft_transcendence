@@ -61,7 +61,6 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
 				<h3 class=" text-gray-500 mb-4">Round ${tournament?.currentRound}</h3>
 	        </div>
-	
 			<div class="w-full overflow-x-auto">
 				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
 			</div>
@@ -72,7 +71,26 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	    </div>
 	</div>
 	`
+	showNotification('teste')
 	return content;
+}
+
+// ======== GET TOURNAMENT GAMES ============
+function showNotification(message: string) {
+    const container = document.getElementById('tournament-notifications');
+    if (!container) return;
+    
+    const notification = document.createElement('div');
+    notification.textContent = message;
+	notification.className = 'text-sm text-gray-400 italic mb-4';
+    
+    container.appendChild(notification);
+    
+    // setTimeout(() => {
+    //     notification.style.opacity = '0';
+    //     notification.style.transition = 'opacity 300ms';
+    //     setTimeout(() => notification.remove(), 300);
+    // }, 3000);
 }
 
 // ======== GET TOURNAMENT GAMES ============
@@ -124,14 +142,9 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 // ======== UPDATE PLAYER INFO ============
 function updatePlayerInfo(tournamentGames: TournamentGame[]) {
 
-	console.log('🔄 updatePlayerInfo called with:', tournamentGames);
-
 	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
-	console.log('🎯 Component found:', !!tournamentNextGameComponent);
 	if (tournamentNextGameComponent && tournamentGames) {
-		console.log('💾 Setting tournamentGamesData...');
         tournamentNextGameComponent.tournamentGamesData = tournamentGames;
-        console.log('✅ tournamentGamesData set');
 	}
 }
 
@@ -150,11 +163,10 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	tournamentWsConnection = new TournamentWsConnection();
 	tournamentWsConnection.connect(gameData.tournamentId!, currentUser.id!,
 		async (tournamentData) => {
-			console.log('--Tournament Ws--', tournamentData);
 			if (tournamentData.message) {
-				console.log('--Tournament WS--', tournamentData.data)
-				// tournamentGames[gameIndex] = tournamentData.game;
-				// updatePlayerInfo([...tournamentGames]);
+				const game = tournamentData.data;
+   				const winner = game.gameUsers.find((gu: typeof game.gameUsers[0]) => gu.score === game.winnerScore);
+    			// showToast(`${winner.user.username} won the match!`);
 			}
 		},
 		() => {

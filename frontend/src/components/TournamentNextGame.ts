@@ -18,7 +18,6 @@ export class TournamentNextGame extends HTMLElement {
 	set tournamentGamesData(value : TournamentGame[] | null) {
 		this._tournamentGamesData = value;
 		if (value){
-			console.log('🎬 Triggering loadAndRender...');
 			this.loadAndRender();
 		}
 	}
