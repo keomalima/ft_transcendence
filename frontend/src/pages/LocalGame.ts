@@ -2,8 +2,8 @@ import { router } from "../main.js";
 import type { AppContext, GameData, UserState } from "../types.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
-import { getGameValue } from "../localGameAlgo/getGameValue.js";
-import { calculateGame } from "../localGameAlgo/calculateGame.js";
+import { getGameValue } from "../game/getLocalGameValue.js";
+import { calculateGame } from "../game/calculateLocalGame.js";
 import { FinishGameDto } from "../api/gameApi.js";
 
 export interface MapKeys {
@@ -128,7 +128,8 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
-				<div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+				<div id='ball' class='absolute w-[2%] h-[4%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+				<!-- <div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div> -->
 			</div>
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">

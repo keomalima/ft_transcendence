@@ -1,4 +1,4 @@
-import { getGameValue } from "./getGameValue.js";
+import { getGameValue } from "./getLocalGameValue.js";
 import type { LocalGameData, MapKeys } from "../pages/LocalGame.js";
 
 function calculatePaddle(game: LocalGameData, mapKeys: MapKeys) {
