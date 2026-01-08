@@ -141,8 +141,9 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 		async (tournamentData) => {
 			if (tournamentData.gameId) {
 				const game = tournamentData.game;
+				const nextGame = tournamentData.nextGame
 				const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
-				tournamentBracketComponent?.updateGameCard(game.id, game);
+				tournamentBracketComponent?.updateGameCard(game, nextGame);
 			}
 		},
 		() => {

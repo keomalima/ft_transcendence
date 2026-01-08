@@ -42,22 +42,43 @@ export class TournamentBracket extends HTMLElement {
 		`;
 	}
 
-	public updateGameCard(gameId: string, updatedGame: TournamentGame) {
-		const gameIndex = this._tournamentGamesData?.findIndex((g: typeof this._tournamentGamesData[0]) => g.id === gameId);
-		if (gameIndex !== undefined && gameIndex !== -1 && this._tournamentGamesData) {
-			this._tournamentGamesData[gameIndex] = updatedGame;
-		}
+	public updateGameCard(updatedGame: TournamentGame, nextUpdatedGame: TournamentGame) {
+		// Update internal state
+		console.log('next-game', nextUpdatedGame);
+		this.updateInternalGameData(updatedGame.id, updatedGame);
+		this.updateInternalGameData(nextUpdatedGame.id, nextUpdatedGame);
 
+		// Update DOM
+		this.updateCardInDOM(updatedGame.id, updatedGame);
+		this.updateCardInDOM(nextUpdatedGame.id, nextUpdatedGame);
+	}
+
+	private updateInternalGameData(gameId: string, updatedGame: TournamentGame): void {
+		if (!this._tournamentGamesData) return;
+		
+		const index = this._tournamentGamesData.findIndex(g => g.id === gameId);
+		if (index !== -1) {
+			this._tournamentGamesData[index] = updatedGame;
+		}
+	}
+
+	private updateCardInDOM(gameId: string, updatedGame: TournamentGame): void {
 		const card = document.getElementById(gameId);
-		if (card) {
-			const newCard = this.createMatchCard(updatedGame, false);
-			newCard.classList.add('animate-pulse'); 
-			card.replaceWith(newCard);
+		if (!card) return;
 
-			setTimeout(() => {
-            	newCard.classList.remove('animate-pulse');
-        	}, 1000);
-		}
+		const newCard = this.createCardForGame(updatedGame);
+
+		newCard.classList.add('animate-pulse');
+		setTimeout(() => {
+			newCard.classList.remove('animate-pulse');
+		}, 1000);
+		card.replaceWith(newCard);
+	}
+
+	private createCardForGame(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
+		return game.gameUsers.length === 2 
+			? this.createMatchCard(game, isMirrored)
+			: this.createEmptyCard(game, isMirrored);
 	}
 
 	private displayMatchCards(): void {
@@ -206,6 +227,7 @@ export class TournamentBracket extends HTMLElement {
 		const containerOpacity = isSinglePlayer ? '' : 'opacity-50';
 
 		const card = document.createElement('div');
+		card.id = game.id;
     	card.className = `w-64 rounded-xl border-2 border-dashed ${borderClass} ${bgClass} p-4 ${isMirrored ? 'text-right' : ''}`;
 	
 		const innerContainer = document.createElement('div');

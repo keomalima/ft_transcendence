@@ -270,10 +270,13 @@ async function advanceToNextRound(prisma: PrismaClient, game: any) {
 
 	const completeGame = await getCompleteGameData(prisma, game.id);
 	
+	const nextCompleteGame = await getCompleteGameData(prisma, nextGame.id);
+
 	TournamentWsController.broadcasToRoom(game.tournamentId!, {
 		type: 'tournament_update',
 		gameId: game.id,
-		game: completeGame
+		game: completeGame,
+		nextGame: nextCompleteGame
 	});
 }
 
@@ -370,6 +373,7 @@ async function findNextBracketGame(
 }
 
 async function addWinnerToNextGame(prisma: PrismaClient, nextGameId: string, winnerId: string) {
+	
 	return prisma.gamePlayer.create({
 		data: { gameId: nextGameId, userId: winnerId }
 	});
