@@ -42,6 +42,24 @@ export class TournamentBracket extends HTMLElement {
 		`;
 	}
 
+	public updateGameCard(gameId: string, updatedGame: TournamentGame) {
+		const gameIndex = this._tournamentGamesData?.findIndex((g: typeof this._tournamentGamesData[0]) => g.id === gameId);
+		if (gameIndex !== undefined && gameIndex !== -1 && this._tournamentGamesData) {
+			this._tournamentGamesData[gameIndex] = updatedGame;
+		}
+
+		const card = document.getElementById(gameId);
+		if (card) {
+			const newCard = this.createMatchCard(updatedGame, false);
+			newCard.classList.add('animate-pulse'); 
+			card.replaceWith(newCard);
+
+			setTimeout(() => {
+            	newCard.classList.remove('animate-pulse');
+        	}, 1000);
+		}
+	}
+
 	private displayMatchCards(): void {
 	    const matchCardsContainer = document.getElementById('match-cards');
 	    if (!matchCardsContainer || !this._tournamentData) return;
@@ -107,6 +125,7 @@ export class TournamentBracket extends HTMLElement {
 		}
 
 		const card = document.createElement('div');
+		card.id = game.id;
 		card.className = `w-64 overflow-hidden rounded-xl border ${borderClass} ${bgClass} ${shadowClass} transition-all hover:shadow-md ${isMirrored ? 'text-right' : ''} ${ringClass}`;
 
 		if (status === 'IN_PROGRESS') {

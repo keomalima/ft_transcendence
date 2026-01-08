@@ -11,6 +11,7 @@ import { tournamentApi } from "../api/tournamentApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
 import { TournamentNextGame } from "../components/TournamentNextGame.js";
 import { TournamentWsConnection } from "../websocket/TournamentConnection.js";
+import { TournamentBracket } from "../components/TournamentBracket.js";
 
 let wsConnection: WaitingRoomConnection | null = null;
 let tournamentWsConnection: TournamentWsConnection | null = null;
@@ -71,27 +72,9 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	    </div>
 	</div>
 	`
-	showNotification('teste')
 	return content;
 }
 
-// ======== GET TOURNAMENT GAMES ============
-function showNotification(message: string) {
-    const container = document.getElementById('tournament-notifications');
-    if (!container) return;
-    
-    const notification = document.createElement('div');
-    notification.textContent = message;
-	notification.className = 'text-sm text-gray-400 italic mb-4';
-    
-    container.appendChild(notification);
-    
-    // setTimeout(() => {
-    //     notification.style.opacity = '0';
-    //     notification.style.transition = 'opacity 300ms';
-    //     setTimeout(() => notification.remove(), 300);
-    // }, 3000);
-}
 
 // ======== GET TOURNAMENT GAMES ============
 async function getTournamentGames(tournamentId: string): Promise<TournamentGame[] | null > {
@@ -143,30 +126,23 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 function updatePlayerInfo(tournamentGames: TournamentGame[]) {
 
 	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
-	if (tournamentNextGameComponent && tournamentGames) {
+	const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
+	if (tournamentNextGameComponent && tournamentBracketComponent && tournamentGames) {
         tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+		tournamentBracketComponent.tournamentGamesData = tournamentGames;
 	}
 }
 
 // ======== SET WEBSOCKET CONNECTION ============
 async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: TournamentGame[], ctx: AppContext) {
-
-	const gameIndex = tournamentGames.findIndex(game =>
-		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id && game.status === 'PENDING')
-	)
-
-	if (gameIndex === -1) return;
-	
-	const gameData = tournamentGames[gameIndex];
-
 	// Create Tournament Websocket
 	tournamentWsConnection = new TournamentWsConnection();
-	tournamentWsConnection.connect(gameData.tournamentId!, currentUser.id!,
+	tournamentWsConnection.connect(tournamentGames[0].tournamentId, currentUser.id!,
 		async (tournamentData) => {
-			if (tournamentData.message) {
-				const game = tournamentData.data;
-   				const winner = game.gameUsers.find((gu: typeof game.gameUsers[0]) => gu.score === game.winnerScore);
-    			// showToast(`${winner.user.username} won the match!`);
+			if (tournamentData.gameId) {
+				const game = tournamentData.game;
+				const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
+				tournamentBracketComponent?.updateGameCard(game.id, game);
 			}
 		},
 		() => {
@@ -179,13 +155,21 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 		},
 	)
 
+	const gameIndex = tournamentGames.findIndex(game =>
+		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id && game.status === 'PENDING')
+	)
+
+	if (gameIndex === -1) return;
+	
+	const gameData = tournamentGames[gameIndex];
+
 	// Create websocket with gameid
 	wsConnection = new WaitingRoomConnection();
 	wsConnection.connect(gameData.id!, currentUser.id!,
 		async (updateGameData) => {
 			if (updateGameData.message) {
 				tournamentGames[gameIndex] = updateGameData.game;
-				updatePlayerInfo([...tournamentGames]);
+				updatePlayerInfo(tournamentGames);
 			}
 			console.log('websocket called')
 		},

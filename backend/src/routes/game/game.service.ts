@@ -1,8 +1,9 @@
 import { GameStatus, Prisma, PrismaClient } from "@prisma/client";
 import type { CreateGameInput, FinishGameInput, UpdateGameInput } from "./game.schema.js";
-import { includes } from "zod";
 import { WaintingRoomWsController } from "../websockets/gameroom/waitingroom.ws.controller.js";
 import { TournamentWsController } from "../websockets/tournament/tournament.ws.controller.js";
+
+type FinishGamePlayer = FinishGameInput["gamePlayers"][number];
 
 // =====================
 // Game CRUD Operations
@@ -203,149 +204,6 @@ async function deletePendingGame(prisma: PrismaClient, gameId: string) {
 	})
 }
 
-async function finishGame(prisma: PrismaClient, gameId: string, status: GameStatus) {
-	console.log(`🏁 Finishing game ${gameId} with status: ${status}`); // ✅ Entry point
-
-	const game = await prisma.game.findFirst({
-		where: { id: gameId },
-		include: {
-			gameUsers: {
-				select: {
-					userId: true,
-					isWinner: true
-				}
-			},
-			tournament : {
-				select: {
-					id: true,
-					currentRound: true,
-					totalRounds: true,
-				}
-			}
-		}
-	});
-
-	await prisma.game.update({
-		where: { id: gameId },
-		data: {
-			status,
-			completedAt: status === "COMPLETED" || status === 'ABANDONED' ? new Date() : null
-		}
-	})
-	
-	if (game?.tournamentId && game.tournament.totalRounds > game.tournament.currentRound) {
-	    console.log(`🏆 Tournament game detected: Tournament ${game.tournamentId}, Round ${game.roundNumber}, Match ${game.matchNumber}`);
-		await tryAdvanceTournament(prisma, game);
-	} else if (game?.tournamentId && game.tournament.totalRounds === game.tournament.currentRound) {
-		const winner = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.isWinner);
-
-		if (winner) {
-			await prisma.tournament.update({
-				where: { id: game.tournamentId },
-				data: {
-					status: 'COMPLETED',
-					completedAt: new Date(),
-					winnerId: winner.userId
-				}
-			});
-			console.log(`🎉 Tournament ${game.tournamentId} completed! Winner: ${winner.userId}`);
-		}
-	}
-
-	return prisma.game.findFirst({
-		where: { id: gameId },
-		include: {
-			gameUsers: {
-				select: {
-					id: true, 
-					score: true,
-					isWinner: true
-				}
-			}
-		}
-	})
-}
-
-async function tryAdvanceTournament(prisma: PrismaClient,
-	game: {
-		tournamentId: string | null
-		roundNumber: number
-		matchNumber: number
-		gameUsers: Array<{
-			userId: string,
-			displayName: string,
-			isWinner: boolean
-    	}>
-		}
-	) {
-
-	if (!game) return;
-
-	const winner = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.isWinner);
-	if (!winner) return;
-
-	const nextGame = await prisma.game.findFirst({
-		where: {
-			tournamentId: game.tournamentId,
-			roundNumber: game.roundNumber + 1,
-			matchNumber: Math.ceil(game.matchNumber / 2)
-		},
-	})
-	if (!nextGame) return;
-
-	await prisma.gamePlayer.create({
-		data:
-			{ gameId: nextGame.id, userId: winner.userId }
-	})
-
-	const updatedNextGame = await prisma.game.findUnique({
-		where: { id: nextGame.id },
-		include: {
-			gameUsers: {
-				include: {
-					user: {
-						select: {
-							id: true,
-							displayName: true,
-							avatarUrl: true
-						}
-					}
-				}
-			}
-		}
-	})
-
-	WaintingRoomWsController.broadcasToRoom(nextGame.id, {
-		type: 'room_update',
-		message: `${winner.displayName} joined the game!`,
-		game: updatedNextGame
-	})
-
-	TournamentWsController.broadcasToRoom(nextGame.tournamentId!, {
-		type: 'tournament_update',
-		message: `Tournament update`,
-		data: updatedNextGame
-	})
-
-	const remainingGamesInRound = await prisma.game.count({
-		where: {
-			tournamentId: game.tournamentId,
-			roundNumber: game.roundNumber,
-			status: { not: 'COMPLETED' }
-		}
-	});
-
-	if (remainingGamesInRound === 0) {
-		await prisma.tournament.update({
-			where: { id: game.tournamentId },
-			data: { currentRound: game.roundNumber + 1 }
-		});
-	}
-
-}
-
-type FinishGamePlayer = FinishGameInput["gamePlayers"][number];
-
 async function findGamePlayerById(prisma: PrismaClient, playerId: string) {
 	return prisma.gamePlayer.findUnique({
 		where: { id: playerId },
@@ -361,6 +219,190 @@ async function updatePlayer(prisma: PrismaClient, player: FinishGamePlayer, isWi
 			isWinner,
 		}
 	})
+}
+
+async function finishGame(prisma: PrismaClient, gameId: string, status: GameStatus) {
+	console.log(`🏁 Finishing game ${gameId} with status: ${status}`);
+
+	const existingGame = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { status: true }
+    });
+    
+    if (existingGame?.status === 'COMPLETED' || existingGame?.status === 'ABANDONED') {
+        return getCompleteGameData(prisma, gameId);
+    }
+
+	await prisma.game.update({
+		where: { id: gameId },
+		data: {
+			status,
+			completedAt: status === "COMPLETED" || status === 'ABANDONED' ? new Date() : null
+		}
+	})
+
+	const game = await getGameWithTournamentInfo(prisma, gameId);
+	if (game?.tournamentId) {
+		const isLastRound = game.tournament.totalRounds === game.tournament.currentRound;
+		if (isLastRound) {
+			await completeTournament(prisma, game);
+		} else {
+			await advanceToNextRound(prisma, game);
+		}
+	}
+	return getCompleteGameData(prisma, gameId);
+}
+
+async function advanceToNextRound(prisma: PrismaClient, game: any) {
+	console.log(`🏆 Tournament game detected: Tournament ${game.tournamentId}, Round ${game.roundNumber}`);
+
+	const winner = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.isWinner);
+	if (!winner) return;
+
+	const nextGame = await findNextBracketGame(prisma, game);
+	if (!nextGame) return;
+
+	await addWinnerToNextGame(prisma, nextGame.id, winner.userId);
+
+	await notifyWaitingRoom(prisma, nextGame.id, winner.userId);
+
+	await checkAndAdvanceRound(prisma, game.tournamentId, game.roundNumber);
+
+	const completeGame = await getCompleteGameData(prisma, game.id);
+	
+	TournamentWsController.broadcasToRoom(game.tournamentId!, {
+		type: 'tournament_update',
+		gameId: game.id,
+		game: completeGame
+	});
+}
+
+async function completeTournament(prisma: PrismaClient, game: any) {
+	const winner = game.gameUsers.find((u: any) => u.isWinner);
+
+	if (winner) {
+		await prisma.tournament.update({
+			where: { id: game.tournamentId },
+			data: {
+				status: 'COMPLETED',
+				completedAt: new Date(),
+				winnerId: winner.userId
+			}
+		})
+		console.log(`🎉 Tournament ${game.tournamentId} completed! Winner: ${winner.userId}`);
+    
+		TournamentWsController.broadcasToRoom(game.tournamentId!, {
+			type: 'tournament_completed',
+			tournamentId: game.tournamentId,
+			winnerId: winner.userId
+		});
+	}
+}
+
+// =====================
+// Helpers Operations
+// =====================
+
+async function checkAndAdvanceRound(prisma: PrismaClient, tournamentId: string, currentRound: number) {
+	const remainingGames = await prisma.game.count({
+		where: {
+			tournamentId,
+			roundNumber: currentRound,
+			status: { not: 'COMPLETED' }
+		}
+	});
+
+	console.log(`🔍 Remaining games in round ${currentRound}: ${remainingGames}`);
+
+	if (remainingGames === 0) {
+
+		console.log(`⚡ ADVANCING ROUND: ${currentRound} → ${currentRound + 1} for tournament ${tournamentId}`);
+		await prisma.tournament.update({
+			where: { id: tournamentId },
+			data: { currentRound: currentRound + 1 }
+		});
+		
+		console.log(`🎯 Tournament ${tournamentId} advanced to round ${currentRound + 1}`);
+	}
+}
+
+async function notifyWaitingRoom(prisma: PrismaClient, gameId: string, winnerId: string) {
+	const updatedGame = await prisma.game.findUnique({
+		where: { id: gameId },
+		include: {
+			gameUsers: {
+				include: {
+					user: {
+						select: {
+							id: true,
+							displayName: true,
+							avatarUrl: true
+						}
+					}
+				}
+			}
+		}
+	});
+
+	if (!updatedGame) return;
+
+	const winnerName = updatedGame.gameUsers.find((gu: any) => gu.user.id === winnerId)?.user.displayName;
+
+	WaintingRoomWsController.broadcasToRoom(gameId, {
+		type: 'room_update',
+		message: `${winnerName} joined the game!`,
+		game: updatedGame
+	});
+}
+
+async function findNextBracketGame(
+	prisma: PrismaClient,
+		game: { tournamentId: string | null; roundNumber: number; matchNumber: number }
+	) {
+
+	return prisma.game.findFirst({
+		where: {
+			tournamentId: game.tournamentId,
+			roundNumber: game.roundNumber + 1,
+			matchNumber: Math.ceil(game.matchNumber / 2)
+		}
+	});
+}
+
+async function addWinnerToNextGame(prisma: PrismaClient, nextGameId: string, winnerId: string) {
+	return prisma.gamePlayer.create({
+		data: { gameId: nextGameId, userId: winnerId }
+	});
+}
+
+async function getCompleteGameData(prisma: PrismaClient, gameId: string) {
+	return prisma.game.findUnique({
+		where: { id: gameId },
+		include: {
+			gameUsers: {
+				include: {
+					user: {
+						select: {
+							id: true,
+							displayName: true,
+							isOnline: true,
+							avatarUrl: true
+						}
+					}
+				}
+			}
+		}
+	});
+}
+
+async function getGameWithTournamentInfo(prisma: PrismaClient, gameId: string) {
+	return prisma.game.findFirst({
+		where: { id: gameId },
+		include: {
+			gameUsers: { select: { userId: true, isWinner: true } },
+			tournament: { select: { id: true, currentRound: true, totalRounds: true } }
+		}
+	});
 }
 
 // =====================
