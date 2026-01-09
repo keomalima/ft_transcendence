@@ -214,6 +214,56 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 	}
 }
 
+async function getParticipantInfoHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		console.log('=======',tournamentId)
+		const participant = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId);
+		if (!participant) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		return participant;
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to get participant info"});
+	}
+}
+
+async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		const tournamentPlayer = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId);
+		console.log('----tournamentplayer----', tournamentPlayer)
+		if (!tournamentPlayer) {
+			return reply.code(404).send({
+				message: "Tournament or Player not found or unauthorized"
+			});
+		}
+		if (tournamentPlayer.tournament.status !== 'IN_PROGRESS') {
+			return reply.code(400).send({
+				message: "Can not quit a tournament that is not in progress"
+			});
+		}
+		if (tournamentPlayer.isQuit) {
+			return reply.code(400).send({
+				message: "Can not quit a tournament player has already quit"
+			});
+		} if (tournamentPlayer.isEliminated) {
+			await tournamentService.quitTournamentByParticipantId(request.server.prisma, tournamentPlayer.id);
+		}
+
+		return reply.code(200).send({ message: "User quit tournament" });
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to quit tournament"});
+	}
+}
+
 async function startTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
 	try {
 		const userId = request.user!.id;
@@ -393,5 +443,7 @@ export const tournamentController = {
 	startTournamentHandler,
 	getTournamentGamesHandler,
 	startTournamentGameHandler,
-	advanceTournamentHandler
+	advanceTournamentHandler,
+	quitTournamentHandler,
+	getParticipantInfoHandler
 };

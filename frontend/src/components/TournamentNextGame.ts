@@ -132,6 +132,17 @@ export class TournamentNextGame extends HTMLElement {
 		actionContainer.appendChild(quitBtn);
 
 		card.appendChild(actionContainer);
+
+		quitBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (!window.confirm('Are you sure you want to quit the tournament?')) return;
+			this.dispatchEvent(new CustomEvent('event-quit-tournament', {
+				detail: {	
+					tournamentId: this._tournamentGamesData![0].tournamentId
+				},
+				bubbles: true
+			}));
+		});
 		
 		return card;
 	}

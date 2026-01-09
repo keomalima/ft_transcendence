@@ -83,8 +83,18 @@ async function findTournamentByParticipant(prisma: PrismaClient, userId: string,
 			}
 		},
 		include: {
-			tournament: true
+			tournament: true,
+			user: true
 		} 
+	})
+}
+
+async function quitTournamentByParticipantId(prisma: PrismaClient, participantId: string) {
+	return prisma.tournamentPlayer.update({
+		where: { id: participantId},
+		data: {
+			isQuit: true
+		}
 	})
 }
 
@@ -291,5 +301,6 @@ export const tournamentService = {
 	markPlayerReadyByGamePlayerId,
 	findGameByRoundNMatch,
 	matchMakeGames,
-	createEmptyGames
+	createEmptyGames,
+	quitTournamentByParticipantId
 };

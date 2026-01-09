@@ -1,4 +1,4 @@
-import { AppContext, UserState } from "../types.js";
+import { AppContext, TournamentParticipant, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // import HTML components
@@ -11,10 +11,14 @@ import { tournamentApi } from "../api/tournamentApi.js";
 export function TournamentPage(ctx: AppContext): string {
 	//get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
-	
+
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
-		renderTournamentContent(currentUser!, currentTournament?.tournamentId!);
+		let participant = null;
+		if (currentTournament && typeof currentTournament.tournamentId === 'string') {
+			participant = await getParticipantInfo(currentTournament.tournamentId);
+		}
+		renderTournamentContent(currentUser!, currentTournament?.tournamentId!, participant);
 		passContext(ctx);
 		setupTournamentEventListeners(ctx);
 	}, 0);
@@ -26,8 +30,7 @@ export function TournamentPage(ctx: AppContext): string {
 	`);
 }
 
-function renderTournamentContent(currentUser: UserState, tournamentId: string | null) {
-
+function renderTournamentContent(currentUser: UserState, tournamentId: string | null, participant: Partial<TournamentParticipant> | null) {
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
@@ -45,12 +48,26 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 			</div>
 
 		<!-- Action Cards -->
-		${tournamentId ?
+		${participant && !participant.isQuit ?
 		`
 		<div class="flex flex-col items-center gap-6 max-w-2xl w-full">
 			<!-- Pending Tournament Card -->
 			<div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-8 w-full border-2 border-gray-400">
 				<div class="text-center">
+				${participant.isEliminated ?
+				`
+					<div class="text-6xl mb-4">👀</div>
+					<h2 class="text-2xl font-bold text-gray-800 mb-3">Spectator Mode</h2>
+					<p class="text-gray-600 mb-6">
+						You're out of this tournament, but stick around to see who wins!
+					</p>
+					<a data-link href='/tournament-room/${tournamentId}' 
+					   class='inline-block ${BUTTON_WHITE_CLASSES}'>
+						Watch
+					</a>
+				`
+				:
+				`
 					<div class="text-6xl mb-4">🏆</div>
 					<h2 class="text-2xl font-bold text-gray-800 mb-3">Tournament in Progress</h2>
 					<p class="text-gray-600 mb-6">
@@ -60,6 +77,8 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 					   class='inline-block ${BUTTON_WHITE_CLASSES}'>
 						Continue
 					</a>
+				`
+				}
 				</div>
 			</div>
 		</div>
@@ -74,9 +93,10 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 					<h2 class="text-2xl font-bold text-gray-800 mb-3">Create Tournament</h2>
 					<p class="text-gray-600 mb-6">
 						Host your own tournament and invite players to compete for the championship.
-					</p>
-					<button type='button' id='create-tournament-btn' class='${BUTTON_WHITE_CLASSES} w-full'>
 						CREATE TOURNAMENT
+					</button>
+					<button onclick="document.getElementById('join-tournament-dialog').showModal()" type='button' id='join-tournament-btn' class='${BUTTON_WHITE_CLASSES} w-full'>
+							JOIN TOURNAMENT
 					</button>
 				</div>
 			</div>
@@ -108,6 +128,21 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 	</dialog>
 	`
 	return content;
+}
+
+// ======== GET CURRENT PARTICIPANT INFO ============
+async function getParticipantInfo(tournamentId: string): Promise<{isQuit: boolean, isEliminated: boolean} | null> {
+	try {
+		const participantInfo = await tournamentApi.getParticipantInfo(tournamentId);
+		if (!participantInfo) return null;
+		return {
+			isQuit: participantInfo.isQuit ?? false,
+			isEliminated: participantInfo.isEliminated ?? false
+		};
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
 }
 
 // ======== GET CURRENT TOURNAMENT ============

@@ -23,7 +23,6 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		console.log('no params available')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -33,6 +32,10 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 		const tournamentGames = await getTournamentGames(params['id']);
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
+		}
+		const participant = await getParticipantInfo(params['id']);
+		if (!participant || participant.isQuit) {
+			setTimeout(() => router.navigateTo(`/tournament`), 0);
 		}
 		renderTournamentContent(currentTournament);
 		passContext(ctx, tournamentGames, currentTournament);
@@ -75,6 +78,20 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	return content;
 }
 
+// ======== GET CURRENT PARTICIPANT INFO ============
+async function getParticipantInfo(tournamentId: string): Promise<{isQuit: boolean, isEliminated: boolean} | null> {
+	try {
+		const participantInfo = await tournamentApi.getParticipantInfo(tournamentId);
+		if (!participantInfo) return null;
+		return {
+			isQuit: participantInfo.isQuit ?? false,
+			isEliminated: participantInfo.isEliminated ?? false
+		};
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
+}
 
 // ======== GET TOURNAMENT GAMES ============
 async function getTournamentGames(tournamentId: string): Promise<TournamentGame[] | null > {
@@ -220,4 +237,17 @@ function setupTournamentEventListeners(ctx: AppContext) {
 			console.log(error);
 		}
 	})
+	
+	tournamentGameComponent?.addEventListener('event-quit-tournament', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const {tournamentId} = customEvent.detail;
+		try {
+			await tournamentApi.quitActiveTournament(tournamentId);
+			router.navigateTo(`/`)
+		} catch (error) {
+			console.log(error);
+		}
+	})
+
 }

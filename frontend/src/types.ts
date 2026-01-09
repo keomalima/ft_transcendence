@@ -170,6 +170,7 @@ export interface TournamentParticipant {
     finalPosition: number | null;
     isEliminated: boolean;
     eliminatedInRound: number | null;
+	isQuit: boolean
 }
 
 // for tournament data

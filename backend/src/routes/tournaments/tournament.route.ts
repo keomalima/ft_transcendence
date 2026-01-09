@@ -94,6 +94,31 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		handler: tournamentController.deletePendingTournamentHandler
 	})
 
+	fastify.get('/:id/participant', {
+		schema: {
+			params: z.object({id: z.string()}),
+			response: { 200: tournamentSchemas.response.getParticipantInfo },
+			tags: ['Tournament'],
+			description: 'Get participant info',
+			summary: 'Get participant info',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.getParticipantInfoHandler
+	})
+
+	fastify.put('/:id/quit', {
+		schema: {
+			params: z.object({id: z.string()}),
+			tags: ['Tournament'],
+			description: 'Quit an active tournament',
+			summary: 'Quit an active tournament',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen, 
+		handler: tournamentController.quitTournamentHandler
+	})
+
 	fastify.put('/:id/start', {
 		schema: {
 			params: z.object({id: z.string()}),

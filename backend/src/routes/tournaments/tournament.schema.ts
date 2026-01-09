@@ -26,6 +26,15 @@ const advanceTournamentSchema = z.object({
 	message: z.string()
 })
 
+const participantInfoSchema = z.object({
+	id: z.string(),
+	tournamentId: z.string(),
+	userId: z.string(),
+	isQuit: z.boolean(),
+	isEliminated: z.boolean(),
+	eliminatedInRound: z.number().int().nullable()
+})
+
 const createTournamentGame = z.object({
 	createdBy: z.string(),
 	scoreToWin: z.number().int().max(10).default(10),
@@ -177,6 +186,7 @@ export const tournamentSchemas = {
 	getTournamentGames: getTournamentGames,
 	startGame: startTournamentGameResponseSchema,
 	finishTournamentGame: finishTournamentGameSchema,
-	advanceTournament: advanceTournamentSchema
+	advanceTournament: advanceTournamentSchema,
+	getParticipantInfo: participantInfoSchema
   },
 };
