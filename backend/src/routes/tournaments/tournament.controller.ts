@@ -23,11 +23,14 @@ async function createTournamentHandler (request: FastifyRequest<{ Body: CreateTo
 
 		const totalRounds = Math.ceil(Math.log2(body.numberPlayers));
 
-		const isTournamentOn = await tournamentService.findActiveTournamentByUserId(request.server.prisma, request.user!.id);
-		if (isTournamentOn) {
-			return reply.code(400).send({
-				message: "User currently has an active tournament on"
-			});
+		const tournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, request.user!.id);
+		if (tournament) {
+			const isParticipantEliminated = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournament.tournamentId);
+			if (!isParticipantEliminated?.isQuit) {
+					return reply.code(400).send({
+					message: "User currently has an active tournament on"
+				});
+			}
 		}
 		const newGame = await tournamentService.createTournament(request.server.prisma, body, userId, totalRounds);
 		return reply.code(201).send(newGame);
@@ -113,10 +116,21 @@ async function joinTournamentHandler (request: FastifyRequest<{ Params: { token:
 				message: "Tournament is already full"
 			});
 		}
+		
 		for (const participant of tournament.participants) {
 			if (participant.user.id === userId) {
 				return reply.code(409).send({
 					message: "User is already in this tournament"
+				});
+			}
+		}
+
+		const activeTournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, request.user!.id);
+		if (activeTournament) {
+			const isParticipantEliminated = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, activeTournament.tournamentId);
+			if (!isParticipantEliminated?.isQuit) {
+					return reply.code(400).send({
+					message: "User currently has an active tournament on"
 				});
 			}
 		}
@@ -239,7 +253,6 @@ async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: st
 		const tournamentId = request.params.id;
 
 		const tournamentPlayer = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId);
-		console.log('----tournamentplayer----', tournamentPlayer)
 		if (!tournamentPlayer) {
 			return reply.code(404).send({
 				message: "Tournament or Player not found or unauthorized"
@@ -254,10 +267,18 @@ async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: st
 			return reply.code(400).send({
 				message: "Can not quit a tournament player has already quit"
 			});
-		} if (tournamentPlayer.isEliminated) {
-			await tournamentService.quitTournamentByParticipantId(request.server.prisma, tournamentPlayer.id);
+		} 
+		if (!tournamentPlayer.isEliminated){
+			const game = await tournamentService.findCurrentGameByUserTournamentId(request.server.prisma, userId, tournamentId);
+			if (!game) return;
+			const winner = game?.gameUsers.find((u: any) => u.userId !== userId);
+			if (winner) {
+				await gameService.updatePlayer(request.server.prisma, {userId: winner.userId ,playerId: winner.id, score: 0}, true);
+				await gameService.finishGame(request.server.prisma, game.id, 'ABANDONED');
+			}
 		}
-
+		
+		await tournamentService.quitTournamentByParticipantId(request.server.prisma, tournamentPlayer.id);
 		return reply.code(200).send({ message: "User quit tournament" });
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to quit tournament"});

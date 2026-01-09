@@ -318,6 +318,7 @@ async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInpu
 		}
 		const gamePlayer1 = await gameService.findGamePlayerById(request.server.prisma, player1.playerId);
 		const gamePlayer2 = await gameService.findGamePlayerById(request.server.prisma, player2.playerId);
+		
 		if (gameId === gamePlayer1?.gameId && gameId === gamePlayer2?.gameId) {
 			const player1Winner = player1.userId === winnerId;
 			const updatePlayer1 = await gameService.updatePlayer(request.server.prisma, player1, player1Winner);

@@ -5,7 +5,7 @@ import { router } from "../main.js";
 import "../components/NavBar.js";
 
 // import styles
-import { RADIO_LABEL, BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
+import { BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 
 export function TournamentPage(ctx: AppContext): string {
@@ -14,6 +14,7 @@ export function TournamentPage(ctx: AppContext): string {
 
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
+		console.log('current tournament', currentTournament)
 		let participant = null;
 		if (currentTournament && typeof currentTournament.tournamentId === 'string') {
 			participant = await getParticipantInfo(currentTournament.tournamentId);
@@ -32,6 +33,7 @@ export function TournamentPage(ctx: AppContext): string {
 
 function renderTournamentContent(currentUser: UserState, tournamentId: string | null, participant: Partial<TournamentParticipant> | null) {
 	const content = document.getElementById('tournament-content');
+	console.log('participant', participant);
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
 		<header>
@@ -93,10 +95,9 @@ function renderTournamentContent(currentUser: UserState, tournamentId: string | 
 					<h2 class="text-2xl font-bold text-gray-800 mb-3">Create Tournament</h2>
 					<p class="text-gray-600 mb-6">
 						Host your own tournament and invite players to compete for the championship.
+					</p>
+					<button type='button' id='create-tournament-btn' class='${BUTTON_WHITE_CLASSES} w-full'>
 						CREATE TOURNAMENT
-					</button>
-					<button onclick="document.getElementById('join-tournament-dialog').showModal()" type='button' id='join-tournament-btn' class='${BUTTON_WHITE_CLASSES} w-full'>
-							JOIN TOURNAMENT
 					</button>
 				</div>
 			</div>

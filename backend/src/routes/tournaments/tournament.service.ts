@@ -17,7 +17,8 @@ async function findActiveTournamentByUserId(prisma: PrismaClient, id: string) {
 			userId: id,
 			tournament: {
 				status: {in: ['REGISTRATION', 'READY', 'IN_PROGRESS']}
-			}
+			},
+			isQuit: false
 		},
 		include: {
 			tournament : {
@@ -83,8 +84,18 @@ async function findTournamentByParticipant(prisma: PrismaClient, userId: string,
 			}
 		},
 		include: {
-			tournament: true,
-			user: true
+			tournament: {
+				select: {
+					id: true,
+					status: true
+				}
+			},
+			user: {
+				select: {
+					id: true,
+					displayName: true,
+				}
+			}
 		} 
 	})
 }
@@ -278,6 +289,23 @@ async function createEmptyGames(prisma: PrismaClient, userId: string, tournament
 	})
 }
 
+async function findCurrentGameByUserTournamentId(prisma: PrismaClient, userId: string, tournamentId: string) {
+	return prisma.game.findFirst({
+		where: {
+			gameUsers: { 
+				some: {
+					userId
+				} 
+			},
+			tournament: { id: tournamentId },
+			status: {in: ['PENDING']}
+		},
+		include: {
+			gameUsers: true
+		}
+	})
+}
+
 // =====================
 // Export Service Object
 // =====================
@@ -302,5 +330,6 @@ export const tournamentService = {
 	findGameByRoundNMatch,
 	matchMakeGames,
 	createEmptyGames,
-	quitTournamentByParticipantId
+	quitTournamentByParticipantId,
+	findCurrentGameByUserTournamentId
 };

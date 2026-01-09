@@ -206,6 +206,24 @@ export class TournamentNextGame extends HTMLElement {
 		statusText.className = player.isReady ? 'text-xs text-gray-500' : 'hidden';
 		actionContainer.appendChild(statusText);
 
+		// Quit Button
+		const quitBtn = document.createElement('button');
+		quitBtn.innerText = 'Quit Tournament';
+		quitBtn.hidden = player.isReady ? true : false;
+		quitBtn.className = 'text-sm text-gray-500 hover:text-gray-700 hover:underline cursor-pointer transition-colors';
+		actionContainer.appendChild(quitBtn);
+
+		quitBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (!window.confirm('Are you sure you want to quit the tournament?')) return;
+			this.dispatchEvent(new CustomEvent('event-quit-tournament', {
+				detail: {	
+					tournamentId: this._tournamentGamesData![0].tournamentId
+				},
+				bubbles: true
+			}));
+		});
+
 		card.appendChild(actionContainer);
 
 		readyBtn.addEventListener('click', (e) => {
