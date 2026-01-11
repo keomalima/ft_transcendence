@@ -20,7 +20,7 @@ export class TournamentWsConnection {
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 			if (data.type === 'tournament_update') {
-				console.log('New tournament update', data);
+				console.log('New tournament update');
 				onUpdate(data);
 			}
 			if (data.type === 'player_quit') {

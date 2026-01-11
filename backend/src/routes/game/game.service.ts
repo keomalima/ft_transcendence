@@ -129,7 +129,7 @@ async function removePlayerFromGame(prisma: PrismaClient, gameId: string, userId
 }
 
 async function createGame(prisma: PrismaClient, data: CreateGameInput, id: string) {
-	const game = await prisma.game.create({ data: { createdBy: id, ...data }});
+	const game = await prisma.game.create({ data: { createdBy: id, ...data, scoreToWin: data.scoreToWin ?? null }});
 	await prisma.gamePlayer.create({ data: { gameId: game.id, userId: id}})
 	return game;
 }
@@ -280,18 +280,41 @@ async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) 
 	if (!nextGame) return;
 
 	await addWinnerToNextGame(prisma, nextGame.id, winner.userId);
-
-	await notifyWaitingRoom(prisma, nextGame.id, winner.userId);
-
 	await checkAndAdvanceRound(prisma, game.tournamentId, game.roundNumber);
-
-	const completeGame = await getCompleteGameData(prisma, game.id);
 	
-	const nextCompleteGame = await getCompleteGameData(prisma, nextGame.id);
+	let currentGame: typeof nextGame | null = nextGame;
 
-	TournamentWsController.broadcasToRoom(game.tournamentId!, {
+	while (currentGame?.status === 'ABANDONED' && currentGame.roundNumber && currentGame.matchNumber !== null) {
+		await checkAndAdvanceRound(prisma, game.tournamentId, currentGame.roundNumber);
+
+		await notifyTournament(prisma, game.tournamentId!, game.id, currentGame.id);
+
+		currentGame = await findNextBracketGame(prisma, {
+			tournamentId: nextGame.tournamentId,
+			roundNumber: nextGame.roundNumber!,
+			matchNumber: nextGame.matchNumber!
+		});
+
+		if (!currentGame) break;
+		
+		await addWinnerToNextGame(prisma, currentGame.id, winner.userId);
+	}
+
+	if (currentGame && currentGame.status === 'PENDING') {
+	    await notifyWaitingRoom(prisma, currentGame.id, winner.userId);
+		await notifyTournament(prisma, game.tournamentId!, game.id, currentGame.id);
+	} else {
+	    await completeTournament(prisma, game, winner);
+	}
+}
+
+async function notifyTournament(prisma: PrismaClient, tournamentId: string, gameId: string, currentGameId: string) {
+	const completeGame = await getCompleteGameData(prisma, gameId);
+	const nextCompleteGame = await getCompleteGameData(prisma, currentGameId);
+	
+	TournamentWsController.broadcasToRoom(tournamentId, {
 		type: 'tournament_update',
-		gameId: game.id,
+		gameId: gameId,
 		game: completeGame,
 		nextGame: nextCompleteGame
 	});
@@ -324,7 +347,7 @@ async function checkAndAdvanceRound(prisma: PrismaClient, tournamentId: string, 
 		where: {
 			tournamentId,
 			roundNumber: currentRound,
-			status: { not: 'COMPLETED' }
+			status: { notIn: ['COMPLETED', 'ABANDONED'] }
 		}
 	});
 

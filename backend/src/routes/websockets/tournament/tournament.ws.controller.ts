@@ -34,7 +34,6 @@ async function tournamentBracketHandler(socket: WebSocket, request: FastifyReque
 
 function broadcasToRoom(tournamentId: string, message: any) {
 	const sockets = tournamentBracket.get(tournamentId);
-	console.log(sockets)
 	if (sockets) {
 		sockets.forEach(socket => {
 			if (socket.readyState === WebSocket.OPEN) {

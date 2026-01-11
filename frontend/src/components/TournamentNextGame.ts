@@ -287,10 +287,22 @@ export class TournamentNextGame extends HTMLElement {
 		readyBtn.className = 'cursor-not-allowed rounded-lg bg-gray-300 px-5 py-2 text-sm font-semibold text-white shadow-sm';
 		actionContainer.appendChild(readyBtn);
 
-		const statusText = document.createElement('span');
-		statusText.innerText = 'Waiting for opponent';
-		statusText.className = 'text-xs text-gray-400';
-		actionContainer.appendChild(statusText);
+		// Quit Button
+		const quitBtn = document.createElement('button');
+		quitBtn.innerText = 'Quit Tournament';
+		quitBtn.className = 'text-sm text-gray-500 hover:text-gray-700 hover:underline cursor-pointer transition-colors';
+		actionContainer.appendChild(quitBtn);
+
+		quitBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (!window.confirm('Are you sure you want to quit the tournament?')) return;
+			this.dispatchEvent(new CustomEvent('event-quit-tournament', {
+				detail: {	
+					tournamentId: this._tournamentGamesData![0].tournamentId
+				},
+				bubbles: true
+			}));
+		});
 
 		card.appendChild(actionContainer);
 
