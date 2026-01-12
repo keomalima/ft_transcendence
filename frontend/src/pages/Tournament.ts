@@ -158,6 +158,7 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	tournamentWsConnection.connect(tournamentGames[0].tournamentId, currentUser.id!,
 		async (tournamentData) => {
 			if (tournamentData.gameId) {
+				console.log('New Tournament WS event', tournamentData);
 				const game = tournamentData.game;
 				const nextGame = tournamentData.nextGame
 				const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
@@ -187,6 +188,7 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	wsConnection.connect(gameData.id!, currentUser.id!,
 		async (updateGameData) => {
 			if (updateGameData.message) {
+				console.log('New WS event', updateGameData);
 				tournamentGames[gameIndex] = updateGameData.game;
 				updatePlayerInfo(tournamentGames);
 			}
