@@ -185,7 +185,9 @@ export class TournamentBracket extends HTMLElement {
 
 			// row content ==============
 			const row = document.createElement('div');
-        	row.className = `flex items-center justify-between px-4 py-3 ${isMirrored ? 'flex-row-reverse' : ''} ${isWinner ? 'bg-indigo-50/30' : ''}`;
+        	row.className = `flex items-center justify-between px-4 py-3 
+							${isMirrored ? 'flex-row-reverse' : ''} 
+							${isWinner ? 'bg-indigo-50/30' : ''}`;
 
 			// player content ==============
 			const playerInfo = document.createElement('div');

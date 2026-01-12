@@ -26,7 +26,14 @@ async function findActiveTournamentByUserId(prisma: PrismaClient, id: string) {
 					token: true,
 					status: true,
 					totalRounds: true,
-					currentRound: true
+					currentRound: true,
+					winner: {
+						select: {
+							id: true,
+							displayName: true,
+							avatarUrl: true
+						}
+					}
 				}
 			}
 		}
@@ -122,6 +129,13 @@ async function findTournamentById(prisma: PrismaClient, tournamentId: string){
 							avatarUrl: true
 						}
 					}
+				}
+			},
+			winner: {
+				select : {
+					id: true,
+					displayName: true,
+					avatarUrl: true
 				}
 			}
 		}

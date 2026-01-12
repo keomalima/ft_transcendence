@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { GameToken, TournamentData, TournamentGame, TournamentParticipant } from '../types';
+import { CurrentTournamentInfo, GameToken, TournamentData, TournamentGame, TournamentParticipant } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/tournaments';
@@ -58,9 +58,9 @@ export const tournamentApi = {
 		}
 	},
 
-	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number, currentRound: number }> => {
+	getCurrentTournament: async (): Promise<CurrentTournamentInfo> => {
 		try {
-			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number, currentRound: number}>(`${BASE_URL}/current`);
+			const response = await httpCall.get<CurrentTournamentInfo>(`${BASE_URL}/current`);
 			console.log('🎮 getCurrentTournament sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {

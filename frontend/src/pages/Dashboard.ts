@@ -11,6 +11,7 @@ import "../components/FriendRequests.js";
 import "../components/AddFriend.js";
 import "../components/JoinGamePopUp.js";
 import type { FriendData, GameHistory } from "../types.js";
+import { tournamentApi } from "../api/tournamentApi.js";
 
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
@@ -18,7 +19,8 @@ export function Dashboard(ctx: AppContext): string{
 
 	setTimeout( async () => {
 		const currentGame = await getCurrentGame(ctx);
-		renderDashboardContent(currentUser!, currentGame);
+		const currentTournament = await getCurrentTournament();
+		renderDashboardContent(currentUser!, currentGame, currentTournament?.tournamentId);
 		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
 		setupDashboardEventListeners(ctx);
@@ -33,12 +35,14 @@ export function Dashboard(ctx: AppContext): string{
 }
 
 // ======== UPDATE CONTENT ========
-function renderDashboardContent(currentUser: UserState, currentGame: {gameId: string, status: string, token: string | null, type: string, userId:string} | null) {
+function renderDashboardContent(currentUser: UserState, currentGame: {gameId: string, status: string, token: string | null, type: string, userId:string} | null, tournamentId: string | undefined) {
 	const content = document.getElementById('dashboard-content');
 
 	let link: string | null  = null;
 	if (currentGame) {
-		if (currentGame.type === 'LOCAL')
+		if (tournamentId)
+			link = `/tournament/${tournamentId}`
+		else if (currentGame.type === 'LOCAL')
 			link = `/local-game/${currentGame.gameId}`;
 		else if (currentGame.status === 'PENDING')
 			link = `/game-room/${currentGame.gameId}`;
@@ -59,34 +63,45 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 					<img src='http://localhost:3000${currentUser.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
-
-				${currentGame?.gameId ?
+				${tournamentId ?
 					`
 						<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
-							<p class='text-white' >You have a pending game</p>
-							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
+							<p class='text-white' >You have an ongoing tournament</p>
+							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter tournament</p>
 						</a>
 
 						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
 							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
 						</a>
 
-					`
+						`
 					:
-					`
-						<a data-link href='/create-game' class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
-							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</p>
-						</a>
-						<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
-							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Join a game</p>
-						</a>
-						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
-							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
-						</a>
+					currentGame?.gameId ?
+						`
+							<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+								<p class='text-white' >You have a pending game</p>
+								<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
+							</a>
 
-					`
+							<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
+							</a>
+
+						`
+						:
+						`
+							<a data-link href='/create-game' class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
+								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</p>
+							</a>
+							<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
+								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Join a game</p>
+							</a>
+							<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
+							</a>
+
+						`
 				}
-
 				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white p-4 lg:p-10 order-4 lg:order-0">
 					<h1>Your achievements</h1>
 				</div>
@@ -117,6 +132,17 @@ async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId:
 	try {
 		const currentGame = await gameService.getCurrentGame(ctx);
 		return currentGame;
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
+}
+
+// ======== GET CURRENT TOURNAMENT ============
+async function getCurrentTournament(): Promise<{userId: string, tournamentId: string, type: string, token: string | null} | null> {
+	try {
+		const currentTournament = await tournamentApi.getCurrentTournament();
+		return currentTournament;
 	} catch(error) {
 		console.log(error);
 		return null;

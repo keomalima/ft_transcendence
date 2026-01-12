@@ -63,6 +63,12 @@ const getTournamentResponseSchema = z.object({
 	updatedAt: z.date().nullable(),
 	completedAt: z.date().nullable(),
 	startedAt: z.date().nullable(),
+	currentRound: z.number().int(),
+	winner: z.object({
+		id: z.string(),
+		displayName: z.string(),
+		avatarUrl: z.string()
+	}).nullable().optional(),
 	participants: z.array(
 		z.object({
 			id: z.string(),
@@ -108,7 +114,12 @@ const getCurrentTournamentSchema = z.object({
 	status: z.enum(TournamentStatus),
 	token: z.string().nullable(),
 	totalRounds: z.number().int(),
-	currentRound: z.number().int()
+	currentRound: z.number().int(),
+	winner: z.object({
+		id: z.string(),
+		displayName: z.string(),
+		avatarUrl: z.string()
+	}).nullable().optional()
 })
 
 const startTournamentResponseSchema = z.object({

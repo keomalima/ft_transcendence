@@ -28,7 +28,8 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	}
 
 	setTimeout(async () => {
-		const currentTournament = await getCurrentTournament();
+		const currentTournament = await getCurrentTournament(params['id']);
+		console.log(currentTournament);
 		const tournamentGames = await getTournamentGames(params['id']);
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
@@ -37,9 +38,9 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 		if (!participant || participant.isQuit) {
 			setTimeout(() => router.navigateTo(`/tournament`), 0);
 		}
+
 		renderTournamentContent(currentTournament);
 		passContext(ctx, tournamentGames, currentTournament);
-
 		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
 
 		setupTournamentEventListeners(ctx);
@@ -104,9 +105,9 @@ async function getTournamentGames(tournamentId: string): Promise<TournamentGame[
 }
 
 // ======== GET CURRENT TOURNAMENT ============
-async function getCurrentTournament(): Promise<Partial< TournamentData | null>> {
+async function getCurrentTournament(tournamentId: string): Promise<Partial< TournamentData | null>> {
 	try {
-		const currentTournament = await tournamentApi.getCurrentTournament();
+		const currentTournament = await tournamentApi.getTournament(tournamentId);
 		return currentTournament;
 	} catch(error) {
 		return null;

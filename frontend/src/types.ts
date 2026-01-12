@@ -162,6 +162,20 @@ export interface GameHistory {
 	} | null;
 }
 
+export type CurrentTournamentInfo = {
+  userId: string;
+  tournamentId: string;
+  type: string;
+  token: string | null;
+  totalRounds: number;
+  currentRound: number;
+  winner: {
+	id: string,
+	displayName: string,
+	avatarUrl: string
+  } | null
+}
+
 export interface TournamentParticipant {
     id: string;
     userId: string;
@@ -184,7 +198,7 @@ export interface TournamentData {
     currentRound: number;
     totalRounds: number;
     winnerId: string | null;
-    winner?: Pick<UserState, 'id' | 'displayName' | 'avatarUrl'>;
+    winner?: Pick<UserState, 'id' | 'displayName' | 'avatarUrl'> | null;
     scoreToWin: number;
     startedAt: string | null;
     completedAt: string | null;

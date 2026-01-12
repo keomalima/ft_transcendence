@@ -86,7 +86,12 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 		const response = {
 			...tournament,
 			isCreator: tournament.createdBy === userId,
-			token: tournament.createdBy === userId ? tournament.token : null
+			token: tournament.createdBy === userId ? tournament.token : null,
+			winner: tournament.winner ? {
+				id: tournament.winner.id,
+				displayName: tournament.winner.displayName,
+				avatarUrl: tournament.winner.avatarUrl
+			} : null
 		}
 		return response;
 	} catch (error:any) {
@@ -156,15 +161,23 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 		if (!tournament) 
 			return reply.code(204).send();
 
-		return {
+		const response: any = {
 			userId: tournament.userId,
 			tournamentId: tournament.tournamentId,
 			status: tournament.tournament.status,
 			token: tournament.tournament.token,
 			totalRounds: tournament.tournament.totalRounds,
-			currentRound: tournament.tournament.currentRound
-		}
+			currentRound: tournament.tournament.currentRound,
+			winner: tournament.tournament.winner ? {
+				id: tournament.tournament.winner.id,
+				displayName: tournament.tournament.winner.displayName,
+				avatarUrl: tournament.tournament.winner.avatarUrl
+			} : null
+		};
+
+		return response;
 	} catch (error:any) {
+		console.log(error);
 		reply.code(500).send({ message: "Failed to fetch current tournament"});
 	}
 }

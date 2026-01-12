@@ -53,19 +53,24 @@ export class TournamentNextGame extends HTMLElement {
 		nextMatchCardContainer.innerHTML = '';
 		nextMatchCardContainer.className = 'flex flex-row gap-10 px-4 w-max mx-auto';
 
+		let card;
+
 		const column = document.createElement('div');
 		column.className = 'flex flex-col gap-8';
 		const nextGame = this.findNextGame(currentUser);
-		if (nextGame && nextGame.gameUsers.length === 2) {
-			const card = this.createNextMatchCard(nextGame, currentUser);
-			column.append(card);
-		} else if (nextGame) {
-			const card = this.createEmptyNextMatchCard()
-			column.append(card);
-		} else {
-			const card = this.createLostCard(currentUser);
-			column.append(card);
+
+		if (this._tournamentData.winner !== null) {
+			card = this.createWonCard(currentUser);
 		}
+		else if (nextGame && nextGame.gameUsers.length === 2) {
+			card = this.createNextMatchCard(nextGame, currentUser);
+		} else if (nextGame) {
+			card = this.createEmptyNextMatchCard()
+		} else {
+			card = this.createLostCard(currentUser);
+		}
+
+		column.append(card);
 		nextMatchCardContainer.appendChild(column);
 	}
 
@@ -151,6 +156,7 @@ export class TournamentNextGame extends HTMLElement {
 		const card = document.createElement('div');
 		card.className = `flex w-[32rem] items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-md`;
 
+		console.log(nextGame);
 		const player = nextGame.gameUsers.find(game => game.user.id === currentUser.id);
 		const opponent = nextGame.gameUsers.find(game => game.user.id !== currentUser.id);
 		if (!opponent || !player) return card;
@@ -198,11 +204,22 @@ export class TournamentNextGame extends HTMLElement {
 		const readyBtn = document.createElement('button');
 		readyBtn.innerText = 'Ready';
 		readyBtn.disabled = player.isReady ? true : false;
+		readyBtn.hidden = opponent.isReady && player.isReady ? true : false;
 		readyBtn.className = 'rounded-lg bg-stone-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-700 disabled:bg-creamgrey disabled:text-medium disabled:cursor-not-allowed disabled:hover:bg-creamgrey';
 		actionContainer.appendChild(readyBtn);
 
+		// go to match button
+		const matchBtn = document.createElement('a');
+		matchBtn.innerText = 'Go to game';
+		matchBtn.href = `/game/${nextGame.id}`;
+		matchBtn.hidden = opponent.isReady && player.isReady ? false : true;
+		matchBtn.className = 'rounded-lg bg-stone-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-700 disabled:bg-creamgrey disabled:text-medium disabled:cursor-not-allowed disabled:hover:bg-creamgrey';
+		actionContainer.appendChild(matchBtn);
+
+
 		const statusText = document.createElement('span');
 		statusText.innerText = 'Waiting opponent';
+		statusText.hidden = opponent.isReady && player.isReady ? true : false;
 		statusText.className = player.isReady ? 'text-xs text-gray-500' : 'hidden';
 		actionContainer.appendChild(statusText);
 
@@ -306,6 +323,63 @@ export class TournamentNextGame extends HTMLElement {
 
 		card.appendChild(actionContainer);
 
+		return card;
+	}
+
+	private createWonCard(currentUser: UserState): HTMLElement {
+		console.log(this._tournamentData)
+		const isUserWinner = currentUser.id === this._tournamentData?.winner?.id ? true : false;
+
+		const card = document.createElement('div');
+		card.className = 'flex w-[32rem] items-center justify-between rounded-xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-100 to-green-200 p-6 shadow-lg';
+
+		// Left Side: Victory Status
+		const infoContainer = document.createElement('div');
+		infoContainer.className = 'flex items-center gap-4';
+
+		// Icon Container
+		const iconContainer = document.createElement('div');
+		iconContainer.className = 'flex h-16 w-16 items-center justify-center rounded-full bg-green-100 border-2 border-green-200 shadow-sm';
+		iconContainer.innerHTML = '<span class="text-3xl">🏆</span>';
+		infoContainer.appendChild(iconContainer);
+
+		// Text Info
+		const textContainer = document.createElement('div');
+		textContainer.className = 'flex flex-col';
+
+		const header = document.createElement('span');
+		header.className = 'text-xs font-bold uppercase tracking-widest text-green-600';
+		header.innerText = 'Tournament Complete';
+		textContainer.appendChild(header);
+
+		// Message
+		const message = document.createElement('h3');
+		message.innerText = isUserWinner ? 'Congratulations!' : `${this._tournamentData?.winner?.displayName} is the winner` ;
+		message.className = 'text-lg font-bold text-gray-800';
+		textContainer.appendChild(message);
+
+		// Info text
+		const infoText = document.createElement('span');
+		infoText.innerText = isUserWinner ? 'You are the champion!' : 'Better luck next time!' ;
+		infoText.className = 'mt-0.5 text-sm text-gray-600';
+		textContainer.appendChild(infoText);
+
+		infoContainer.appendChild(textContainer);
+		card.appendChild(infoContainer);
+
+		// Right Side: Action Buttons
+		const actionContainer = document.createElement('div');
+		actionContainer.className = 'flex flex-col gap-2.5';
+
+		// Go back home
+		const homeLink = document.createElement('a');
+		homeLink.innerText = 'Back to Home';
+		homeLink.href = '/';  // or your home route
+		homeLink.className = 'rounded-lg bg-white border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 transition-colors';
+		actionContainer.appendChild(homeLink);
+
+		card.appendChild(actionContainer);
+		
 		return card;
 	}
 }

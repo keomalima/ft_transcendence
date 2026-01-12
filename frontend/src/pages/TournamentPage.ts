@@ -14,7 +14,6 @@ export function TournamentPage(ctx: AppContext): string {
 
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
-		console.log('current tournament', currentTournament)
 		let participant = null;
 		if (currentTournament && typeof currentTournament.tournamentId === 'string') {
 			participant = await getParticipantInfo(currentTournament.tournamentId);
@@ -33,7 +32,6 @@ export function TournamentPage(ctx: AppContext): string {
 
 function renderTournamentContent(currentUser: UserState, tournamentId: string | null, participant: Partial<TournamentParticipant> | null) {
 	const content = document.getElementById('tournament-content');
-	console.log('participant', participant);
 	content!.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
 		<header>
