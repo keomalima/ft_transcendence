@@ -24,7 +24,8 @@ import { chatPrivateRoutes } from './routes/chat/chat.route.js';
 
 
 const fastify = Fastify({
-  logger: true
+  logger: true,
+  trustProxy: true
 }).withTypeProvider<ZodTypeProvider>();
 
 fastify.setValidatorCompiler(validatorCompiler);
