@@ -109,8 +109,8 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 	/*html*/`
 		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
 			<div class="text-center flex-shrink-0">
-				<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Local Game</h1>
-			</div>
+			<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Local Game</h1>
+		</div>
 			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
 				<div class='flex-1 justify-items-center'>
 					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>${currentUser.displayName}</p>
@@ -124,12 +124,11 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 			</div>
-			<div id="arena" class='w-full max-w-[90vw] lg:max-w-[80vw] mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl flex-shrink min-h-0'>
+			<div id="arena" class='mx-auto bg-black relative border-2 border-black rounded-xl' style='width: min(90vw, calc(100vh - 6rem) * 2); height: calc(min(90vw, calc(100vh - 6rem) * 2) / 2);'>
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
 				<div id='ball' class='absolute w-[2%] h-[4%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-				<!-- <div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div> -->
 			</div>
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
@@ -300,6 +299,10 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 function gameActionListener(mapKeys: MapKeys, game: LocalGameData) {
 	// Keyboard controls
 	document.addEventListener('keydown', (e) => {
+		if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+			e.preventDefault();
+		}
+
 		if (e.key === 's') mapKeys.s = true;
 		if (e.key === 'x') mapKeys.x = true;
 		if (e.key === 'ArrowUp') {
