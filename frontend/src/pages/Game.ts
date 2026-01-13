@@ -90,7 +90,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 			</div>
-			<div id="arena" class='w-full max-w-[90vw] lg:max-w-[80vw] mx-auto aspect-[2/1] bg-black relative border-2 border-black rounded-xl flex-shrink min-h-0'>
+			<div id="arena" class='mx-auto bg-black relative border-2 border-black rounded-xl' style='width: min(90vw, calc(100vh - 6rem) * 2); height: calc(min(90vw, calc(100vh - 6rem) * 2) / 2);'>
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>

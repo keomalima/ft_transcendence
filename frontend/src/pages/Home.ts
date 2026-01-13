@@ -15,7 +15,10 @@ export function Home(ctx: AppContext): string {
 		const startedBtnEl = document.getElementById('get-started-btn') as HTMLButtonElement | null;
 		const learnBtnEl = document.getElementById('learn-more-btn') as HTMLElement | null;
 		const hiddenFormEl = document.getElementById('hidden-form') as HTMLElement | null;
-		if (startedBtnEl) startedBtnEl.disabled = false;
+		if (startedBtnEl) {
+			startedBtnEl.disabled = false;
+			if (startedBtnEl.classList.contains('hidden')) startedBtnEl.classList.remove('hidden');
+		}
 		if (learnBtnEl) learnBtnEl.style.display = '';
 		if (hiddenFormEl) hiddenFormEl.style.display = 'none';
 
@@ -36,7 +39,7 @@ export function Home(ctx: AppContext): string {
 					<div class="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
-							<button id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</button>
+							<button id='get-started-btn' class='${LINK_STYLED_CLASSES} disba'>Get started</button>
 							<a data-link href="/LearnMore" id="learn-more-btn" class='${LINK_STYLED_CLASSES}'>Learn more →</a>
 						</div>
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
@@ -108,9 +111,10 @@ function setupHomeEventListeners(ctx: AppContext) {
 	startedBtn?.addEventListener('click', (e) => {
 		console.log('started triggered')
 		e.preventDefault();
+		startedBtn.disabled = true;
+		startedBtn.classList.add('hidden');
 		if (hidenForm) {
 			hidenForm.style.display = 'block';
-			startedBtn.disabled = true;
 		}
 		if (learnBtn)
 			learnBtn.style.display = 'none';
