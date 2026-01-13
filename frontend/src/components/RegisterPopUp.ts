@@ -1,5 +1,3 @@
-import { router } from "../main.js";
-import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { INPUT_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { AppContext } from "../types.js";
@@ -61,7 +59,7 @@ export class RegisterPopUp extends HTMLElement {
 
 						<div class="col-span-full">
 							<label for="username">Username</label>
-							<input id="username" type="text" name="username" autoComplete="username" class='${INPUT_CLASSES}'/>
+							<input id="username" type="text" name="username" autoComplete="username" class='${INPUT_CLASSES}' maxlength="20"/>
 						</div>
 
 						<div class="col-span-full">
@@ -124,7 +122,7 @@ export class RegisterPopUp extends HTMLElement {
 				return;
 			} finally {
 				saveBtn.disabled = false;
-				saveBtn.className = 'btn-primary bg-white hover:bg-black';
+				saveBtn.className = `${BUTTON_WHITE_CLASSES}`;
 				saveBtn.textContent = 'Save';
 			}
 		}, { once: true });

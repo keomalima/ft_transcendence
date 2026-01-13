@@ -119,7 +119,7 @@ export class FriendList extends HTMLElement {
 	private createFriendCard(friend: Partial<FriendData>): HTMLElement {
 		const card = document.createElement('div');
 
-		card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
+		card.className = 'relative flex items-center bg-stone-100 rounded gap-3 my-2 py-2 px-3';
 
 		// profile picture ===========
 		const avatar = document.createElement('div');
@@ -155,11 +155,11 @@ export class FriendList extends HTMLElement {
 
 		// text content ==============
 		const text = document.createElement('div');
-		text.className = 'min-w-0 flex-1 pl-3 text-[Inter]';
+		text.className = 'min-w-0 flex-1 text-[Inter]';
 
 		const name = document.createElement('p');
 		name.innerText = `${friend.displayName}`;
-		name.className = 'text-sm font-[Inter]'
+		name.className = 'text-sm font-[Inter] truncate'
 
 		const status = document.createElement('p');
 		status.innerText = `${friend.isOnline === true ? 'online' : 'offline'}`;

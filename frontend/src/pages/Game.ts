@@ -169,6 +169,11 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				</div>
 			</div>
 
+			<!-- Waiting opponent overlay -->
+			<div id="waiting-opponent-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+				<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
+			</div>
+
 			<!-- Confirmation Dialog -->
 			<dialog id="quit-game-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
@@ -321,6 +326,11 @@ function startGame() {
 
 		const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement | null;
 		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement | null;
+		const waitingOpponentOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement;
+
+		if (waitingOpponentOverlay) {
+			waitingOpponentOverlay.classList.add('hidden');
+		}
 
 		if (playingSide) {
 			playingSide.innerHTML = `You play on ${detail.position} side ${detail.position === 'left' ? '⬅️' : '➡️' }`;

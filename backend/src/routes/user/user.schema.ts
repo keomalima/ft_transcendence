@@ -38,6 +38,11 @@ const editUserSchema = z.object({
 	surname: z.string().nullable().optional()
 });
 
+const changeUserPasswordSchema = z.object({
+	currentPassword: z.string(),
+	newPassword: z.string()
+});
+
 const uploadSchema = z.object({
 	avatarFile: z
 		.custom<MultipartFile>()
@@ -92,6 +97,11 @@ const editUserResponseSchema = z.object({
 	updatedAt: z.date(),
 });
 
+const changeUserPasswordResponseSchema = z.object({
+	id: z.string(),
+	updatedAt: z.date(),
+});
+
 const uploadAvatarResponseSchema = z.object({
 	id: z.string(),
     avatarUrl: z.string(),
@@ -106,7 +116,8 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type EditInput = z.infer<typeof editUserSchema>;
 export type UploadInput = z.infer<typeof uploadSchema>;
-export type CreateUserData = Omit<CreateUserInput, 'avatarFile'> & {avatarUrl: string;}
+export type CreateUserData = Omit<CreateUserInput, 'avatarFile'> & {avatarUrl: string;};
+export type ChangeUserPassword = z.infer<typeof changeUserPasswordSchema>;
 
 // =====================
 // Schema Objects Export
@@ -118,7 +129,8 @@ export const userSchemas = {
     createUser: createUserSchema,
     login: loginSchema,
     editUser: editUserSchema,
-	uploadAvatar: uploadSchema
+	uploadAvatar: uploadSchema,
+	changeUserPassword: changeUserPasswordSchema
   },
   
   // Response schemas
@@ -128,6 +140,7 @@ export const userSchemas = {
     getUser: getUserResponseSchema,
     editUser: editUserResponseSchema,
 	uploadtAvatar: uploadAvatarResponseSchema,
-	getUserDev: getUserArraySchema
+	getUserDev: getUserArraySchema,
+	changeUserPassword: changeUserPasswordResponseSchema
   },
 };

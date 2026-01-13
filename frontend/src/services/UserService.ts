@@ -1,6 +1,6 @@
 import { AppContext } from "../types";
 import { UserState } from "../types";
-import { updateAvatarResp, userApi } from "../api/userApi.js";
+import { changePasswordResp, updateAvatarResp, userApi } from "../api/userApi.js";
 
 import { CreateUserDto, CreateUserResp, LoginUserResp, getUserResp, updateUserResp } from "../api/userApi.js";
 
@@ -99,6 +99,19 @@ class UserService {
 			surname: result.surname ?? prevState.surname,
 			displayName: result.displayName ?? prevState.displayName,
 			avatarFile: result.avatarFile ?? prevState.avatarFile
+		}));
+		
+		return result;
+	}
+
+	// change user password
+	async changePassword(currentPassword: string, newPassword: string, ctx: AppContext): Promise<changePasswordResp> {
+		const result = await userApi.changePassword(currentPassword, newPassword);
+		
+		// Update only the fields that were returned from the API
+		ctx.userStore.update((prevState) => ({
+			...prevState,
+			updatedAt: result.updatedAt
 		}));
 		
 		return result;

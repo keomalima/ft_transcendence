@@ -38,8 +38,8 @@ export class ProfileCard extends HTMLElement {
 				<div class="bg-white rounded-lg p-6">
 					<div class="flex flex-col items-center">
 						<img src='${profilePicture}' class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover"></img>
-						<h1 class="text-xl font-bold">${currentUser?.displayName}</h1>
-						<p>${currentUser?.name} ${currentUser?.surname}</p>
+						<h1 class="text-xl font-bold truncate">${currentUser?.displayName}</h1>
+						<p class='truncate'>${currentUser?.name} ${currentUser?.surname}</p>
 						<div class="mt-6 flex flex-wrap gap-4 justify-center">
 							<a data-link href="/edit-profile" id='edit-btn' class="${BUTTON_WHITE_CLASSES} ">Edit profile</a>
 						</div>

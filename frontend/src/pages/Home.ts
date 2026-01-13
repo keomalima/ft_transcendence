@@ -2,8 +2,6 @@ import { router } from "../main.js";
 import { AppContext } from "../types.js";
 import { userService } from "../services/UserService.js";
 import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
-
-// import HTML components
 import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
@@ -11,8 +9,8 @@ import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 // listeners when the SPA recreates the DOM node during navigation.
 let lastStartedBtn: HTMLButtonElement | null = null;
 
-	export function Home(ctx: AppContext): string {
-	requestAnimationFrame(() => {
+export function Home(ctx: AppContext): string {
+	setTimeout(() => {
 		// Reset UI state on each render
 		const startedBtnEl = document.getElementById('get-started-btn') as HTMLButtonElement | null;
 		const learnBtnEl = document.getElementById('learn-more-btn') as HTMLElement | null;
@@ -21,15 +19,14 @@ let lastStartedBtn: HTMLButtonElement | null = null;
 		if (learnBtnEl) learnBtnEl.style.display = '';
 		if (hiddenFormEl) hiddenFormEl.style.display = 'none';
 
-		passContext(ctx);
-
 		// If the Get started button element has changed (SPA re-render),
 		// re-run setup to attach listeners to the new DOM node.
 		if (lastStartedBtn !== startedBtnEl) {
+			passContext(ctx);
 			setupHomeEventListeners(ctx);
 			lastStartedBtn = startedBtnEl;
 		}
-	});
+	}, 0);
 
 	const content:string = /*html*/`
         <div>
@@ -141,13 +138,20 @@ function setupHomeEventListeners(ctx: AppContext) {
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
-	}, { once: true });
+	});
 
 
 	// **** CREATE NEW ACCOUNT ****
 	registerComponent?.addEventListener('event-account-creation', async (e: Event) => {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
+		const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
+		if (data.username && data.username.length > 20) {
+			if (displayError) {
+				displayError.innerText = 'Error: Username is too long.'
+				return;
+			}
+		}
 		try {
 			await userService.createUser({
 				email: data.email,
@@ -163,9 +167,9 @@ function setupHomeEventListeners(ctx: AppContext) {
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);
-			const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
-			displayError.innerText = `${error}`;
+			if (displayError)
+				displayError.innerText = `${error}`;
 		}
-	}, { once: true });
+	});
 
 }

@@ -110,6 +110,19 @@ export async function userPrivateRoutes(fastify: FastifyInstance) {
 		handler: userController.editUserHandler
 	});
 
+	fastify.put('/password', { 
+		schema: { 
+			body: userSchemas.request.changeUserPassword, 
+			response: { 200: userSchemas.response.changeUserPassword },
+			tags: ['Users'],
+			description: 'Change user password',
+			summary: 'Change user password',
+			security: [{ cookieAuth: [] }]
+		}, 
+		preHandler: userController.updateLastSeen,
+		handler: userController.changeUserPasswordHandler
+	});
+
 	fastify.get('/me', {
 		schema: {
 			response: { 200: userSchemas.response.getUser },
