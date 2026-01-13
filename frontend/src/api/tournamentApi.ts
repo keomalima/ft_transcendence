@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { GameToken, TournamentData, TournamentGame } from '../types';
+import { CurrentTournamentInfo, GameToken, TournamentData, TournamentGame, TournamentParticipant } from '../types';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/tournaments';
@@ -37,15 +37,14 @@ export const tournamentApi = {
 			throw buildApiError('start tournament game', error);
 		}
 	},
-
-
-	matchMaking: async (tournamentId: string): Promise<Partial<TournamentData>> => {
+	
+	getParticipantInfo: async (tournamentId: string): Promise<Partial<TournamentParticipant>> => {
 		try {
-			const response = await httpCall.post<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/match-make`);
-			console.log('🎮 match making sucess ✅ ', response.data);
+			const response = await httpCall.get<Partial<TournamentData>>(`${BASE_URL}/${tournamentId}/participant`);
+			console.log('🎮 got participant info success ✅ ', response.data);
 			return response.data;
 		} catch (error) {
-			throw buildApiError('match making', error);
+			throw buildApiError('get participant info', error);
 		}
 	},
 
@@ -59,9 +58,9 @@ export const tournamentApi = {
 		}
 	},
 
-	getCurrentTournament: async (): Promise<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number, currentRound: number }> => {
+	getCurrentTournament: async (): Promise<CurrentTournamentInfo> => {
 		try {
-			const response = await httpCall.get<{ userId: string; tournamentId: string; type: string; token: string | null, totalRounds: number, currentRound: number}>(`${BASE_URL}/current`);
+			const response = await httpCall.get<CurrentTournamentInfo>(`${BASE_URL}/current`);
 			console.log('🎮 getCurrentTournament sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
@@ -104,6 +103,15 @@ export const tournamentApi = {
 			console.log('🎮 quit / delete pending tournament sucess ✅ ');
 		} catch (error) {
 			throw buildApiError('quit / delete pending tournament', error);
+		}
+	},
+
+	quitActiveTournament: async (tournamentId: string): Promise<void> => {
+		try {
+			await httpCall.put(`${BASE_URL}/${tournamentId}/quit`);
+			console.log('🎮 quit active tournament sucess ✅ ');
+		} catch (error) {
+			throw buildApiError('quit active tournament', error);
 		}
 	},
 

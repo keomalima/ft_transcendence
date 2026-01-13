@@ -26,6 +26,15 @@ const advanceTournamentSchema = z.object({
 	message: z.string()
 })
 
+const participantInfoSchema = z.object({
+	id: z.string(),
+	tournamentId: z.string(),
+	userId: z.string(),
+	isQuit: z.boolean(),
+	isEliminated: z.boolean(),
+	eliminatedInRound: z.number().int().nullable()
+})
+
 const createTournamentGame = z.object({
 	createdBy: z.string(),
 	scoreToWin: z.number().int().max(10).default(10),
@@ -54,6 +63,12 @@ const getTournamentResponseSchema = z.object({
 	updatedAt: z.date().nullable(),
 	completedAt: z.date().nullable(),
 	startedAt: z.date().nullable(),
+	currentRound: z.number().int(),
+	winner: z.object({
+		id: z.string(),
+		displayName: z.string(),
+		avatarUrl: z.string()
+	}).nullable().optional(),
 	participants: z.array(
 		z.object({
 			id: z.string(),
@@ -99,7 +114,12 @@ const getCurrentTournamentSchema = z.object({
 	status: z.enum(TournamentStatus),
 	token: z.string().nullable(),
 	totalRounds: z.number().int(),
-	currentRound: z.number().int()
+	currentRound: z.number().int(),
+	winner: z.object({
+		id: z.string(),
+		displayName: z.string(),
+		avatarUrl: z.string()
+	}).nullable().optional()
 })
 
 const startTournamentResponseSchema = z.object({
@@ -153,6 +173,7 @@ const joinTournamentResponseSchema = z.object({
 
 export type CreateTournamentInput = z.infer<typeof createTournamentSchema>;
 export type CreateGameTournamentInput = z.infer<typeof createTournamentGame>;
+export type Tournament = z.infer<typeof getTournamentResponseSchema >
 
 // =====================
 // Schema Objects Export
@@ -176,6 +197,7 @@ export const tournamentSchemas = {
 	getTournamentGames: getTournamentGames,
 	startGame: startTournamentGameResponseSchema,
 	finishTournamentGame: finishTournamentGameSchema,
-	advanceTournament: advanceTournamentSchema
+	advanceTournament: advanceTournamentSchema,
+	getParticipantInfo: participantInfoSchema
   },
 };

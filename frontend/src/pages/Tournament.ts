@@ -10,8 +10,11 @@ import "../components/TournamentNextGame.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
 import { TournamentNextGame } from "../components/TournamentNextGame.js";
+import { TournamentWsConnection } from "../websocket/TournamentConnection.js";
+import { TournamentBracket } from "../components/TournamentBracket.js";
 
 let wsConnection: WaitingRoomConnection | null = null;
+let tournamentWsConnection: TournamentWsConnection | null = null;
 
 export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
 	//get user data from store
@@ -20,20 +23,24 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		console.log('no params available')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
 
 	setTimeout(async () => {
-		const currentTournament = await getCurrentTournament();
+		const currentTournament = await getCurrentTournament(params['id']);
+		console.log(currentTournament);
 		const tournamentGames = await getTournamentGames(params['id']);
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
 		}
+		const participant = await getParticipantInfo(params['id']);
+		if (!participant || participant.isQuit) {
+			setTimeout(() => router.navigateTo(`/tournament`), 0);
+		}
+
 		renderTournamentContent(currentTournament);
 		passContext(ctx, tournamentGames, currentTournament);
-
 		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
 
 		setupTournamentEventListeners(ctx);
@@ -59,7 +66,6 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
 				<h3 class=" text-gray-500 mb-4">Round ${tournament?.currentRound}</h3>
 	        </div>
-	
 			<div class="w-full overflow-x-auto">
 				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
 			</div>
@@ -73,6 +79,21 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	return content;
 }
 
+// ======== GET CURRENT PARTICIPANT INFO ============
+async function getParticipantInfo(tournamentId: string): Promise<{isQuit: boolean, isEliminated: boolean} | null> {
+	try {
+		const participantInfo = await tournamentApi.getParticipantInfo(tournamentId);
+		if (!participantInfo) return null;
+		return {
+			isQuit: participantInfo.isQuit ?? false,
+			isEliminated: participantInfo.isEliminated ?? false
+		};
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
+}
+
 // ======== GET TOURNAMENT GAMES ============
 async function getTournamentGames(tournamentId: string): Promise<TournamentGame[] | null > {
 	try {
@@ -84,9 +105,9 @@ async function getTournamentGames(tournamentId: string): Promise<TournamentGame[
 }
 
 // ======== GET CURRENT TOURNAMENT ============
-async function getCurrentTournament(): Promise<Partial< TournamentData | null>> {
+async function getCurrentTournament(tournamentId: string): Promise<Partial< TournamentData | null>> {
 	try {
-		const currentTournament = await tournamentApi.getCurrentTournament();
+		const currentTournament = await tournamentApi.getTournament(tournamentId);
 		return currentTournament;
 	} catch(error) {
 		return null;
@@ -123,14 +144,36 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 function updatePlayerInfo(tournamentGames: TournamentGame[]) {
 
 	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
-	if (tournamentNextGameComponent && tournamentGames) {
-		// Update the nextGame component with the new data from websocket
-		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+	const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
+	if (tournamentNextGameComponent && tournamentBracketComponent && tournamentGames) {
+        tournamentNextGameComponent.tournamentGamesData = tournamentGames;
+		tournamentBracketComponent.tournamentGamesData = tournamentGames;
 	}
 }
 
 // ======== SET WEBSOCKET CONNECTION ============
 async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: TournamentGame[], ctx: AppContext) {
+	// Create Tournament Websocket
+	tournamentWsConnection = new TournamentWsConnection();
+	tournamentWsConnection.connect(tournamentGames[0].tournamentId, currentUser.id!,
+		async (tournamentData) => {
+			if (tournamentData.gameId) {
+				console.log('New Tournament WS event', tournamentData);
+				const game = tournamentData.game;
+				const nextGame = tournamentData.nextGame
+				const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
+				tournamentBracketComponent?.updateGameCard(game, nextGame);
+			}
+		},
+		() => {
+			cleantTournamentWs()
+			router.navigateTo('/home');
+		},
+		() => {
+			cleantTournamentWs()
+			router.navigateTo('/home');
+		},
+	)
 
 	const gameIndex = tournamentGames.findIndex(game =>
 		game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id && game.status === 'PENDING')
@@ -145,8 +188,8 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	wsConnection.connect(gameData.id!, currentUser.id!,
 		async (updateGameData) => {
 			if (updateGameData.message) {
+				console.log('New WS event', updateGameData);
 				tournamentGames[gameIndex] = updateGameData.game;
-				console.log('🔔', updateGameData.game);
 				updatePlayerInfo(tournamentGames);
 			}
 			console.log('websocket called')
@@ -174,6 +217,13 @@ export function cleanWaitingRoomWS() {
 	}
 }
 
+export function cleantTournamentWs() {
+	if (tournamentWsConnection) {
+		tournamentWsConnection.disconnect();
+		tournamentWsConnection = null;
+	}
+}
+
 
 // ======== EVENT LISTENER ============
 function setupTournamentEventListeners(ctx: AppContext) {
@@ -190,4 +240,17 @@ function setupTournamentEventListeners(ctx: AppContext) {
 			console.log(error);
 		}
 	})
+	
+	tournamentGameComponent?.addEventListener('event-quit-tournament', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const {tournamentId} = customEvent.detail;
+		try {
+			await tournamentApi.quitActiveTournament(tournamentId);
+			router.navigateTo(`/`)
+		} catch (error) {
+			console.log(error);
+		}
+	})
+
 }

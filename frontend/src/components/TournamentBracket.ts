@@ -42,6 +42,45 @@ export class TournamentBracket extends HTMLElement {
 		`;
 	}
 
+	public updateGameCard(updatedGame: TournamentGame, nextUpdatedGame: TournamentGame) {
+		// Update internal state
+		console.log('next-game', nextUpdatedGame);
+		this.updateInternalGameData(updatedGame.id, updatedGame);
+		this.updateInternalGameData(nextUpdatedGame.id, nextUpdatedGame);
+
+		// Update DOM
+		this.updateCardInDOM(updatedGame.id, updatedGame);
+		this.updateCardInDOM(nextUpdatedGame.id, nextUpdatedGame);
+	}
+
+	private updateInternalGameData(gameId: string, updatedGame: TournamentGame): void {
+		if (!this._tournamentGamesData) return;
+		
+		const index = this._tournamentGamesData.findIndex(g => g.id === gameId);
+		if (index !== -1) {
+			this._tournamentGamesData[index] = updatedGame;
+		}
+	}
+
+	private updateCardInDOM(gameId: string, updatedGame: TournamentGame): void {
+		const card = document.getElementById(gameId);
+		if (!card) return;
+
+		const newCard = this.createCardForGame(updatedGame);
+
+		newCard.classList.add('animate-pulse');
+		setTimeout(() => {
+			newCard.classList.remove('animate-pulse');
+		}, 1000);
+		card.replaceWith(newCard);
+	}
+
+	private createCardForGame(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
+		return game.gameUsers.length === 2 
+			? this.createMatchCard(game, isMirrored)
+			: this.createEmptyCard(game, isMirrored);
+	}
+
 	private displayMatchCards(): void {
 	    const matchCardsContainer = document.getElementById('match-cards');
 	    if (!matchCardsContainer || !this._tournamentData) return;
@@ -64,79 +103,15 @@ export class TournamentBracket extends HTMLElement {
 	
 	        for (let i = 1; i <= gamesInThisRound; i++) {
 	            const game = this.findGame(currentRound, i);
-	            const card = game ? this.createMatchCard(game, false) : this.createEmptyCard(false);
-	            column.appendChild(card);
+				if (game) {
+					const card = game.gameUsers.length === 2 ? this.createMatchCard(game, false) : this.createEmptyCard(game, false);
+	            	column.appendChild(card);
+				}
 	        }
 	
 	        matchCardsContainer.appendChild(column);
 	    }
 	}
-	 
-	// Mirrored brackets
-	// private displayMatchCards(): void {
-	// 	const matchCardsContainer = document.getElementById('match-cards');
-	// 	if (!matchCardsContainer || !this._tournamentData ) return;
-
-	// 	matchCardsContainer.innerHTML = '';
-	// 	const totalRounds = this._tournamentData.totalRounds;
-	// 	const visualColumns:HTMLElement[] = new Array((totalRounds * 2) - 1);
-
-	// 	for (let currentRound = 1; currentRound <= totalRounds; currentRound++) {
-	// 		const gamesInThisRound = Math.pow(2, totalRounds - currentRound);
-	// 		const isFinal = currentRound === totalRounds;
-			
-	// 		if (isFinal) {
-	// 			const centerCol = document.createElement('div');
-	// 			centerCol.className = 'relative z-10 scale-110 transform shadow-2xl flex flex-col justify-center';
-
-	// 			const game = this.findGame(currentRound, 1);
-	// 			if (game) {
-	// 				centerCol.appendChild(this.createMatchCard(game));
-	// 			} else {
-	// 				centerCol.appendChild(this.createEmptyCard());
-	// 			}
-	// 			visualColumns[totalRounds - 1] = centerCol;
-	// 		} else {
-	// 			const [leftCol, rigthCol] = this.createCol(currentRound, gamesInThisRound);
-	// 			const leftIndex = currentRound - 1;
-	// 			const rightIndex = visualColumns.length - currentRound;
-
-	// 			visualColumns[leftIndex] = leftCol;
-	// 			visualColumns[rightIndex] = rigthCol;
-	// 		}
-	// 	}
-	// 	visualColumns.forEach(col => {
-	// 		if (col) matchCardsContainer.appendChild(col);
-	// 	})
-	// }
-
-	// private createCol(currentRound: number, gamesInThisRound: number): HTMLElement[] {
-	// 	let className = '';
-		
-	// 	if (currentRound === 1) {
-	// 		className = 'flex flex-col gap-8';
-	// 	} else {
-	// 		className = 'flex flex-col justify-around py-10';
-	// 	}
-	// 	const leftCol = document.createElement('div');
-	// 	leftCol.className = className;
-
-	// 	const rightCol = document.createElement('div');
-	// 	rightCol.className = className;
-
-	// 	for (let i = 1; i <= gamesInThisRound; i++) {
-	// 		const game = this.findGame(currentRound, i);
-
-	// 		if (i <= gamesInThisRound / 2) {
-	// 			const card = game ? this.createMatchCard(game) : this.createEmptyCard();
-	// 			leftCol.appendChild(card);
-	// 		} else {
-	// 			const card = game ? this.createMatchCard(game, true) : this.createEmptyCard();
-	// 			rightCol.appendChild(card);
-	// 		}
-	// 	}
-	// 	return [leftCol, rightCol]
-	// }
 
 	private findGame(roundNbr: number, matchNbr: number): TournamentGame | undefined {
 		return this._tournamentGamesData?.find(
@@ -145,7 +120,6 @@ export class TournamentBracket extends HTMLElement {
 	}
 
 	private createMatchCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
-		console.log('Game', game.gameUsers);
 		const status = (game as any).status || 'PENDING';
 		const currentUser = this._ctx?.userStore.get();
 		const isMyGame = currentUser?.id && game.gameUsers.some((p: any) => p.user.id === currentUser?.id);
@@ -172,6 +146,7 @@ export class TournamentBracket extends HTMLElement {
 		}
 
 		const card = document.createElement('div');
+		card.id = game.id;
 		card.className = `w-64 overflow-hidden rounded-xl border ${borderClass} ${bgClass} ${shadowClass} transition-all hover:shadow-md ${isMirrored ? 'text-right' : ''} ${ringClass}`;
 
 		if (status === 'IN_PROGRESS') {
@@ -210,7 +185,9 @@ export class TournamentBracket extends HTMLElement {
 
 			// row content ==============
 			const row = document.createElement('div');
-        	row.className = `flex items-center justify-between px-4 py-3 ${isMirrored ? 'flex-row-reverse' : ''} ${isWinner ? 'bg-indigo-50/30' : ''}`;
+        	row.className = `flex items-center justify-between px-4 py-3 
+							${isMirrored ? 'flex-row-reverse' : ''} 
+							${isWinner ? 'bg-indigo-50/30' : ''}`;
 
 			// player content ==============
 			const playerInfo = document.createElement('div');
@@ -243,14 +220,23 @@ export class TournamentBracket extends HTMLElement {
 		return card;
 	}
 
-	private createEmptyCard(isMirrored: boolean = false): HTMLElement {
+	private createEmptyCard(game: TournamentGame, isMirrored: boolean = false): HTMLElement {
+		const hasPlayers = game.gameUsers.length;
+		const isSinglePlayer = hasPlayers === 1;
+
+		const borderClass = isSinglePlayer ? 'border-indigo-300' : 'border-gray-200';
+		const bgClass = isSinglePlayer ? 'bg-indigo-50/20' : 'bg-gray-50/50';
+		const containerOpacity = isSinglePlayer ? '' : 'opacity-50';
+
 		const card = document.createElement('div');
-    	card.className = `w-64 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-4 ${isMirrored ? 'text-right' : ''}`;
+		card.id = game.id;
+    	card.className = `w-64 rounded-xl border-2 border-dashed ${borderClass} ${bgClass} p-4 ${isMirrored ? 'text-right' : ''}`;
 	
 		const innerContainer = document.createElement('div');
-    	innerContainer.className = 'flex flex-col gap-3 opacity-50';
-		
+    	innerContainer.className = `flex flex-col gap-3 ${containerOpacity}`;
+	
 		for (let i = 0; i < 2; i++ ) {
+			const user = game.gameUsers[i];
 	
 			// row content ==============
 			const row = document.createElement('div');
@@ -258,23 +244,30 @@ export class TournamentBracket extends HTMLElement {
 
 			// player content ==============
 			const playerInfo = document.createElement('div');
-			playerInfo.className = `flex items-center gap-3 ${isMirrored ? 'flex-row-reverse' : ''}`;
+			playerInfo.className = `flex items-center gap-3 ${isMirrored ? 'flex-row-reverse' : ''} ${!user && isSinglePlayer ? 'opacity-50' : ''}`;
 
 			// avatar content ==============
-			const avatar = document.createElement('div');
-	        avatar.className = 'h-8 w-8 rounded-full bg-gray-200';
+			if (user) {
+				const avatar = document.createElement('img');
+				avatar.src = `${this._imageUrl}${user.user.avatarUrl}`;
+				avatar.className = 'h-8 w-8 rounded-full object-cover ring-2 ring-indigo-100';
+				playerInfo.appendChild(avatar);
+			} else {
+				const avatar = document.createElement('div');
+				avatar.className = 'h-8 w-8 rounded-full bg-gray-200';
+				playerInfo.appendChild(avatar);
+			}
 
 			// name content ==============
 	        const name = document.createElement('span');
-	        name.innerText = 'TBD';
-	        name.className = 'text-sm font-medium text-gray-400';
+	        name.innerText = user ? user.user.displayName : 'TBD';
+	        name.className = `text-sm font-medium ${user ? 'text-indigo-900' : 'text-gray-400'}`;
 
 			// score content  ==============
 			const score = document.createElement('span');
-	        score.innerText = '-';
-	        score.className = 'font-mono text-lg text-gray-300';
+	        score.innerText = user ? user.score.toString() : '-';
+	        score.className = `font-mono text-lg ${user ? 'text-indigo-600' : 'text-gray-300'}`;
 			
-	        playerInfo.appendChild(avatar);
 	        playerInfo.appendChild(name);
 	        row.appendChild(playerInfo);
 			row.appendChild(score);

@@ -102,6 +102,7 @@ model TournamentPlayer {
 	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 	joinedAt DateTime @default(now())
 	finalPosition Int?
+	isQuit Boolean @default(false)
 	isEliminated Boolean @default(false)
 	eliminatedInRound Int?
 

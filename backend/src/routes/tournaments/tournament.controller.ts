@@ -23,11 +23,14 @@ async function createTournamentHandler (request: FastifyRequest<{ Body: CreateTo
 
 		const totalRounds = Math.ceil(Math.log2(body.numberPlayers));
 
-		const isTournamentOn = await tournamentService.findActiveTournamentByUserId(request.server.prisma, request.user!.id);
-		if (isTournamentOn) {
-			return reply.code(400).send({
-				message: "User currently has an active tournament on"
-			});
+		const tournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, request.user!.id);
+		if (tournament) {
+			const isParticipantEliminated = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournament.tournamentId);
+			if (!isParticipantEliminated?.isQuit) {
+					return reply.code(400).send({
+					message: "User currently has an active tournament on"
+				});
+			}
 		}
 		const newGame = await tournamentService.createTournament(request.server.prisma, body, userId, totalRounds);
 		return reply.code(201).send(newGame);
@@ -83,7 +86,12 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 		const response = {
 			...tournament,
 			isCreator: tournament.createdBy === userId,
-			token: tournament.createdBy === userId ? tournament.token : null
+			token: tournament.createdBy === userId ? tournament.token : null,
+			winner: tournament.winner ? {
+				id: tournament.winner.id,
+				displayName: tournament.winner.displayName,
+				avatarUrl: tournament.winner.avatarUrl
+			} : null
 		}
 		return response;
 	} catch (error:any) {
@@ -113,10 +121,21 @@ async function joinTournamentHandler (request: FastifyRequest<{ Params: { token:
 				message: "Tournament is already full"
 			});
 		}
+		
 		for (const participant of tournament.participants) {
 			if (participant.user.id === userId) {
 				return reply.code(409).send({
 					message: "User is already in this tournament"
+				});
+			}
+		}
+
+		const activeTournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, request.user!.id);
+		if (activeTournament) {
+			const isParticipantEliminated = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, activeTournament.tournamentId);
+			if (!isParticipantEliminated?.isQuit) {
+					return reply.code(400).send({
+					message: "User currently has an active tournament on"
 				});
 			}
 		}
@@ -142,15 +161,23 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 		if (!tournament) 
 			return reply.code(204).send();
 
-		return {
+		const response: any = {
 			userId: tournament.userId,
 			tournamentId: tournament.tournamentId,
 			status: tournament.tournament.status,
 			token: tournament.tournament.token,
 			totalRounds: tournament.tournament.totalRounds,
-			currentRound: tournament.tournament.currentRound
-		}
+			currentRound: tournament.tournament.currentRound,
+			winner: tournament.tournament.winner ? {
+				id: tournament.tournament.winner.id,
+				displayName: tournament.tournament.winner.displayName,
+				avatarUrl: tournament.tournament.winner.avatarUrl
+			} : null
+		};
+
+		return response;
 	} catch (error:any) {
+		console.log(error);
 		reply.code(500).send({ message: "Failed to fetch current tournament"});
 	}
 }
@@ -214,6 +241,63 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 	}
 }
 
+async function getParticipantInfoHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		console.log('=======',tournamentId)
+		const participant = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId);
+		if (!participant) {
+			return reply.code(404).send({
+				message: "Tournament not found or unauthorized"
+			});
+		}
+		return participant;
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to get participant info"});
+	}
+}
+
+async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const tournamentId = request.params.id;
+
+		const tournamentPlayer = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId);
+		if (!tournamentPlayer) {
+			return reply.code(404).send({
+				message: "Tournament or Player not found or unauthorized"
+			});
+		}
+		if (tournamentPlayer.tournament.status !== 'IN_PROGRESS') {
+			return reply.code(400).send({
+				message: "Can not quit a tournament that is not in progress"
+			});
+		}
+		if (tournamentPlayer.isQuit) {
+			return reply.code(400).send({
+				message: "Can not quit a tournament player has already quit"
+			});
+		} 
+		if (!tournamentPlayer.isEliminated){
+			const game = await tournamentService.findCurrentGameByUserTournamentId(request.server.prisma, userId, tournamentId);
+			if (!game) return;
+			const winner = game?.gameUsers.find((u: any) => u.userId !== userId);
+			if (winner) {
+				await gameService.updatePlayer(request.server.prisma, {userId: winner.userId ,playerId: winner.id, score: 0}, true);
+			}
+			await gameService.finishGame(request.server.prisma, game.id, 'ABANDONED');
+		} 
+		
+		await tournamentService.quitTournamentByParticipantId(request.server.prisma, tournamentPlayer.id);
+		return reply.code(200).send({ message: "User quit tournament" });
+	} catch (error: any) {
+		reply.code(500).send({ message: "Failed to quit tournament"});
+	}
+}
+
 async function startTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
 	try {
 		const userId = request.user!.id;
@@ -235,6 +319,10 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 			});
 		}
 		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
+
+		await tournamentService.matchMakeGames(request.server.prisma, userId, tournament);
+		await tournamentService.createEmptyGames(request.server.prisma, userId, tournament);
+
 		WaintingRoomWsController.broadcasToRoom(tournament.id, {
 			type: 'start_tournament',
 			message: `Start tournament!`
@@ -242,65 +330,6 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		return response;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to start tournament"});
-	}
-}
-
-async function matchMakeTournamentHandler (request: FastifyRequest<{ Params: { id: string} }>, reply: FastifyReply) {
-	try {
-		const userId = request.user!.id;
-		const tournamentId = request.params.id;
-		const tournament = await tournamentService.findTournamentByUserId(request.server.prisma, userId, tournamentId)
-		if (!tournament) {
-			return reply.code(404).send({
-				message: "Tournament not found or unauthorized"
-			});
-		}
-		if (tournament.status !== "READY") {
-			return reply.code(409).send({
-				message: "Cannot match make, tournament has already started or finished"
-			});
-		}
-		if (tournament.participants.length < tournament.numberPlayers) {
-			return reply.code(409).send({
-				message: "Tournament is not yet full"
-			});
-		}
-
-		await request.server.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			const shuffled = [...tournament.participants];
-			for (let i = shuffled.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				const temp = shuffled[i]!;
-				shuffled[i] = shuffled[j]!;
-				shuffled[j] = temp;
-			}
-
-			for (let i = 0; i < shuffled.length; i += 2) {
-				const first = shuffled[i];
-				const second = shuffled[i + 1];
-				if (!first || !second) {
-					throw new Error("Unexpected missing participant while pairing");
-				}
-				const game = await tx.game.create({ data: {
-					createdBy: userId, 
-					type: 'TOURNAMENT',
-					scoreToWin: tournament.scoreToWin,
-					tournamentId: tournament.id,
-					roundNumber: 1,
-					matchNumber: i/2 + 1,
-				}})
-				await tx.gamePlayer.createMany({
-					data: [
-						{ gameId: game.id, userId: first.userId },
-						{ gameId: game.id, userId: second.userId }
-					]
-				})
-			}
-			await tx.tournament.update({ where: { id: tournament.id}, data: { status: 'IN_PROGRESS' }})
-		});
-		return tournament;
-	} catch (error: any) {
-		reply.code(500).send({ message: "Failed to match make tournament"});
 	}
 }
 
@@ -344,7 +373,7 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 		}
 
 		const updatedGame = await gameService.findGameById(request.server.prisma, gameId);
-		const updatedOpponent = updatedGame?.gameUsers.find(u => u.user.id !== userId);
+		const updatedOpponent = updatedGame?.gameUsers.find((u: typeof updatedGame.gameUsers[0]) => u.user.id !== userId);
 
 		if (updatedOpponent?.isReady) {
 			await gameService.startGame(request.server.prisma, gameId, userId);
@@ -446,8 +475,9 @@ export const tournamentController = {
 	removePlayerHandler,
 	deletePendingTournamentHandler,
 	startTournamentHandler,
-	matchMakeTournamentHandler,
 	getTournamentGamesHandler,
 	startTournamentGameHandler,
-	advanceTournamentHandler
+	advanceTournamentHandler,
+	quitTournamentHandler,
+	getParticipantInfoHandler
 };

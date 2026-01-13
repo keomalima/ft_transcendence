@@ -49,6 +49,7 @@ export class JoinGamePopUp extends HTMLElement {
 					</div>
 				</form>
 				<p id='error-join-game'></p>
+				<p id='error-join-tournament'></p>
 			</div>
 
         `;
