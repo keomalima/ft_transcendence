@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import type { CreateUserData, CreateUserInput, EditInput, LoginInput } from './user.schema.js';
+import type { CreateUserData, CreateUserInput, EditInput, LoginInput, ChangeUserPassword } from './user.schema.js';
 import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
 
 // =====================
@@ -71,6 +71,18 @@ async function editUser(prisma: PrismaClient, id: string, data: EditInput) {
       createdAt: true,
       updatedAt: true,
     }
+  });
+}
+
+async function changeUserPassword(prisma: PrismaClient, id:string, newPassword: string) {
+	const { hash, salt } = hashPassword(newPassword);
+
+  return prisma.user.update({
+    where: { id: id },
+    data: {
+		salt,
+		password: hash
+	 },
   });
 }
 
@@ -151,6 +163,7 @@ export const userService = {
   findUserById,
   createUser,
   editUser,
+  changeUserPassword,
   deleteUser,
   editUserAvatar,
   updateLastSeen,

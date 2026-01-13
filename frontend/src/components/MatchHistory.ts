@@ -109,7 +109,11 @@ export class MatchHistory extends HTMLElement {
 
 		const opponent = document.createElement('p');
 		opponent.className = 'my-0';
-		opponent.innerHTML = `${match.opponent?.name}`;
+		let opponentName = match.opponent?.name;
+		if (opponentName && opponentName?.length > 15) {
+			opponentName = `${opponentName.substring(0, 15)}...`;
+		}
+		opponent.innerHTML = `${opponentName}`;
 
 		profile.appendChild(img);
 		profile.appendChild(opponent);

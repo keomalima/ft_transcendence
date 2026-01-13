@@ -42,7 +42,7 @@ export class JoinGamePopUp extends HTMLElement {
 				<form action="/" method="POST" id='join-form' class="md:col-span-2">
 					<div class='flex flex-1 flex-row gap-10'>
 						<div class='flex flex-1 flex-col'>
-							<label class='text-sm text-medium' for="token">${label}</label>
+							<label class='text-sm text-medium' for="token-input">${label}</label>
 							<input id="token-input" type="text" name="token" autoComplete="token" class='${INPUT_CLASSES}'/>
 						</div>
 						<button type='submit' class='${BUTTON_BLACK_CLASSES}'>LET'S GO</button>

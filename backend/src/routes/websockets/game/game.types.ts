@@ -1,3 +1,5 @@
+import { WebSocket } from 'ws';
+
 export interface GameState {
 	paddleA: {y: number, userId: string, side: 'right' | 'left'};
 	paddleB: {y: number, userId: string | undefined, side: 'right' | 'left'};

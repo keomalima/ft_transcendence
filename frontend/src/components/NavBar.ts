@@ -78,7 +78,7 @@ export class NavBar extends HTMLElement {
 					<p id="logout-message" class="text-gray-600">Are you sure you want to leave?</p>
 					<div class="flex gap-3 justify-end">
 						<button id="logout-cancel-delete-btn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
-						<button id="logout-confirm-delete-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Delete</button>
+						<button id="logout-confirm-delete-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Confirm</button>
 					</div>
 				</div>
 			</dialog>

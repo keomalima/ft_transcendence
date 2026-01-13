@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { CreateUserData, CreateUserInput, EditInput, LoginInput, UploadInput } from './user.schema.js';
+import type { ChangeUserPassword, CreateUserData, CreateUserInput, EditInput, LoginInput, UploadInput } from './user.schema.js';
 import { userService } from './user.service.js'
 import type { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -159,9 +159,39 @@ async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply
 	try {
 		return await userService.editUser(request.server.prisma, request.user!.id, request.body);
 	} catch (error: unknown) {
-		if (error instanceof Error)
-			return reply.code(401).send({ message: error.message });
-		return reply.code(401).send({ message: 'Unauthorized' });
+		if (error instanceof Error) {
+			// Display name conflict should return 409, not 401
+			if (error.message.includes("Display name's not available")) {
+				return reply.code(409).send({ message: error.message });
+			}
+			return reply.code(500).send({ message: error.message });
+		}
+		return reply.code(500).send({ message: 'Internal server error' });
+	}
+}
+
+async function changeUserPasswordHandler(request: FastifyRequest<{Body: ChangeUserPassword}>, reply: FastifyReply) {
+	const { currentPassword, newPassword } = request.body;
+
+	const user = await userService.findUserById(request.server.prisma, request.user!.id);
+	if (!user) {
+		return reply.code(404).send({ message: "User not found" });
+	}
+	const isValid = verifyPassword(currentPassword, user.password, user.salt);
+	if (!isValid) {
+		return reply.code(400).send({
+			message: "Invalid password"
+		});
+	}
+	if (currentPassword === newPassword) {
+		return reply.code(400).send({
+			message: "New password must be different"
+		});
+	}
+	try {
+		return await userService.changeUserPassword(request.server.prisma, request.user.id, newPassword);
+	} catch (error : unknown) {
+		reply.code(500).send({ message: "Failed to change password"});
 	}
 }
 
@@ -268,5 +298,6 @@ export const userController = {
 	editUserHandler,
 	deleteHandler,
 	uploadAvatarHandler,
-	validateSessionAuth
+	validateSessionAuth,
+	changeUserPasswordHandler
 };

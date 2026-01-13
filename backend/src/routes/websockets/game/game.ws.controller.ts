@@ -163,7 +163,7 @@ function createGameSession(gameId: string, userId: string, scoreToWin: number, s
 			paddlewidth: paddleWidth, // = 4
 			paddlespeed: 2,
 			ballspeed: 2,
-			ballsize: 5,
+			ballsize: 4,
 			scoreToWin: scoreToWin
 		},
 		gameLoop: null,

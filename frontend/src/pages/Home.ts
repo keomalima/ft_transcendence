@@ -2,19 +2,29 @@ import { router } from "../main.js";
 import { AppContext } from "../types.js";
 import { userService } from "../services/UserService.js";
 import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
-
-// import HTML components
 import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 
-let homeListenersAttached = false;
+// Track the last attached "Get started" button element so we can reattach
+// listeners when the SPA recreates the DOM node during navigation.
+let lastStartedBtn: HTMLButtonElement | null = null;
 
 export function Home(ctx: AppContext): string {
 	setTimeout(() => {
-		passContext(ctx);
-		if (!homeListenersAttached) {
+		// Reset UI state on each render
+		const startedBtnEl = document.getElementById('get-started-btn') as HTMLButtonElement | null;
+		const learnBtnEl = document.getElementById('learn-more-btn') as HTMLElement | null;
+		const hiddenFormEl = document.getElementById('hidden-form') as HTMLElement | null;
+		if (startedBtnEl) startedBtnEl.disabled = false;
+		if (learnBtnEl) learnBtnEl.style.display = '';
+		if (hiddenFormEl) hiddenFormEl.style.display = 'none';
+
+		// If the Get started button element has changed (SPA re-render),
+		// re-run setup to attach listeners to the new DOM node.
+		if (lastStartedBtn !== startedBtnEl) {
+			passContext(ctx);
 			setupHomeEventListeners(ctx);
-			homeListenersAttached = true;
+			lastStartedBtn = startedBtnEl;
 		}
 	}, 0);
 
@@ -26,11 +36,11 @@ export function Home(ctx: AppContext): string {
 					<div class="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
-							<a href="#" id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</a>
+							<button id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</button>
 							<a data-link href="/LearnMore" id="learn-more-btn" class='${LINK_STYLED_CLASSES}'>Learn more →</a>
 						</div>
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
-							<form action="#" method="POST" class="space-y-6" id="signin-form" >
+							<form class="space-y-6" id="signin-form" >
 								<div>
 									<label for="email" class='${LABEL_CLASSES}'>Email address</label>
 									<input class="${INPUT_CLASSES}" id="email" type="email" name="email" autoComplete="email" required/>
@@ -91,20 +101,20 @@ function setupHomeEventListeners(ctx: AppContext) {
 	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
 
 	// **** SHOW FORM ****
-	const startedBtn = document.getElementById('get-started-btn');
-	const learnBtn = document.getElementById('learn-more-btn');
+	const startedBtn = document.getElementById('get-started-btn') as HTMLButtonElement;
+	const learnBtn = document.getElementById('learn-more-btn') as HTMLLinkElement;
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 
-
 	startedBtn?.addEventListener('click', (e) => {
+		console.log('started triggered')
 		e.preventDefault();
 		if (hidenForm) {
 			hidenForm.style.display = 'block';
-			startedBtn.style.display = 'none';
+			startedBtn.disabled = true;
 		}
 		if (learnBtn)
 			learnBtn.style.display = 'none';
-	}, { once: true });
+	});
 
 
 	// **** SIGN IN ****
@@ -121,22 +131,28 @@ function setupHomeEventListeners(ctx: AppContext) {
 		const password = passwordInput?.value;
 
 		try {
-			const user = await userService.loginUser(email, password, ctx);
+			await userService.loginUser(email, password, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
-	}, { once: true });
+	});
 
 
 	// **** CREATE NEW ACCOUNT ****
 	registerComponent?.addEventListener('event-account-creation', async (e: Event) => {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
+		const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
+		if (data.username && data.username.length > 20) {
+			if (displayError) {
+				displayError.innerText = 'Error: Username is too long.'
+				return;
+			}
+		}
 		try {
-			console.log('🌐 Calling createUser API');
 			await userService.createUser({
 				email: data.email,
 				name: data.firstName,
@@ -151,9 +167,9 @@ function setupHomeEventListeners(ctx: AppContext) {
 			router.navigateTo('/home');
 		} catch (error) {
 			console.log(error);
-			const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
-			displayError.innerText = `${error}`;
+			if (displayError)
+				displayError.innerText = `${error}`;
 		}
-	}, { once: true });
+	});
 
 }

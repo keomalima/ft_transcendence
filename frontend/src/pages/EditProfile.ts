@@ -59,7 +59,7 @@ export function EditProfile(ctx: AppContext) : string {
 
 						<div class="col-span-full">
 							<label class='${LABEL_CLASSES}' for="username">Username</label>
-							<input class='${INPUT_CLASSES}' id="username" type="text" name="username" autoComplete="username" placeholder=${currentUser?.displayName}>
+							<input class='${INPUT_CLASSES}' id="username" type="text" name="username" autoComplete="username" placeholder=${currentUser?.displayName} maxlength="20">
 						</div>
 
 						<div class="sm:col-span-3">
@@ -73,6 +73,7 @@ export function EditProfile(ctx: AppContext) : string {
 						</div>
 
 					</div>
+					<p id='update-personnal-info-error' class='pt-5 text-red-500 text-sm'></p>
 					<div class="mt-8 flex">
 						<button type="submit" class="${BUTTON_CREAM_CLASSES}">Save</button>
 					</div>
@@ -86,7 +87,7 @@ export function EditProfile(ctx: AppContext) : string {
 				<p class="mt-1 text-sm/6 text-medium">Update your password associated with your account.</p>
 			</div>
 
-			<form class="md:col-span-2">
+			<form id='change-password-form' class="md:col-span-2">
 				<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
 				<div class="col-span-full">
 					<label class='${LABEL_CLASSES}' for="current-password">Current password</label>
@@ -104,8 +105,9 @@ export function EditProfile(ctx: AppContext) : string {
 				</div>
 				</div>
 
+				<p id='change-password-msg' class='pt-5 text-red-500 text-sm'></p>
 				<div class="mt-8 flex">
-				<button type="submit" class="${BUTTON_CREAM_CLASSES}">Save</button>
+					<button type="submit" class="${BUTTON_CREAM_CLASSES}">Save</button>
 				</div>
 			</form>
 			</div>
@@ -193,17 +195,61 @@ function setupEditEventListeners(ctx: AppContext) {
 	updatePersonnalInfo.addEventListener('submit', async(e) => {
 		e.preventDefault();
 		e.stopPropagation();
+		const formData = new FormData(updatePersonnalInfo);
+		const newDisplayName = formData.get('username') as string;
+		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
+		if (newDisplayName && newDisplayName.length > 20) {
+			if (errorMsg) {
+				errorMsg.innerText = 'Error: New Display name is too long';
+				return;
+			}
+		}
 		try {
-			const formData = new FormData(updatePersonnalInfo);
-			const user = await userService.updateUser({
+			await userService.updateUser({
 				surname: formData.get('last_name') ? formData.get('last_name') as string : null,
 				displayName: formData.get('username') ? formData.get('username') as string : null,
 				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			}, ctx);
+			console.log('test');
 			router.navigateTo('/profile');
 		}
 		catch (error) {
+			if (errorMsg) {
+				errorMsg.innerText = `${error}`;
+			}
 			console.log(error);
+		}
+	})
+
+	// **** CHANGE USER PASSWORD ****
+	const changePasswordForm = document.getElementById('change-password-form') as HTMLFormElement;
+	const changePwdMsg = document.getElementById('change-password-msg') as HTMLParagraphElement;
+	changePasswordForm.addEventListener('submit', async(e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		const formData = new FormData(changePasswordForm);
+		const currentPassword = formData.get('current_password') as string;
+		const newPassword = formData.get('new_password') as string;
+		const confirmPassword = formData.get('confirm_password') as string;
+		if (!currentPassword || !newPassword || !confirmPassword) {
+			changePwdMsg.innerText = 'Missing input';
+			changePwdMsg.className = 'pt-5 text-red-500 text-sm';
+			return;
+		}
+		if (newPassword != confirmPassword) {
+			changePwdMsg.innerText = 'Password confirmation is wrong';
+			changePwdMsg.className = 'pt-5 text-red-500 text-sm';
+			return;
+		}
+		try {
+			await userService.changePassword(currentPassword, newPassword, ctx);
+			changePwdMsg.innerHTML = 'Password sucessfully updated!';
+			changePwdMsg.className = 'pt-5 text-green-500 text-sm';
+			changePasswordForm.reset();
+		} catch (error) {
+			changePasswordForm.reset();
+			changePwdMsg.innerText = `${error}`;
+			changePwdMsg.className = 'pt-5 text-red-500 text-sm';
 		}
 	})
 

@@ -3,12 +3,10 @@ import type { AppContext, GameData, UserState } from "../types.js";
 import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
-import { FinishGameDto } from "../api/gameApi.js";
 import { tournamentApi } from "../api/tournamentApi.js";
+import { sharedGameState, setGameConnection, setIsFinishing } from "../game/sharedGameState.js";
+import { setupGameEventListeners } from "./GameEventListeners.js";
 
-
-let gameConnection: GameConnection | null = null;
-let isFinishingGame: boolean = false; // Flag to prevent duplicate finishGame calls
 
 export function Game(ctx: AppContext, params?: Record<string, string>): string {
 
@@ -96,7 +94,8 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				<div id="line" class='absolute w-[1px] h-full bg-white' style='left: 50%'></div>
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
-				<div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+				<div id='ball' class='absolute w-[2%] h-[4%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+				<!-- <div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div> -->
 			</div>
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
@@ -170,6 +169,11 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				</div>
 			</div>
 
+			<!-- Waiting opponent overlay -->
+			<div id="waiting-opponent-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+				<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
+			</div>
+
 			<!-- Confirmation Dialog -->
 			<dialog id="quit-game-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
@@ -210,18 +214,19 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 async function setGameSockets(gameId: string, userId: string, scoreToWin: string) {
 
 	// Create websocket
-	gameConnection = new GameConnection();
+	const gameConnection = new GameConnection();
 	gameConnection.connect(gameId, userId, scoreToWin);
+	setGameConnection(gameConnection);
 }
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
 export function cleanGameWS() {
-	if (gameConnection) {
-		gameConnection.disconnect();
-		gameConnection = null;
+	if (sharedGameState.gameConnection) {
+		sharedGameState.gameConnection.disconnect();
+		setGameConnection(null);
 	}
 	// Reset the flag when cleaning up
-	isFinishingGame = false;
+	sharedGameState.isFinishingGame = false;
 }
 
 // ======== GAME ACTION ============
@@ -230,17 +235,17 @@ function gameActionListener() {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'ArrowUp') {
 			e.preventDefault();
-			gameConnection?.send({ type: 'input', action: 'up' });
+			sharedGameState.gameConnection?.send({ type: 'input', action: 'up' });
 		} else if (e.key === 'ArrowDown') {
 			e.preventDefault();
-			gameConnection?.send({ type: 'input', action: 'down' });
+			sharedGameState.gameConnection?.send({ type: 'input', action: 'down' });
 		}
 	});
 
 	document.addEventListener('keyup', (e) => {
 		if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
 			e.preventDefault();
-			gameConnection?.send({ type: 'input', action: 'stop' });
+			sharedGameState.gameConnection?.send({ type: 'input', action: 'stop' });
 		}
 	});
 
@@ -303,7 +308,7 @@ function gameActionListener() {
 		const positionPercent = (paddlePosition / arenaRect.height) * 100;
 		
 		// Send position to server
-		gameConnection?.send({ type: 'position', position: positionPercent });
+		sharedGameState.gameConnection?.send({ type: 'position', position: positionPercent });
 	}
 
 	document.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -319,460 +324,27 @@ function startGame() {
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
 
-		const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement;
-		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement;
-		playingSide.innerText = `You play on ${detail.position} side ${detail.position === 'left' ? '⬅️' : '➡️' }`;
-		
+		const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement | null;
+		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement | null;
+		const waitingOpponentOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement;
+
+		if (waitingOpponentOverlay) {
+			waitingOpponentOverlay.classList.add('hidden');
+		}
+
+		if (playingSide) {
+			playingSide.innerHTML = `You play on ${detail.position} side ${detail.position === 'left' ? '⬅️' : '➡️' }`;
+		}
+
 		startOverlay?.classList.remove('hidden');
-		
-		let count = 3;
-		const interval = setInterval(() => {
-			count--;
-			if (count >= 0)
-				count--;
-			else {
-				startOverlay?.classList.add('hidden');
-				clearInterval(interval);
-			}
-		}, 1000);
+
+		setTimeout(() => {
+			startOverlay?.classList.add('hidden');
+		}, 3000);
 	}, { once: true });
 }
 
 
-// ======== EVENT LISTENER ============
-function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
-
-	console.log(currentGame);
-	if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers.length < 2) {
-		console.log('❌ Missing current game');
-		return;
-	}
-
-	let opponentDisplayName: string | null | undefined = null;
-	if (currentGame.gameUsers[0].user?.id === currentUser.id) {
-		opponentDisplayName = currentGame.gameUsers[1].user?.displayName;
-	} else {
-		opponentDisplayName = currentGame.gameUsers[0].user?.displayName;
-	}
-
-	let playerPauseInterval: number | null = null;
-	let opponentPauseInterval: number | null = null;
-
-	// **** UPDATE GAME ****
-	document.addEventListener('event-update-game', (e: Event) => {
-		e.preventDefault();
-		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
-		
-		const paddleLeft = document.getElementById('paddleLeft');
-		const paddleRight = document.getElementById('paddleRight');
-		const ball = document.getElementById('ball');
-		const leftPlayer = document.getElementById('left-player') as HTMLParagraphElement;
-		const rightPlayer = document.getElementById('right-player') as HTMLParagraphElement;
-		const leftScore = document.getElementById('left-score') as HTMLParagraphElement;
-		const rightScore = document.getElementById('right-score') as HTMLParagraphElement;
-		
-		if (!paddleLeft || !paddleRight || !ball) return;
-
-
-		paddleLeft.style.top = `${parseInt(data.left.paddleposition) * getGameHeight() / 100}px`;
-		paddleRight.style.top = `${parseInt(data.right.paddleposition) * getGameHeight() / 100}px`;
-		ball.style.left = `${parseInt(data.ballX) * getGameWidth() / 200}px`;
-		ball.style.top = `${parseInt(data.ballY) * getGameHeight() / 100}px`;
-		ball.style.transform = 'translate(-50%, -50%)';
-		leftPlayer.innerText = data.left.userid === currentUser.id ? 'You' : opponentDisplayName!;
-		leftScore.innerText = data.left.score;
-		rightPlayer.innerText = data.right.userid === currentUser.id ? 'You' : opponentDisplayName!;
-		rightScore.innerText = data.right.score;
-	})
-
-	// **** QUIT GAME ****
-	const quitBtn = document.getElementById('quit-btn');
-	quitBtn?.addEventListener('click', (e) => {
-		e.preventDefault();
-
-		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
-		if (!quitDialog)
-			return;
-
-		quitDialog.showModal();
-		const cancelBtn = document.querySelector('#cancel-quit-btn') as HTMLButtonElement;
-		const confirmBtn = document.querySelector('#confirm-quit-btn') as HTMLButtonElement;
-
-		// Handle cancel
-		const handleCancel = () => {
-			quitDialog.close();
-			cancelBtn?.removeEventListener('click', handleCancel);
-			confirmBtn?.removeEventListener('click', handleConfirm);
-		};
-		
-		// Handle confirm
-		const handleConfirm = () => {
-			quitDialog.close();
-			cancelBtn?.removeEventListener('click', handleCancel);
-			confirmBtn?.removeEventListener('click', handleConfirm);
-			gameConnection?.send({ type: 'quit', looser: currentUser.id});
-		};
-
-		// Attach event listeners
-		cancelBtn?.addEventListener('click', handleCancel);
-		confirmBtn?.addEventListener('click', handleConfirm);
-		
-		// Close on backdrop click
-		quitDialog.addEventListener('click', (e) => {
-			if (e.target === quitDialog) {
-				handleCancel();
-			}
-		});
-	});
-
-	// const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
-	// const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
-	
-	// wonGameOverlay.classList.remove('hidden');
-	// backHomeBtn?.addEventListener('click', async () => {
-	// 	console.log(currentGame);
-	// 	cleanGameWS();
-	// 	if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
-	// 		await tournamentApi.advanceTournament(currentGame.tournamentId!);
-	// 	else
-	// 		router.navigateTo('/home');
-	// }, { once: true });
-	
-	// **** WON GAME ****
-	document.addEventListener('event-won-game', async (e: Event) => {
-		e.preventDefault();
-		console.log('🏆 WON GAME');
-		
-		if (isFinishingGame) {
-			console.log('⏭️ Already finishing game, skipping...');
-			return;
-		}
-		isFinishingGame = true;
-		
-		const customEvent = e as CustomEvent;
-		const detail = customEvent.detail;
-
-		// Only the creator should call the API to finish the game
-		if (currentGame.isCreator || currentGame.tournamentId) {
-			const currentGame = await gameService.getGame(gameId, ctx);
-			if (!currentGame) {
-				router.navigateTo('/home');
-				return;
-			}
-			
-			// Check if game is already finished
-			if (currentGame.status !== 'IN_PROGRESS') {
-				console.log('👀 Game already finished, skipping finishGame API call');
-			} else {
-				try {
-					// Build game players data from currentGame.gameUsers
-					if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
-						console.error('❌ Missing game users data');
-						router.navigateTo('/home');
-						return;
-					}
-					console.log(`Winner id = ${detail.winnerId}`);
-					const data: FinishGameDto = {
-						status: 'COMPLETED',
-						winnerId: detail.winnerId,
-						gamePlayers: [
-							{
-								userId: currentGame.gameUsers[0].user?.id!,
-								playerId: currentGame.gameUsers[0].id!,
-								score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
-							},
-							{
-								userId: currentGame.gameUsers[1].user?.id!,
-								playerId: currentGame.gameUsers[1].id!,
-								score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
-							}
-						]
-					};
-					console.log('🎮 Creator finishing game...');
-					await gameService.finishGame(currentGame.id!, data, ctx);
-					console.log('✅ Game finished successfully');
-				} catch (error) {
-					console.error('❌ Error finishing game:', error);
-				}
-			}
-		} else {
-			console.log('👀 Non-creator, skipping finishGame API call');
-		}
-
-		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
-		const winner = document.querySelector('#winner') as HTMLParagraphElement;
-		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
-		const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
-
-		if (quitDialog?.open) {
-			return;
-		}
-		if (!wonGameOverlay || !winner)
-			return;
-		const isWinner = detail.iswinner;
-		if (isWinner === true)
-			winner.innerText = `Congratulation you won the game !`;
-		else
-			winner.innerText = `Sorry, you've lost`;
-		wonGameOverlay.classList.remove('hidden');
-		
-		backHomeBtn?.addEventListener('click', async () => {
-			console.log(currentGame);
-			cleanGameWS();
-			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId) {
-				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
-			}
-			else
-				router.navigateTo('/home');
-		}, { once: true });
-
-	}, { once: true });
-
-	// **** ADANDONNED GAME ****
-	document.addEventListener('event-abandoned-game', async (e: Event) => {
-		e.preventDefault();
-		console.log('🏆 ABANDONED GAME');
-
-		if (isFinishingGame) {
-			console.log('⏭️ Already finishing game, skipping...');
-			return;
-		}
-		isFinishingGame = true;
-
-		const customEvent = e as CustomEvent;
-		const detail = customEvent.detail;
-		const currentGame = await gameService.getGame(gameId, ctx);
-		if (!currentGame) {
-			router.navigateTo('/home');
-			return;
-		}
-
-		// For abandoned games, ANY player can finish (creator might have left)
-		if (currentGame.status === 'IN_PROGRESS') {
-			try {
-				if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
-					console.error('❌ Missing game users data');
-					router.navigateTo('/home');
-					return;
-				}
-
-				console.log(`🚨 Abandoned game -> winner Id = ${detail.winnerId}`);
-				
-				const data: FinishGameDto = {
-					status: 'ABANDONED',
-					winnerId: detail.winnerId,
-					gamePlayers: [
-						{
-								userId: currentGame.gameUsers[0].user?.id!,
-								playerId: currentGame.gameUsers[0].id!,
-								score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
-						},
-						{
-								userId: currentGame.gameUsers[1].user?.id!,
-							playerId: currentGame.gameUsers[1].id!,
-							score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
-						}
-					]
-				};
-				console.log('🎮 Finishing abandoned game...');
-				await gameService.finishGame(currentGame.id!, data, ctx);
-				console.log('✅ Game finished successfully');
-			} catch (error) {
-				console.error('❌ Error finishing game:', error);
-			}
-		} else {
-			console.log('👀 Game already finished, skipping finishGame API call');
-			isFinishingGame = true;
-		}
-
-		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
-		const winner = document.querySelector('#winner') as HTMLParagraphElement;
-		const backHomeBtn = document.querySelector('#won-back-home-btn') as HTMLButtonElement;
-
-		if (!wonGameOverlay || !winner)
-			return;
-
-		const isWinner = detail.iswinner;
-		if (isWinner === true)
-			winner.innerText = `Your opponent gave up`;
-		else
-			winner.innerText = `Game over`;
-		wonGameOverlay.classList.remove('hidden');
-		
-		backHomeBtn?.addEventListener('click', async () => {
-			cleanGameWS();
-			router.navigateTo('/home');
-		}, { once: true });
-
-	}, { once: true });
-
-	// **** COUNTDOWN ****
-	document.addEventListener('event-service-countdown', (e: Event) => {
-		e.preventDefault();
-		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
-
-		const countdownOverlay = document.querySelector('#countdown-overlay') as HTMLDivElement;
-		const countdownNumber = document.querySelector('#countdown-number') as HTMLParagraphElement;
-		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
-		const pauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
-
-		if (!countdownOverlay || !countdownNumber || !quitDialog || !pauseOverlay
-			|| quitDialog?.open || !pauseOverlay.classList.contains('hidden'))
-			return;
-
-		let count = data.count;
-
-		countdownOverlay?.classList.remove('hidden');
-		countdownNumber.textContent = count.toString();
-
-		const interval = setInterval(() => {
-			count--;
-			if (count > 0) {
-				countdownNumber.textContent = count.toString();
-			} else {
-				countdownNumber.textContent = 'GO!';
-				setTimeout(() => {
-					countdownOverlay?.classList.add('hidden');
-				}, 800);
-				clearInterval(interval);
-			}
-		}, 1000);
-	})
-
-	// **** CURRENT USER SET PAUSE ****
-	const pauseBtn = document.querySelector('#pause-btn') as HTMLButtonElement;
-	pauseBtn?.addEventListener('click', (e: Event) => {
-		e.preventDefault();
-		
-		const stopPauseBtn = document.querySelector('#stop-pause-btn') as HTMLButtonElement;
-		const playerPauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
-		const timer = document.querySelector('#player-pause-timer') as HTMLParagraphElement;
-
-		playerPauseOverlay?.classList.remove('hidden');
-		gameConnection?.send({ type: 'pause', action: 'stop', pausedby: currentUser.id});
-
-		let count = 10;
-		timer.textContent = count.toString();
-		playerPauseInterval = setInterval(() => {
-			count--;
-			if (count >= 0) {
-				timer.textContent = count.toString();
-			} else {
-				if (playerPauseInterval) {
-					clearInterval(playerPauseInterval);
-					playerPauseInterval = null;
-					gameConnection?.send({ type: 'quit', looser: currentUser.id});
-				}
-			}
-		}, 1000);
-
-		stopPauseBtn.addEventListener('click', (e) => {
-			e.preventDefault();
-			gameConnection?.send({ type: 'pause', action: 'resume'});
-			playerPauseOverlay?.classList.add('hidden');
-			if (playerPauseInterval) {
-				clearInterval(playerPauseInterval);
-				playerPauseInterval = null;
-			}
-		});
-	});
-
-	// **** GAME PAUSED BY OPPONENT ****
-	document.addEventListener('event-pause-game', (e: Event) => {
-		e.preventDefault();
-		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
-
-		const opponentPauseOverlay = document.querySelector('#opponent-set-pause-overlay') as HTMLDivElement;
-		const timer = document.querySelector('#opponent-pause-timer') as HTMLParagraphElement;
-
-		if (!opponentPauseOverlay)
-			return;
-
-		console.log('opponent pause overlay');
-		if (data.status === true) {
-			let count = 10;
-			timer.textContent = count.toString();
-			opponentPauseOverlay.classList.remove('hidden');
-			opponentPauseInterval = setInterval(() => {
-				count--;
-				if (count >= 0) {
-					timer.textContent = count.toString();
-				} else {
-					if (opponentPauseInterval) {
-						clearInterval(opponentPauseInterval);
-						opponentPauseInterval = null;
-					}
-				}
-			}, 1000)
-		} if (data.status === false) {
-			opponentPauseOverlay.classList.add('hidden');
-			if (opponentPauseInterval) {
-				clearInterval(opponentPauseInterval);
-				opponentPauseInterval = null;
-			}
-		}
-	})
-
-	// **** PLAYER DISCONNECTED ****
-	let disconnectInterval: number | null = null;
-	document.addEventListener('event-player-disconnected', (e: Event) => {
-		e.preventDefault();
-		console.log('🔌 Player disconnected');
-		
-		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
-		const disconnectTimer = document.querySelector('#disconnect-timer') as HTMLParagraphElement;
-		
-		if (!disconnectOverlay || !disconnectTimer) return;
-		
-		let count = 30;
-		disconnectTimer.textContent = count.toString();
-		disconnectOverlay.classList.remove('hidden');
-		
-		disconnectInterval = setInterval(() => {
-			count--;
-			if (count >= 0) {
-				disconnectTimer.textContent = count.toString();
-			} else {
-				if (disconnectInterval) {
-					clearInterval(disconnectInterval);
-					disconnectInterval = null;
-				}
-			}
-		}, 1000);
-	});
-
-	// **** PLAYER RECONNECTED ****
-	document.addEventListener('event-player-reconnected', (e: Event) => {
-		e.preventDefault();
-		console.log('🔄 Player reconnected');
-		
-		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
-		
-		if (!disconnectOverlay) return;
-		
-		disconnectOverlay.classList.add('hidden');
-		
-		if (disconnectInterval) {
-			clearInterval(disconnectInterval);
-			disconnectInterval = null;
-		}
-	});
-}
 
 
 
-// ======== UTILS ============
-function getGameHeight(): number
-{
-	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientHeight);
-}
-
-function getGameWidth(): number
-{
-	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientWidth);
-}

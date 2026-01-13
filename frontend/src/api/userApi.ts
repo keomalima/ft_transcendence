@@ -28,6 +28,9 @@ export type updateUserResp = Pick<UserState, 'name' | 'surname' | 'displayName' 
 
 // response update Avatar
 export type updateAvatarResp = Pick<UserState, 'id' | 'email' | 'name' | 'surname' | 'displayName' | 'avatarUrl' | 'isOnline' | 'createdAt' | 'updatedAt'>
+
+// reponse change password 
+export type changePasswordResp = Pick< UserState, 'id' | 'updatedAt' >
  
 export const userApi = {
 
@@ -118,6 +121,17 @@ export const userApi = {
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('update user', error);
+		}
+	},
+
+	changePassword: async (currentPassword: string, newPassword: string): Promise<changePasswordResp> => {
+		try {
+			const body = { currentPassword, newPassword };
+			const response = await httpCall.put<changePasswordResp> (`${BASE_URL}/password`, body);
+			console.log('⭐ changeUserPassword success ✅', response.data);
+			return response.data;
+		} catch (error: unknown) {
+			throw buildApiError('change user password user', error);
 		}
 	},
 
