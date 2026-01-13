@@ -95,7 +95,13 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
-		if (currentGame.isCreator) {
+		if (!currentGame.gameUsers || currentGame.gameUsers.length < 2) {
+    		console.error('❌ Missing game users data');
+			return;
+		}
+		const isResponsiblePlayer = currentGame.gameUsers[0].user?.id === currentUser.id;
+
+		if (isResponsiblePlayer) {
 			if (!await finishGame('COMPLETED', e, ctx, gameId))
 				return;
 		} else {
@@ -136,8 +142,19 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 
 	// **** ADANDONNED GAME ****
 	document.addEventListener('event-abandoned-game', async (e: Event) => {
-		if (!await finishGame('COMPLETED', e, ctx, gameId))
+		
+		if (!currentGame.gameUsers || currentGame.gameUsers.length < 2) {
+    		console.error('❌ Missing game users data');
 			return;
+		}
+		const isResponsiblePlayer = currentGame.gameUsers[0].user?.id === currentUser.id;
+
+		if (isResponsiblePlayer) {
+			if (!await finishGame('ABANDONED', e, ctx, gameId))
+				return;
+		} else {
+			console.log('⏭️ Player is not the game creator, skipping...')
+		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;

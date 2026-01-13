@@ -38,6 +38,11 @@ export function Dashboard(ctx: AppContext): string{
 function renderDashboardContent(currentUser: UserState, currentGame: {gameId: string, status: string, token: string | null, type: string, userId:string} | null, tournamentId: string | undefined) {
 	const content = document.getElementById('dashboard-content');
 
+    const avatarRaw = currentUser.avatarUrl || '/uploads/avatars/default.jpg';
+    const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : (avatarRaw.startsWith('/') ? avatarRaw : `/${avatarRaw}`);
+
+	console.log('Avatar URL ', avatarSrc);
+
 	let link: string | null  = null;
 	if (currentGame) {
 		if (tournamentId)
@@ -60,7 +65,7 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 		<div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
 			<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
 				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
-					<img src='http://localhost:3000${currentUser.avatarUrl}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
+					<img src='${avatarSrc}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
 					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words truncate'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
 				</div>
 				${tournamentId ?
