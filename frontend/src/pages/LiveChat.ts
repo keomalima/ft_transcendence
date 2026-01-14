@@ -255,6 +255,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 }
 
 async function renderChatBox(friend: any, ctx: AppContext) {
+	console.log("hi", ctx.gameStore.get());// check if show the button for invite
 	const chatRight = document.getElementById('chat-right');
 	const chatEmpty = document.getElementById('chat-empty');
 	if (!chatRight || !chatEmpty) return;
