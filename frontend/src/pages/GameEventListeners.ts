@@ -52,9 +52,20 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		rightScore.innerText = data.right.score;
 	})
 
-	// **** QUIT GAME ****
-	const quitBtn = document.getElementById('quit-btn');
-	quitBtn?.addEventListener('click', (e) => {
+	// **** GO BACK GAME ****
+	const goBackButton = document.getElementById('go-back-btn');
+	goBackButton?.addEventListener('click', (e) => {
+		e.preventDefault();
+		if (currentGame.type === 'TOURNAMENT') {
+			router.navigateTo(`/tournament/${currentGame.tournamentId}`);
+		} else {
+			router.navigateTo(`/home`);
+		}
+	});
+
+	// **** GIVE UP GAME ****
+	const giveUpBtn = document.getElementById('give-up-btn');
+	giveUpBtn?.addEventListener('click', (e) => {
 		e.preventDefault();
 
 		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
@@ -62,8 +73,8 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			return;
 
 		quitDialog.showModal();
-		const cancelBtn = document.querySelector('#cancel-quit-btn') as HTMLButtonElement;
-		const confirmBtn = document.querySelector('#confirm-quit-btn') as HTMLButtonElement;
+		const cancelBtn = document.querySelector('#cancel-give-up-btn') as HTMLButtonElement;
+		const confirmBtn = document.querySelector('#confirm-give-up-btn') as HTMLButtonElement;
 
 		// Handle cancel
 		const handleCancel = () => {

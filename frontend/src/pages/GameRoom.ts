@@ -14,11 +14,20 @@ let wsConnection: WaitingRoomConnection | null = null;
 export function GameRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser = ctx.userStore.get();
+	console.log('Game store = ', ctx.gameStore.get());
+
+	// secure if no user
+	if (!currentUser?.id)
+	{
+		console.log('No active session when accessing game')
+		setTimeout(() => router.navigateTo('/'), 0);
+		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+	}
 
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		console.log('no params available')
+		console.log('No game id is provided')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -27,8 +36,32 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	setTimeout(async () => {
 		cleanWaitingRoomWS();
 		let gameData = await getGameData(params['id'], ctx);
-		if (!gameData)
-			return;
+		console.log('fail');
+		console.log(gameData);
+		// secure if the game is not valid 
+		if (!gameData) {
+			console.log('This game is not valid')
+			setTimeout(() => router.navigateTo('/home'), 0);
+			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+		}
+		// secure if the user do not belong to the game
+		if (params['id'] !== gameData.id) {
+			console.log('User do not belong to this game')
+			setTimeout(() => router.navigateTo('/home'), 0);
+			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+		}
+		// secure if the game is not PENDING
+		if (gameData.status !== "PENDING") {
+			if (gameData.status === 'IN_PROGRESS') {
+				console.log('The game has already started')
+				setTimeout(() => router.navigateTo(`/game/${params['id']}`), 0);
+				return '<div class="flex items-center justify-center h-screen"><p>Redirecting to game...</p></div>';
+			} else {
+				console.log('This game is not pending')
+				setTimeout(() => router.navigateTo('/home'), 0);
+				return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+			}
+		}
 		renderGameRoomContent(gameData);
 		passContext(ctx, gameData, gameData.isCreator);
 		

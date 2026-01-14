@@ -13,10 +13,10 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	// get user data from store
 	const currentUser = ctx.userStore.get();
 
-	// secure if no access token or user ID
+	// secure if no user
 	if (!currentUser?.id)
 	{
-		console.log('no session when accessing /game-room')
+		console.log('No active session when accessing game')
 		setTimeout(() => router.navigateTo('/'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -24,7 +24,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		console.log('no params available')
+		console.log('No game id is provided')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -33,8 +33,16 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	setTimeout(async () => {
 		let currentGame = await gameService.getGame(params['id'], ctx);
 		console.log('💫 current game = ', currentGame);
+		// secure if the ugame is not IN_PROGRESS
 		if (!currentGame || currentGame.status === 'ABANDONED' || currentGame.status === 'COMPLETED') {
+			console.log('The game is not in progress');
 			setTimeout(() => router.navigateTo('/'), 0);
+			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+		}
+		// secure if the user do not belong to the game
+		if (params['id'] !== currentGame?.id) {
+			console.log('User do not belong to this game')
+			setTimeout(() => router.navigateTo('/home'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
 		let check = await userIsAuthorized(currentUser.id!, ctx);
@@ -100,7 +108,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
 					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button>
-					<button id='quit-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>give up</button>
+					<button id='give-up-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>give up</button>
 				</div>
 			</div>
 
@@ -171,20 +179,24 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 
 			<!-- Waiting opponent overlay -->
 			<div id="waiting-opponent-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-				<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
+				<div class='flex flex-col gap-5'>
+					<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
+					<button id='go-back-btn' type='click' class='px-3.5 py-2.5 rounded-full bg-white outline outline-1 outline-black hover:font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'>go back</button>
+				</div>
 			</div>
 
-			<!-- Confirmation Dialog -->
+			<!-- Confirmation QUIT Dialog -->
 			<dialog id="quit-game-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
 					<h2 class="text-xl font-semibold">Give up</h2>
 					<p id="delete-friend-message" class="text-gray-600">Are you sure to quit game?</p>
 					<div class="flex gap-3 justify-end">
-						<button id="cancel-quit-btn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
-						<button id="confirm-quit-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Confirm</button>
+						<button id="cancel-give-up-btn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
+						<button id="confirm-give-up-btn" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">Confirm</button>
 					</div>
 				</div>
 			</dialog>
+
 		</main>
 	`;
 }
