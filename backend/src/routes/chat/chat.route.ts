@@ -36,17 +36,17 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		handler: chatController.sendMessageHandler
 	});
 
-	fastify.get('/unread', {
-		schema: {
-			response: { 200: z.array(z.string()), },
-			tags: ['Chat'],
-			description: 'Get list of friend IDs with unread messages',
-			summary: 'Unread message friends',
-			security: [{ cookieAuth: [] }]
-		},
-		preHandler: userController.updateLastSeen,
-		handler: chatController.getFriendsWithNewMessagesHandler
-	});
+	// fastify.get('/unread', {
+	// 	schema: {
+	// 		response: { 200: z.array(z.string()), },
+	// 		tags: ['Chat'],
+	// 		description: 'Get list of friend IDs with unread messages',
+	// 		summary: 'Unread message friends',
+	// 		security: [{ cookieAuth: [] }]
+	// 	},
+	// 	preHandler: userController.updateLastSeen,
+	// 	handler: chatController.getFriendsWithNewMessagesHandler
+	// });
 
 
 }

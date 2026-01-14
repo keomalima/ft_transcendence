@@ -24,14 +24,14 @@ export const chatApi = {
 	},
 
 
-	getFriendsWithNewMessages: async (): Promise<string[]> => {
-		try {
-			const response = await httpCall.get(`${BASE_URL}/unread`);
-			return response.data as string[];
-		} catch (error: unknown) {
-			throw buildApiError('get unread message friends', error);
-		}
-	},
+	// getFriendsWithNewMessages: async (): Promise<string[]> => {
+	// 	try {
+	// 		const response = await httpCall.get(`${BASE_URL}/unread`);
+	// 		return response.data as string[];
+	// 	} catch (error: unknown) {
+	// 		throw buildApiError('get unread message friends', error);
+	// 	}
+	// },
 
 	sendMessage: async (data: { toUserId: string; content: string }): Promise<SendMessageResponse> => {
 		try {
@@ -49,8 +49,4 @@ export const chatApi = {
 			};
 		}
 	}
-
-
-
-
 };

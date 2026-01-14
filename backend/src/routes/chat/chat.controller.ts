@@ -113,18 +113,18 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 	}
 }
 
-async function getFriendsWithNewMessagesHandler(request: FastifyRequest, reply: FastifyReply) {
-	try {
-		const userId = request.user!.id;
+// async function getFriendsWithNewMessagesHandler(request: FastifyRequest, reply: FastifyReply) {
+// 	try {
+// 		const userId = request.user!.id;
 
-		const unreadFriendIds = await chatService.getFriendsWithNewMessages(request.server.prisma, userId);
+// 		const unreadFriendIds = await chatService.getFriendsWithNewMessages(request.server.prisma, userId);
 
-		return reply.code(200).send(unreadFriendIds);
-	} catch (error: any) {
-		console.error("Error fetching unread friends:", error);
-		return reply.status(500).send({ message: "Failed to get unread friends" });
-	}
-}
+// 		return reply.code(200).send(unreadFriendIds);
+// 	} catch (error: any) {
+// 		console.error("Error fetching unread friends:", error);
+// 		return reply.status(500).send({ message: "Failed to get unread friends" });
+// 	}
+// }
 
 // =====================
 // Export Controller Object
@@ -133,5 +133,5 @@ async function getFriendsWithNewMessagesHandler(request: FastifyRequest, reply: 
 export const chatController = {
 	getChatHistoryHandler,
 	sendMessageHandler,
-	getFriendsWithNewMessagesHandler,
+	// getFriendsWithNewMessagesHandler,
 };

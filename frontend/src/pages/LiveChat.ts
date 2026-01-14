@@ -32,7 +32,7 @@ export function LiveChat(ctx: AppContext): string {
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
-		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
+		// await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
 	}, 0);
 
@@ -170,19 +170,19 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const clickedFriend = customEvent.detail;
 
-		// STEP 1: Remove from localStorage unread set
-		const currentUserId = ctx.userStore.get()?.id;
-		const key = `chat_unread_${currentUserId}`;
-		try {
-			const raw = localStorage.getItem(key);
-			if (raw) {
-				const unreadSet = new Set<string>(JSON.parse(raw));
-				unreadSet.delete(clickedFriend.id);
-				localStorage.setItem(key, JSON.stringify([...unreadSet]));
-			}
-		} catch (err) {
-			console.error("❌ Failed to update unread set after friend click:", err);
-		}
+		// // STEP 1: Remove from localStorage unread set
+		// const currentUserId = ctx.userStore.get()?.id;
+		// const key = `chat_unread_${currentUserId}`;
+		// try {
+		// 	const raw = localStorage.getItem(key);
+		// 	if (raw) {
+		// 		const unreadSet = new Set<string>(JSON.parse(raw));
+		// 		unreadSet.delete(clickedFriend.id);
+		// 		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+		// 	}
+		// } catch (err) {
+		// 	console.error("❌ Failed to update unread set after friend click:", err);
+		// }
 
 		// STEP 2: Reload friend list (to refresh red ! badges)
 		await friendListComponent.loadAndRender();
@@ -233,14 +233,14 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				return;
 			}
 
-			// CASE 2: Otherwise, save in unread set and refresh FriendList
-			const key = `chat_unread_${currentUserId}`;
-			let unreadSet = new Set<string>();
-			const raw = localStorage.getItem(key);
-			if (raw) unreadSet = new Set(JSON.parse(raw));
+			// // CASE 2: Otherwise, save in unread set and refresh FriendList
+			// const key = `chat_unread_${currentUserId}`;
+			// let unreadSet = new Set<string>();
+			// const raw = localStorage.getItem(key);
+			// if (raw) unreadSet = new Set(JSON.parse(raw));
 
-			unreadSet.add(fromUserId);
-			localStorage.setItem(key, JSON.stringify([...unreadSet]));
+			// unreadSet.add(fromUserId);
+			// localStorage.setItem(key, JSON.stringify([...unreadSet]));
 
 			const friendList = document.getElementById("friend-list-component") as any;
 			if (friendList?.loadAndRender) {
@@ -531,30 +531,30 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 		}).join('');
 }
 
-async function fetchUnreadSendersFromBackend(ctx: AppContext) {
-	const currentUserId = ctx.userStore.get()?.id;
-	if (!currentUserId) return;
+// async function fetchUnreadSendersFromBackend(ctx: AppContext) {
+// 	const currentUserId = ctx.userStore.get()?.id;
+// 	if (!currentUserId) return;
 
-	try {
-		const senderIds: string[] = await chatApi.getFriendsWithNewMessages();
-		if (!senderIds || senderIds.length === 0) return;
+// 	try {
+// 		const senderIds: string[] = await chatApi.getFriendsWithNewMessages();
+// 		if (!senderIds || senderIds.length === 0) return;
 
-		const key = `chat_unread_${currentUserId}`;
-		const raw = localStorage.getItem(key);
-		const unreadSet = new Set<string>(raw ? JSON.parse(raw) : []);
-		senderIds.forEach((id) => unreadSet.add(id));
-		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+// 		const key = `chat_unread_${currentUserId}`;
+// 		const raw = localStorage.getItem(key);
+// 		const unreadSet = new Set<string>(raw ? JSON.parse(raw) : []);
+// 		senderIds.forEach((id) => unreadSet.add(id));
+// 		localStorage.setItem(key, JSON.stringify([...unreadSet]));
 
-		// Re-render FriendList to show updated blue dots
-		const friendList = document.getElementById("friend-list-component") as any;
-		if (friendList?.loadAndRender) {
-			friendList.skipAutoSelect = true;
-			await friendList.loadAndRender();
-		}
-	} catch (err) {
-		console.error("❌ Failed to fetch unread senders from backend:", err);
-	}
-}
+// 		// Re-render FriendList to show updated blue dots
+// 		const friendList = document.getElementById("friend-list-component") as any;
+// 		if (friendList?.loadAndRender) {
+// 			friendList.skipAutoSelect = true;
+// 			await friendList.loadAndRender();
+// 		}
+// 	} catch (err) {
+// 		console.error("❌ Failed to fetch unread senders from backend:", err);
+// 	}
+// }
 
 
 // ======== CLEANUP HOOKS ==========

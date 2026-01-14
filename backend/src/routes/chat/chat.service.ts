@@ -59,24 +59,24 @@ async function saveMessage(prisma: PrismaClient, fromUserId: string, toUserId: s
 
 }
 
-async function getFriendsWithNewMessages(prisma: PrismaClient, userId: string): Promise<string[]> {
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-		select: { lastLiveChatOnlineAt: true },
-	});
+// async function getFriendsWithNewMessages(prisma: PrismaClient, userId: string): Promise<string[]> {
+// 	const user = await prisma.user.findUnique({
+// 		where: { id: userId },
+// 		select: { lastLiveChatOnlineAt: true },
+// 	});
 
-	const whereCondition = user?.lastLiveChatOnlineAt
-		? { receiverId: userId, sentAt: { gt: user.lastLiveChatOnlineAt } }
-		: { receiverId: userId };
+// 	const whereCondition = user?.lastLiveChatOnlineAt
+// 		? { receiverId: userId, sentAt: { gt: user.lastLiveChatOnlineAt } }
+// 		: { receiverId: userId };
 
-	const messages: { senderId: string }[]  = await prisma.message.findMany({
-		where: whereCondition,
-		select: { senderId: true },
-		distinct: ['senderId'],
-	});
+// 	const messages: { senderId: string }[]  = await prisma.message.findMany({
+// 		where: whereCondition,
+// 		select: { senderId: true },
+// 		distinct: ['senderId'],
+// 	});
 
-	return messages.map(msg => msg.senderId);
-}
+// 	return messages.map(msg => msg.senderId);
+// }
 
 
 
@@ -89,5 +89,5 @@ export const chatService = {
 	getChatHistory,
 	isBlockedBy,
 	saveMessage,
-	getFriendsWithNewMessages,
+	// getFriendsWithNewMessages,
 };

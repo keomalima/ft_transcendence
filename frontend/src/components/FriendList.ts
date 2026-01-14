@@ -128,24 +128,24 @@ export class FriendList extends HTMLElement {
 		const image = document.createElement('img');
 
 		// === Blue dot for new message (only in LiveChat)
-		const isLiveChatPage = window.location.pathname === '/live-chat';
-		if (isLiveChatPage) {
-			const currentUserId = this._ctx?.userStore.get()?.id;
-			const key = `chat_unread_${currentUserId}`;
-			try {
-				const raw = localStorage.getItem(key);
-				if (raw) {
-					const unreadList: string[] = JSON.parse(raw);
-					if (friend.id && unreadList.includes(friend.id)) {
-						const dot = document.createElement('span');
-						dot.className = 'absolute top-1 left-1 w-2 h-2 rounded-full bg-blue-500';
-						avatar.appendChild(dot);
-					}
-				}
-			} catch (e) {
-				console.error("❌ Failed to read unread list from localStorage", e);
-			}
-		}
+		// const isLiveChatPage = window.location.pathname === '/live-chat';
+		// if (isLiveChatPage) {
+		// 	const currentUserId = this._ctx?.userStore.get()?.id;
+		// 	const key = `chat_unread_${currentUserId}`;
+		// 	try {
+		// 		const raw = localStorage.getItem(key);
+		// 		if (raw) {
+		// 			const unreadList: string[] = JSON.parse(raw);
+		// 			if (friend.id && unreadList.includes(friend.id)) {
+		// 				const dot = document.createElement('span');
+		// 				dot.className = 'absolute top-1 left-1 w-2 h-2 rounded-full bg-blue-500';
+		// 				avatar.appendChild(dot);
+		// 			}
+		// 		}
+		// 	} catch (e) {
+		// 		console.error("❌ Failed to read unread list from localStorage", e);
+		// 	}
+		// }
 
 		image.src = `${this._uploadsUrl}${friend.avatarUrl}`;
 		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
