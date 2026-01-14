@@ -441,6 +441,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			const res = await chatApi.sendMessage({
 				toUserId: _selectedFriend.id,
 				content,
+				type: "TEXT"
 			});
 
 			if (res.status === "ok") {

@@ -232,12 +232,13 @@ export type ChatWsMessage =
 	| ChatMessagePayload
 	| ConnectedPayload;
 
-export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
+export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "IN_GAME" | "UNKNOWN";
 
 export interface SendMessageSuccess {
 	status: "ok";
 	messageId: string;
 	sentAt: string;
+	gameToken?: string;
 }
 
 export interface SendMessageError {

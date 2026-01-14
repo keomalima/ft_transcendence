@@ -33,7 +33,7 @@ export const chatApi = {
 	// 	}
 	// },
 
-	sendMessage: async (data: { toUserId: string; content: string }): Promise<SendMessageResponse> => {
+	sendMessage: async (data: { toUserId: string; content: string; type?: "TEXT" | "GAME_INVITE";}): Promise<SendMessageResponse> => {
 		try {
 			const response = await httpCall.post(`${BASE_URL}/send`, data);
 			return response.data;

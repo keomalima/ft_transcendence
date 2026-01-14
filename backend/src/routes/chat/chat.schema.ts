@@ -7,6 +7,7 @@ import { z } from "zod";
 const sendMessageRequestSchema = z.object({
 	toUserId: z.string(),
 	content: z.string().min(1).max(1000), // set the content min and max length
+	type: z.enum(["TEXT", "GAME_INVITE"]).optional(),
 });
 
 // =====================
@@ -17,12 +18,13 @@ const sendMessageSuccessResponseSchema = z.object({
 	status: z.literal("ok"),
 	messageId: z.string(),
 	sentAt: z.string(),
+	gameToken: z.string().optional(),
 });
 
 const sendMessageErrorResponseSchema = z.object({
 	status: z.literal("error"),
 	reason: z.string(),
-	code: z.enum(["BLOCKED", "SELF", "NOT_FRIEND", "UNKNOWN"]),
+	code: z.enum(["BLOCKED", "SELF", "NOT_FRIEND", "IN_GAME", "UNKNOWN"]),
 });
 
 

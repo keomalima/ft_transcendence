@@ -4,6 +4,8 @@ import type { User } from '@prisma/client';
 import {z} from 'zod'
 import type { SendMessageInput } from './chat.schema.js';
 import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
+import { gameService } from '../game/game.service.js';
+import { tournamentService } from '../tournaments/tournament.service.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -61,7 +63,17 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 async function sendMessageHandler(request: SendMessageRequest, reply: FastifyReply) {
 	try {
 		const fromUserId = request.user!.id;
-		const { toUserId, content } = request.body;
+		let { toUserId, content, type } = request.body;
+
+		if (!type) type = "TEXT";
+
+		if (type !== "TEXT" && type !== "GAME_INVITE") {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Invalid message type",
+				code: "UNKNOWN",
+			});
+		}
 
 		if (fromUserId === toUserId) {
 			return reply.status(400).send({
@@ -81,6 +93,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 		}
 
 		// Check block status: if recipient blocked the sender
+		// !! if block need to disable the invite game or join game button for front end
 		const isBlocked = await chatService.isBlockedBy(request.server.prisma, fromUserId, toUserId);
 
 		if (isBlocked) {
@@ -91,18 +104,57 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 			});
 		}
 
-		// Save message to database
-		const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content);
+		if (type === "TEXT") {
+			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "TEXT");
 
-		// Try to send message via WebSocket if recipient is online
-		await sendMessageToUser(toUserId, {
-			type: "chat-message",
-			fromUserId,
-			content,
-			sentAt: message.sentAt.toISOString(),
-		});
+			await sendMessageToUser(toUserId, {
+				type: "chat-message",
+				fromUserId,
+				content,
+				sentAt: message.sentAt.toISOString(),
+				messageType: "TEXT",
+			});
 
-		return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(),});
+			return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(),});
+		}
+		// check if can invite game
+		else if (type === "GAME_INVITE") {
+			const senderTournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, fromUserId);
+			const senderGame = await gameService.findActiveGameByUserId(request.server.prisma, fromUserId);
+
+			const receiverTournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma, toUserId);
+			const receiverGame = await gameService.findActiveGameByUserId(request.server.prisma, toUserId);
+
+			if (senderGame || senderTournament) {
+				return reply.status(400).send({
+					status: "error",
+					reason: "You are already in a game or tournament",
+					code: "IN_GAME"
+				});
+			}
+
+			if (receiverGame || receiverTournament) {
+				return reply.status(400).send({
+					status: "error",
+					reason: "Friend is already in a game or tournament",
+					code: "IN_GAME"
+				});
+			}
+			// ✅ Both users are available — proceed to generate gameToken and invite
+			const gameToken = generateGameToken(); // future logic
+			// Save message to database
+			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "GAME_INVITE", gameToken);
+
+			await sendMessageToUser(toUserId, {
+				type: "chat-message",
+				fromUserId,
+				content,
+				sentAt: message.sentAt.toISOString(),
+				messageType: "GAME_INVITE",
+				gameToken,
+			});
+			return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(), gameToken,});
+		}		
 	} catch (error: any) {
 		console.error("Error sending message:", error);
 		return reply.status(500).send({

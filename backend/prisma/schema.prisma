@@ -63,6 +63,8 @@ model User {
 	messagesSent  		    Message[] @relation("MessageSender")
     messagesReceived 		Message[] @relation("MessageReceiver")
 	lastLiveChatOnlineAt DateTime?
+	notificationsSent     Notification[] @relation("NotificationSender")
+	notificationsReceived Notification[] @relation("NotificationReceiver")
 
 }
 
@@ -167,14 +169,33 @@ model BlockStatus {
   @@unique([blockerId, blockedId])
 }
 
+enum MessageType {
+  TEXT
+  GAME_INVITE
+}
+
 model Message {
-  id         String   @id @default(uuid())
+  id         String      @id @default(uuid())
   senderId   String
-  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  sender     User        @relation("MessageSender", fields: [senderId], references: [id])
   
   receiverId String
-  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id])
   
-  content    String
-  sentAt     DateTime @default(now())
+  type       MessageType
+  content    String?     // used when type = TEXT
+  gameToken  String?     // only used when type = GAME_INVITE
+  
+  sentAt     DateTime    @default(now())
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("NotificationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User     @relation("NotificationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([senderId, receiverId])
 }
