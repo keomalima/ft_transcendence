@@ -173,7 +173,10 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		
 		backHomeBtn?.addEventListener('click', async () => {
 			cleanGameWS();
-			router.navigateTo('/home');
+			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId)
+				router.navigateTo(`/tournament/${currentGame.tournamentId}`)
+			else
+				router.navigateTo('/home');
 		}, { once: true });
 
 	}, { once: true });

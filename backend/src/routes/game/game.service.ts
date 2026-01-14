@@ -358,7 +358,8 @@ async function completeTournament(prisma: PrismaClient, tournamentId: string, ga
 	TournamentWsController.broadcasToRoom(tournamentId, {
 		type: 'tournament_update',
 		gameId: gameId,
-		game: completeGame
+		game: completeGame,
+		nextGame: completeGame
 	});
 }
 
@@ -427,7 +428,8 @@ async function notifyWaitingRoom(prisma: PrismaClient, gameId: string, winnerId:
 	WaintingRoomWsController.broadcasToRoom(gameId, {
 		type: 'room_update',
 		message: `${winnerName} joined the game!`,
-		game: updatedGame
+		game: updatedGame,
+		nextGame: updatedGame
 	});
 }
 

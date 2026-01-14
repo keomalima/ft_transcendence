@@ -32,7 +32,13 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 		const currentTournament = await getCurrentTournament(params['id']);
 		const tournamentGames = await getTournamentGames(params['id']);
 
-		console.log(currentTournament);
+		if (!currentTournament)
+			return;
+
+		const isUserOnTournament = currentTournament.participants!.find((u: any) => u.user.id === currentUser!.id);
+		if (!isUserOnTournament)
+			setTimeout(() => router.navigateTo('/'), 0);
+
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
 		}
