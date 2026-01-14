@@ -12,6 +12,7 @@ import { WaitingRoomConnection } from "../websocket/WaitingRoomConnection.js";
 import { TournamentNextGame } from "../components/TournamentNextGame.js";
 import { TournamentWsConnection } from "../websocket/TournamentConnection.js";
 import { TournamentBracket } from "../components/TournamentBracket.js";
+import { gameService } from "../services/GameService.js";
 
 let wsConnection: WaitingRoomConnection | null = null;
 let tournamentWsConnection: TournamentWsConnection | null = null;
@@ -29,8 +30,9 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament(params['id']);
-		console.log(currentTournament);
 		const tournamentGames = await getTournamentGames(params['id']);
+
+		console.log(currentTournament);
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
 		}
@@ -247,6 +249,7 @@ function setupTournamentEventListeners(ctx: AppContext) {
 		const {tournamentId} = customEvent.detail;
 		try {
 			await tournamentApi.quitActiveTournament(tournamentId);
+			gameService.cleanGame(ctx);
 			router.navigateTo(`/`)
 		} catch (error) {
 			console.log(error);

@@ -108,6 +108,14 @@ async function joinGameHandler (request: FastifyRequest<{ Params: { token: strin
 		const userId = request.user!.id;
 		const joinedUser = request.user!;
 		const token = request.params.token;
+
+		const isGameOn = await gameService.findActiveGameByUserId(request.server.prisma, userId);
+		if (isGameOn) {
+			return reply.code(400).send({
+				message: "User currently has an active game on"
+			});
+		}
+
 		const game = await gameService.findGameByToken(request.server.prisma, token);
 		if (!game) {
 			return reply.code(404).send({

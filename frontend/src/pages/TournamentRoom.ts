@@ -28,6 +28,9 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 		let tournamentData = await getTournamentData(params['id']);
 		if (!tournamentData)
 			return;
+		const isUserOnTournament = tournamentData.participants.find((u: any) => u.user.id === currentUser!.id);
+		if (!isUserOnTournament)
+			setTimeout(() => router.navigateTo('/'), 0);
 		if (tournamentData.status !== 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament/${tournamentData.id}`), 0);
 		}
