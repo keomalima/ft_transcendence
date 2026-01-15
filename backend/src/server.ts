@@ -21,15 +21,7 @@ import { wsPrivateRoutes } from './routes/websockets/ws.routes.js';
 import type { FastifyCookieOptions } from '@fastify/cookie'
 import cookie from '@fastify/cookie'
 import { chatPrivateRoutes } from './routes/chat/chat.route.js';
-import oauth2 from '@fastify/oauth2';
-import { userService } from './routes/user/user.service.js';
-import type { CreateUserData } from './routes/user/user.schema.js';
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    googleOAuth2: import('@fastify/oauth2').OAuth2Namespace;
-  }
-}
+import googleAuthPlugin from './plugins/googleAuth.plugin.js';
 
 const fastify = Fastify({
   logger: true,
@@ -47,28 +39,7 @@ await fastify.register(cors, {
   credentials: true
 });
 
-await fastify.register(oauth2, {
-	name: 'googleOAuth2',
-	scope: ['profile', 'email'],
-	credentials: {
-		client: { id: '98652351612-mmn1ig2j8hqhqpkamcqhctv184e8oc7j.apps.googleusercontent.com', secret: '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' },
-		auth: {
-			authorizeHost: 'https://accounts.google.com',
-			authorizePath: '/o/oauth2/v2/auth',
-			tokenHost: 'https://oauth2.googleapis.com',
-			tokenPath: '/token'
-		}
-	},
-	cookie: {
-    	path: '/',
-    	sameSite: 'lax',
-    	secure: false, 
-		httpOnly: true
-  	},
-	
-	startRedirectPath: '/login/google',
-	callbackUri: 'http://localhost:3000/login/google/callback'
-})
+await fastify.register(googleAuthPlugin);
 
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
@@ -95,47 +66,6 @@ fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSiz
 fastify.register(prismaPlugin);
 
 fastify.register(userPublicRoutes, { prefix: "/api/users" });
-
-fastify.get('/login/google/callback', async (request, reply) => {
-	try {
-		const { token } = await fastify.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
-		
-		const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-			headers: {
-				Authorization: `Bearer ${token.access_token}`
-			}
-		});
-
-		const userData = await userResponse.json();
-
-		let newUser;
-		const user = await userService.findUserByEmail(request.server.prisma, {email: userData.email} );
-		if (!user) {
-			newUser = await userService.createUser(request.server.prisma, {
-				email: userData.email,
-				name: userData.name,
-				password: userData.id,
-				surname: userData.family_name,
-				displayName: userData.given_name,
-				avatarUrl: userData.picture,
-			} as CreateUserData);
-		}
-		
-		const session = await userService.createSession(request.server.prisma, newUser.id);
-		const isProduction = process.env.NODE_ENV === 'production';
-		reply.setCookie('sessionId', session.id, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'none' : 'lax',
-			path: '/',
-			maxAge: 60 * 60 * 24,
-		})
-		return reply.redirect('http://localhost:5173/home');
-	} catch (err) {
-		console.log(err);
-		reply.send(err);
-	}
-});
 
 fastify.register(async (protectedRoutes) => {
 	protectedRoutes.addHook('preHandler', async (request, reply) => await userController.protectedRouteHandler(request, reply));

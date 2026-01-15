@@ -125,7 +125,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 	googleForm?.addEventListener('click', async (e) => {
 		e.preventDefault();
 		try {
-			window.location.href = 'http://localhost:3000/login/google';
+			window.location.href = 'http://localhost:3000/api/users/login/google';
 			console.log('⭐ loginUser success! ✅');
 			router.navigateTo('/home');
 		} catch (error) {

@@ -30,6 +30,15 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 		handler: userController.createUserHandler
 	});
 
+	fastify.get('/login/google/callback', {
+		schema: {
+			tags: ['Authentication'],
+			description: 'Login user with google Auth',
+			summary: 'User google login'
+		},
+		handler: userController.loginGoogleHandler
+	})
+
 	// DELETE AFTER, ONLY FOR DEV
 	fastify.get('/', {
 		schema: { 
