@@ -147,7 +147,7 @@ export class FriendList extends HTMLElement {
 			}
 		}
 
-		image.src = `${this._uploadsUrl}${friend.avatarUrl}`;
+		image.src = `${friend.avatarUrl}`;
 		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
 		avatar.appendChild(image);
 		// ===========================

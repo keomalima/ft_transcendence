@@ -788,113 +788,113 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     
     print(f"\n{GREEN}✓{RESET} Mock scenario created successfully!\n")
     
-    # Create games
-    print(f"{CYAN}Step 3: Creating games...{RESET}")
+    # # Create games
+    # print(f"{CYAN}Step 3: Creating games...{RESET}")
     
-    games_data = []
+    # games_data = []
     
-    # Game 1: Alice creates an ONLINE game, generates token, Bob joins, Alice starts
-    print(f"{DIM}  Creating ONLINE game: Alice vs Bob{RESET}")
-    game1 = alice.create_game("ONLINE", 10)
-    if game1:
-        time.sleep(0.3)
-        token1 = alice.generate_game_token(game1['id'])
-        if token1:
-            time.sleep(0.3)
-            bob.join_game(token1)
-            time.sleep(0.3)
-            alice.start_game(game1['id'])
-            games_data.append({
-                'id': game1['id'],
-                'type': 'ONLINE',
-                'status': 'IN_PROGRESS',
-                'players': ['Alice', 'Bob'],
-                'token': token1
-            })
-            time.sleep(0.3)
+    # # Game 1: Alice creates an ONLINE game, generates token, Bob joins, Alice starts
+    # print(f"{DIM}  Creating ONLINE game: Alice vs Bob{RESET}")
+    # game1 = alice.create_game("ONLINE", 10)
+    # if game1:
+    #     time.sleep(0.3)
+    #     token1 = alice.generate_game_token(game1['id'])
+    #     if token1:
+    #         time.sleep(0.3)
+    #         bob.join_game(token1)
+    #         time.sleep(0.3)
+    #         alice.start_game(game1['id'])
+    #         games_data.append({
+    #             'id': game1['id'],
+    #             'type': 'ONLINE',
+    #             'status': 'IN_PROGRESS',
+    #             'players': ['Alice', 'Bob'],
+    #             'token': token1
+    #         })
+    #         time.sleep(0.3)
     
-    # Game 2: Charlie creates a LOCAL game
-    print(f"{DIM}  Creating LOCAL game: Charlie (practice mode){RESET}")
-    game2 = charlie.create_game("LOCAL", 5)
-    if game2:
-        games_data.append({
-            'id': game2['id'],
-            'type': 'LOCAL',
-            'status': 'PENDING',
-            'players': ['Charlie'],
-            'token': None
-        })
-        time.sleep(0.3)
+    # # Game 2: Charlie creates a LOCAL game
+    # print(f"{DIM}  Creating LOCAL game: Charlie (practice mode){RESET}")
+    # game2 = charlie.create_game("LOCAL", 5)
+    # if game2:
+    #     games_data.append({
+    #         'id': game2['id'],
+    #         'type': 'LOCAL',
+    #         'status': 'PENDING',
+    #         'players': ['Charlie'],
+    #         'token': None
+    #     })
+    #     time.sleep(0.3)
     
-    # Game 3: Diana creates an ONLINE game, generates token, Frank joins, Diana starts
-    print(f"{DIM}  Creating ONLINE game: Diana vs Frank{RESET}")
-    game3 = diana.create_game("ONLINE", 7)
-    if game3:
-        time.sleep(0.3)
-        token3 = diana.generate_game_token(game3['id'])
-        if token3:
-            time.sleep(0.3)
-            frank.join_game(token3)
-            time.sleep(0.3)
-            diana.start_game(game3['id'])
-            games_data.append({
-                'id': game3['id'],
-                'type': 'ONLINE',
-                'status': 'IN_PROGRESS',
-                'players': ['Diana', 'Frank'],
-                'token': token3
-            })
-            time.sleep(0.3)
+    # # Game 3: Diana creates an ONLINE game, generates token, Frank joins, Diana starts
+    # print(f"{DIM}  Creating ONLINE game: Diana vs Frank{RESET}")
+    # game3 = diana.create_game("ONLINE", 7)
+    # if game3:
+    #     time.sleep(0.3)
+    #     token3 = diana.generate_game_token(game3['id'])
+    #     if token3:
+    #         time.sleep(0.3)
+    #         frank.join_game(token3)
+    #         time.sleep(0.3)
+    #         diana.start_game(game3['id'])
+    #         games_data.append({
+    #             'id': game3['id'],
+    #             'type': 'ONLINE',
+    #             'status': 'IN_PROGRESS',
+    #             'players': ['Diana', 'Frank'],
+    #             'token': token3
+    #         })
+    #         time.sleep(0.3)
     
-    # Game 4: Eve creates a TOURNAMENT game (pending)
-    print(f"{DIM}  Creating TOURNAMENT game: Eve (waiting for players){RESET}")
-    game4 = eve.create_game("TOURNAMENT", 10)
-    if game4:
-        time.sleep(0.3)
-        token4 = eve.generate_game_token(game4['id'])
-        games_data.append({
-            'id': game4['id'],
-            'type': 'TOURNAMENT',
-            'status': 'PENDING',
-            'players': ['Eve'],
-            'token': token4
-        })
-        time.sleep(0.3)
+    # # Game 4: Eve creates a TOURNAMENT game (pending)
+    # print(f"{DIM}  Creating TOURNAMENT game: Eve (waiting for players){RESET}")
+    # game4 = eve.create_game("TOURNAMENT", 10)
+    # if game4:
+    #     time.sleep(0.3)
+    #     token4 = eve.generate_game_token(game4['id'])
+    #     games_data.append({
+    #         'id': game4['id'],
+    #         'type': 'TOURNAMENT',
+    #         'status': 'PENDING',
+    #         'players': ['Eve'],
+    #         'token': token4
+    #     })
+    #     time.sleep(0.3)
     
-    # Game 5: Grace creates an ONLINE game and generates token (waiting for opponent)
-    print(f"{DIM}  Creating ONLINE game: Grace (waiting for opponent){RESET}")
-    game5 = grace.create_game("ONLINE", 10)
-    if game5:
-        time.sleep(0.3)
-        token5 = grace.generate_game_token(game5['id'])
-        games_data.append({
-            'id': game5['id'],
-            'type': 'ONLINE',
-            'status': 'PENDING',
-            'players': ['Grace'],
-            'token': token5
-        })
-        time.sleep(0.3)
+    # # Game 5: Grace creates an ONLINE game and generates token (waiting for opponent)
+    # print(f"{DIM}  Creating ONLINE game: Grace (waiting for opponent){RESET}")
+    # game5 = grace.create_game("ONLINE", 10)
+    # if game5:
+    #     time.sleep(0.3)
+    #     token5 = grace.generate_game_token(game5['id'])
+    #     games_data.append({
+    #         'id': game5['id'],
+    #         'type': 'ONLINE',
+    #         'status': 'PENDING',
+    #         'players': ['Grace'],
+    #         'token': token5
+    #     })
+    #     time.sleep(0.3)
     
-    # Game 6: Henry creates an ONLINE game, Iris joins (ready to start)
-    print(f"{DIM}  Creating ONLINE game: Henry vs Iris (ready to start){RESET}")
-    game6 = henry.create_game("ONLINE", 9)
-    if game6:
-        time.sleep(0.3)
-        token6 = henry.generate_game_token(game6['id'])
-        if token6:
-            time.sleep(0.3)
-            iris.join_game(token6)
-            games_data.append({
-                'id': game6['id'],
-                'type': 'ONLINE',
-                'status': 'PENDING',
-                'players': ['Henry', 'Iris'],
-                'token': token6
-            })
-            time.sleep(0.3)
+    # # Game 6: Henry creates an ONLINE game, Iris joins (ready to start)
+    # print(f"{DIM}  Creating ONLINE game: Henry vs Iris (ready to start){RESET}")
+    # game6 = henry.create_game("ONLINE", 9)
+    # if game6:
+    #     time.sleep(0.3)
+    #     token6 = henry.generate_game_token(game6['id'])
+    #     if token6:
+    #         time.sleep(0.3)
+    #         iris.join_game(token6)
+    #         games_data.append({
+    #             'id': game6['id'],
+    #             'type': 'ONLINE',
+    #             'status': 'PENDING',
+    #             'players': ['Henry', 'Iris'],
+    #             'token': token6
+    #         })
+    #         time.sleep(0.3)
     
-    print(f"\n{GREEN}✓{RESET} Games created successfully!\n")
+    # print(f"\n{GREEN}✓{RESET} Games created successfully!\n")
     
     # Create tournaments
     print(f"{CYAN}Step 4: Creating tournaments...{RESET}")

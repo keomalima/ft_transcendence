@@ -41,13 +41,11 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
     const avatarRaw = currentUser.avatarUrl || '/uploads/avatars/default.jpg';
     const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : (avatarRaw.startsWith('/') ? avatarRaw : `/${avatarRaw}`);
 
-	console.log('Avatar URL ', avatarSrc);
-
 	let link: string | null  = null;
-	if (currentGame) {
-		if (tournamentId)
-			link = `/tournament/${tournamentId}`
-		else if (currentGame.type === 'LOCAL')
+	if (tournamentId)
+		link = `/tournament/${tournamentId}`
+	else if (currentGame) {
+		if (currentGame.type === 'LOCAL')
 			link = `/local-game/${currentGame.gameId}`;
 		else if (currentGame.status === 'PENDING')
 			link = `/game-room/${currentGame.gameId}`;

@@ -15,6 +15,13 @@ async function createTournamentHandler (request: FastifyRequest<{ Body: CreateTo
 		const body = request.body;
 		const userId = request.user!.id;
 
+		const isGameOn = await gameService.findActiveGameByUserId(request.server.prisma, request.user!.id);
+		if (isGameOn) {
+			return reply.code(400).send({
+				message: "User currently has an active game on"
+			});
+		}
+		
 		if (body.numberPlayers < 2 || body.numberPlayers % 2 !== 0) {
 			return reply.code(400).send({
 				message: "Invalid number of players"
@@ -105,6 +112,14 @@ async function joinTournamentHandler (request: FastifyRequest<{ Params: { token:
 		const userId = request.user!.id;
 		const joinedUser = request.user!;
 		const token = request.params.token;
+
+		const isGameOn = await gameService.findActiveGameByUserId(request.server.prisma, request.user!.id);
+		if (isGameOn) {
+			return reply.code(400).send({
+				message: "Can not join, user currently has an active game on"
+			});
+		}
+
 		const tournament = await tournamentService.findTournamentByToken(request.server.prisma, token);
 		if (!tournament) {
 			return reply.code(404).send({

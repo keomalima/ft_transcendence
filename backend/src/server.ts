@@ -21,15 +21,16 @@ import { wsPrivateRoutes } from './routes/websockets/ws.routes.js';
 import type { FastifyCookieOptions } from '@fastify/cookie'
 import cookie from '@fastify/cookie'
 import { chatPrivateRoutes } from './routes/chat/chat.route.js';
-
+import googleAuthPlugin from './plugins/googleAuth.plugin.js';
 
 const fastify = Fastify({
   logger: true,
   trustProxy: true
 }).withTypeProvider<ZodTypeProvider>();
 
-fastify.setValidatorCompiler(validatorCompiler);
-fastify.setSerializerCompiler(serializerCompiler);
+await fastify.register(cookie, {
+	secret: "my-secret",
+} as FastifyCookieOptions)
 
 await fastify.register(cors, {
   origin: true,
@@ -38,14 +39,15 @@ await fastify.register(cors, {
   credentials: true
 });
 
+await fastify.register(googleAuthPlugin);
+
+fastify.setValidatorCompiler(validatorCompiler);
+fastify.setSerializerCompiler(serializerCompiler);
+
 await registerSwagger(fastify);
 await registerSwaggerUi(fastify);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-fastify.register(cookie, {
-	secret: "my-secret",
-} as FastifyCookieOptions)
 
 fastify.register(fastifyStatic, {
 	root: path.join(__dirname, '../uploads'),
@@ -78,7 +80,6 @@ fastify.register(async (protectedRoutes) => {
 	//WebSocket routes
 	fastify.register(wsPrivateRoutes, { prefix: "/ws"})
 });
-
 
 try {
   await fastify.listen({ port: 3000, host: '0.0.0.0' })

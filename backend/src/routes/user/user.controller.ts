@@ -18,6 +18,12 @@ declare module 'fastify' {
   }
 }
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    googleOAuth2: import('@fastify/oauth2').OAuth2Namespace;
+  }
+}
+
 // =====================
 // Authentication Handlers
 // =====================
@@ -86,6 +92,49 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 		return safeUser;	
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to login user"});
+	}
+}
+
+async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const { token } = await request.server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+		
+		const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+			headers: {
+				Authorization: `Bearer ${token.access_token}`
+			}
+		});
+
+		const userData = await userResponse.json();
+
+		let newUser;
+		const user = await userService.findUserByEmail(request.server.prisma, {email: userData.email} );
+		if (!user) {
+			newUser = await userService.createUser(request.server.prisma, {
+				email: userData.email,
+				name: userData.name,
+				password: userData.id,
+				surname: userData.family_name,
+				displayName: userData.given_name,
+				avatarUrl: userData.picture,
+			} as CreateUserData);
+		} else {
+			newUser = user;
+		}
+		
+		const session = await userService.createSession(request.server.prisma, newUser.id);
+		const isProduction = process.env.NODE_ENV === 'production';
+		reply.setCookie('sessionId', session.id, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: isProduction ? 'none' : 'lax',
+			path: '/',
+			maxAge: 60 * 60 * 24,
+		})
+		return reply.redirect('http://localhost:5173/home');
+	} catch (err) {
+		console.log(err);
+		reply.code(500).send({ message: "Failed to login user with google"});
 	}
 }
 
@@ -291,6 +340,7 @@ export const userController = {
 	protectedRouteHandler,
 	getUserHandlerDev,
 	updateLastSeen,
+	loginGoogleHandler,
 	
 	// User CRUD
 	createUserHandler,

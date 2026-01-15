@@ -4,6 +4,7 @@ import { userService } from "../services/UserService.js";
 import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES } from "../styles/tailwindStyles.js";
 import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
+import httpCall from "../api/httpClient.js";
 
 // Track the last attached "Get started" button element so we can reattach
 // listeners when the SPA recreates the DOM node during navigation.
@@ -39,9 +40,11 @@ export function Home(ctx: AppContext): string {
 					<div class="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
 						<p class="text-lg text-pretty sm:text-xl/8">Welcome to our transcendance project</p>
 						<div class="mt-10 flex items-center gap-x-6">
-							<button id='get-started-btn' class='${LINK_STYLED_CLASSES} disba'>Get started</button>
+							<button id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</button>
+							<button id='google-login-btn' class='${LINK_STYLED_CLASSES}'>Login Google</button>
 							<a data-link href="/LearnMore" id="learn-more-btn" class='${LINK_STYLED_CLASSES}'>Learn more →</a>
 						</div>
+						
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">
 							<form class="space-y-6" id="signin-form" >
 								<div>
@@ -69,6 +72,7 @@ export function Home(ctx: AppContext): string {
 								Not a member?
 								<a class="underline" onclick="document.getElementById('register-dialog').showModal()">Create a new account</a>
 							</p>
+							
 						</div>
 					</div>
 					<img src="/src/images/pong.png" alt="Pong game" class="mt-10 aspect-5/5 w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36" />
@@ -120,6 +124,20 @@ function setupHomeEventListeners(ctx: AppContext) {
 			learnBtn.style.display = 'none';
 	});
 
+	// **** GOOGLE LOGIN ****
+	const googleForm = document.getElementById('google-login-btn') as HTMLFormElement;
+	googleForm?.addEventListener('click', async (e) => {
+		e.preventDefault();
+		try {
+			window.location.href = 'http://localhost:3000/api/users/login/google';
+			console.log('⭐ loginUser success! ✅');
+			router.navigateTo('/home');
+		} catch (error) {
+			console.log(error);
+			const popUpLogin = document.getElementById('login-error');
+			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
+		}
+	});
 
 	// **** SIGN IN ****
 	const form = document.getElementById('signin-form') as HTMLFormElement;
