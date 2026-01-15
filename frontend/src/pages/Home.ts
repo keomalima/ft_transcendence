@@ -16,7 +16,10 @@ export function Home(ctx: AppContext): string {
 		const startedBtnEl = document.getElementById('get-started-btn') as HTMLButtonElement | null;
 		const learnBtnEl = document.getElementById('learn-more-btn') as HTMLElement | null;
 		const hiddenFormEl = document.getElementById('hidden-form') as HTMLElement | null;
-		if (startedBtnEl) startedBtnEl.disabled = false;
+		if (startedBtnEl) {
+			startedBtnEl.disabled = false;
+			if (startedBtnEl.classList.contains('hidden')) startedBtnEl.classList.remove('hidden');
+		}
 		if (learnBtnEl) learnBtnEl.style.display = '';
 		if (hiddenFormEl) hiddenFormEl.style.display = 'none';
 
@@ -112,9 +115,10 @@ function setupHomeEventListeners(ctx: AppContext) {
 	startedBtn?.addEventListener('click', (e) => {
 		console.log('started triggered')
 		e.preventDefault();
+		startedBtn.disabled = true;
+		startedBtn.classList.add('hidden');
 		if (hidenForm) {
 			hidenForm.style.display = 'block';
-			startedBtn.disabled = true;
 		}
 		if (learnBtn)
 			learnBtn.style.display = 'none';
