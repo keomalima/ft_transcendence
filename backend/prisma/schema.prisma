@@ -128,6 +128,8 @@ model Game {
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 	gameUsers GamePlayer[]
+	messages Message[] @relation("GameMessages")
+
 }
 
 model GamePlayer {
@@ -183,9 +185,11 @@ model Message {
   receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id])
   
   type       MessageType
-  content    String?     // used when type = TEXT
-  gameToken  String?     // only used when type = GAME_INVITE
-  
+  content    String?
+
+  gameId     String?     // used when type = GAME_INVITE
+  game       Game?       @relation("GameMessages", fields: [gameId], references: [id])
+
   sentAt     DateTime    @default(now())
 }
 

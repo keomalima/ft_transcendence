@@ -6,6 +6,7 @@ import type { SendMessageInput } from './chat.schema.js';
 import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
+import { gameController } from '../game/game.controller.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -47,13 +48,18 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 		}
 
 		const messages = await chatService.getChatHistory(request.server.prisma, userId, friendId, limit, beforeId);
-		return reply.code(200).send(messages.map(m => ({
-			id: m.id,
-			senderId: m.senderId,
-			receiverId: m.receiverId,
-			content: m.content,
-			sentAt: m.sentAt.toISOString(),
-		})));
+		return reply.code(200).send(
+			messages.map(m => ({
+				id: m.id,
+				senderId: m.senderId,
+				receiverId: m.receiverId,
+				content: m.content,
+				sentAt: m.sentAt.toISOString(),
+				messageType: m.type,
+				gameId: m.gameId ?? undefined, 
+			}))
+		);
+
 
 	} catch (error: any) {
 		return reply.code(500).send({ message: "Failed to get chat history" });
@@ -140,10 +146,33 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 					code: "IN_GAME"
 				});
 			}
-			// ✅ Both users are available — proceed to generate gameToken and invite
-			const gameToken = generateGameToken(); // future logic
+			// Both users are available — proceed to generate gameToken and invite
+			const game = await gameService.createGame(request.server.prisma, {type: 'ONLINE' , scoreToWin: 5}, fromUserId);
+			if (!game)
+			{
+				console.log("Fail to create game");
+				return reply.status(400).send({
+					status: "error",
+					reason: "Fail to create game",
+					code: "UNKNOWN",
+				});
+			}
+	
+			// let attempts = 0;
+    		// const maxAttempts = 10;
+			// let token;
+			// while (attempts < maxAttempts) {
+			// 	token = gameController.generateGameToken();
+			// 	const existingGame = await gameService.findGameByToken(request.server.prisma, token);
+			// 	if (!existingGame){
+			// 		await gameService.generateToken(request.server.prisma, game.id, token);
+			// 		break;
+			// 	}
+			// 	attempts++;
+			// }
+
 			// Save message to database
-			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "GAME_INVITE", gameToken);
+			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "GAME_INVITE", game.id);
 
 			await sendMessageToUser(request.server.prisma, toUserId, {
 				type: "chat-message",
@@ -151,9 +180,9 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 				content,
 				sentAt: message.sentAt.toISOString(),
 				messageType: "GAME_INVITE",
-				gameToken,
+				gameId: game.id,
 			});
-			return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(), gameToken,});
+			return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(), gameId: game.id});
 		}		
 	} catch (error: any) {
 		console.error("Error sending message:", error);

@@ -12,7 +12,7 @@ export type ChatWsMessage =
 		content: string;
 		sentAt: string;
 		messageType: "GAME_INVITE";
-		gameToken: string;
+		gameId: string;
 	}
 	| {
 		type: "connected";

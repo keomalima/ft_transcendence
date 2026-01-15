@@ -48,14 +48,14 @@ async function isBlockedBy(prisma: PrismaClient, senderId: string, receiverId: s
 	});
 }
 
-async function saveMessage(prisma: PrismaClient, fromUserId: string, toUserId: string, content: string, type: "TEXT" | "GAME_INVITE", gameToken?: string) {
+async function saveMessage(prisma: PrismaClient, fromUserId: string, toUserId: string, content: string, type: "TEXT" | "GAME_INVITE", gameId?: string) {
 	return prisma.message.create({
 		data: {
 			senderId: fromUserId,
 			receiverId: toUserId,
 			content,
 			type,
-			gameToken: gameToken ?? null, 
+			gameId: gameId ?? null, 
 		}
 	});
 

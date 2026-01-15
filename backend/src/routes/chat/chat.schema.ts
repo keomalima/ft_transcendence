@@ -18,7 +18,7 @@ const sendMessageSuccessResponseSchema = z.object({
 	status: z.literal("ok"),
 	messageId: z.string(),
 	sentAt: z.string(),
-	gameToken: z.string().optional(),
+	gameId: z.string().optional(),
 });
 
 const sendMessageErrorResponseSchema = z.object({
@@ -33,13 +33,26 @@ const sendMessageResponseSchema = z.union([
 	sendMessageErrorResponseSchema,
 ]);
 
-const chatMessageSchema = z.object({
+const chatMessageTextSchema = z.object({
 	id: z.string(),
 	senderId: z.string(),
 	receiverId: z.string(),
-	content: z.string(),
+	content: z.string().nullable(),
 	sentAt: z.string(),
+	messageType: z.literal("TEXT"),
 });
+
+const chatMessageInviteSchema = z.object({
+	id: z.string(),
+	senderId: z.string(),
+	receiverId: z.string(),
+	content: z.string().nullable(),
+	sentAt: z.string(),
+	messageType: z.literal("GAME_INVITE"),
+	gameId: z.string(),
+});
+
+const chatMessageSchema = z.union([chatMessageTextSchema, chatMessageInviteSchema]);
 
 const getChatHistoryResponseSchema = z.array(chatMessageSchema);
 
