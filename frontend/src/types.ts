@@ -208,19 +208,39 @@ export interface TournamentData {
     games: GameData[];
 }
 
-export interface ChatMessage {
+export type ChatMessage = {
 	id: string;
 	senderId: string;
 	receiverId: string;
-	content: string;
+	content: string | null;
 	sentAt: string;
-}
+	messageType: "TEXT";
+} | {
+	id: string;
+	senderId: string;
+	receiverId: string;
+	content: string | null;
+	sentAt: string;
+	messageType: "GAME_INVITE";
+	gameId: string;
+};
 
-export interface ChatMessagePayload {
+
+export interface ChatTextMessagePayload {
 	type: "chat-message";
 	fromUserId: string;
 	content: string;
 	sentAt: string;
+	messageType: "TEXT";
+}
+
+export interface ChatInviteMessagePayload {
+	type: "chat-message";
+	fromUserId: string;
+	content: string;
+	sentAt: string;
+	messageType: "GAME_INVITE";
+	gameId: string;
 }
 
 export interface ConnectedPayload {
@@ -229,15 +249,17 @@ export interface ConnectedPayload {
 }
 
 export type ChatWsMessage =
-	| ChatMessagePayload
+	| ChatTextMessagePayload
+	| ChatInviteMessagePayload
 	| ConnectedPayload;
 
-export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "UNKNOWN";
+export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "IN_GAME" | "UNKNOWN";
 
 export interface SendMessageSuccess {
 	status: "ok";
 	messageId: string;
 	sentAt: string;
+	gameId?: string;
 }
 
 export interface SendMessageError {

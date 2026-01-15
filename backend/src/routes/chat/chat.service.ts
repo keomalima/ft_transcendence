@@ -48,36 +48,88 @@ async function isBlockedBy(prisma: PrismaClient, senderId: string, receiverId: s
 	});
 }
 
-async function saveMessage(prisma: PrismaClient, fromUserId: string, toUserId: string, content: string) {
+async function saveMessage(prisma: PrismaClient, fromUserId: string, toUserId: string, content: string, type: "TEXT" | "GAME_INVITE", gameId?: string) {
 	return prisma.message.create({
 		data: {
 			senderId: fromUserId,
 			receiverId: toUserId,
 			content,
+			type,
+			gameId: gameId ?? null, 
 		}
 	});
 
 }
 
 async function getFriendsWithNewMessages(prisma: PrismaClient, userId: string): Promise<string[]> {
+	// Step 1: Get user's last time online in live chat
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		select: { lastLiveChatOnlineAt: true },
 	});
 
-	const whereCondition = user?.lastLiveChatOnlineAt
-		? { receiverId: userId, sentAt: { gt: user.lastLiveChatOnlineAt } }
-		: { receiverId: userId };
+	if (!user) return [];
 
-	const messages: { senderId: string }[]  = await prisma.message.findMany({
-		where: whereCondition,
+	// Step 2: Find all recent messages sent to this user
+	const recentMessages = await prisma.message.findMany({
+		where: {
+			receiverId: userId,
+			sentAt: user.lastLiveChatOnlineAt
+				? { gt: user.lastLiveChatOnlineAt }
+				: undefined,
+		},
 		select: { senderId: true },
 		distinct: ['senderId'],
 	});
 
-	return messages.map(msg => msg.senderId);
+	// Step 3: Try to insert each sender into Notification table
+	for (const msg of recentMessages) {
+		const existing = await prisma.notification.findFirst({
+			where: {
+				senderId: msg.senderId,
+				receiverId: userId,
+			},
+		});
+
+		if (!existing) {
+			await prisma.notification.create({
+				data: {
+					senderId: msg.senderId,
+					receiverId: userId,
+				},
+			});
+		}
+	}
+
+	// Step 4: Return all senderIds in notification table for this user
+	const notifications: { senderId: string }[] = await prisma.notification.findMany({
+		where: { receiverId: userId },
+		select: { senderId: true },
+	});
+
+	return notifications.map(n => n.senderId);
 }
 
+async function createNotificationIfMissing(prisma: PrismaClient, senderId: string, receiverId: string): Promise<void> {
+	const existing = await prisma.notification.findFirst({
+		where: { senderId, receiverId }
+	});
+
+	if (!existing) {
+		await prisma.notification.create({
+			data: { senderId, receiverId }
+		});
+	}
+}
+
+async function deleteNotification(prisma: PrismaClient, senderId: string, receiverId: string): Promise<void> {
+	await prisma.notification.deleteMany({
+		where: {
+			senderId,
+			receiverId,
+		},
+	});
+}
 
 
 // =====================
@@ -90,4 +142,6 @@ export const chatService = {
 	isBlockedBy,
 	saveMessage,
 	getFriendsWithNewMessages,
+	createNotificationIfMissing,
+	deleteNotification,
 };

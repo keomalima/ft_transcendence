@@ -8,13 +8,14 @@ import "../components/FriendProfilePopUp.js";
 import { friendshipApi } from "../api/friendshipApi.js";
 import { ChatConnection } from "../websocket/ChatConnection.js";
 import { chatApi } from "../api/chatApi.js";
+import { gameService } from "../services/GameService.js";
+import { tournamentApi } from "../api/tournamentApi.js";
 
 let chatConnection: ChatConnection | null = null;
 let _selectedFriend: any = null;
 let paginationMap: FriendPaginationMap = {};
 let wsListenerAttached = false;
-
-
+export const unreadNotificationSet = new Set<string>();
 
 
 export function LiveChat(ctx: AppContext): string {
@@ -29,10 +30,11 @@ export function LiveChat(ctx: AppContext): string {
 
 	// 2. Setup logic after render
 	setTimeout(async () => {
+		await getCurrentGame(ctx);
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
-		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
+		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
 	}, 0);
 
@@ -66,7 +68,7 @@ function renderLiveChatContent(ctx: AppContext) {
 			<!-- Right: Empty state (shown when no friend selected / no friends) -->
 			<div id="chat-empty"
 				class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex items-center justify-center h-[50vh] min-h-[300px] lg:h-auto">
-				<p class="text-gray-500">Loading friend list ......</p>
+				<p class="text-gray-900 text-xl font-semibold italic text-center block">👈 Select a friend to start chatting!</p>
 			</div>
 
 			<!-- Dialog for friend profile -->
@@ -170,18 +172,15 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const clickedFriend = customEvent.detail;
 
-		// STEP 1: Remove from localStorage unread set
-		const currentUserId = ctx.userStore.get()?.id;
-		const key = `chat_unread_${currentUserId}`;
-		try {
-			const raw = localStorage.getItem(key);
-			if (raw) {
-				const unreadSet = new Set<string>(JSON.parse(raw));
-				unreadSet.delete(clickedFriend.id);
-				localStorage.setItem(key, JSON.stringify([...unreadSet]));
+		// // STEP 1: Remove from localStorage unread set
+		if (unreadNotificationSet.has(clickedFriend.id)) {
+			unreadNotificationSet.delete(clickedFriend.id);
+
+			try {
+				await chatApi.deleteNotification(clickedFriend.id); // Call backend to remove
+			} catch (err) {
+				console.error("❌ Failed to delete notification from backend:", err);
 			}
-		} catch (err) {
-			console.error("❌ Failed to update unread set after friend click:", err);
 		}
 
 		// STEP 2: Reload friend list (to refresh red ! badges)
@@ -233,19 +232,23 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				return;
 			}
 
-			// CASE 2: Otherwise, save in unread set and refresh FriendList
-			const key = `chat_unread_${currentUserId}`;
-			let unreadSet = new Set<string>();
-			const raw = localStorage.getItem(key);
-			if (raw) unreadSet = new Set(JSON.parse(raw));
+			// CASE 2: Chat box not open — check if sender is already marked as unread
+			if (!unreadNotificationSet.has(fromUserId)) {
+				unreadNotificationSet.add(fromUserId);
 
-			unreadSet.add(fromUserId);
-			localStorage.setItem(key, JSON.stringify([...unreadSet]));
+				// Optional: call backend to insert notification
+				try {
+					await chatApi.createNotification(fromUserId);  // you'll implement this soon
+				} catch (err) {
+					console.error("❌ Failed to create notification in backend:", err);
+				}
 
-			const friendList = document.getElementById("friend-list-component") as any;
-			if (friendList?.loadAndRender) {
-				friendList.skipAutoSelect = true;
-				await friendList.loadAndRender();
+				// Then update UI
+				const friendList = document.getElementById("friend-list-component") as any;
+				if (friendList?.loadAndRender) {
+					friendList.skipAutoSelect = true;
+					await friendList.loadAndRender();
+				}
 			}
 		});
 
@@ -288,7 +291,14 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			hasMoreMessages: false,
 		};
 	}
+	
+	const game = ctx.gameStore.get();
 
+	const currentTournament = await getCurrentTournament();
+	
+	let inGameOrTournament = false;
+	if (game?.id || currentTournament?.tournamentId)
+		inGameOrTournament = true;
 
 	chatRight.innerHTML = `
 		<!-- Header -->
@@ -297,32 +307,48 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				<p class="font-bold text-lg">${friend.displayName}</p>
 				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
 			</div>
+
 			<div class="flex gap-2 items-center">
+				<!-- See Profile -->
 				<button
 					id="see-profile-btn"
 					class="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-shadow shadow-sm hover:shadow-md"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.57 0 4.947.723 6.879 1.96M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M5.121 17.804A13.937 13.937 0 0112 15c2.57 0 4.947.723 6.879 1.96M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
 					</svg>
 					<span>See Profile</span>
 				</button>
-				<button id="block-toggle-btn"
+
+				<!-- Invite Game -->
+				<button
+					id="invite-game-btn"
+					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md
+						${inGameOrTournament || friend.isBlockedBy
+							? 'bg-red-500 text-white cursor-not-allowed'
+							: 'bg-green-600 text-white hover:bg-green-700'}"
+					${inGameOrTournament || friend.isBlockedBy ? 'disabled' : ''}
+				>
+					🎮 Invite Game
+				</button>
+
+				<!-- Block / Unblock -->
+				<button
+					id="block-toggle-btn"
 					class="
-					rounded-full px-4 py-1.5
-					text-sm font-medium
-					transition-shadow shadow-sm hover:shadow-md
-					${friend.isBlocked 
-						? 'bg-green-600 text-white hover:bg-green-700' 
-						: 'bg-red-600 text-white hover:bg-red-700'}
-				"
+						rounded-full px-4 py-1.5
+						text-sm font-medium
+						transition-shadow shadow-sm hover:shadow-md
+						${friend.isBlocked
+							? 'bg-green-600 text-white hover:bg-green-700'
+							: 'bg-red-600 text-white hover:bg-red-700'}
+					"
 				>
 					${friend.isBlocked ? 'Unblock your friend' : 'Block your friend'}
 				</button>
-
 			</div>
 		</div>
-
 
 		<!-- Messages -->
 		<div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
@@ -335,20 +361,26 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 		<!-- Input -->
 		${friend.isBlockedBy ? `
 			<div class="p-4 border-t text-center text-red-500 font-semibold">
-				${friend.displayName} has blocked you. You cannot send messages.
+				${friend.displayName} has blocked you. You cannot send messages or invite to games.
 			</div>
 		` : `
-			<form id="chat-form" class="flex items-center p-4 border-t gap-2">
-				<input
-					type="text"
-					id="chat-input"
-					placeholder="Type your message here"
-					class="flex-grow border rounded px-3 py-2"
-				/>
-				<button type="submit" class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">⬆️</button>
-			</form>
+			<div class="p-4 border-t">
+				<form id="chat-form" class="flex items-center gap-2">
+					<input
+						type="text"
+						id="chat-input"
+						placeholder="Type your message here"
+						class="flex-grow border rounded px-3 py-2"
+					/>
+					<button type="submit"
+						class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">
+						⬆️
+					</button>
+				</form>
+			</div>
 		`}
 	`;
+
 
 	// Auto scroll to bottom after inserting messages
 	const chatBox = document.getElementById("chat-messages");
@@ -441,6 +473,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			const res = await chatApi.sendMessage({
 				toUserId: _selectedFriend.id,
 				content,
+				type: "TEXT"
 			});
 
 			if (res.status === "ok") {
@@ -536,16 +569,16 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 	if (!currentUserId) return;
 
 	try {
+		// Step 1: Call backend to get unread senderIds
 		const senderIds: string[] = await chatApi.getFriendsWithNewMessages();
 		if (!senderIds || senderIds.length === 0) return;
 
-		const key = `chat_unread_${currentUserId}`;
-		const raw = localStorage.getItem(key);
-		const unreadSet = new Set<string>(raw ? JSON.parse(raw) : []);
-		senderIds.forEach((id) => unreadSet.add(id));
-		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+		// Step 2: Store them in frontend Set (in-memory)
+		for (const senderId of senderIds) {
+			unreadNotificationSet.add(senderId);
+		}
 
-		// Re-render FriendList to show updated blue dots
+		// Step 3: Re-render FriendList to show blue dots
 		const friendList = document.getElementById("friend-list-component") as any;
 		if (friendList?.loadAndRender) {
 			friendList.skipAutoSelect = true;
@@ -556,6 +589,27 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 	}
 }
 
+// ======== GET CURRENT GAME ============
+async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
+	try {
+		const currentGame = await gameService.getCurrentGame(ctx);
+		return currentGame;
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
+}
+
+// ======== GET CURRENT TOURNAMENT ============
+async function getCurrentTournament(): Promise<{userId: string, tournamentId: string, type: string, token: string | null} | null> {
+	try {
+		const currentTournament = await tournamentApi.getCurrentTournament();
+		return currentTournament;
+	} catch(error) {
+		console.log(error);
+		return null;
+	}
+}
 
 // ======== CLEANUP HOOKS ==========
 // when close the tab/page, close the ws

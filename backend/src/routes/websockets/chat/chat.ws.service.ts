@@ -19,13 +19,40 @@ export async function removeChatConnectionAndUpdateTime(userId: string, prisma: 
 	}	
 }
 
-export function sendMessageToUser(userId: string, payload: ChatWsMessage): void {
-	const connection = chatConnections.get(userId);
-	if (!connection) return;
+export async function sendMessageToUser(prisma: PrismaClient, receiverId: string, payload: ChatWsMessage): Promise<void> {
+	const connection = chatConnections.get(receiverId);
+
+	if (!connection) {
+		if (payload.type === "chat-message") {
+			const senderId = payload.fromUserId;
+
+			try {
+				const existing = await prisma.notification.findFirst({
+					where: {
+						senderId,
+						receiverId,
+					},
+				});
+
+				if (!existing) {
+					await prisma.notification.create({
+						data: {
+							senderId,
+							receiverId,
+						},
+					});
+				}
+			} catch (err) {
+				console.error(`❌ Failed to create notification for ${receiverId}:`, err);
+			}
+		}
+
+		return;
+	}
 
 	try {
 		connection.send(JSON.stringify(payload));
 	} catch (err) {
-		console.error(`❌ Failed to send message to user ${userId}:`, err);
+		console.error(`❌ Failed to send message to user ${receiverId}:`, err);
 	}
 }

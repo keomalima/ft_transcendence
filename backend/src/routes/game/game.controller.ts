@@ -360,6 +360,7 @@ function generateGameToken() {
 	return token.slice(0, 8);
 }
 
+
 // =====================
 // Export Controller Object
 // =====================
@@ -376,5 +377,6 @@ export const gameController = {
 	getCurrentGameHandler,
 	removePlayerHandler,
 	deletePendingGameHandler,
-	finishGameHandler
+	finishGameHandler,
+	generateGameToken
 };
