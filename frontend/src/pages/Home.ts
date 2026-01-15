@@ -42,7 +42,6 @@ export function Home(ctx: AppContext): string {
 						<div class="mt-10 flex items-center gap-x-6">
 							<button id='get-started-btn' class='${LINK_STYLED_CLASSES}'>Get started</button>
 							<button id='google-login-btn' class='${LINK_STYLED_CLASSES}'>Login Google</button>
-							<a data-link href="/LearnMore" id="learn-more-btn" class='${LINK_STYLED_CLASSES}'>Learn more →</a>
 						</div>
 						
 						<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm" id="hidden-form" style="display: none;">

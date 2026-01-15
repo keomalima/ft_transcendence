@@ -903,7 +903,7 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     
     # Tournament 1: Alice creates an 8-player tournament, all players join, ready to start
     print(f"{DIM}  Creating 8-player tournament: Alice (fully filled, ready to start){RESET}")
-    tournament1 = alice.create_tournament(8, 2)
+    tournament1 = alice.create_tournament(4, 2)
     if tournament1:
         time.sleep(0.3)
         token_t1 = alice.generate_tournament_token(tournament1['id'])
@@ -914,19 +914,11 @@ def create_mock_scenario(users: List[User]) -> List[User]:
             charlie.join_tournament(token_t1)
             time.sleep(0.3)
             diana.join_tournament(token_t1)
-            time.sleep(0.3)
-            eve.join_tournament(token_t1)
-            time.sleep(0.3)
-            frank.join_tournament(token_t1)
-            time.sleep(0.3)
-            grace.join_tournament(token_t1)
-            time.sleep(0.3)
-            henry.join_tournament(token_t1)
             tournaments_data.append({
                 'id': tournament1['id'],
                 'status': 'PENDING',
-                'players': 8,
-                'joined': ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'],
+                'players': 4,
+                'joined': ['Alice', 'Bob', 'Charlie', 'Diana'],
                 'token': token_t1,
                 'scoreToWin': 10
             })
