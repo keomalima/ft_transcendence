@@ -107,7 +107,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 		if (type === "TEXT") {
 			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "TEXT");
 
-			await sendMessageToUser(toUserId, {
+			await sendMessageToUser(request.server.prisma, toUserId, {
 				type: "chat-message",
 				fromUserId,
 				content,
@@ -145,7 +145,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 			// Save message to database
 			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "GAME_INVITE", gameToken);
 
-			await sendMessageToUser(toUserId, {
+			await sendMessageToUser(request.server.prisma, toUserId, {
 				type: "chat-message",
 				fromUserId,
 				content,
