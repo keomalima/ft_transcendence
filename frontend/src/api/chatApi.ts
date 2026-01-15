@@ -24,14 +24,16 @@ export const chatApi = {
 	},
 
 
-	// getFriendsWithNewMessages: async (): Promise<string[]> => {
-	// 	try {
-	// 		const response = await httpCall.get(`${BASE_URL}/unread`);
-	// 		return response.data as string[];
-	// 	} catch (error: unknown) {
-	// 		throw buildApiError('get unread message friends', error);
-	// 	}
-	// },
+	getFriendsWithNewMessages: async (): Promise<string[]> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/unread`);
+			console.log("🔔 getFriendsWithNewMessages success ✅", response.data);
+			return response.data as string[];
+		} catch (error: unknown) {
+			throw buildApiError('get unread message friends', error);
+		}
+	},
+
 
 	sendMessage: async (data: { toUserId: string; content: string; type?: "TEXT" | "GAME_INVITE";}): Promise<SendMessageResponse> => {
 		try {
@@ -48,5 +50,22 @@ export const chatApi = {
 				code: "UNKNOWN"
 			};
 		}
-	}
+	},
+
+	createNotification: async (senderId: string): Promise<void> => {
+		try {
+			await httpCall.post(`${BASE_URL}/notify`, { senderId });
+		} catch (error: unknown) {
+			throw buildApiError('create notification', error);
+		}
+	},
+
+	deleteNotification: async (senderId: string): Promise<void> => {
+		try {
+			await httpCall.delete(`${BASE_URL}/notify`, { data: { senderId }});
+		} catch (error: unknown) {
+			throw buildApiError('delete notification', error);
+		}
+	},
+
 };

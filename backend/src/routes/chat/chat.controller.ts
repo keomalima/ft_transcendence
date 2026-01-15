@@ -194,18 +194,68 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 	}
 }
 
-// async function getFriendsWithNewMessagesHandler(request: FastifyRequest, reply: FastifyReply) {
-// 	try {
-// 		const userId = request.user!.id;
+async function getFriendsWithNewMessagesHandler(request: FastifyRequest, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
 
-// 		const unreadFriendIds = await chatService.getFriendsWithNewMessages(request.server.prisma, userId);
+		const unreadFriendIds = await chatService.getFriendsWithNewMessages(request.server.prisma, userId);
 
-// 		return reply.code(200).send(unreadFriendIds);
-// 	} catch (error: any) {
-// 		console.error("Error fetching unread friends:", error);
-// 		return reply.status(500).send({ message: "Failed to get unread friends" });
-// 	}
-// }
+		return reply.code(200).send(unreadFriendIds);
+	} catch (error: any) {
+		console.error("Error fetching unread friends:", error);
+		return reply.status(500).send({ message: "Failed to get unread friends" });
+	}
+}
+
+async function createNotificationHandler(request: FastifyRequest<{ Body: { senderId: string } }>, reply: FastifyReply) {
+	try {
+		const receiverId = request.user!.id;
+		const senderId = request.body.senderId;
+
+		if (receiverId === senderId) {
+			return reply.status(400).send({ status: "error", reason: "Self notification not allowed" });
+		}
+
+		await chatService.createNotificationIfMissing(request.server.prisma, senderId, receiverId);
+
+		return reply.status(200).send({ status: "ok" });
+	} catch (err) {
+		console.error("❌ Failed to create notification:", err);
+		return reply.status(500).send({ status: "error", reason: "Internal error" });
+	}
+}
+
+async function deleteNotificationHandler(request: FastifyRequest<{ Body: { senderId: string } }>, reply: FastifyReply) {
+	try {
+		const receiverId = request.user!.id;
+		const { senderId } = request.body;
+
+		if (!senderId) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Missing senderId",
+			});
+		}
+
+		if (receiverId === senderId) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Cannot delete self notification",
+			});
+		}
+
+		await chatService.deleteNotification(request.server.prisma, senderId, receiverId);
+
+		return reply.status(200).send({ status: "ok" });
+	} catch (err) {
+		console.error("❌ Failed to delete notification:", err);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+		});
+	}
+}
+
 
 // =====================
 // Export Controller Object
@@ -214,5 +264,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 export const chatController = {
 	getChatHistoryHandler,
 	sendMessageHandler,
-	// getFriendsWithNewMessagesHandler,
+	getFriendsWithNewMessagesHandler,
+	createNotificationHandler,
+	deleteNotificationHandler,
 };

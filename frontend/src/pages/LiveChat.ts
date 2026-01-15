@@ -13,6 +13,7 @@ let chatConnection: ChatConnection | null = null;
 let _selectedFriend: any = null;
 let paginationMap: FriendPaginationMap = {};
 let wsListenerAttached = false;
+export const unreadNotificationSet = new Set<string>();
 
 
 
@@ -31,8 +32,8 @@ export function LiveChat(ctx: AppContext): string {
 	setTimeout(async () => {
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
+		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
-		// await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
 	}, 0);
 
@@ -66,7 +67,7 @@ function renderLiveChatContent(ctx: AppContext) {
 			<!-- Right: Empty state (shown when no friend selected / no friends) -->
 			<div id="chat-empty"
 				class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex items-center justify-center h-[50vh] min-h-[300px] lg:h-auto">
-				<p class="text-gray-500">Loading friend list ......</p>
+				<p class="text-gray-900 text-xl font-semibold italic text-center block">👈 Select a friend to start chatting!</p>
 			</div>
 
 			<!-- Dialog for friend profile -->
@@ -171,18 +172,15 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const clickedFriend = customEvent.detail;
 
 		// // STEP 1: Remove from localStorage unread set
-		// const currentUserId = ctx.userStore.get()?.id;
-		// const key = `chat_unread_${currentUserId}`;
-		// try {
-		// 	const raw = localStorage.getItem(key);
-		// 	if (raw) {
-		// 		const unreadSet = new Set<string>(JSON.parse(raw));
-		// 		unreadSet.delete(clickedFriend.id);
-		// 		localStorage.setItem(key, JSON.stringify([...unreadSet]));
-		// 	}
-		// } catch (err) {
-		// 	console.error("❌ Failed to update unread set after friend click:", err);
-		// }
+		if (unreadNotificationSet.has(clickedFriend.id)) {
+			unreadNotificationSet.delete(clickedFriend.id);
+
+			try {
+				await chatApi.deleteNotification(clickedFriend.id); // Call backend to remove
+			} catch (err) {
+				console.error("❌ Failed to delete notification from backend:", err);
+			}
+		}
 
 		// STEP 2: Reload friend list (to refresh red ! badges)
 		await friendListComponent.loadAndRender();
@@ -233,19 +231,23 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				return;
 			}
 
-			// // CASE 2: Otherwise, save in unread set and refresh FriendList
-			// const key = `chat_unread_${currentUserId}`;
-			// let unreadSet = new Set<string>();
-			// const raw = localStorage.getItem(key);
-			// if (raw) unreadSet = new Set(JSON.parse(raw));
+			// CASE 2: Chat box not open — check if sender is already marked as unread
+			if (!unreadNotificationSet.has(fromUserId)) {
+				unreadNotificationSet.add(fromUserId);
 
-			// unreadSet.add(fromUserId);
-			// localStorage.setItem(key, JSON.stringify([...unreadSet]));
+				// Optional: call backend to insert notification
+				try {
+					await chatApi.createNotification(fromUserId);  // you'll implement this soon
+				} catch (err) {
+					console.error("❌ Failed to create notification in backend:", err);
+				}
 
-			const friendList = document.getElementById("friend-list-component") as any;
-			if (friendList?.loadAndRender) {
-				friendList.skipAutoSelect = true;
-				await friendList.loadAndRender();
+				// Then update UI
+				const friendList = document.getElementById("friend-list-component") as any;
+				if (friendList?.loadAndRender) {
+					friendList.skipAutoSelect = true;
+					await friendList.loadAndRender();
+				}
 			}
 		});
 
@@ -255,7 +257,6 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 }
 
 async function renderChatBox(friend: any, ctx: AppContext) {
-	console.log("hi", ctx.gameStore.get());// check if show the button for invite
 	const chatRight = document.getElementById('chat-right');
 	const chatEmpty = document.getElementById('chat-empty');
 	if (!chatRight || !chatEmpty) return;
@@ -532,30 +533,30 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 		}).join('');
 }
 
-// async function fetchUnreadSendersFromBackend(ctx: AppContext) {
-// 	const currentUserId = ctx.userStore.get()?.id;
-// 	if (!currentUserId) return;
+async function fetchUnreadSendersFromBackend(ctx: AppContext) {
+	const currentUserId = ctx.userStore.get()?.id;
+	if (!currentUserId) return;
 
-// 	try {
-// 		const senderIds: string[] = await chatApi.getFriendsWithNewMessages();
-// 		if (!senderIds || senderIds.length === 0) return;
+	try {
+		// Step 1: Call backend to get unread senderIds
+		const senderIds: string[] = await chatApi.getFriendsWithNewMessages();
+		if (!senderIds || senderIds.length === 0) return;
 
-// 		const key = `chat_unread_${currentUserId}`;
-// 		const raw = localStorage.getItem(key);
-// 		const unreadSet = new Set<string>(raw ? JSON.parse(raw) : []);
-// 		senderIds.forEach((id) => unreadSet.add(id));
-// 		localStorage.setItem(key, JSON.stringify([...unreadSet]));
+		// Step 2: Store them in frontend Set (in-memory)
+		for (const senderId of senderIds) {
+			unreadNotificationSet.add(senderId);
+		}
 
-// 		// Re-render FriendList to show updated blue dots
-// 		const friendList = document.getElementById("friend-list-component") as any;
-// 		if (friendList?.loadAndRender) {
-// 			friendList.skipAutoSelect = true;
-// 			await friendList.loadAndRender();
-// 		}
-// 	} catch (err) {
-// 		console.error("❌ Failed to fetch unread senders from backend:", err);
-// 	}
-// }
+		// Step 3: Re-render FriendList to show blue dots
+		const friendList = document.getElementById("friend-list-component") as any;
+		if (friendList?.loadAndRender) {
+			friendList.skipAutoSelect = true;
+			await friendList.loadAndRender();
+		}
+	} catch (err) {
+		console.error("❌ Failed to fetch unread senders from backend:", err);
+	}
+}
 
 
 // ======== CLEANUP HOOKS ==========
