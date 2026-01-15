@@ -24,7 +24,7 @@ const sendMessageSuccessResponseSchema = z.object({
 const sendMessageErrorResponseSchema = z.object({
 	status: z.literal("error"),
 	reason: z.string(),
-	code: z.enum(["BLOCKED", "SELF", "NOT_FRIEND", "IN_GAME", "UNKNOWN"]),
+	code: z.enum(["BLOCKED", "SELF", "NOT_FRIEND", "U_IN_GAME", "F_IN_GAME","UNKNOWN"]),
 });
 
 

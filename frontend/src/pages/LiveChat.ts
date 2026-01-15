@@ -16,6 +16,10 @@ let _selectedFriend: any = null;
 let paginationMap: FriendPaginationMap = {};
 let wsListenerAttached = false;
 export const unreadNotificationSet = new Set<string>();
+let isUserInGameOrTournament = false;
+let isFriendInGameOrTournament = false;
+
+
 
 
 export function LiveChat(ctx: AppContext): string {
@@ -191,6 +195,8 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 		const updatedFriend = updatedList?.find((f: any) => f.id === clickedFriend.id);
 		if (!updatedFriend) return;
 		_selectedFriend = updatedFriend;
+		isUserInGameOrTournament = !!(ctx.gameStore.get()?.id || (await getCurrentTournament())?.tournamentId);
+		isFriendInGameOrTournament = false;	
 
 		// STEP 4: get the selected friend history
 		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory(_selectedFriend.id);
@@ -296,10 +302,9 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 
 	const currentTournament = await getCurrentTournament();
 	
-	let inGameOrTournament = false;
-	if (game?.id || currentTournament?.tournamentId)
-		inGameOrTournament = true;
+	isUserInGameOrTournament = !!(game?.id || currentTournament?.tournamentId);
 
+	const isAnyInGame = isUserInGameOrTournament || isFriendInGameOrTournament;
 	chatRight.innerHTML = `
 		<!-- Header -->
 		<div class="flex justify-between items-center p-4 border-b">
@@ -325,10 +330,10 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				<button
 					id="invite-game-btn"
 					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md
-						${inGameOrTournament || friend.isBlockedBy
+						${isAnyInGame  || friend.isBlockedBy
 							? 'bg-red-500 text-white cursor-not-allowed'
 							: 'bg-green-600 text-white hover:bg-green-700'}"
-					${inGameOrTournament || friend.isBlockedBy ? 'disabled' : ''}
+					${isAnyInGame  || friend.isBlockedBy ? 'disabled' : ''}
 				>
 					🎮 Invite Game
 				</button>
@@ -448,6 +453,50 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				} catch (error) {
 					console.error('Error block/unblock:', error);
 					showToast('Action failed', 'block');
+			}
+		});
+	}
+
+	const inviteBtn = document.getElementById("invite-game-btn");
+	if (inviteBtn) {
+		inviteBtn.addEventListener("click", async () => {
+			if (!_selectedFriend) return;
+
+			try {
+				const res = await chatApi.sendMessage({
+					toUserId: _selectedFriend.id,
+					content: "I invite you to a game.",
+					type: "GAME_INVITE",
+				});
+
+				if (res.status === "ok") {
+					console.log("✅ Game invite sent successfully!");
+
+				} else if (res.code === "BLOCKED") {
+					showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
+
+					const updatedFriendList = await friendshipApi.getList();
+					const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
+					if (updated) {
+						_selectedFriend = updated;
+						renderChatBox(_selectedFriend, ctx);
+					}
+				}   else if (res.code === "U_IN_GAME") {
+					showToast("❌ You are already in a game or tournament.", "block");
+					isUserInGameOrTournament = true;
+					renderChatBox(_selectedFriend, ctx);
+					return;
+
+				} else if (res.code === "F_IN_GAME") {
+					showToast(`❌ ${_selectedFriend.displayName} is already in a game or tournament.`, "block");
+					isFriendInGameOrTournament = true;
+					renderChatBox(_selectedFriend, ctx);
+					return;
+				}
+
+			} catch (err) {
+				console.error("❌ Error sending game invite:", err);
+				alert("An error occurred. Please try again.");
 			}
 		});
 	}

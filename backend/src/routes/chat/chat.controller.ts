@@ -2,11 +2,11 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { chatService } from './chat.service.js';
 import type { User } from '@prisma/client';
 import {z} from 'zod'
-import type { SendMessageInput } from './chat.schema.js';
 import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
 import { gameController } from '../game/game.controller.js';
+import type { SendMessageInput } from './chat.schema.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -16,11 +16,6 @@ declare module 'fastify' {
 		user?: User;
 	}
 }
-
-type SendMessageRequest = FastifyRequest<{
-	body: SendMessageInput;
-}>;
-
 
 // =====================
 // Chat Handlers
@@ -32,7 +27,7 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 		const friendId = request.params.friendId;
 
 		const limit = request.query.limit ? parseInt(request.query.limit, 10) : 30;
-		const beforeId = request.query.before || null;
+		const beforeId = request.query.before ?? undefined;
 
 		if (userId === friendId) {
 			return reply.code(400).send({ message: "Cannot chat with yourself" });
@@ -66,7 +61,10 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 	}
 }
 
-async function sendMessageHandler(request: SendMessageRequest, reply: FastifyReply) {
+async function sendMessageHandler(
+	request: FastifyRequest<{ Body: SendMessageInput }>,
+	reply: FastifyReply
+) {
 	try {
 		const fromUserId = request.user!.id;
 		let { toUserId, content, type } = request.body;
@@ -135,7 +133,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 				return reply.status(400).send({
 					status: "error",
 					reason: "You are already in a game or tournament",
-					code: "IN_GAME"
+					code: "U_IN_GAME"
 				});
 			}
 
@@ -143,7 +141,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 				return reply.status(400).send({
 					status: "error",
 					reason: "Friend is already in a game or tournament",
-					code: "IN_GAME"
+					code: "F_IN_GAME"
 				});
 			}
 			// Both users are available — proceed to generate gameToken and invite

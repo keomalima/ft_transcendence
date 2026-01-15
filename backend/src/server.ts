@@ -39,7 +39,7 @@ await fastify.register(cors, {
   credentials: true
 });
 
-await fastify.register(googleAuthPlugin);
+//await fastify.register(googleAuthPlugin);
 
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);

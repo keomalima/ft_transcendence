@@ -253,7 +253,7 @@ export type ChatWsMessage =
 	| ChatInviteMessagePayload
 	| ConnectedPayload;
 
-export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "IN_GAME" | "UNKNOWN";
+export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "U_IN_GAME" | "F_IN_GAME" |"UNKNOWN";
 
 export interface SendMessageSuccess {
 	status: "ok";
