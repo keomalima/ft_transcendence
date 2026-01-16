@@ -51,11 +51,10 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 				content: m.content,
 				sentAt: m.sentAt.toISOString(),
 				messageType: m.type,
-				gameId: m.gameId ?? undefined, 
+				gameId: m.type === "GAME_INVITE" ? (m.gameId ?? undefined) : undefined,
+				gameStatus: m.type === "GAME_INVITE" ? (m.gameStatus ?? undefined) : undefined,
 			}))
 		);
-
-
 	} catch (error: any) {
 		return reply.code(500).send({ message: "Failed to get chat history" });
 	}

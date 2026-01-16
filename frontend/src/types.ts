@@ -208,6 +208,8 @@ export interface TournamentData {
     games: GameData[];
 }
 
+export type GameStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+
 export type ChatMessage = {
 	id: string;
 	senderId: string;
@@ -223,6 +225,7 @@ export type ChatMessage = {
 	sentAt: string;
 	messageType: "GAME_INVITE";
 	gameId: string;
+	gameStatus: GameStatus;
 };
 
 

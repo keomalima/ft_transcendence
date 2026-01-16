@@ -43,13 +43,14 @@ const chatMessageTextSchema = z.object({
 });
 
 const chatMessageInviteSchema = z.object({
-	id: z.string(),
-	senderId: z.string(),
-	receiverId: z.string(),
-	content: z.string().nullable(),
-	sentAt: z.string(),
-	messageType: z.literal("GAME_INVITE"),
-	gameId: z.string(),
+  id: z.string(),
+  senderId: z.string(),
+  receiverId: z.string(),
+  content: z.string().nullable(),
+  sentAt: z.string(),
+  messageType: z.literal("GAME_INVITE"),
+  gameId: z.string(),
+  gameStatus: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "ABANDONED"]),
 });
 
 const chatMessageSchema = z.union([chatMessageTextSchema, chatMessageInviteSchema]);

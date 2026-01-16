@@ -1,5 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-import type { Message } from '@prisma/client';
+import { PrismaClient, GameStatus, MessageType } from '@prisma/client';
+
+export type ChatHistoryMessage = {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  type: MessageType;
+  content: string | null;
+  gameId: string | null;
+  gameStatus: GameStatus | null;
+  sentAt: Date;
+};
 
 // =====================
 // Chat Service Functions
@@ -18,26 +28,49 @@ async function findFriendshipBetween(prisma: PrismaClient, userId: string, frien
 	});
 }
 
-async function getChatHistory(prisma: PrismaClient, userId: string, friendId: string, limit: number,beforeMessageId?: string): Promise<Message[]> {
+async function getChatHistory(prisma: PrismaClient, userId: string, friendId: string, limit: number, beforeMessageId?: string): Promise<ChatHistoryMessage[]> {
+  const messages = await prisma.message.findMany({
+	where: {
+		OR: [
+		{ senderId: userId, receiverId: friendId },
+		{ senderId: friendId, receiverId: userId },
+		],
+	},
+	orderBy: { sentAt: "desc" },
+	cursor: beforeMessageId ? { id: beforeMessageId } : undefined,
+	skip: beforeMessageId ? 1 : 0,
+	take: limit,
+	select: {
+		id: true,
+		senderId: true,
+		receiverId: true,
+		type: true,
+		content: true,
+		gameId: true,
+		sentAt: true,
+		game: { select: { status: true } },
+	},
+	});
 
-	const messages = await prisma.message.findMany({
-   		where: {
-      		OR: [
-       			{ senderId: userId, receiverId: friendId },
-        		{ senderId: friendId, receiverId: userId },
-     		],
-    	},
-   	 	orderBy: {
-    		sentAt: 'desc',
-    	},
-   	 	cursor: beforeMessageId ? { id: beforeMessageId } : undefined,
-    	skip: beforeMessageId ? 1 : 0,
-    	take: limit,
-  	});
+  	const ordered = messages.reverse();
 
-	// Reverse so frontend always gets oldest → newest
-	return messages.reverse();
+ 	const out: ChatHistoryMessage[] = [];
+
+	for (const m of ordered) {
+		out.push({
+			id: m.id,
+			senderId: m.senderId,
+			receiverId: m.receiverId,
+			type: m.type,
+			content: m.content ?? null,
+			gameId: m.gameId ?? null,
+			gameStatus: m.game ? m.game.status : null,
+			sentAt: m.sentAt,
+		});
+	}
+	return out;
 }
+
 
 async function isBlockedBy(prisma: PrismaClient, senderId: string, receiverId: string) {
 	return prisma.blockStatus.findFirst({

@@ -597,7 +597,7 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 	if (!Array.isArray(messages)) return '';
 
 	return messages
-		.filter(msg => msg && msg.senderId && msg.content && msg.receiverId)
+		.filter(msg => msg && msg.senderId && msg.receiverId && msg.sentAt && msg.messageType)
 		.map(msg => {
 			const isSender = msg.senderId === currentUserId;
 			const bubbleColor = isSender ? 'bg-blue-100' : 'bg-green-100';
