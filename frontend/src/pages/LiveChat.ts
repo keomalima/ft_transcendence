@@ -219,7 +219,12 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			const currentUserId = ctx.userStore.get()?.id;
 			if (!currentUserId) return;
 
-			const { fromUserId, content } = (e as CustomEvent).detail;
+			const detail = (e as CustomEvent).detail as any;
+			const fromUserId = detail.fromUserId as string;
+			const content = (detail.content as string | null) ?? "";
+			const messageType = detail.messageType as "TEXT" | "GAME_INVITE";
+			const gameId = detail.gameId as string | undefined;
+
 
 			// CASE 1: If the friend is currently selected, show the bubble
 			if (_selectedFriend?.id === fromUserId) {
@@ -227,16 +232,27 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				if (chatBox) {
 					const bubble = document.createElement("div");
 					bubble.className = "flex justify-start";
+
+					if (messageType === "GAME_INVITE") {
 					bubble.innerHTML = `
 						<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-							${content}
+						🎮 Game invite received
 						</div>
 					`;
+					} else {
+					bubble.innerHTML = `
+						<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
+						${content}
+						</div>
+					`;
+					}
+
 					chatBox.appendChild(bubble);
 					chatBox.scrollTop = chatBox.scrollHeight;
 				}
 				return;
 			}
+
 
 			// CASE 2: Chat box not open — check if sender is already marked as unread
 			if (!unreadNotificationSet.has(fromUserId)) {
@@ -472,6 +488,24 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				if (res.status === "ok") {
 					console.log("✅ Game invite sent successfully!");
 
+					// Step 1A requirement: backend must return gameId for GAME_INVITE success
+					if (!res.gameId) {
+						console.error("❌ Missing res.gameId for GAME_INVITE success:", res);
+						alert("Invite sent but missing gameId from server.");
+						return;
+					}
+
+					const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
+					if (!inviteBtn) return;
+
+					// Change button label + style
+					inviteBtn.textContent = "🟢 Go to Game";
+					inviteBtn.disabled = false;
+					inviteBtn.className =
+						"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
+
+					// Ensure only one handler
+					inviteBtn.onclick = () => router.navigateTo(`/game-room/${res.gameId}`);
 				} else if (res.code === "BLOCKED") {
 					showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
 
