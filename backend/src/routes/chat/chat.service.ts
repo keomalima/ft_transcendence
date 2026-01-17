@@ -164,6 +164,29 @@ async function deleteNotification(prisma: PrismaClient, senderId: string, receiv
 	});
 }
 
+async function findInviteForReceiver(prisma: PrismaClient, receiverId: string, gameId: string) {
+	return prisma.message.findFirst({
+		where: {
+			type: "GAME_INVITE",
+			receiverId,
+			gameId,
+		},
+		select: {
+			id: true,
+			senderId: true,
+		},
+	});
+}
+
+async function isUserGamePlayerInGame(prisma: PrismaClient, gameId: string, userId: string): Promise<boolean> {
+	const existing = await prisma.gamePlayer.findUnique({
+		where: {
+			gameId_userId: { gameId, userId },
+		},
+	});
+	return !!existing;
+}
+
 
 // =====================
 // Export Chat Service Object
@@ -177,4 +200,6 @@ export const chatService = {
 	getFriendsWithNewMessages,
 	createNotificationIfMissing,
 	deleteNotification,
+	findInviteForReceiver,
+	isUserGamePlayerInGame,
 };

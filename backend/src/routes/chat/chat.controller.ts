@@ -1,12 +1,10 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { chatService } from './chat.service.js';
 import type { User } from '@prisma/client';
-import {z} from 'zod'
 import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
-import { gameController } from '../game/game.controller.js';
-import type { SendMessageInput } from './chat.schema.js';
+import type { JoinGameFromChatInput, SendMessageInput } from './chat.schema.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -253,6 +251,87 @@ async function deleteNotificationHandler(request: FastifyRequest<{ Body: { sende
 	}
 }
 
+async function joinGameFromChatHandler(request: FastifyRequest<{ Body: JoinGameFromChatInput }>, reply: FastifyReply) {
+	try {
+		const user2Id = request.user!.id;
+		const { gameId } = request.body;
+
+		// 1) Check if user2 already in a game or tournament
+		const user2Tournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma,user2Id);
+		const user2Game = await gameService.findActiveGameByUserId(request.server.prisma,user2Id);
+
+		if (user2Game || user2Tournament) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "You are already in a game or tournament",
+				code: "U_IN_GAME",
+			});
+		}
+
+		// 2) Check game exists
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.status(404).send({
+				status: "error",
+				reason: "Game not found",
+				code: "GAME_NOT_FOUND",
+			});
+		}
+		// 2.5) only PENDING game can be joined
+		if (game.status !== "PENDING") {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Game is not joinable anymore",
+				code: "UNKNOWN",
+			});
+		}
+
+		// 3) Verify user2 was invited (Message table)
+		const inviteMessage = await chatService.findInviteForReceiver(request.server.prisma, user2Id, gameId);
+
+		if (!inviteMessage) {
+			return reply.status(403).send({
+				status: "error",
+				reason: "You were not invited to this game",
+				code: "NOT_INVITED",
+			});
+		}
+
+		const user1Id = inviteMessage.senderId; // inviter
+
+		// 4) Join user2 to game (idempotent)
+		const alreadyJoined = await chatService.isUserGamePlayerInGame(request.server.prisma, gameId, user2Id);
+
+		let joinedNow = false;
+
+		if (!alreadyJoined) {
+			await gameService.joinUserToGame(request.server.prisma, gameId, user2Id);
+			joinedNow = true;
+		}
+
+		// 5) Save a TEXT system message (only when user2 actually joined now)
+		if (joinedNow) {
+			await chatService.saveMessage(
+				request.server.prisma,
+				user2Id,      // from user2
+				user1Id,      // to user1
+				"✅ Accepted the game invite",
+				"TEXT"
+			);
+		}
+
+		return reply.code(200).send({ status: "ok" });
+	} catch (error: any) {
+		console.error("❌ joinGameFromChatHandler error:", error);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+			code: "UNKNOWN",
+		});
+	}
+}
+
+
 
 // =====================
 // Export Controller Object
@@ -264,4 +343,5 @@ export const chatController = {
 	getFriendsWithNewMessagesHandler,
 	createNotificationHandler,
 	deleteNotificationHandler,
+	joinGameFromChatHandler,
 };

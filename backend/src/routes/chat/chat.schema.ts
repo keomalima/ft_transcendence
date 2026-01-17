@@ -57,11 +57,33 @@ const chatMessageSchema = z.union([chatMessageTextSchema, chatMessageInviteSchem
 
 const getChatHistoryResponseSchema = z.array(chatMessageSchema);
 
+const joinGameFromChatRequestSchema = z.object({
+	gameId: z.string(),
+});
+
+const joinGameFromChatOkSchema = z.object({
+	status: z.literal("ok"),
+});
+
+const joinGameFromChatErrorSchema = z.object({
+	status: z.literal("error"),
+	reason: z.string(),
+	code: z.enum(["U_IN_GAME", "GAME_NOT_FOUND", "NOT_INVITED", "UNKNOWN"]),
+});
+
+const joinGameFromChatResponseSchema = z.union([
+	joinGameFromChatOkSchema,
+	joinGameFromChatErrorSchema,
+]);
+
+
 // =====================
 // Type Exports
 // =====================
 
 export type SendMessageInput = z.infer<typeof sendMessageRequestSchema>;
+export type JoinGameFromChatInput = z.infer<typeof joinGameFromChatRequestSchema>;
+
 
 // =====================
 // Schema Objects Export
@@ -70,9 +92,11 @@ export type SendMessageInput = z.infer<typeof sendMessageRequestSchema>;
 export const chatSchemas = {
 	request: {
 		sendMessage: sendMessageRequestSchema,
+		joinGameFromChat: joinGameFromChatRequestSchema,
 	},
 	response: {
 		getChatHistory: getChatHistoryResponseSchema,
 		sendMessage: sendMessageResponseSchema,
+		joinGameFromChat: joinGameFromChatResponseSchema,
 	},
 };

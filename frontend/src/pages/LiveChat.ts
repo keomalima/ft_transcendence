@@ -243,20 +243,22 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 							// 2) show accept/decline in header immediately
 							const inviteActions = document.getElementById("invite-actions");
 							if (inviteActions && !isUserInGameOrTournament) {
-							inviteActions.innerHTML = `
-								<button
-									id="accept-invite-btn"
-									class="px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-shadow shadow-sm hover:shadow-md"
-								>
-									✅ Accept
-								</button>
-								<button
-									id="decline-invite-btn"
-									class="px-4 py-1.5 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-shadow shadow-sm hover:shadow-md"
-								>
-									❌ Decline
-								</button>
-							`;
+								inviteActions.innerHTML = `
+									<button
+										id="accept-invite-btn"
+										class="px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-shadow shadow-sm hover:shadow-md"
+									>
+										✅ Accept
+									</button>
+									<button
+										id="decline-invite-btn"
+										class="px-4 py-1.5 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-shadow shadow-sm hover:shadow-md"
+									>
+										❌ Decline
+									</button>
+								`;
+
+								bindInviteActionButtons(ctx, fromUserId);
 							}
 						}
 
@@ -458,6 +460,8 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				❌ Decline
 			</button>
 		`;
+
+		bindInviteActionButtons(ctx, friend.id);
 	} else if (inviteActions) {
 		inviteActions.innerHTML = "";
 	}
@@ -647,27 +651,6 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 
 	}
 
-
-	// **** Show msg for block/unblock at left-up corner ***
-	function showToast(message: string, type: 'block' | 'unblock') {
-		const toast = document.createElement('div');
-		toast.textContent = message;
-
-		toast.className = `
-			fixed top-4 left-4 z-50
-			min-w-[200px] text-center
-			px-4 py-2 rounded shadow-lg
-			text-white font-medium
-			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
-		`;
-
-		document.body.appendChild(toast);
-
-		setTimeout(() => {
-			toast.remove();
-		}, 2000);
-	}
-
 	chatEmpty.classList.add('hidden');
 	chatRight.classList.remove('hidden');
 }
@@ -682,6 +665,25 @@ export function cleanLiveChatWS() {
 		chatConnection.disconnect();
 		chatConnection = null;
 	}
+}
+
+function showToast(message: string, type: 'block' | 'unblock') {
+	const toast = document.createElement('div');
+	toast.textContent = message;
+
+	toast.className = `
+		fixed top-4 left-4 z-50
+		min-w-[200px] text-center
+		px-4 py-2 rounded shadow-lg
+		text-white font-medium
+		${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
+	`;
+
+	document.body.appendChild(toast);
+
+	setTimeout(() => {
+		toast.remove();
+	}, 2000);
 }
 
 function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): string {
@@ -728,6 +730,64 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 		console.error("❌ Failed to fetch unread senders from backend:", err);
 	}
 }
+
+function bindInviteActionButtons(ctx: AppContext, friendId: string) {
+	const acceptBtn = document.getElementById("accept-invite-btn") as HTMLButtonElement | null;
+	const declineBtn = document.getElementById("decline-invite-btn") as HTMLButtonElement | null;
+
+	const gameId = pendingInviteMap.get(friendId);
+	if (!acceptBtn || !declineBtn || !gameId) return;
+
+	acceptBtn.onclick = async () => {
+		// safety check
+		if (isUserInGameOrTournament) {
+			showToast("❌ You are already in a game or tournament.", "block");
+			return;
+		}
+
+		acceptBtn.disabled = true;
+		declineBtn.disabled = true;
+
+		try {
+			// 1) Call backend: join game by gameId (no token needed)
+			const res = await chatApi.joinGameFromChat({ gameId });
+
+			if (res.status !== "ok") {
+				console.error("❌ joinGameFromChat failed:", res);
+				showToast(res.reason || "❌ Failed to join the game.", "block");
+				acceptBtn.disabled = false;
+				declineBtn.disabled = false;
+				return;
+			}
+
+			// 2) Clear pending invite state + header UI
+			pendingInviteMap.delete(friendId);
+			const inviteActions = document.getElementById("invite-actions");
+			if (inviteActions) inviteActions.innerHTML = "";
+
+			isUserInGameOrTournament = true;
+
+			// 3) Go to game room
+			router.navigateTo(`/game-room/${gameId}`);
+		} catch (err) {
+			console.error("❌ joinGameFromChat error:", err);
+			showToast("❌ Failed to join the game.", "block");
+			acceptBtn.disabled = false;
+			declineBtn.disabled = false;
+		}
+	};
+
+	declineBtn.onclick = () => {
+		pendingInviteMap.delete(friendId);
+
+		const inviteActions = document.getElementById("invite-actions");
+		if (inviteActions) inviteActions.innerHTML = "";
+
+		// optional UX feedback
+		showToast("Invite declined", "block");
+	};
+}
+
 
 // ======== GET CURRENT GAME ============
 async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {

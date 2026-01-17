@@ -76,6 +76,20 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		handler: chatController.deleteNotificationHandler
 	});
 
+	fastify.post('/join-game', {
+		schema: {
+			body: chatSchemas.request.joinGameFromChat,
+			response: { 200: chatSchemas.response.joinGameFromChat },
+			tags: ['Chat'],
+			description: 'Join a game from a chat invite using gameId',
+			summary: 'Join game from chat',
+			security: [{ cookieAuth: [] }],
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.joinGameFromChatHandler,
+	});
+
+
 
 }
  

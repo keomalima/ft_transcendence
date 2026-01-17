@@ -279,3 +279,14 @@ export type FriendPaginationState = {
 };
 
 export type FriendPaginationMap = Record<string, FriendPaginationState>;
+
+export type JoinGameFromChatInput = {
+	gameId: string;
+};
+
+export type JoinGameFromChatErrorCode = "U_IN_GAME" | "GAME_NOT_FOUND" | "NOT_INVITED" | "UNKNOWN";
+
+export type JoinGameFromChatResponse =
+	| { status: "ok" }
+	| { status: "error"; reason: string; code: JoinGameFromChatErrorCode };
+
