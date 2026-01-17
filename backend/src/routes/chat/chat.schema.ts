@@ -97,6 +97,13 @@ const getPendingInviteResponseSchema = z.union([
 	getPendingInviteErrorSchema,
 ]);
 
+const getGoToGameParamsSchema = z.object({
+	friendId: z.string(),
+});
+
+// same shape as getPendingInvite
+const getGoToGameResponseSchema = getPendingInviteResponseSchema;
+
 
 // =====================
 // Type Exports
@@ -115,11 +122,13 @@ export const chatSchemas = {
 		sendMessage: sendMessageRequestSchema,
 		joinGameFromChat: joinGameFromChatRequestSchema,
 		getPendingInviteParams: getPendingInviteParamsSchema,
+		getGoToGameParams: getGoToGameParamsSchema,
 	},
 	response: {
 		getChatHistory: getChatHistoryResponseSchema,
 		sendMessage: sendMessageResponseSchema,
 		joinGameFromChat: joinGameFromChatResponseSchema,
 		getPendingInvite: getPendingInviteResponseSchema,
+		getGoToGame: getGoToGameResponseSchema,
 	},
 };

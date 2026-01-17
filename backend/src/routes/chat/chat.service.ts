@@ -200,7 +200,44 @@ async function findLatestInviteFromFriend(prisma: PrismaClient, userId: string, 
 	});
 }
 
+async function findLatestInviteToFriend(prisma: PrismaClient, userId: string, friendId: string) {
+	return prisma.message.findFirst({
+		where: {
+			type: "GAME_INVITE",
+			senderId: userId,
+			receiverId: friendId,
+			gameId: { not: null },
+			game: {
+				is: { status: "PENDING" },
+		},
+	},
+		orderBy: { sentAt: "desc" },
+		select: { gameId: true },
+	});
+}
 
+async function findSharedPendingGameWithFriend(prisma: PrismaClient, userId: string, friendId: string ): Promise<string | null> {
+	// Find a PENDING game where BOTH users are GamePlayers
+	const game = await prisma.game.findFirst({
+		where: {
+			status: "PENDING",
+			gameUsers: {
+			some: { userId: userId },
+		},
+		AND: [
+			{
+				gameUsers: {
+					some: { userId: friendId },	
+				},
+			},
+		],
+		},
+		select: { id: true },
+		orderBy: { createdAt: "desc" },
+	});
+
+	return game ? game.id : null;
+}
 
 // =====================
 // Export Chat Service Object
@@ -217,4 +254,6 @@ export const chatService = {
 	findInviteForReceiver,
 	isUserGamePlayerInGame,
 	findLatestInviteFromFriend,
+	findLatestInviteToFriend,
+	findSharedPendingGameWithFriend,
 };

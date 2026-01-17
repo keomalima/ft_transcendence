@@ -94,4 +94,17 @@ export const chatApi = {
 		}
 	},
 
+	getGoToGameId: async (friendId: string): Promise<GetPendingInviteResponse> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/go-to-game/${friendId}`);
+			return response.data as GetPendingInviteResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as GetPendingInviteResponse;
+			}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
+		}
+	},
+
 };

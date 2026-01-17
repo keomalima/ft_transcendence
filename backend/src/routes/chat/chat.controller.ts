@@ -372,6 +372,11 @@ async function getPendingInviteHandler( request: FastifyRequest<{ Params: { frie
 			return reply.code(200).send({ status: "ok", gameId: null });
 		}
 
+		const alreadyJoined = await chatService.isUserGamePlayerInGame(request.server.prisma, game.id, userId);
+		if (alreadyJoined) {
+			return reply.code(200).send({ status: "ok", gameId: null });
+		}
+
 		return reply.code(200).send({ status: "ok", gameId: game.id });
 	} catch (err) {
 		console.error("getPendingInviteHandler error:", err);
@@ -379,6 +384,42 @@ async function getPendingInviteHandler( request: FastifyRequest<{ Params: { frie
 				status: "error",
 				reason: "Internal server error",
 				code: "UNKNOWN",
+		});
+	}
+}
+
+async function getGoToGameHandler(request: FastifyRequest<{ Params: { friendId: string } }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const friendId = request.params.friendId;
+
+		if (userId === friendId) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Cannot query go-to-game with yourself",
+				code: "SELF",
+			});
+		}
+
+		const friendship = await chatService.findFriendshipBetween(request.server.prisma, userId, friendId);
+		if (!friendship) {
+			return reply.status(403).send({
+				status: "error",
+				reason: "Not friends",
+				code: "NOT_FRIEND",
+		});
+		}
+
+		// ✅ NEW: ask by GamePlayer relationship (works for user1 and user2)
+		const gameId = await chatService.findSharedPendingGameWithFriend(request.server.prisma, userId, friendId);
+
+		return reply.code(200).send({ status: "ok", gameId });
+	} catch (err) {
+		console.error("getGoToGameHandler error:", err);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+			code: "UNKNOWN",
 		});
 	}
 }
@@ -397,4 +438,5 @@ export const chatController = {
 	deleteNotificationHandler,
 	joinGameFromChatHandler,
 	getPendingInviteHandler,
+	getGoToGameHandler,
 };
