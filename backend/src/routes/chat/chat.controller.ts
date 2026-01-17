@@ -15,6 +15,8 @@ declare module 'fastify' {
 	}
 }
 
+
+
 // =====================
 // Chat Handlers
 // =====================
@@ -331,6 +333,56 @@ async function joinGameFromChatHandler(request: FastifyRequest<{ Body: JoinGameF
 	}
 }
 
+async function getPendingInviteHandler( request: FastifyRequest<{ Params: { friendId: string } }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const friendId = request.params.friendId;
+
+		// 1) SELF
+		if (userId === friendId) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Cannot query pending invite with yourself",
+				code: "SELF",
+			});
+		}
+
+		// 2) must be friends
+		const friendship = await chatService.findFriendshipBetween(request.server.prisma, userId, friendId);
+		if (!friendship) {
+				return reply.status(403).send({
+				status: "error",
+				reason: "Not friends",
+				code: "NOT_FRIEND",
+			});
+		}
+
+		// 3) find latest invite from friend -> me
+		const latestInvite = await chatService.findLatestInviteFromFriend(request.server.prisma, userId, friendId);
+
+		// no invite => ok(null)
+		if (!latestInvite?.gameId) {
+			return reply.code(200).send({ status: "ok", gameId: null });
+		}
+
+		// 4) game must exist + be PENDING
+		const game = await gameService.findGameById(request.server.prisma, latestInvite.gameId);
+
+		if (!game || game.status !== "PENDING") {
+			return reply.code(200).send({ status: "ok", gameId: null });
+		}
+
+		return reply.code(200).send({ status: "ok", gameId: game.id });
+	} catch (err) {
+		console.error("getPendingInviteHandler error:", err);
+			return reply.status(500).send({
+				status: "error",
+				reason: "Internal server error",
+				code: "UNKNOWN",
+		});
+	}
+}
+
 
 
 // =====================
@@ -344,4 +396,5 @@ export const chatController = {
 	createNotificationHandler,
 	deleteNotificationHandler,
 	joinGameFromChatHandler,
+	getPendingInviteHandler,
 };

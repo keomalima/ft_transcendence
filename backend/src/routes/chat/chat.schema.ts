@@ -49,9 +49,10 @@ const chatMessageInviteSchema = z.object({
   content: z.string().nullable(),
   sentAt: z.string(),
   messageType: z.literal("GAME_INVITE"),
-  gameId: z.string(),
-  gameStatus: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "ABANDONED"]),
+  gameId: z.string().optional(),
+  gameStatus: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "ABANDONED"]).optional(),
 });
+
 
 const chatMessageSchema = z.union([chatMessageTextSchema, chatMessageInviteSchema]);
 
@@ -76,6 +77,26 @@ const joinGameFromChatResponseSchema = z.union([
 	joinGameFromChatErrorSchema,
 ]);
 
+const getPendingInviteParamsSchema = z.object({
+	friendId: z.string(),
+});
+
+const getPendingInviteOkSchema = z.object({
+	status: z.literal("ok"),
+	gameId: z.string().nullable(),
+});
+
+const getPendingInviteErrorSchema = z.object({
+	status: z.literal("error"),
+	reason: z.string(),
+	code: z.enum(["SELF", "NOT_FRIEND", "UNKNOWN"]),
+});
+
+const getPendingInviteResponseSchema = z.union([
+	getPendingInviteOkSchema,
+	getPendingInviteErrorSchema,
+]);
+
 
 // =====================
 // Type Exports
@@ -93,10 +114,12 @@ export const chatSchemas = {
 	request: {
 		sendMessage: sendMessageRequestSchema,
 		joinGameFromChat: joinGameFromChatRequestSchema,
+		getPendingInviteParams: getPendingInviteParamsSchema,
 	},
 	response: {
 		getChatHistory: getChatHistoryResponseSchema,
 		sendMessage: sendMessageResponseSchema,
 		joinGameFromChat: joinGameFromChatResponseSchema,
+		getPendingInvite: getPendingInviteResponseSchema,
 	},
 };

@@ -89,6 +89,20 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		handler: chatController.joinGameFromChatHandler,
 	});
 
+	// GET pending invite gameId from friend -> me
+	fastify.get("/pending-invite/:friendId", {
+		schema: {
+			params: chatSchemas.request.getPendingInviteParams,
+			response: { 200: chatSchemas.response.getPendingInvite },
+			tags: ["Chat"],
+			description: "Get pending game invite (gameId) from friend -> me",
+			summary: "Pending invite",
+			security: [{ cookieAuth: [] }],
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.getPendingInviteHandler,
+	});
+
 
 
 }

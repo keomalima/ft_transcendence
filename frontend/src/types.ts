@@ -224,8 +224,8 @@ export type ChatMessage = {
 	content: string | null;
 	sentAt: string;
 	messageType: "GAME_INVITE";
-	gameId: string;
-	gameStatus: GameStatus;
+	gameId?: string;
+	gameStatus?: GameStatus;
 };
 
 
@@ -289,4 +289,9 @@ export type JoinGameFromChatErrorCode = "U_IN_GAME" | "GAME_NOT_FOUND" | "NOT_IN
 export type JoinGameFromChatResponse =
 	| { status: "ok" }
 	| { status: "error"; reason: string; code: JoinGameFromChatErrorCode };
+
+export type GetPendingInviteResponse =
+  | { status: "ok"; gameId: string | null }
+  | { status: "error"; reason: string; code: "SELF" | "NOT_FRIEND" | "UNKNOWN" };
+
 

@@ -258,7 +258,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 									</button>
 								`;
 
-								bindInviteActionButtons(ctx, fromUserId);
+								bindInviteActionButtons(fromUserId, gameId);
 							}
 						}
 
@@ -355,6 +355,10 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 	isUserInGameOrTournament = !!(game?.id || currentTournament?.tournamentId);
 
 	const isAnyInGame = isUserInGameOrTournament || isFriendInGameOrTournament;
+
+	// after messages fetched and isUserInGameOrTournament computed
+	const pendingGameId = await syncPendingInviteFromBackend(friend.id);
+
 	chatRight.innerHTML = `
 		<!-- Header -->
 		<div class="flex justify-between items-center p-4 border-b">
@@ -442,7 +446,6 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 	
 	// If this friend has sent a pending invite, show Accept/Decline buttons in header
 	const inviteActions = document.getElementById("invite-actions");
-	const pendingGameId = pendingInviteMap.get(friend.id);
 
 	if (inviteActions && pendingGameId && !isUserInGameOrTournament) {
 		inviteActions.innerHTML = `
@@ -461,7 +464,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			</button>
 		`;
 
-		bindInviteActionButtons(ctx, friend.id);
+		bindInviteActionButtons(friend.id, pendingGameId);
 	} else if (inviteActions) {
 		inviteActions.innerHTML = "";
 	}
@@ -692,6 +695,22 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 	return messages
 		.filter(msg => msg && msg.senderId && msg.receiverId && msg.sentAt && msg.messageType)
 		.map(msg => {
+			// Only show GAME_INVITE when it's pending + has gameId
+			if (msg.messageType === "GAME_INVITE") {
+				if (!msg.gameId || msg.gameStatus !== "PENDING") return "";
+
+				const isSender = msg.senderId === currentUserId;
+
+				return `
+					<div class="flex ${isSender ? 'justify-end' : 'justify-start'}">
+						<div class="px-4 py-2 rounded-lg bg-yellow-100 text-black max-w-xs break-words">
+							🎮 Game invite pending
+						</div>
+					</div>
+				`;
+			}
+
+			// Normal TEXT message bubble
 			const isSender = msg.senderId === currentUserId;
 			const bubbleColor = isSender ? 'bg-blue-100' : 'bg-green-100';
 			const textColor = 'text-black';
@@ -699,12 +718,15 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 			return `
 				<div class="flex ${isSender ? 'justify-end' : 'justify-start'}">
 					<div class="px-4 py-2 rounded-lg ${bubbleColor} ${textColor} max-w-xs break-words">
-						${msg.content}
+						${msg.content ?? ""}
 					</div>
 				</div>
 			`;
-		}).join('');
+		})
+		.join('');
 }
+
+
 
 async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 	const currentUserId = ctx.userStore.get()?.id;
@@ -731,11 +753,10 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 	}
 }
 
-function bindInviteActionButtons(ctx: AppContext, friendId: string) {
+function bindInviteActionButtons(friendId: string, gameId: string) {
 	const acceptBtn = document.getElementById("accept-invite-btn") as HTMLButtonElement | null;
 	const declineBtn = document.getElementById("decline-invite-btn") as HTMLButtonElement | null;
 
-	const gameId = pendingInviteMap.get(friendId);
 	if (!acceptBtn || !declineBtn || !gameId) return;
 
 	acceptBtn.onclick = async () => {
@@ -786,6 +807,31 @@ function bindInviteActionButtons(ctx: AppContext, friendId: string) {
 		// optional UX feedback
 		showToast("Invite declined", "block");
 	};
+}
+
+async function syncPendingInviteFromBackend(friendId: string): Promise<string | null> {
+	try {
+		const res = await chatApi.getPendingInvite(friendId);
+
+		// if not ok -> clear stale state
+		if (!res || res.status !== "ok") {
+			pendingInviteMap.delete(friendId);
+			return null;
+		}
+
+		const gameId = (res.gameId && res.gameId.trim() !== "") ? res.gameId : null;
+
+		if (gameId) 
+			pendingInviteMap.set(friendId, gameId);
+		else 
+			pendingInviteMap.delete(friendId);
+
+		return gameId;
+	} catch (err) {
+		console.error("❌ syncPendingInviteFromBackend error:", err);
+		pendingInviteMap.delete(friendId);
+		return null;
+	}
 }
 
 

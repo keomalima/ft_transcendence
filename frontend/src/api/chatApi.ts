@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { ChatMessage, JoinGameFromChatInput, JoinGameFromChatResponse, SendMessageError, SendMessageResponse } from '../types.js';
+import { ChatMessage, GetPendingInviteResponse, JoinGameFromChatInput, JoinGameFromChatResponse, SendMessageError, SendMessageResponse } from '../types.js';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/chat';
@@ -76,6 +76,19 @@ export const chatApi = {
 			const errData = error?.response?.data;
 			if (errData && (errData.status === "error" || errData.status === "ok")) {
 				return errData as JoinGameFromChatResponse;
+			}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
+		}
+	},
+
+	getPendingInvite: async (friendId: string): Promise<GetPendingInviteResponse> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/pending-invite/${friendId}`);
+			return response.data as GetPendingInviteResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as GetPendingInviteResponse;
 			}
 			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
 		}

@@ -187,6 +187,20 @@ async function isUserGamePlayerInGame(prisma: PrismaClient, gameId: string, user
 	return !!existing;
 }
 
+async function findLatestInviteFromFriend(prisma: PrismaClient, userId: string, friendId: string) {
+	return prisma.message.findFirst({
+		where: {
+				type: "GAME_INVITE",
+				senderId: friendId,
+				receiverId: userId,
+				gameId: { not: null },
+			},
+		orderBy: { sentAt: "desc" },
+		select: { gameId: true },
+	});
+}
+
+
 
 // =====================
 // Export Chat Service Object
@@ -202,4 +216,5 @@ export const chatService = {
 	deleteNotification,
 	findInviteForReceiver,
 	isUserGamePlayerInGame,
+	findLatestInviteFromFriend,
 };
