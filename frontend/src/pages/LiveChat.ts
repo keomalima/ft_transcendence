@@ -1,4 +1,4 @@
-import type { AppContext, ChatMessage, FriendData, FriendPaginationMap, UserState, GameHistory } from "../types.js";
+import type { AppContext, ChatMessage, FriendPaginationMap, UserState, GameHistory } from "../types.js";
 import { router } from "../main.js";
 
 // Import UI components
@@ -18,6 +18,8 @@ let wsListenerAttached = false;
 export const unreadNotificationSet = new Set<string>();
 let isUserInGameOrTournament = false;
 let isFriendInGameOrTournament = false;
+// sender -> gameId
+const pendingInviteMap = new Map<string, string>();
 
 
 
@@ -234,17 +236,43 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 					bubble.className = "flex justify-start";
 
 					if (messageType === "GAME_INVITE") {
-					bubble.innerHTML = `
-						<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-						🎮 Game invite received
-						</div>
-					`;
+						if (gameId) {
+							// 1) save gameId
+							pendingInviteMap.set(fromUserId, gameId);
+
+							// 2) show accept/decline in header immediately
+							const inviteActions = document.getElementById("invite-actions");
+							if (inviteActions && !isUserInGameOrTournament) {
+							inviteActions.innerHTML = `
+								<button
+									id="accept-invite-btn"
+									class="px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-shadow shadow-sm hover:shadow-md"
+								>
+									✅ Accept
+								</button>
+								<button
+									id="decline-invite-btn"
+									class="px-4 py-1.5 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-shadow shadow-sm hover:shadow-md"
+								>
+									❌ Decline
+								</button>
+							`;
+							}
+						}
+
+						// Show a visible bubble
+						bubble.innerHTML = `
+							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
+								🎮 Game invite received
+							</div>
+						`;
+
 					} else {
-					bubble.innerHTML = `
-						<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-						${content}
-						</div>
-					`;
+						bubble.innerHTML = `
+							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
+							${content}
+							</div>
+						`;
 					}
 
 					chatBox.appendChild(bubble);
@@ -254,13 +282,17 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			}
 
 
-			// CASE 2: Chat box not open — check if sender is already marked as unread
+			// CASE 2: Chat box not open
+
+			if (messageType === "GAME_INVITE" && gameId) {
+				pendingInviteMap.set(fromUserId, gameId);
+			}
+
 			if (!unreadNotificationSet.has(fromUserId)) {
 				unreadNotificationSet.add(fromUserId);
 
-				// Optional: call backend to insert notification
 				try {
-					await chatApi.createNotification(fromUserId);  // you'll implement this soon
+					await chatApi.createNotification(fromUserId);
 				} catch (err) {
 					console.error("❌ Failed to create notification in backend:", err);
 				}
@@ -342,6 +374,9 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 					<span>See Profile</span>
 				</button>
 
+				<!-- Invite actions placeholder (Accept/Decline will go here later) -->
+				<div id="invite-actions" class="flex gap-2 items-center"></div>
+
 				<!-- Invite Game -->
 				<button
 					id="invite-game-btn"
@@ -401,6 +436,31 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			</div>
 		`}
 	`;
+
+	
+	// If this friend has sent a pending invite, show Accept/Decline buttons in header
+	const inviteActions = document.getElementById("invite-actions");
+	const pendingGameId = pendingInviteMap.get(friend.id);
+
+	if (inviteActions && pendingGameId && !isUserInGameOrTournament) {
+		inviteActions.innerHTML = `
+			<button
+				id="accept-invite-btn"
+				class="px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-shadow shadow-sm hover:shadow-md"
+			>
+				✅ Accept
+			</button>
+
+			<button
+				id="decline-invite-btn"
+				class="px-4 py-1.5 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-shadow shadow-sm hover:shadow-md"
+			>
+				❌ Decline
+			</button>
+		`;
+	} else if (inviteActions) {
+		inviteActions.innerHTML = "";
+	}
 
 
 	// Auto scroll to bottom after inserting messages
@@ -473,10 +533,11 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 		});
 	}
 
-	const inviteBtn = document.getElementById("invite-game-btn");
+	const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 	if (inviteBtn) {
-		inviteBtn.addEventListener("click", async () => {
+		inviteBtn.onclick = async () => {
 			if (!_selectedFriend) return;
+			if (inviteBtn.disabled) return;
 
 			try {
 				const res = await chatApi.sendMessage({
@@ -495,17 +556,13 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 						return;
 					}
 
-					const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
-					if (!inviteBtn) return;
-
-					// Change button label + style
 					inviteBtn.textContent = "🟢 Go to Game";
-					inviteBtn.disabled = false;
 					inviteBtn.className =
 						"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
 
-					// Ensure only one handler
 					inviteBtn.onclick = () => router.navigateTo(`/game-room/${res.gameId}`);
+
+					return;
 				} else if (res.code === "BLOCKED") {
 					showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
 
@@ -532,7 +589,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				console.error("❌ Error sending game invite:", err);
 				alert("An error occurred. Please try again.");
 			}
-		});
+		};
 	}
 
 	const seeProfileBtn = document.getElementById('see-profile-btn');
