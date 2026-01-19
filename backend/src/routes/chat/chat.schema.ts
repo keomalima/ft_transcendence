@@ -49,8 +49,8 @@ const chatMessageInviteSchema = z.object({
   content: z.string().nullable(),
   sentAt: z.string(),
   messageType: z.literal("GAME_INVITE"),
-  gameId: z.string().optional(),
-  gameStatus: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "ABANDONED"]).optional(),
+  gameId: z.string().nullable().optional(),
+  gameStatus: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "ABANDONED"]).nullable().optional(),
 });
 
 
@@ -101,6 +101,25 @@ const getGoToGameParamsSchema = z.object({
 	friendId: z.string(),
 });
 
+const declineGameFromChatRequestSchema = z.object({
+	gameId: z.string(),
+});
+
+const declineGameFromChatOkSchema = z.object({
+	status: z.literal("ok"),
+});
+
+const declineGameFromChatErrorSchema = z.object({
+	status: z.literal("error"),
+	reason: z.string(),
+	code: z.enum(["GAME_NOT_FOUND", "NOT_INVITED", "UNKNOWN"]),
+});
+
+const declineGameFromChatResponseSchema = z.union([
+	declineGameFromChatOkSchema,
+	declineGameFromChatErrorSchema,
+]);
+
 // same shape as getPendingInvite
 const getGoToGameResponseSchema = getPendingInviteResponseSchema;
 
@@ -111,7 +130,7 @@ const getGoToGameResponseSchema = getPendingInviteResponseSchema;
 
 export type SendMessageInput = z.infer<typeof sendMessageRequestSchema>;
 export type JoinGameFromChatInput = z.infer<typeof joinGameFromChatRequestSchema>;
-
+export type DeclineGameFromChatInput = z.infer<typeof declineGameFromChatRequestSchema>;
 
 // =====================
 // Schema Objects Export
@@ -123,6 +142,7 @@ export const chatSchemas = {
 		joinGameFromChat: joinGameFromChatRequestSchema,
 		getPendingInviteParams: getPendingInviteParamsSchema,
 		getGoToGameParams: getGoToGameParamsSchema,
+		declineGameFromChat: declineGameFromChatRequestSchema,
 	},
 	response: {
 		getChatHistory: getChatHistoryResponseSchema,
@@ -130,5 +150,6 @@ export const chatSchemas = {
 		joinGameFromChat: joinGameFromChatResponseSchema,
 		getPendingInvite: getPendingInviteResponseSchema,
 		getGoToGame: getGoToGameResponseSchema,
+		declineGameFromChat: declineGameFromChatResponseSchema,
 	},
 };

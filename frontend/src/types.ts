@@ -294,4 +294,17 @@ export type GetPendingInviteResponse =
   | { status: "ok"; gameId: string | null }
   | { status: "error"; reason: string; code: "SELF" | "NOT_FRIEND" | "UNKNOWN" };
 
+  
+export type DeclineGameFromChatInput = {
+  gameId: string;
+};
+
+export type DeclineGameFromChatErrorCode =
+  | "GAME_NOT_FOUND"
+  | "NOT_INVITED"
+  | "UNKNOWN";
+
+export type DeclineGameFromChatResponse =
+  | { status: "ok" }
+  | { status: "error"; reason: string; code: DeclineGameFromChatErrorCode };
 

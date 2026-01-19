@@ -117,6 +117,18 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		handler: chatController.getGoToGameHandler,
 	});
 
+	fastify.post('/decline-game', {
+		schema: {
+			body: chatSchemas.request.declineGameFromChat,
+			response: { 200: chatSchemas.response.declineGameFromChat },
+			tags: ['Chat'],
+			description: 'Decline a game invite from chat (delete the game)',
+			summary: 'Decline game invite from chat',
+			security: [{ cookieAuth: [] }],
+		},
+			preHandler: userController.updateLastSeen,
+			handler: chatController.declineGameFromChatHandler,
+	});
 
 }
  

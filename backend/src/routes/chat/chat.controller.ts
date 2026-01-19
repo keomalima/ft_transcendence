@@ -4,7 +4,7 @@ import type { User } from '@prisma/client';
 import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
-import type { JoinGameFromChatInput, SendMessageInput } from './chat.schema.js';
+import type { DeclineGameFromChatInput, JoinGameFromChatInput, SendMessageInput } from './chat.schema.js';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
 
 // =====================
@@ -441,6 +441,75 @@ async function getGoToGameHandler(request: FastifyRequest<{ Params: { friendId: 
 	}
 }
 
+async function declineGameFromChatHandler(request: FastifyRequest<{ Body: DeclineGameFromChatInput }>,reply: FastifyReply) {
+	try {
+		const user2Id = request.user!.id;
+		const { gameId } = request.body;
+
+		// 1) Check game exists
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.status(404).send({
+				status: "error",
+				reason: "Game not found",
+				code: "GAME_NOT_FOUND",
+			});
+		}
+
+		// 2) Only pending invites can be declined
+		if (game.status !== "PENDING") {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Game is not pending anymore",
+				code: "UNKNOWN",
+			});
+		}
+
+		// 3) Verify user2 was invited (Message table)
+		const inviteMessage = await chatService.findInviteForReceiver(request.server.prisma, user2Id, gameId);
+
+		if (!inviteMessage) {
+			return reply.status(403).send({
+				status: "error",
+				reason: "You were not invited to this game",
+				code: "NOT_INVITED",
+			});
+		}
+
+		const user1Id = inviteMessage.senderId; // inviter
+
+		// 4) DELETE game logic
+		WaintingRoomWsController.notifyCreatorGameInvitationDenied(gameId, user1Id);
+		await gameService.deletePendingGame(request.server.prisma, gameId);
+		
+
+		// 5) Save a TEXT message (decline notice) + push to user1 via WS
+		const declineMsg = await chatService.saveMessage(
+			request.server.prisma,
+			user2Id,   // from user2
+			user1Id,   // to user1
+			"❌ Declined the game invite",
+			"TEXT"
+		);
+
+		await sendMessageToUser(request.server.prisma, user1Id, {
+			type: "chat-message",
+			fromUserId: user2Id,
+			content: declineMsg.content ?? "❌ Declined the game invite",
+			sentAt: declineMsg.sentAt.toISOString(),
+			messageType: "TEXT",
+		});
+
+		return reply.code(200).send({ status: "ok" });
+	} catch (error: any) {
+		console.error("❌ declineGameFromChatHandler error:", error);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+			code: "UNKNOWN",
+		});
+	}
+}
 
 
 // =====================
@@ -456,4 +525,5 @@ export const chatController = {
 	joinGameFromChatHandler,
 	getPendingInviteHandler,
 	getGoToGameHandler,
+	declineGameFromChatHandler,
 };

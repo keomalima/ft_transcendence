@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { ChatMessage, GetPendingInviteResponse, JoinGameFromChatInput, JoinGameFromChatResponse, SendMessageError, SendMessageResponse } from '../types.js';
+import { ChatMessage, DeclineGameFromChatInput, DeclineGameFromChatResponse, GetPendingInviteResponse, JoinGameFromChatInput, JoinGameFromChatResponse, SendMessageError, SendMessageResponse } from '../types.js';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/chat';
@@ -103,6 +103,19 @@ export const chatApi = {
 			if (errData && (errData.status === "error" || errData.status === "ok")) {
 				return errData as GetPendingInviteResponse;
 			}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
+		}
+	},
+
+	declineGameFromChat: async (data: DeclineGameFromChatInput): Promise<DeclineGameFromChatResponse> => {
+		try {
+			const response = await httpCall.post(`${BASE_URL}/decline-game`, data);
+			return response.data as DeclineGameFromChatResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as DeclineGameFromChatResponse;
+		}
 			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
 		}
 	},

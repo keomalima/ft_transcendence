@@ -230,6 +230,13 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 			// CASE 1: If the friend is currently selected, show the bubble
 			if (_selectedFriend?.id === fromUserId) {
+
+				if (messageType === "TEXT") {
+					await refreshIsUserInGameOrTournament(ctx);
+					await renderChatBox(_selectedFriend, ctx);
+					return;
+				}
+
 				const chatBox = document.getElementById("chat-messages");
 				if (chatBox) {
 					const bubble = document.createElement("div");
@@ -264,7 +271,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 									</button>
 								`;
 
-								bindInviteActionButtons(fromUserId, gameId);
+								bindInviteActionButtons(fromUserId, gameId, ctx);
 
 							}
 						}
@@ -478,7 +485,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			</button>
 		`;
 
-		bindInviteActionButtons(friend.id, pendingGameId);
+		bindInviteActionButtons(friend.id, pendingGameId, ctx);
 	} else if (inviteActions) {
 		inviteActions.innerHTML = "";
 	}
@@ -782,7 +789,7 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 	}
 }
 
-function bindInviteActionButtons(friendId: string, gameId: string) {
+function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppContext) {
 	const acceptBtn = document.getElementById("accept-invite-btn") as HTMLButtonElement | null;
 	const declineBtn = document.getElementById("decline-invite-btn") as HTMLButtonElement | null;
 
@@ -827,14 +834,45 @@ function bindInviteActionButtons(friendId: string, gameId: string) {
 		}
 	};
 
-	declineBtn.onclick = () => {
-		pendingInviteMap.delete(friendId);
+	declineBtn.onclick = async () => {
+		declineBtn.disabled = true;
+		acceptBtn.disabled = true;
 
-		const inviteActions = document.getElementById("invite-actions");
-		if (inviteActions) inviteActions.innerHTML = "";
+		try {
+			// Step 1: call backend
+			const res = await chatApi.declineGameFromChat({ gameId });
 
-		// optional UX feedback
-		showToast("Invite declined", "block");
+			if (!res || res.status !== "ok") {
+				showToast(res?.reason || "❌ Failed to decline invite.", "block");
+				declineBtn.disabled = false;
+				acceptBtn.disabled = false;
+				return;
+			}
+
+			// Step 2: clear local pending state + header UI
+			pendingInviteMap.delete(friendId);
+
+			const inviteActions = document.getElementById("invite-actions");
+			if (inviteActions) inviteActions.innerHTML = "";
+
+			const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
+			if (inviteBtn) {
+				inviteBtn.classList.remove("hidden");
+				inviteBtn.disabled = false;
+			}
+
+			showToast("Invite declined", "block");
+
+			if (_selectedFriend) {
+				await refreshIsUserInGameOrTournament(ctx);
+				renderChatBox(_selectedFriend, ctx);
+			}
+		} catch (err) {
+			console.error("❌ declineGameFromChat error:", err);
+			showToast("❌ Failed to decline invite.", "block");
+			declineBtn.disabled = false;
+			acceptBtn.disabled = false;
+		}
 	};
 }
 
