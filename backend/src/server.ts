@@ -21,7 +21,7 @@ import { wsPrivateRoutes } from './routes/websockets/ws.routes.js';
 import type { FastifyCookieOptions } from '@fastify/cookie'
 import cookie from '@fastify/cookie'
 import { chatPrivateRoutes } from './routes/chat/chat.route.js';
-import googleAuthPlugin from './plugins/googleAuth.plugin.js';
+// import googleAuthPlugin from './plugins/googleAuth.plugin.js';
 
 const fastify = Fastify({
   logger: true,
@@ -39,12 +39,12 @@ await fastify.register(cors, {
   credentials: true
 });
 
-//await fastify.register(googleAuthPlugin);
+// await fastify.register(googleAuthPlugin);
 
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
 
-await registerSwagger(fastify);
+await registerSwagger(fastify); 
 await registerSwaggerUi(fastify);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

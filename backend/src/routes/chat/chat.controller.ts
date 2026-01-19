@@ -5,6 +5,7 @@ import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
 import type { JoinGameFromChatInput, SendMessageInput } from './chat.schema.js';
+import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -313,13 +314,29 @@ async function joinGameFromChatHandler(request: FastifyRequest<{ Body: JoinGameF
 
 		// 5) Save a TEXT system message (only when user2 actually joined now)
 		if (joinedNow) {
-			await chatService.saveMessage(
+			const acceptMsg = await chatService.saveMessage(
 				request.server.prisma,
-				user2Id,      // from user2
-				user1Id,      // to user1
+				user2Id,   // from user2
+				user1Id,   // to user1
 				"✅ Accepted the game invite",
 				"TEXT"
 			);
+
+			const completeGame = await gameService.getGamesByUserId(request.server.prisma, user2Id);
+
+			WaintingRoomWsController.broadcasToRoom(game.id, {
+				type: 'room_update',
+				message: `${request.user!.displayName} joined the game!`,
+				game: completeGame
+			})
+
+			await sendMessageToUser(request.server.prisma, user1Id, {
+				type: "chat-message",
+				fromUserId: user2Id,
+				content: acceptMsg.content ?? "✅ Accepted the game invite",
+				sentAt: acceptMsg.sentAt.toISOString(),
+				messageType: "TEXT",
+			});
 		}
 
 		return reply.code(200).send({ status: "ok" });
