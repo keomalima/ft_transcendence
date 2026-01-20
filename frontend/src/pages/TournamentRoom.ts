@@ -118,15 +118,15 @@ async function setTournamentRoomWebSockets(currentUser: UserState, tournamentDat
 			}
 		},
 		() => {
-			cleanWaitingRoomWS();
+			cleanTournamentWaitingRoomWS();
 			router.navigateTo('/home');
 		},
 		() => {
-			cleanWaitingRoomWS();
+			cleanTournamentWaitingRoomWS();
 			router.navigateTo('/home');
 		},
 		() => {
-			cleanWaitingRoomWS();
+			cleanTournamentWaitingRoomWS();
 			router.navigateTo(`/tournament-room/${tournamentData.id}`)
 		}
 	)
@@ -171,7 +171,7 @@ function updatePlayerList(tournamentData: TournamentData) {
 }
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============
-export function cleanWaitingRoomWS() {
+export function cleanTournamentWaitingRoomWS() {
 	if (wsConnection) {
 		wsConnection.disconnect();
 		wsConnection = null;
@@ -232,7 +232,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 		const tournamentId = customEvent.detail;
 		try {
 			await tournamentApi.startTournament(tournamentId);
-			cleanWaitingRoomWS();
+			cleanTournamentWaitingRoomWS();
 			router.navigateTo(`/tournament/${tournamentId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-tournament') as HTMLParagraphElement;
@@ -253,7 +253,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			return;
 		try {
 			await tournamentApi.quitTournament(tournamentId);
-			cleanWaitingRoomWS();
+			cleanTournamentWaitingRoomWS();
 			router.navigateTo('/tournament');
 		} catch (error) {
 			console.log(error);

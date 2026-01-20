@@ -320,7 +320,6 @@ async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) 
 		await addWinnerToNextGame(prisma, currentGame.id, winner.userId);
 	}
 
-	console.log('========= CURRENT GAME STATE AT END ========', currentGame);
 	if (currentGame && currentGame.status === 'PENDING') {
 		console.log('🔔 Notifying waiting room and tournament about pending game', currentGame);
 	    await notifyWaitingRoom(prisma, currentGame.id, winner.userId);
@@ -335,7 +334,7 @@ async function notifyTournament(prisma: PrismaClient, tournamentId: string, game
 	const completeGame = await getCompleteGameData(prisma, gameId);
 	const nextCompleteGame = await getCompleteGameData(prisma, currentGameId);
 	
-	TournamentWsController.broadcasToRoom(tournamentId, {
+	TournamentWsController.broadcastToRoom(tournamentId, {
 		type: 'tournament_update',
 		gameId: gameId,
 		game: completeGame,
@@ -355,8 +354,8 @@ async function completeTournament(prisma: PrismaClient, tournamentId: string, ga
 	console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
 
 	const completeGame = await getCompleteGameData(prisma, gameId);
-	TournamentWsController.broadcasToRoom(tournamentId, {
-		type: 'tournament_update',
+	TournamentWsController.broadcastToRoom(tournamentId, {
+		type: 'tournament_closed',
 		gameId: gameId,
 		game: completeGame,
 		nextGame: completeGame

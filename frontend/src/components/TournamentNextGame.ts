@@ -29,6 +29,16 @@ export class TournamentNextGame extends HTMLElement {
 		}
 	}
 
+	public updateGame(updatedGame: TournamentGame): void {
+		if (!this._tournamentGamesData) return;
+
+		const index = this._tournamentGamesData.findIndex(game => game.id === updatedGame.id);
+		if (index !== -1) {
+			this._tournamentGamesData[index] = updatedGame;
+			this.displayNextGameCard();
+		}
+	}
+
 	private async loadAndRender() {
 		this.render();
 		this.displayNextGameCard();

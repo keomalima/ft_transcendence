@@ -5,6 +5,7 @@ import type { CreateTournamentInput } from './tournament.schema.js';
 import crypto from 'crypto';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
 import { gameService } from '../game/game.service.js';
+import { TournamentWsController } from '../websockets/tournament/tournament.ws.controller.js';
 
 // =====================
 // Tournament CRUD Handlers
@@ -338,10 +339,11 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		await tournamentService.matchMakeGames(request.server.prisma, userId, tournament);
 		await tournamentService.createEmptyGames(request.server.prisma, userId, tournament);
 
-		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+		TournamentWsController.broadcastToRoom(tournament.id, {
 			type: 'start_tournament',
-			message: `Start tournament!`
+			message:'Tournament has started',
 		})
+
 		return response;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to start tournament"});
@@ -392,17 +394,10 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 
 		if (updatedOpponent?.isReady) {
 			await gameService.startGame(request.server.prisma, gameId, userId);
-			WaintingRoomWsController.broadcasToRoom(game.id, {
-				type: 'start_game',
-				message: `${player.user.displayName} is starting the game!`,
-				game: updatedGame
-			})
+			TournamentWsController.notifyGameReadiness(game.tournamentId, {user: userId, opponent: updatedOpponent.user.id}, 'start_game', updatedGame);
+
 		} else {
-			WaintingRoomWsController.broadcasToRoom(game.id, {
-				type: 'room_update',
-				message: `${player.user.displayName} is ready for the game!`,
-				game: updatedGame
-			})
+			TournamentWsController.notifyGameReadiness(game.tournamentId, {user: userId, opponent: updatedOpponent.user.id}, 'opponent_ready', updatedGame);
 		}
 
 		return updatedGame;
