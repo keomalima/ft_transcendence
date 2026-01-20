@@ -62,7 +62,7 @@ export class Router {
 		if (currentPath.startsWith('/game')) {
 			cleanGameWS();
 		}
-		if (currentPath === '/live-chat') {
+		if (currentPath.startsWith('/live-chat')) {
 			cleanLiveChatWS();
 		}
 		const route = this.match(path) ?? this.match("/404");

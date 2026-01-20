@@ -10,17 +10,21 @@ import { ChatConnection } from "../websocket/ChatConnection.js";
 import { chatApi } from "../api/chatApi.js";
 import { gameService } from "../services/GameService.js";
 import { tournamentApi } from "../api/tournamentApi.js";
+import { TournamentWsConnection } from "../websocket/TournamentConnection.js";
 
 let chatConnection: ChatConnection | null = null;
 let _selectedFriend: any = null;
 let paginationMap: FriendPaginationMap = {};
-let wsListenerAttached = false;
+let listenersAttached = false;
 export const unreadNotificationSet = new Set<string>();
 let isUserInGameOrTournament = false;
 let isFriendInGameOrTournament = false;
 // sender -> gameId
 const pendingInviteMap = new Map<string, string>();
 let livechatTournamentId: string | null = null;
+let tournamentConnection: TournamentWsConnection | null = null;
+let wsNewMessageHandler: ((e: Event) => void) | null = null;
+let connectedTournamentId: string | null = null;
 
 
 
@@ -40,19 +44,11 @@ export function LiveChat(ctx: AppContext): string {
 		await refreshIsUserInGameOrTournament(ctx);
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
-		const t = await getCurrentTournament();
-		livechatTournamentId = t?.tournamentId ?? null;
-		if (livechatTournamentId) {
-			showTournamentNotifBox("Connected to tournament. Waiting for updates...");
-		} else {
-			hideTournamentNotifBox();
-		}
+		await setupTournamentNotifAndWs(ctx, currentUser.id!);
 		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
 		
-
-
 	}, 0);
 
 	// 3. Return loading screen placeholder
@@ -122,8 +118,28 @@ function passContext(ctx: AppContext) {
 	}
 }
 
+// ======== SET TOURNAMENT WS ========
+async function setupTournamentNotifAndWs(ctx: AppContext, currentUserId: string) {
+	const t = await getCurrentTournament();
+	livechatTournamentId = t?.tournamentId ?? null;
+
+	if (livechatTournamentId) {
+		showTournamentNotifBox("Connected to tournament. Waiting for updates...");
+		setTournamentWebSocket(livechatTournamentId, currentUserId, ctx);
+	} else {
+		hideTournamentNotifBox();
+		tournamentConnection?.disconnect();
+		tournamentConnection = null;
+		connectedTournamentId = null;
+	}
+}
+
 // ======== EVENT LISTENER ============
 function setupLiveChatEventListeners(ctx: AppContext) {
+	if (listenersAttached) return;
+
+ 	listenersAttached = true;
+
 	const friendListComponent = document.getElementById('friend-list-component') as any;
 	let manualClick = false;
  
@@ -240,8 +256,8 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 	});
 
 	// WS message event: receive chat from a friend
-	if (!wsListenerAttached) {
-		window.addEventListener("ws-new-message", async (e: Event) => {
+	if (!wsNewMessageHandler) {
+		wsNewMessageHandler = async (e: Event) => {
 			const currentUserId = ctx.userStore.get()?.id;
 			if (!currentUserId) return;
 
@@ -251,10 +267,8 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			const messageType = detail.messageType as "TEXT" | "GAME_INVITE";
 			const gameId = detail.gameId as string | undefined;
 
-
 			// CASE 1: If the friend is currently selected, show the bubble
 			if (_selectedFriend?.id === fromUserId) {
-
 				if (messageType === "TEXT") {
 					await refreshIsUserInGameOrTournament(ctx);
 					await renderChatBox(_selectedFriend, ctx);
@@ -274,7 +288,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 							const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 							if (inviteBtn) {
 								inviteBtn.classList.add("hidden");
-								inviteBtn.disabled = true; 
+								inviteBtn.disabled = true;
 							}
 
 							// 2) show accept/decline in header immediately
@@ -296,21 +310,18 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 								`;
 
 								bindInviteActionButtons(fromUserId, gameId, ctx);
-
 							}
 						}
 
-						// Show a visible bubble
 						bubble.innerHTML = `
 							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
 								🎮 Game invite received
 							</div>
 						`;
-
 					} else {
 						bubble.innerHTML = `
 							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-							${content}
+								${content}
 							</div>
 						`;
 					}
@@ -321,9 +332,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				return;
 			}
 
-
 			// CASE 2: Chat box not open
-
 			if (messageType === "GAME_INVITE" && gameId) {
 				pendingInviteMap.set(fromUserId, gameId);
 			}
@@ -344,11 +353,10 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 					await friendList.loadAndRender();
 				}
 			}
-		});
+		};
 
-		wsListenerAttached = true;
+		window.addEventListener("ws-new-message", wsNewMessageHandler);
 	}
-
 }
 
 async function renderChatBox(friend: any, ctx: AppContext) {
@@ -724,11 +732,57 @@ function setLiveChatWebSocket(userId: string) {
 	chatConnection.connect(userId);
 }
 
+function setTournamentWebSocket(tournamentId: string, userId: string, ctx: AppContext) {
+	// already connected to same tournament -> do nothing
+	if (tournamentConnection && connectedTournamentId === tournamentId) return;
+
+	// switch tournament or first connect
+	tournamentConnection?.disconnect();
+	tournamentConnection = new TournamentWsConnection();
+	connectedTournamentId = tournamentId;
+
+	tournamentConnection.connect(
+		tournamentId,
+		userId,
+
+		// onUpdate -> tournament_update
+		(data) => {
+			const myId = ctx.userStore.get()?.id;
+			if (!myId) return;
+
+			const msg = buildSimpleTournamentMsg(data, myId);
+			showTournamentNotifBox(msg);
+			console.log("tournament_update payload:", data);
+		},
+
+		// onQuit -> player_quit (ignore for now)
+		() => {},
+
+		// onTournamentEnd -> tournament_closed (ignore for now)
+		() => {}
+	);
+}
+
+
+
 export function cleanLiveChatWS() {
 	if (chatConnection) {
 		chatConnection.disconnect();
 		chatConnection = null;
 	}
+	if (tournamentConnection) {
+		tournamentConnection.disconnect();
+		tournamentConnection = null;
+	}
+	livechatTournamentId = null;
+	connectedTournamentId = null;
+	
+	if (wsNewMessageHandler) {
+		window.removeEventListener("ws-new-message", wsNewMessageHandler);
+		wsNewMessageHandler = null;
+	}
+
+	listenersAttached = false;
 }
 
 function showToast(message: string, type: 'block' | 'unblock') {
@@ -961,6 +1015,22 @@ function hideTournamentNotifBox() {
 	const box = document.getElementById("tournament-notif");
 	if (!box) return;
 	box.classList.add("hidden");
+}
+
+
+function isMeInGame(game: any, myId: string): boolean {
+	const arr = game?.gameUsers;
+	if (!Array.isArray(arr)) return false;
+	return arr.some((gu) => gu?.userId === myId);
+}
+
+function buildSimpleTournamentMsg(data: any, myId: string): string {
+	const inCurrent = isMeInGame(data?.game, myId);
+	const inNext = isMeInGame(data?.nextGame, myId);
+
+	if (inNext) return "🟢 You have a coming game.";
+	if (inCurrent) return "🎮 You have a current game update.";
+	return "🏆 Tournament updated (not related to you).";
 }
 
 // ======== GET CURRENT GAME ============
