@@ -339,10 +339,11 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		await tournamentService.matchMakeGames(request.server.prisma, userId, tournament);
 		await tournamentService.createEmptyGames(request.server.prisma, userId, tournament);
 
-		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+		TournamentWsController.broadcastToRoom(tournament.id, {
 			type: 'start_tournament',
-			message: `Start tournament!`
+			message:'Tournament has started',
 		})
+
 		return response;
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to start tournament"});
@@ -394,18 +395,9 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 		if (updatedOpponent?.isReady) {
 			await gameService.startGame(request.server.prisma, gameId, userId);
 			TournamentWsController.notifyGameReadiness(game.tournamentId, {user: userId, opponent: updatedOpponent.user.id}, 'start_game', updatedGame);
-			// WaintingRoomWsController.broadcasToRoom(game.id, {
-			// 	type: 'start_game',
-			// 	message: `${player.user.displayName} is starting the game!`,
-			// 	game: updatedGame
-			// })
+
 		} else {
 			TournamentWsController.notifyGameReadiness(game.tournamentId, {user: userId, opponent: updatedOpponent.user.id}, 'opponent_ready', updatedGame);
-			// WaintingRoomWsController.broadcasToRoom(game.id, {
-			// 	type: 'room_update',
-			// 	message: `${player.user.displayName} is ready for the game!`,
-			// 	game: updatedGame
-			// })
 		}
 
 		return updatedGame;

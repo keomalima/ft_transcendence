@@ -53,32 +53,8 @@ function notifyGameReadiness(tournamentId: string, playersId:{user: string, oppo
     });
 }
 
-function notifyTournamentFinished(tournamentId: string, userId: string) {
 
-	const sockets = tournamentBracket.get(tournamentId);
-	
-	if (!sockets) {
-		console.log(`❌ No sockets found for game room: ${tournamentId}`);
-		return;
-	}
-	
-	sockets.forEach(sock => {
-		const socketUserId = (sock as any).userId;
-		
-		if (socketUserId != userId) {
-			if (sock.readyState === WebSocket.OPEN) {
-				sock.send(JSON.stringify({
-					type: 'game_closed',
-					message: "The game has been deleted"
-				}));
-			} else {
-				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
-			}
-		}
-	});
-}
-
-function broadcasToRoom(tournamentId: string, message: any) {
+function broadcastToRoom(tournamentId: string, message: any) {
 	const sockets = tournamentBracket.get(tournamentId);
 	if (sockets) {
 		sockets.forEach(socket => {
@@ -90,7 +66,7 @@ function broadcasToRoom(tournamentId: string, message: any) {
 }
 
 export const TournamentWsController = {
-	broadcasToRoom,
+	broadcastToRoom,
 	tournamentBracketHandler,
 	notifyGameReadiness
 };

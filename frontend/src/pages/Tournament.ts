@@ -148,88 +148,35 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 	}
 }
 
-// ======== UPDATE PLAYER INFO ============
-function updatePlayerInfo(tournamentGames: TournamentGame[]) {
-
-	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
-	const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
-	if (tournamentNextGameComponent && tournamentBracketComponent && tournamentGames) {
-        tournamentNextGameComponent.tournamentGamesData = tournamentGames;
-		tournamentBracketComponent.tournamentGamesData = tournamentGames;
-	}
-}
-
 // ======== SET WEBSOCKET CONNECTION ============
 async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: TournamentGame[], ctx: AppContext) {
+	const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
+	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
+
 	// Create Tournament Websocket
 	tournamentWsConnection = new TournamentWsConnection();
 	tournamentWsConnection.connect(tournamentGames[0].tournamentId, currentUser.id!,
 		async (tournamentData) => {
-			console.log('New Tournament Global WS event', tournamentData);
-			if (tournamentData.gameId) {
-				// console.log('New Tournament WS event', tournamentData);
-				// const game = tournamentData.game;
-				// const nextGame = tournamentData.nextGame
-				// const tournamentBracketComponent = document.getElementById('tournament-game-component') as TournamentBracket | null;
-				// tournamentBracketComponent?.updateGameCard(game, nextGame);
-			}
+			if (tournamentData.gameId)
+				tournamentBracketComponent?.updateGameCard(tournamentData.game, tournamentData.nextGame);
 		},
 		(game) => {
-			const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as TournamentNextGame | null;
-			tournamentNextGameComponent?.updateGame(game.data);
+			if (game.data)
+				tournamentNextGameComponent?.updateGame(game.data);
 		},
 		(game) => {
 			cleantTournamentGlobalWs()
 			router.navigateTo(`/game/${game.data.id}`)
 		},
 		() => {
+			console.log("tournament started");
+		},
+		() => {
 			cleantTournamentGlobalWs()
 			router.navigateTo('/home');
 		},
-	)
-
-
-	// const gameIndex = tournamentGames.findIndex(game =>
-	// 	game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id && game.status === 'PENDING')
-	// )
-
-	// if (gameIndex === -1) return;
-	
-	// const gameData = tournamentGames[gameIndex];
-
-	// // Create websocket with gameid
-	// wsConnection = new WaitingRoomConnection();
-	// wsConnection.connect(gameData.id!, currentUser.id!,
-	// 	async (updateGameData) => {
-	// 		if (updateGameData.message) {
-	// 			console.log('New WS event', updateGameData);
-	// 			tournamentGames[gameIndex] = updateGameData.game;
-	// 			updatePlayerInfo(tournamentGames);
-	// 		}
-	// 		console.log('websocket called')
-	// 	},
-	// 	() => {
-	// 		cleanTournamentWaitingRoomWS();
-	// 		router.navigateTo('/home');
-	// 	},
-	// 	() => {
-	// 		cleanTournamentWaitingRoomWS();
-	// 		router.navigateTo('/home');
-	// 	},
-	// 	() => {
-	// 		cleanTournamentWaitingRoomWS();
-	// 		router.navigateTo(`/game/${gameData.id}`)
-	// 	}
-	// )
+	)	
 }
-
-// ======== CLEANUP WEBSOCKET CONNECTION ============
-// export function cleanTournamentGlobalWS() {
-// 	if (wsConnection) {
-// 		wsConnection.disconnect();
-// 		wsConnection = null;
-// 	}
-// }
 
 export function cleantTournamentGlobalWs() {
 	if (tournamentWsConnection) {

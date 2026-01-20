@@ -3,6 +3,7 @@ import { cleanGameWS } from "./pages/Game.js";
 import { cleanLiveChatWS } from "./pages/LiveChat.js";
 import { cleanTournamentWaitingRoomWS } from "./pages/TournamentRoom.js";
 import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
+import { cleantTournamentGlobalWs } from "./pages/Tournament.js";
 
 
 // Define a new function type to make sure that the function sent to route is well designed
@@ -68,6 +69,9 @@ export class Router {
 		}
 		if (currentPath.startsWith('/tournament-room')) {
 			cleanTournamentWaitingRoomWS();
+		}
+		if (currentPath.startsWith('/tournament')) {
+			cleantTournamentGlobalWs();
 		}
 		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;
