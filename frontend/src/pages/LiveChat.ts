@@ -792,7 +792,8 @@ function setTournamentWebSocket(tournamentId: string, userId: string, ctx: AppCo
 
 		// onQuit -> player_quit (ignore for now)
 		() => {},
-
+		() => {},
+		() => {},
 		// onTournamentEnd -> tournament_closed (ignore for now)
 		() => {}
 	);

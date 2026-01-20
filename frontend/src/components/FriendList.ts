@@ -127,6 +127,7 @@ export class FriendList extends HTMLElement {
 		'cursor-pointer transition-colors hover:bg-stone-200';
 
 		if (friend.id && friend.id === this._selectedFriendId) {
+			console.log('hoover');
 			card.classList.remove('bg-stone-100');
 			card.classList.add('bg-stone-300');
 		}
