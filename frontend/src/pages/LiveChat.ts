@@ -20,6 +20,7 @@ let isUserInGameOrTournament = false;
 let isFriendInGameOrTournament = false;
 // sender -> gameId
 const pendingInviteMap = new Map<string, string>();
+let livechatTournamentId: string | null = null;
 
 
 
@@ -39,9 +40,19 @@ export function LiveChat(ctx: AppContext): string {
 		await refreshIsUserInGameOrTournament(ctx);
 		renderLiveChatContent(ctx);       // Build and insert the layout
 		passContext(ctx);                 // Pass ctx to components like <friend-list>
+		const t = await getCurrentTournament();
+		livechatTournamentId = t?.tournamentId ?? null;
+		if (livechatTournamentId) {
+			showTournamentNotifBox("Connected to tournament. Waiting for updates...");
+		} else {
+			hideTournamentNotifBox();
+		}
 		await fetchUnreadSendersFromBackend(ctx); // Fetch new messages from backend when come back to the livechat page
 		setupLiveChatEventListeners(ctx); // Handle form submission, etc.
 		setLiveChatWebSocket(currentUser.id!); // Set up WS connection
+		
+
+
 	}, 0);
 
 	// 3. Return loading screen placeholder
@@ -61,10 +72,23 @@ function renderLiveChatContent(ctx: AppContext) {
 		<nav-bar id="nav-bar-component"></nav-bar>
 
 		<div class="grid h-[90vh] gap-4 px-4 py-6 grid-rows-[auto_1fr_auto] lg:grid-cols-4 lg:grid-rows-1">
-			<!-- Left: Friends list -->
+			<!-- Left: Tournament Notif + Friends list -->
+
 			<div class="order-1 lg:order-1 lg:col-span-1 bg-white rounded-lg shadow p-4 h-[50vh] min-h-[300px] lg:h-auto overflow-y-auto">
+			
+			<!-- Tournament notif box (hidden by default) -->
+			<div id="tournament-notif" class="hidden mb-3 rounded-lg border border-gray-200 bg-yellow-50 p-3">
+				<div class="flex items-start justify-between gap-2">
+					<div>
+						<p class="font-semibold text-gray-900">🏆 Tournament Notification</p>
+						<p id="tournament-notif-text" class="text-sm text-gray-700 mt-1">Loading...</p>
+					</div>
+				</div>
+			</div>
+
 				<friend-list id="friend-list-component"></friend-list>
 			</div>
+
 
 			<!-- Right: Chat box (dynamic) -->
 			<div id="chat-right"
@@ -695,6 +719,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 }
 
 function setLiveChatWebSocket(userId: string) {
+	if (chatConnection) return;
 	chatConnection = new ChatConnection();
 	chatConnection.connect(userId);
 }
@@ -919,6 +944,23 @@ async function refreshIsUserInGameOrTournament(ctx: AppContext): Promise<void> {
 	const currentTournament = await getCurrentTournament();
 
 	isUserInGameOrTournament = !!(currentGame?.gameId || currentTournament?.tournamentId);
+}
+
+function showTournamentNotifBox(text: string) {
+	const box = document.getElementById("tournament-notif");
+	const textEl = document.getElementById("tournament-notif-text");
+
+	if (!box || !textEl) return;
+
+	box.classList.remove("hidden");
+	textEl.textContent = text;
+}
+
+
+function hideTournamentNotifBox() {
+	const box = document.getElementById("tournament-notif");
+	if (!box) return;
+	box.classList.add("hidden");
 }
 
 // ======== GET CURRENT GAME ============
