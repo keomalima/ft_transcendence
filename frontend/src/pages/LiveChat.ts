@@ -1,4 +1,4 @@
-import type { AppContext, ChatMessage, FriendPaginationMap, UserState, GameHistory } from "../types.js";
+import type { AppContext, ChatMessage, FriendPaginationMap, UserState } from "../types.js";
 import { router } from "../main.js";
 
 // Import UI components
@@ -19,12 +19,12 @@ let listenersAttached = false;
 export const unreadNotificationSet = new Set<string>();
 let isUserInGameOrTournament = false;
 let isFriendInGameOrTournament = false;
-// sender -> gameId
 const pendingInviteMap = new Map<string, string>();
 let livechatTournamentId: string | null = null;
 let tournamentConnection: TournamentWsConnection | null = null;
 let wsNewMessageHandler: ((e: Event) => void) | null = null;
 let connectedTournamentId: string | null = null;
+let selectVersion = 0;
 
 
 
@@ -141,54 +141,44 @@ function setupLiveChatEventListeners(ctx: AppContext) {
  	listenersAttached = true;
 
 	const friendListComponent = document.getElementById('friend-list-component') as any;
-	let manualClick = false;
  
 	// **** FRIEND LIST LOADED ****
-	friendListComponent?.addEventListener('friends-loaded', async (e: Event) => {
-		if (manualClick)
-		{
-			manualClick = false;
-			return;
-		}
-
+	friendListComponent?.addEventListener("friends-loaded", (e: Event) => {
 		if (friendListComponent.skipAutoSelect) {
 			friendListComponent.skipAutoSelect = false;
 			return;
 		}
 
-		const customEvent = e as CustomEvent;
-		const friends = customEvent.detail as any[];
-
-		const chatRight = document.getElementById('chat-right');
-		const chatEmpty = document.getElementById('chat-empty');
-
+		const friends = (e as CustomEvent).detail as any[];
+		const chatRight = document.getElementById("chat-right");
+		const chatEmpty = document.getElementById("chat-empty");
 		if (!chatRight || !chatEmpty) return;
 
-		if (friends.length === 0) {
-			// No friends → show empty panel
-			chatRight.classList.add('hidden');
-			chatEmpty.classList.remove('hidden');
-
-			const chatEmptyMessage = chatEmpty.querySelector('p');
-			if (chatEmptyMessage) {
-				chatEmptyMessage.innerHTML = `
-							<span class="text-gray-900 text-xl font-semibold italic text-center block">
-								🫤 You have no friends yet. Add some to start chatting!
-							</span>
-						`;			
-					}
-		} else {
-			chatRight.classList.add('hidden');
-			chatEmpty.classList.remove('hidden');
-
-			const chatEmptyMessage = chatEmpty.querySelector('p');
-			if (chatEmptyMessage) {
-				chatEmptyMessage.innerHTML = `
-					<span class="text-gray-900 text-xl font-semibold italic text-center block">
-						👈 Select a friend to start chatting!
-					</span>
-				`;
+		// If have a selected friend, keep chat UI unless friend disappeared
+		if (_selectedFriend?.id) {
+			const stillExists = friends.some((f) => f.id === _selectedFriend.id);
+			if (stillExists) {
+				return;
 			}
+
+			// Selected friend is gone -> reset selection and show empty
+			_selectedFriend = null;
+		}
+
+		// No selection: show empty panel
+		chatRight.classList.add("hidden");
+		chatEmpty.classList.remove("hidden");
+
+		const p = chatEmpty.querySelector("p");
+		if (p) {
+			p.innerHTML =
+			friends.length === 0
+			? `<span class="text-gray-900 text-xl font-semibold italic text-center block">
+					🫤 You have no friends yet. Add some to start chatting!
+				</span>`
+			: `<span class="text-gray-900 text-xl font-semibold italic text-center block">
+					👈 Select a friend to start chatting!
+				</span>`;
 		}
 	});
 
@@ -212,48 +202,64 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 	});
 
 	// **** When user clicks a friend ****
-	friendListComponent?.addEventListener('friend-selected', async (e: Event) => {
-		manualClick = true;
+	friendListComponent?.addEventListener("friend-selected", (e: Event) => {
 
-		const customEvent = e as CustomEvent;
-		const clickedFriend = customEvent.detail;
+		const clickedFriend = (e as CustomEvent).detail;
+		const myVersion = ++selectVersion;
 
-		// // STEP 1: Remove from localStorage unread set
+		_selectedFriend = clickedFriend;
+		isFriendInGameOrTournament = false;
+
+		renderChatShell(clickedFriend);
+
+		const popup = document.getElementById("friend-profile-component") as any;
+		if (popup) {
+			popup.ctx = ctx;
+			popup.friend = clickedFriend;
+			popup.friendHistory = [];
+		}
+
+		setTimeout(async () => {
+			if (myVersion !== selectVersion) return;
+			try {
+				const history = await friendshipApi.getFriendHistory(clickedFriend.id);
+				if (myVersion !== selectVersion) return;
+
+				const popup2 = document.getElementById("friend-profile-component") as any;
+				if (popup2) {
+					popup2.ctx = ctx;
+					popup2.friend = clickedFriend;
+					popup2.friendHistory = history;
+				}
+			} catch (err) {
+				console.error("getFriendHistory failed:", err);
+			}
+		}, 0);
+
 		if (unreadNotificationSet.has(clickedFriend.id)) {
 			unreadNotificationSet.delete(clickedFriend.id);
 
-			try {
-				await chatApi.deleteNotification(clickedFriend.id); // Call backend to remove
-			} catch (err) {
-				console.error("❌ Failed to delete notification from backend:", err);
-			}
+			chatApi.deleteNotification(clickedFriend.id).catch((err) => {
+				console.error("deleteNotification failed:", err);
+				unreadNotificationSet.add(clickedFriend.id);
+			});
+
+			setTimeout(() => {
+				if (friendListComponent?.loadAndRender) {
+					friendListComponent.skipAutoSelect = true;
+					friendListComponent.loadAndRender();
+				}
+			}, 0);
 		}
 
-		// STEP 2: Reload friend list (to refresh red ! badges)
-		await friendListComponent.loadAndRender();
-		const updatedList = friendListComponent._list;
+		setTimeout(async () => {
+			if (myVersion !== selectVersion) return;
 
-		// STEP 3: Find and set selected friend
-		const updatedFriend = updatedList?.find((f: any) => f.id === clickedFriend.id);
-		if (!updatedFriend) return;
-		_selectedFriend = updatedFriend;
-		await refreshIsUserInGameOrTournament(ctx);
-		isFriendInGameOrTournament = false;	
-
-		// STEP 4: get the selected friend history
-		const friendHistory: GameHistory[] = await friendshipApi.getFriendHistory(_selectedFriend.id);
-
-		const FriendPofileComponent = document.getElementById('friend-profile-component') as any;
-		if (FriendPofileComponent) {
-			FriendPofileComponent.ctx = ctx;
-			FriendPofileComponent.friendHistory = friendHistory;
-			FriendPofileComponent.friend = _selectedFriend;
-		}
-		// STEP 4: Render chat box
-		const chatRight = document.getElementById('chat-right');
-		if (!chatRight) return;
-		renderChatBox(_selectedFriend, ctx);
+			await renderChatBox(clickedFriend, ctx, myVersion);
+			verifyStillFriend(clickedFriend.id, friendListComponent, ctx, myVersion);
+		}, 0);
 	});
+
 
 	// WS message event: receive chat from a friend
 	if (!wsNewMessageHandler) {
@@ -270,8 +276,18 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			// CASE 1: If the friend is currently selected, show the bubble
 			if (_selectedFriend?.id === fromUserId) {
 				if (messageType === "TEXT") {
-					await refreshIsUserInGameOrTournament(ctx);
-					await renderChatBox(_selectedFriend, ctx);
+					const chatBox = document.getElementById("chat-messages");
+					if (chatBox) {
+						const bubble = document.createElement("div");
+						bubble.className = "flex justify-start";
+						bubble.innerHTML = `
+							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
+								${content}
+							</div>
+						`;
+						chatBox.appendChild(bubble);
+						chatBox.scrollTop = chatBox.scrollHeight;
+					}
 					return;
 				}
 
@@ -309,7 +325,8 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 									</button>
 								`;
 
-								bindInviteActionButtons(fromUserId, gameId, ctx);
+								const v = selectVersion;
+								bindInviteActionButtons(fromUserId, gameId, ctx, v);
 							}
 						}
 
@@ -346,7 +363,6 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 					console.error("❌ Failed to create notification in backend:", err);
 				}
 
-				// Then update UI
 				const friendList = document.getElementById("friend-list-component") as any;
 				if (friendList?.loadAndRender) {
 					friendList.skipAutoSelect = true;
@@ -359,11 +375,13 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 	}
 }
 
-async function renderChatBox(friend: any, ctx: AppContext) {
-	console.log('Game Store', ctx.gameStore.get());
+async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	const chatRight = document.getElementById('chat-right');
 	const chatEmpty = document.getElementById('chat-empty');
 	if (!chatRight || !chatEmpty) return;
+
+	const isStale = () => version !== selectVersion || _selectedFriend?.id !== friend.id;
+	if (isStale()) return;
 
 	const currentUserId = ctx.userStore.get()?.id;
 	
@@ -378,6 +396,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 	let messages: ChatMessage[] = [];
 	try {
 		messages = await chatApi.fetchChatHistory(friend.id);
+		if (isStale()) return;
 		if (messages.length > 0) {
 			paginationMap[friend.id] = {
 				oldestMessageId: messages[0].id,
@@ -390,25 +409,27 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			};
 		}
 	} catch (error) {
+		if (isStale()) return;
 		console.error('❌ Failed to load chat history:', error);
 		paginationMap[friend.id] = {
 			oldestMessageId: null,
 			hasMoreMessages: false,
 		};
 	}
-	
+
 	await refreshIsUserInGameOrTournament(ctx);
+	if (isStale()) return;
 
 	const isAnyInGame = isUserInGameOrTournament || isFriendInGameOrTournament;
 
-	// receiver-side pending invite (friend -> me)
-	const pendingGameId = await syncPendingInviteFromBackend(friend.id);
-	const shouldHideInviteGameBtn = !!pendingGameId && !isUserInGameOrTournament;
-
-	// user1-side: ask backend if I should see Go to Game with this friend
-	const goToGameId = await syncGoToGameFromBackend(friend.id);
+	const [pendingGameId, goToGameId] = await Promise.all([
+		syncPendingInviteFromBackend(friend.id),
+		syncGoToGameFromBackend(friend.id),
+	]);
+	if (isStale()) return;
 
 	const canShowGoToGame = !!goToGameId && !pendingGameId && !friend.isBlockedBy;
+	const shouldHideInviteGameBtn = !!pendingGameId && !isUserInGameOrTournament;
 
 	chatRight.innerHTML = `
 		<!-- Header -->
@@ -517,7 +538,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			</button>
 		`;
 
-		bindInviteActionButtons(friend.id, pendingGameId, ctx);
+		bindInviteActionButtons(friend.id, pendingGameId, ctx, version);
 	} else if (inviteActions) {
 		inviteActions.innerHTML = "";
 	}
@@ -530,46 +551,52 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 		requestAnimationFrame(() => {
 			chatBox.scrollTop = chatBox.scrollHeight;
 		});
+		const thisFriendId = friend.id;
 		chatBox.onscroll = async () => {
-			const state = paginationMap[_selectedFriend.id];
-			if (chatBox.scrollTop === 0 && state?.hasMoreMessages && state.oldestMessageId && _selectedFriend) {
-				console.log("🔼 Scrolled to top — loading older messages...");
+			if (_selectedFriend?.id !== thisFriendId) return;
 
-				const olderMessages = await chatApi.fetchChatHistory(_selectedFriend.id, state.oldestMessageId);				
-				if (olderMessages.length === 0) {
-					paginationMap[_selectedFriend.id].hasMoreMessages = false;
-					console.log("🛑 No more older messages.");
-					return;
-				}
+			const state = paginationMap[thisFriendId];
+			if (chatBox.scrollTop !== 0) return;
+			if (!state?.hasMoreMessages || !state.oldestMessageId) return;
 
-				if (olderMessages.length < 30) {
-					paginationMap[_selectedFriend.id].hasMoreMessages = false;
-				}
+			console.log("🔼 Scrolled to top — loading older messages...");
 
-				// Update oldest ID
-				paginationMap[_selectedFriend.id].oldestMessageId = olderMessages[0].id;
+			const olderMessages = await chatApi.fetchChatHistory(thisFriendId, state.oldestMessageId);
 
-				// Save scroll height before inserting
-				const previousHeight = chatBox.scrollHeight;
+			// guard again after await
+			if (_selectedFriend?.id !== thisFriendId) return;
 
-				// Render new messages and prepend
-				const tempDiv = document.createElement("div");
-				tempDiv.innerHTML = renderMessageBubbles(olderMessages, ctx.userStore.get()?.id || "");
-				chatBox.prepend(...Array.from(tempDiv.children));
-
-				// Restore scroll position
-				requestAnimationFrame(() => {
-					const newHeight = chatBox.scrollHeight;
-					chatBox.scrollTop = newHeight - previousHeight;
-				});
+			if (olderMessages.length === 0) {
+				paginationMap[thisFriendId].hasMoreMessages = false;
+				console.log("🛑 No more older messages.");
+				return;
 			}
+
+			if (olderMessages.length < 30) {
+				paginationMap[thisFriendId].hasMoreMessages = false;
+			}
+
+			paginationMap[thisFriendId].oldestMessageId = olderMessages[0].id;
+
+			const previousHeight = chatBox.scrollHeight;
+
+			const tempDiv = document.createElement("div");
+			tempDiv.innerHTML = renderMessageBubbles(olderMessages, currentUserId);
+			chatBox.prepend(...Array.from(tempDiv.children));
+
+			requestAnimationFrame(() => {
+				const newHeight = chatBox.scrollHeight;
+				chatBox.scrollTop = newHeight - previousHeight;
+			});
 		};
+
 	}
 
 	
 	const blockBtn = document.getElementById('block-toggle-btn');
 	if (blockBtn) {
 		blockBtn.addEventListener('click', async () => {
+			if (isStale()) return;
 			try {
 				if (friend.isBlocked) {
 					await friendshipApi.unblock(friend.id);
@@ -583,7 +610,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 				const updated = updatedFriendList.find((f) => f.id === friend.id);
 				if (updated) {
 					_selectedFriend = updated;
-					renderChatBox(_selectedFriend, ctx);
+					renderChatBox(_selectedFriend, ctx, selectVersion);
 				}
 				} catch (error) {
 					console.error('Error block/unblock:', error);
@@ -608,13 +635,14 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			inviteBtn.onclick = async () => {
 				if (!_selectedFriend) return;
 				if (inviteBtn.disabled) return;
-
+				if (isStale()) return;
 				try {
 					const res = await chatApi.sendMessage({
 						toUserId: _selectedFriend.id,
 						content: "I invite you to a game.",
 						type: "GAME_INVITE",
 					});
+					if (isStale()) return;
 
 					if (res.status === "ok") {
 						console.log("✅ Game invite sent successfully!");
@@ -639,7 +667,7 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 						const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
 						if (updated) {
 							_selectedFriend = updated;
-							renderChatBox(_selectedFriend, ctx);
+							renderChatBox(_selectedFriend, ctx, selectVersion);
 						}
 						return;
 					}
@@ -647,18 +675,19 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 					if (res.code === "U_IN_GAME") {
 						showToast("❌ You are already in a game or tournament.", "block");
 						isUserInGameOrTournament = true;
-						renderChatBox(_selectedFriend, ctx);
+						renderChatBox(_selectedFriend, ctx, selectVersion);
 						return;
 					}
 
 					if (res.code === "F_IN_GAME") {
 						showToast(`❌ ${_selectedFriend.displayName} is already in a game or tournament.`, "block");
 						isFriendInGameOrTournament = true;
-						renderChatBox(_selectedFriend, ctx);
+						renderChatBox(_selectedFriend, ctx, selectVersion);
 						return;
 					}
 
 				} catch (err) {
+					if (isStale()) return;
 					console.error("❌ Error sending game invite:", err);
 					alert("An error occurred. Please try again.");
 				}
@@ -685,38 +714,44 @@ async function renderChatBox(friend: any, ctx: AppContext) {
 			const content = chatInput.value.trim();
 			if (!content || !_selectedFriend) return;
 
-			const res = await chatApi.sendMessage({
-				toUserId: _selectedFriend.id,
-				content,
-				type: "TEXT"
-			});
+			try{
+				const res = await chatApi.sendMessage({
+					toUserId: _selectedFriend.id,
+					content,
+					type: "TEXT"
+				});
+				if (isStale()) return;
+				if (res.status === "ok") {
+					const chatBox = document.getElementById("chat-messages");
+					if (chatBox) {
+						const bubble = document.createElement("div");
+						bubble.className = "flex justify-end";
+						bubble.innerHTML = `
+							<div class="px-4 py-2 rounded-lg bg-blue-100 text-black max-w-xs break-words">
+								${content}
+							</div>
+						`;
+						chatBox.appendChild(bubble);
+						chatBox.scrollTop = chatBox.scrollHeight;
+					}
+					chatInput.value = "";
 
-			if (res.status === "ok") {
-				const chatBox = document.getElementById("chat-messages");
-				if (chatBox) {
-					const bubble = document.createElement("div");
-					bubble.className = "flex justify-end";
-					bubble.innerHTML = `
-						<div class="px-4 py-2 rounded-lg bg-blue-100 text-black max-w-xs break-words">
-							${content}
-						</div>
-					`;
-					chatBox.appendChild(bubble);
-					chatBox.scrollTop = chatBox.scrollHeight;
+				} else if (res.code === "BLOCKED") {
+					showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
+
+					const updatedFriendList = await friendshipApi.getList();
+					const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
+					if (updated) {
+						_selectedFriend = updated;
+						renderChatBox(_selectedFriend, ctx, selectVersion);
+					}
+				} else {
+					alert(`Failed to send message: ${res.reason}`);
 				}
-				chatInput.value = "";
-
-			} else if (res.code === "BLOCKED") {
-				showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
-
-				const updatedFriendList = await friendshipApi.getList();
-				const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
-				if (updated) {
-					_selectedFriend = updated;
-					renderChatBox(_selectedFriend, ctx);
-				}
-			} else {
-				alert(`Failed to send message: ${res.reason}`);
+			}
+			catch (err) {
+				if (isStale()) return;
+					console.error("send text failed:", err);
 			}
 		});
 
@@ -868,13 +903,15 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 	}
 }
 
-function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppContext) {
+function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppContext, version:number) {
 	const acceptBtn = document.getElementById("accept-invite-btn") as HTMLButtonElement | null;
 	const declineBtn = document.getElementById("decline-invite-btn") as HTMLButtonElement | null;
 
 	if (!acceptBtn || !declineBtn || !gameId) return;
 
+	const isStale = () => version !== selectVersion || _selectedFriend?.id !== friendId;
 	acceptBtn.onclick = async () => {
+		if (isStale()) return;
 		// safety check
 		if (isUserInGameOrTournament) {
 			showToast("❌ You are already in a game or tournament.", "block");
@@ -887,6 +924,7 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 		try {
 			// 1) Call backend: join game by gameId (no token needed)
 			const res = await chatApi.joinGameFromChat({ gameId });
+			if (isStale()) return;
 
 			if (res.status !== "ok") {
 				console.error("❌ joinGameFromChat failed:", res);
@@ -914,12 +952,14 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 	};
 
 	declineBtn.onclick = async () => {
+		if (isStale()) return; 
 		declineBtn.disabled = true;
 		acceptBtn.disabled = true;
 
 		try {
 			// Step 1: call backend
 			const res = await chatApi.declineGameFromChat({ gameId });
+			if (isStale()) return; 
 
 			if (!res || res.status !== "ok") {
 				showToast(res?.reason || "❌ Failed to decline invite.", "block");
@@ -944,7 +984,7 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 
 			if (_selectedFriend) {
 				await refreshIsUserInGameOrTournament(ctx);
-				renderChatBox(_selectedFriend, ctx);
+				renderChatBox(_selectedFriend, ctx, selectVersion);
 			}
 		} catch (err) {
 			console.error("❌ declineGameFromChat error:", err);
@@ -956,13 +996,14 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 }
 
 async function syncPendingInviteFromBackend(friendId: string): Promise<string | null> {
+	const cached = pendingInviteMap.get(friendId) ?? null;
+
 	try {
 		const res = await chatApi.getPendingInvite(friendId);
 
 		// if not ok -> clear stale state
 		if (!res || res.status !== "ok") {
-			pendingInviteMap.delete(friendId);
-			return null;
+			return cached;
 		}
 
 		const gameId = (res.gameId && res.gameId.trim() !== "") ? res.gameId : null;
@@ -975,8 +1016,7 @@ async function syncPendingInviteFromBackend(friendId: string): Promise<string | 
 		return gameId;
 	} catch (err) {
 		console.error("❌ syncPendingInviteFromBackend error:", err);
-		pendingInviteMap.delete(friendId);
-		return null;
+		return cached;
 	}
 }
 
@@ -1031,6 +1071,65 @@ function buildSimpleTournamentMsg(data: any, myId: string): string {
 	if (inNext) return "🟢 You have a coming game.";
 	if (inCurrent) return "🎮 You have a current game update.";
 	return "🏆 Tournament updated (not related to you).";
+}
+
+function patchChatHeader(friend: any) {
+	const nameEl = document.getElementById("chat-friend-name");
+	const statusEl = document.getElementById("chat-friend-status");
+	if (nameEl) nameEl.textContent = friend.displayName ?? "";
+	if (statusEl) statusEl.textContent = friend.isOnline ? "Online" : "Offline";
+}
+
+function renderChatShell(friend: any) {
+	const chatRight = document.getElementById("chat-right");
+	const chatEmpty = document.getElementById("chat-empty");
+	if (!chatRight || !chatEmpty) return;
+
+	chatEmpty.classList.add("hidden");
+	chatRight.classList.remove("hidden");
+
+	chatRight.innerHTML = `
+	<div class="flex justify-between items-center p-4 border-b">
+		<div>
+			<p id="chat-friend-name" class="font-bold text-lg">${friend.displayName ?? ""}</p>
+			<p id="chat-friend-status" class="text-gray-500 text-sm">${friend.isOnline ? "Online" : "Offline"}</p>
+		</div>
+		<div class="text-sm text-gray-400">Loading…</div>
+	</div>
+
+	<div class="flex-1 p-4 overflow-y-auto">
+		<p class="text-gray-400 text-center mt-4">Loading messages…</p>
+	</div>
+	`;
+}
+
+async function verifyStillFriend(friendId: string, friendListComponent: any, ctx: AppContext, version: number) {
+	try {
+		const list = await friendshipApi.getList();
+		if (version !== selectVersion) return;
+
+		const fresh = list.find((f: any) => f.id === friendId);
+		if (!fresh) {
+			// friendship removed / friend deleted you
+			_selectedFriend = null;
+			document.getElementById("chat-right")?.classList.add("hidden");
+			document.getElementById("chat-empty")?.classList.remove("hidden");
+
+			if (friendListComponent?.loadAndRender) {
+				friendListComponent.skipAutoSelect = true;
+				await friendListComponent.loadAndRender();
+			}
+			return;
+		}
+
+		// update selected friend fields (online/blocked etc.) without re-rendering chat
+		if (_selectedFriend?.id === friendId) {
+			_selectedFriend = fresh;
+			patchChatHeader(fresh);
+		}
+	} catch (err) {
+		console.error("verifyStillFriend failed:", err);
+	}
 }
 
 // ======== GET CURRENT GAME ============
