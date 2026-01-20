@@ -76,7 +76,7 @@ function renderLiveChatContent(ctx: AppContext) {
 			<div id="tournament-notif" class="hidden mb-3 rounded-lg border border-gray-200 bg-yellow-50 p-3">
 				<div class="flex items-start justify-between gap-2">
 					<div>
-						<p class="font-semibold text-gray-900">🏆 Tournament Notification</p>
+						<p class="font-semibold text-gray-900">Tournament Notification</p>
 						<p id="tournament-notif-text" class="text-sm text-gray-700 mt-1">Loading...</p>
 					</div>
 				</div>
@@ -124,7 +124,7 @@ async function setupTournamentNotifAndWs(ctx: AppContext, currentUserId: string)
 	livechatTournamentId = t?.tournamentId ?? null;
 
 	if (livechatTournamentId) {
-		showTournamentNotifBox("Connected to tournament. Waiting for updates...");
+		showTournamentNotifBox("📡 Connected. Waiting for tournament updates...");
 		setTournamentWebSocket(livechatTournamentId, currentUserId, ctx);
 	} else {
 		hideTournamentNotifBox();
@@ -780,26 +780,57 @@ function setTournamentWebSocket(tournamentId: string, userId: string, ctx: AppCo
 		tournamentId,
 		userId,
 
-		// onUpdate -> tournament_update
+		// tournament_update
 		(data) => {
 			const myId = ctx.userStore.get()?.id;
 			if (!myId) return;
 
 			const msg = buildSimpleTournamentMsg(data, myId);
 			showTournamentNotifBox(msg);
-			console.log("tournament_update payload:", data);
+
+			// optional: keep state fresh for disabling invites etc.
+			refreshIsUserInGameOrTournament(ctx).catch(() => {});
 		},
 
-		// onQuit -> player_quit (ignore for now)
-		() => {},
-		() => {},
-		() => {},
-		// onTournamentEnd -> tournament_closed (ignore for now)
-		() => {}
+		// opponent_ready
+		(data) => {
+			showTournamentNotifBox("🟢 Opponent is ready. Go to the tournament page.");
+		},
+
+		// start_game
+		(data) => {
+			showTournamentNotifBox("🎮 Match is starting now. Go to the tournament page.");
+		},
+
+		// start_tournament
+		() => {
+			showTournamentNotifBox("🚀 Tournament started. Go to the tournament page.");
+		},
+
+		// tournament_closed
+		() => {
+			// 1) show notif
+			showTournamentNotifBox("🏁 Tournament finished.");
+
+			// 2) disconnect tournament WS + reset ids
+			tournamentConnection?.disconnect();
+			tournamentConnection = null;
+			livechatTournamentId = null;
+			connectedTournamentId = null;
+
+			// 3) refresh flags so invite buttons etc. become correct again
+			refreshIsUserInGameOrTournament(ctx)
+			.then(() => {
+				if (_selectedFriend) renderChatBox(_selectedFriend, ctx, selectVersion);
+			})
+			.catch(() => {});
+
+			// 4) hide the notif box after 5 sec
+			window.setTimeout(() => hideTournamentNotifBox(), 2000);
+		},
 	);
+
 }
-
-
 
 export function cleanLiveChatWS() {
 	if (chatConnection) {
@@ -1054,8 +1085,10 @@ function showTournamentNotifBox(text: string) {
 
 function hideTournamentNotifBox() {
 	const box = document.getElementById("tournament-notif");
+	const textEl = document.getElementById("tournament-notif-text");
 	if (!box) return;
 	box.classList.add("hidden");
+	if (textEl) textEl.textContent = "";
 }
 
 
@@ -1069,9 +1102,9 @@ function buildSimpleTournamentMsg(data: any, myId: string): string {
 	const inCurrent = isMeInGame(data?.game, myId);
 	const inNext = isMeInGame(data?.nextGame, myId);
 
-	if (inNext) return "🟢 You have a coming game.";
-	if (inCurrent) return "🎮 You have a current game update.";
-	return "🏆 Tournament updated (not related to you).";
+	if (inNext) return "📣 Upcoming match assigned.";
+	if (inCurrent) return "📣 Current match updated.";
+	return "📣 Tournament updated.";
 }
 
 function patchChatHeader(friend: any) {

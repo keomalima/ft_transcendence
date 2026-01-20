@@ -21,6 +21,7 @@ export class TournamentWsConnection {
 
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
+
 			if (data.type === 'tournament_update') {
 				console.log('New tournament update');
 				onUpdate(data);
@@ -33,7 +34,7 @@ export class TournamentWsConnection {
 				console.log('The game will start..');
 				onStartGame(data);
 			}
-			if (data.type === 'tournament_started') {
+			if (data.type === 'start_tournament') {
 				console.log('The tournament has started');
 				onStartTournament();
 			}
