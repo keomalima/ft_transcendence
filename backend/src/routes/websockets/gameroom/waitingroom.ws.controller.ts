@@ -29,7 +29,6 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 	socket.on('close', () => {
 		clearInterval(pingInterval);
 		gameRooms.get(gameId)?.delete(identifiedSocket);
-		console.log(`Player disconnected from game room: ${gameId}`);
 	})
 }
 

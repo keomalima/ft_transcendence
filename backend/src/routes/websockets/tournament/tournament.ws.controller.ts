@@ -1,16 +1,20 @@
 import type { FastifyRequest } from 'fastify'
 import { WebSocket } from 'ws';
+import type { gameService } from '../../game/game.service.js';
 
 // =====================
 // Websocket Handlers for Tournament
 // =====================
 
-const tournamentBracket = new Map<string, Set<WebSocket>>();
+type GameWithUsers = Awaited<ReturnType<typeof gameService.findGameById>>;
+type IdentifiedSocket = WebSocket & { userId: string };
+const tournamentBracket = new Map<string, Set<IdentifiedSocket>>();
 
 async function tournamentBracketHandler(socket: WebSocket, request: FastifyRequest<{Params: {tournamentId: string, userId: string}}>) {
 	const tournamentId = request.params.tournamentId;
 	const userId = request.params.userId;
-	const identifiedSocket = socket as WebSocket & { userId?: string};
+	const identifiedSocket = socket as IdentifiedSocket;
+    identifiedSocket.userId = userId;
 
 	identifiedSocket.userId = userId;
 
@@ -32,15 +36,21 @@ async function tournamentBracketHandler(socket: WebSocket, request: FastifyReque
 	})
 }
 
-function broadcasToRoom(tournamentId: string, message: any) {
+function notifyGameReadiness(tournamentId: string, playersId:{user: string, opponent: string}, type: string, data: GameWithUsers) {
 	const sockets = tournamentBracket.get(tournamentId);
-	if (sockets) {
-		sockets.forEach(socket => {
-			if (socket.readyState === WebSocket.OPEN) {
-				socket.send(JSON.stringify(message));
-			}
-		})
-	}
+	if (!sockets) return;
+
+	console.log('User id', playersId.user, 'Opponent Id', playersId.opponent);
+	const targetUserIds = [playersId.user, playersId.opponent];
+    
+    sockets.forEach(socket => {
+        if (targetUserIds.includes(socket.userId) && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type,
+                data
+            }));
+        }
+    });
 }
 
 function notifyTournamentFinished(tournamentId: string, userId: string) {
@@ -68,7 +78,19 @@ function notifyTournamentFinished(tournamentId: string, userId: string) {
 	});
 }
 
+function broadcasToRoom(tournamentId: string, message: any) {
+	const sockets = tournamentBracket.get(tournamentId);
+	if (sockets) {
+		sockets.forEach(socket => {
+			if (socket.readyState === WebSocket.OPEN) {
+				socket.send(JSON.stringify(message));
+			}
+		})
+	}
+}
+
 export const TournamentWsController = {
 	broadcasToRoom,
-	tournamentBracketHandler
+	tournamentBracketHandler,
+	notifyGameReadiness
 };

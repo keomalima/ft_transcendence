@@ -1,7 +1,8 @@
 import { AppContext } from "./types";
-import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
 import { cleanGameWS } from "./pages/Game.js";
 import { cleanLiveChatWS } from "./pages/LiveChat.js";
+import { cleanTournamentWaitingRoomWS } from "./pages/TournamentRoom.js";
+import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
 
 
 // Define a new function type to make sure that the function sent to route is well designed
@@ -64,6 +65,9 @@ export class Router {
 		}
 		if (currentPath === '/live-chat') {
 			cleanLiveChatWS();
+		}
+		if (currentPath.startsWith('/tournament-room')) {
+			cleanTournamentWaitingRoomWS();
 		}
 		const route = this.match(path) ?? this.match("/404");
 		if (!route) return;

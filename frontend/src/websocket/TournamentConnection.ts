@@ -5,7 +5,8 @@ export class TournamentWsConnection {
 
 	connect(tournamentId: string, userId: string,
 		onUpdate: (tournamentData: any) => void,
-		onQuit: () => void,
+		opponentReady: (game: any) => void,
+		onStartGame: (game: any) => void,
 		onTournamentEnd: () => void)
 		{
 		const httpUrl = new URL(`/ws/tournament/${tournamentId}/${userId}`, API_BASE_URL);
@@ -23,9 +24,13 @@ export class TournamentWsConnection {
 				console.log('New tournament update');
 				onUpdate(data);
 			}
-			if (data.type === 'player_quit') {
-				console.log('🚫 A player quitted the tournament');
-				onQuit();
+			if (data.type == 'opponent_ready') {
+				console.log('A player is ready to play the game');
+				opponentReady(data);
+			}
+			if (data.type == 'start_game') {
+				console.log('The game will start..');
+				onStartGame(data);
 			}
 			if (data.type === 'tournament_closed') {
 				console.log('🚫 The tournament has finished');
