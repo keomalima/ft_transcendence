@@ -1,12 +1,11 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { chatService } from './chat.service.js';
 import type { User } from '@prisma/client';
-import {z} from 'zod'
-import type { SendMessageInput } from './chat.schema.js';
 import { sendMessageToUser } from '../websockets/chat/chat.ws.service.js';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
-import { gameController } from '../game/game.controller.js';
+import type { DeclineGameFromChatInput, JoinGameFromChatInput, SendMessageInput } from './chat.schema.js';
+import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -17,9 +16,6 @@ declare module 'fastify' {
 	}
 }
 
-type SendMessageRequest = FastifyRequest<{
-	body: SendMessageInput;
-}>;
 
 
 // =====================
@@ -32,7 +28,7 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 		const friendId = request.params.friendId;
 
 		const limit = request.query.limit ? parseInt(request.query.limit, 10) : 30;
-		const beforeId = request.query.before || null;
+		const beforeId = request.query.before ?? undefined;
 
 		if (userId === friendId) {
 			return reply.code(400).send({ message: "Cannot chat with yourself" });
@@ -56,17 +52,19 @@ async function getChatHistoryHandler(request: FastifyRequest<{ Params: { friendI
 				content: m.content,
 				sentAt: m.sentAt.toISOString(),
 				messageType: m.type,
-				gameId: m.gameId ?? undefined, 
+				gameId: m.type === "GAME_INVITE" ? (m.gameId ?? undefined) : undefined,
+				gameStatus: m.type === "GAME_INVITE" ? (m.gameStatus ?? undefined) : undefined,
 			}))
 		);
-
-
 	} catch (error: any) {
 		return reply.code(500).send({ message: "Failed to get chat history" });
 	}
 }
 
-async function sendMessageHandler(request: SendMessageRequest, reply: FastifyReply) {
+async function sendMessageHandler(
+	request: FastifyRequest<{ Body: SendMessageInput }>,
+	reply: FastifyReply
+) {
 	try {
 		const fromUserId = request.user!.id;
 		let { toUserId, content, type } = request.body;
@@ -135,7 +133,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 				return reply.status(400).send({
 					status: "error",
 					reason: "You are already in a game or tournament",
-					code: "IN_GAME"
+					code: "U_IN_GAME"
 				});
 			}
 
@@ -143,7 +141,7 @@ async function sendMessageHandler(request: SendMessageRequest, reply: FastifyRep
 				return reply.status(400).send({
 					status: "error",
 					reason: "Friend is already in a game or tournament",
-					code: "IN_GAME"
+					code: "F_IN_GAME"
 				});
 			}
 			// Both users are available — proceed to generate gameToken and invite
@@ -256,6 +254,263 @@ async function deleteNotificationHandler(request: FastifyRequest<{ Body: { sende
 	}
 }
 
+async function joinGameFromChatHandler(request: FastifyRequest<{ Body: JoinGameFromChatInput }>, reply: FastifyReply) {
+	try {
+		const user2Id = request.user!.id;
+		const { gameId } = request.body;
+
+		// 1) Check if user2 already in a game or tournament
+		const user2Tournament = await tournamentService.findActiveTournamentByUserId(request.server.prisma,user2Id);
+		const user2Game = await gameService.findActiveGameByUserId(request.server.prisma,user2Id);
+
+		if (user2Game || user2Tournament) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "You are already in a game or tournament",
+				code: "U_IN_GAME",
+			});
+		}
+
+		// 2) Check game exists
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.status(404).send({
+				status: "error",
+				reason: "Game not found",
+				code: "GAME_NOT_FOUND",
+			});
+		}
+		// 2.5) only PENDING game can be joined
+		if (game.status !== "PENDING") {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Game is not joinable anymore",
+				code: "UNKNOWN",
+			});
+		}
+
+		// 3) Verify user2 was invited (Message table)
+		const inviteMessage = await chatService.findInviteForReceiver(request.server.prisma, user2Id, gameId);
+
+		if (!inviteMessage) {
+			return reply.status(403).send({
+				status: "error",
+				reason: "You were not invited to this game",
+				code: "NOT_INVITED",
+			});
+		}
+
+		const user1Id = inviteMessage.senderId; // inviter
+
+		// 4) Join user2 to game (idempotent)
+		const alreadyJoined = await chatService.isUserGamePlayerInGame(request.server.prisma, gameId, user2Id);
+
+		let joinedNow = false;
+
+		if (!alreadyJoined) {
+			await gameService.joinUserToGame(request.server.prisma, gameId, user2Id);
+			joinedNow = true;
+		}
+
+		// 5) Save a TEXT system message (only when user2 actually joined now)
+		if (joinedNow) {
+			const acceptMsg = await chatService.saveMessage(
+				request.server.prisma,
+				user2Id,   // from user2
+				user1Id,   // to user1
+				"✅ Accepted the game invite",
+				"TEXT"
+			);
+
+			const completeGame = await gameService.getGamesByUserId(request.server.prisma, user2Id);
+
+			WaintingRoomWsController.broadcasToRoom(game.id, {
+				type: 'room_update',
+				message: `${request.user!.displayName} joined the game!`,
+				game: completeGame
+			})
+
+			await sendMessageToUser(request.server.prisma, user1Id, {
+				type: "chat-message",
+				fromUserId: user2Id,
+				content: acceptMsg.content ?? "✅ Accepted the game invite",
+				sentAt: acceptMsg.sentAt.toISOString(),
+				messageType: "TEXT",
+			});
+		}
+
+		return reply.code(200).send({ status: "ok" });
+	} catch (error: any) {
+		console.error("❌ joinGameFromChatHandler error:", error);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+			code: "UNKNOWN",
+		});
+	}
+}
+
+async function getPendingInviteHandler( request: FastifyRequest<{ Params: { friendId: string } }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const friendId = request.params.friendId;
+
+		// 1) SELF
+		if (userId === friendId) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Cannot query pending invite with yourself",
+				code: "SELF",
+			});
+		}
+
+		// 2) must be friends
+		const friendship = await chatService.findFriendshipBetween(request.server.prisma, userId, friendId);
+		if (!friendship) {
+				return reply.status(403).send({
+				status: "error",
+				reason: "Not friends",
+				code: "NOT_FRIEND",
+			});
+		}
+
+		// 3) find latest invite from friend -> me
+		const latestInvite = await chatService.findLatestInviteFromFriend(request.server.prisma, userId, friendId);
+
+		// no invite => ok(null)
+		if (!latestInvite?.gameId) {
+			return reply.code(200).send({ status: "ok", gameId: null });
+		}
+
+		// 4) game must exist + be PENDING
+		const game = await gameService.findGameById(request.server.prisma, latestInvite.gameId);
+
+		if (!game || game.status !== "PENDING") {
+			return reply.code(200).send({ status: "ok", gameId: null });
+		}
+
+		const alreadyJoined = await chatService.isUserGamePlayerInGame(request.server.prisma, game.id, userId);
+		if (alreadyJoined) {
+			return reply.code(200).send({ status: "ok", gameId: null });
+		}
+
+		return reply.code(200).send({ status: "ok", gameId: game.id });
+	} catch (err) {
+		console.error("getPendingInviteHandler error:", err);
+			return reply.status(500).send({
+				status: "error",
+				reason: "Internal server error",
+				code: "UNKNOWN",
+		});
+	}
+}
+
+async function getGoToGameHandler(request: FastifyRequest<{ Params: { friendId: string } }>, reply: FastifyReply) {
+	try {
+		const userId = request.user!.id;
+		const friendId = request.params.friendId;
+
+		if (userId === friendId) {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Cannot query go-to-game with yourself",
+				code: "SELF",
+			});
+		}
+
+		const friendship = await chatService.findFriendshipBetween(request.server.prisma, userId, friendId);
+		if (!friendship) {
+			return reply.status(403).send({
+				status: "error",
+				reason: "Not friends",
+				code: "NOT_FRIEND",
+		});
+		}
+
+		// ✅ NEW: ask by GamePlayer relationship (works for user1 and user2)
+		const gameId = await chatService.findSharedPendingGameWithFriend(request.server.prisma, userId, friendId);
+
+		return reply.code(200).send({ status: "ok", gameId });
+	} catch (err) {
+		console.error("getGoToGameHandler error:", err);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+			code: "UNKNOWN",
+		});
+	}
+}
+
+async function declineGameFromChatHandler(request: FastifyRequest<{ Body: DeclineGameFromChatInput }>,reply: FastifyReply) {
+	try {
+		const user2Id = request.user!.id;
+		const { gameId } = request.body;
+
+		// 1) Check game exists
+		const game = await gameService.findGameById(request.server.prisma, gameId);
+		if (!game) {
+			return reply.status(404).send({
+				status: "error",
+				reason: "Game not found",
+				code: "GAME_NOT_FOUND",
+			});
+		}
+
+		// 2) Only pending invites can be declined
+		if (game.status !== "PENDING") {
+			return reply.status(400).send({
+				status: "error",
+				reason: "Game is not pending anymore",
+				code: "UNKNOWN",
+			});
+		}
+
+		// 3) Verify user2 was invited (Message table)
+		const inviteMessage = await chatService.findInviteForReceiver(request.server.prisma, user2Id, gameId);
+
+		if (!inviteMessage) {
+			return reply.status(403).send({
+				status: "error",
+				reason: "You were not invited to this game",
+				code: "NOT_INVITED",
+			});
+		}
+
+		const user1Id = inviteMessage.senderId; // inviter
+
+		// 4) DELETE game logic
+		WaintingRoomWsController.notifyCreatorGameInvitationDenied(gameId, user1Id);
+		await gameService.deletePendingGame(request.server.prisma, gameId);
+		
+
+		// 5) Save a TEXT message (decline notice) + push to user1 via WS
+		const declineMsg = await chatService.saveMessage(
+			request.server.prisma,
+			user2Id,   // from user2
+			user1Id,   // to user1
+			"❌ Declined the game invite",
+			"TEXT"
+		);
+
+		await sendMessageToUser(request.server.prisma, user1Id, {
+			type: "chat-message",
+			fromUserId: user2Id,
+			content: declineMsg.content ?? "❌ Declined the game invite",
+			sentAt: declineMsg.sentAt.toISOString(),
+			messageType: "TEXT",
+		});
+
+		return reply.code(200).send({ status: "ok" });
+	} catch (error: any) {
+		console.error("❌ declineGameFromChatHandler error:", error);
+		return reply.status(500).send({
+			status: "error",
+			reason: "Internal server error",
+			code: "UNKNOWN",
+		});
+	}
+}
+
 
 // =====================
 // Export Controller Object
@@ -267,4 +522,8 @@ export const chatController = {
 	getFriendsWithNewMessagesHandler,
 	createNotificationHandler,
 	deleteNotificationHandler,
+	joinGameFromChatHandler,
+	getPendingInviteHandler,
+	getGoToGameHandler,
+	declineGameFromChatHandler,
 };

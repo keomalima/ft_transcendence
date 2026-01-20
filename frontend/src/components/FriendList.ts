@@ -8,6 +8,7 @@ export class FriendList extends HTMLElement {
 	private _list: Partial<FriendData>[] | null = null;
 	private _uploadsUrl: string = 'http://localhost:3000';
 	private _isLoading: boolean = false;
+	private _selectedFriendId: string | null = null;
 
 	public skipAutoSelect: boolean = false; // for Live Chat logic
 	
@@ -91,7 +92,7 @@ export class FriendList extends HTMLElement {
 	}
 
 	private displayFriendCards(): void {
-		const friendCards = document.getElementById('friend-cards');
+		const friendCards = this.querySelector('#friend-cards');
 		if (!friendCards)
 			return;
 
@@ -119,9 +120,16 @@ export class FriendList extends HTMLElement {
 
 	private createFriendCard(friend: Partial<FriendData>): HTMLElement {
 		const card = document.createElement('div');
+		card.dataset.friendId = friend.id ?? "";
 
-		card.className = 'relative flex items-center bg-stone-100 rounded gap-3 my-2 py-2 px-3';
+		card.className =
+		'relative flex items-center bg-stone-100 rounded gap-3 my-2 py-2 px-3 ' +
+		'cursor-pointer transition-colors hover:bg-stone-200';
 
+		if (friend.id && friend.id === this._selectedFriendId) {
+			card.classList.remove('bg-stone-100');
+			card.classList.add('bg-stone-300');
+		}
 		// profile picture ===========
 		const avatar = document.createElement('div');
 		avatar.className = 'shrink-0';
@@ -228,6 +236,13 @@ export class FriendList extends HTMLElement {
 
 		// Dispatch event when user clicks this friend
 		card.addEventListener('click', () => {
+			// 1) remember selection
+			this._selectedFriendId = friend.id ?? null;
+
+			// 2) update UI highlight immediately
+			this.updateSelectedStyles();
+
+			// 3) keep your original event dispatch
 			this.dispatchEvent(new CustomEvent('friend-selected', {
 				detail: friend,
 				bubbles: true
@@ -236,6 +251,28 @@ export class FriendList extends HTMLElement {
 		
 		return card;
 	}
+
+	private updateSelectedStyles(): void {
+		const friendCards = this.querySelector('#friend-cards');
+		if (!friendCards) return;
+
+		const cards = friendCards.querySelectorAll('[data-friend-id]');
+		cards.forEach((el) => {
+			const card = el as HTMLElement;
+			const id = card.dataset.friendId;
+
+			// reset to normal
+			card.classList.remove('bg-stone-300');
+			card.classList.add('bg-stone-100');
+
+			// apply selected
+			if (id && id === this._selectedFriendId) {
+				card.classList.remove('bg-stone-100');
+				card.classList.add('bg-stone-300');
+			}
+		});
+	}
+
 }
 
 customElements.define('friend-list', FriendList);

@@ -1,5 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-import type { Message } from '@prisma/client';
+import { PrismaClient, GameStatus, MessageType } from '@prisma/client';
+
+export type ChatHistoryMessage = {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  type: MessageType;
+  content: string | null;
+  gameId: string | null;
+  gameStatus: GameStatus | null;
+  sentAt: Date;
+};
 
 // =====================
 // Chat Service Functions
@@ -18,26 +28,49 @@ async function findFriendshipBetween(prisma: PrismaClient, userId: string, frien
 	});
 }
 
-async function getChatHistory(prisma: PrismaClient, userId: string, friendId: string, limit: number,beforeMessageId?: string): Promise<Message[]> {
+async function getChatHistory(prisma: PrismaClient, userId: string, friendId: string, limit: number, beforeMessageId?: string): Promise<ChatHistoryMessage[]> {
+  const messages = await prisma.message.findMany({
+	where: {
+		OR: [
+		{ senderId: userId, receiverId: friendId },
+		{ senderId: friendId, receiverId: userId },
+		],
+	},
+	orderBy: { sentAt: "desc" },
+	cursor: beforeMessageId ? { id: beforeMessageId } : undefined,
+	skip: beforeMessageId ? 1 : 0,
+	take: limit,
+	select: {
+		id: true,
+		senderId: true,
+		receiverId: true,
+		type: true,
+		content: true,
+		gameId: true,
+		sentAt: true,
+		game: { select: { status: true } },
+	},
+	});
 
-	const messages = await prisma.message.findMany({
-   		where: {
-      		OR: [
-       			{ senderId: userId, receiverId: friendId },
-        		{ senderId: friendId, receiverId: userId },
-     		],
-    	},
-   	 	orderBy: {
-    		sentAt: 'desc',
-    	},
-   	 	cursor: beforeMessageId ? { id: beforeMessageId } : undefined,
-    	skip: beforeMessageId ? 1 : 0,
-    	take: limit,
-  	});
+  	const ordered = messages.reverse();
 
-	// Reverse so frontend always gets oldest → newest
-	return messages.reverse();
+ 	const out: ChatHistoryMessage[] = [];
+
+	for (const m of ordered) {
+		out.push({
+			id: m.id,
+			senderId: m.senderId,
+			receiverId: m.receiverId,
+			type: m.type,
+			content: m.content ?? null,
+			gameId: m.gameId ?? null,
+			gameStatus: m.game ? m.game.status : null,
+			sentAt: m.sentAt,
+		});
+	}
+	return out;
 }
+
 
 async function isBlockedBy(prisma: PrismaClient, senderId: string, receiverId: string) {
 	return prisma.blockStatus.findFirst({
@@ -131,6 +164,80 @@ async function deleteNotification(prisma: PrismaClient, senderId: string, receiv
 	});
 }
 
+async function findInviteForReceiver(prisma: PrismaClient, receiverId: string, gameId: string) {
+	return prisma.message.findFirst({
+		where: {
+			type: "GAME_INVITE",
+			receiverId,
+			gameId,
+		},
+		select: {
+			id: true,
+			senderId: true,
+		},
+	});
+}
+
+async function isUserGamePlayerInGame(prisma: PrismaClient, gameId: string, userId: string): Promise<boolean> {
+	const existing = await prisma.gamePlayer.findUnique({
+		where: {
+			gameId_userId: { gameId, userId },
+		},
+	});
+	return !!existing;
+}
+
+async function findLatestInviteFromFriend(prisma: PrismaClient, userId: string, friendId: string) {
+	return prisma.message.findFirst({
+		where: {
+				type: "GAME_INVITE",
+				senderId: friendId,
+				receiverId: userId,
+				gameId: { not: null },
+			},
+		orderBy: { sentAt: "desc" },
+		select: { gameId: true },
+	});
+}
+
+async function findLatestInviteToFriend(prisma: PrismaClient, userId: string, friendId: string) {
+	return prisma.message.findFirst({
+		where: {
+			type: "GAME_INVITE",
+			senderId: userId,
+			receiverId: friendId,
+			gameId: { not: null },
+			game: {
+				is: { status: "PENDING" },
+		},
+	},
+		orderBy: { sentAt: "desc" },
+		select: { gameId: true },
+	});
+}
+
+async function findSharedPendingGameWithFriend(prisma: PrismaClient, userId: string, friendId: string ): Promise<string | null> {
+	// Find a PENDING game where BOTH users are GamePlayers
+	const game = await prisma.game.findFirst({
+		where: {
+			status: "PENDING",
+			gameUsers: {
+			some: { userId: userId },
+		},
+		AND: [
+			{
+				gameUsers: {
+					some: { userId: friendId },	
+				},
+			},
+		],
+		},
+		select: { id: true },
+		orderBy: { createdAt: "desc" },
+	});
+
+	return game ? game.id : null;
+}
 
 // =====================
 // Export Chat Service Object
@@ -144,4 +251,9 @@ export const chatService = {
 	getFriendsWithNewMessages,
 	createNotificationIfMissing,
 	deleteNotification,
+	findInviteForReceiver,
+	isUserGamePlayerInGame,
+	findLatestInviteFromFriend,
+	findLatestInviteToFriend,
+	findSharedPendingGameWithFriend,
 };

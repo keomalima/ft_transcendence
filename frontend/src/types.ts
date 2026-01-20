@@ -208,6 +208,8 @@ export interface TournamentData {
     games: GameData[];
 }
 
+export type GameStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+
 export type ChatMessage = {
 	id: string;
 	senderId: string;
@@ -222,7 +224,8 @@ export type ChatMessage = {
 	content: string | null;
 	sentAt: string;
 	messageType: "GAME_INVITE";
-	gameId: string;
+	gameId?: string;
+	gameStatus?: GameStatus;
 };
 
 
@@ -253,7 +256,7 @@ export type ChatWsMessage =
 	| ChatInviteMessagePayload
 	| ConnectedPayload;
 
-export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "IN_GAME" | "UNKNOWN";
+export type ChatErrorCode = "BLOCKED" | "SELF" | "NOT_FRIEND" | "U_IN_GAME" | "F_IN_GAME" |"UNKNOWN";
 
 export interface SendMessageSuccess {
 	status: "ok";
@@ -276,3 +279,32 @@ export type FriendPaginationState = {
 };
 
 export type FriendPaginationMap = Record<string, FriendPaginationState>;
+
+export type JoinGameFromChatInput = {
+	gameId: string;
+};
+
+export type JoinGameFromChatErrorCode = "U_IN_GAME" | "GAME_NOT_FOUND" | "NOT_INVITED" | "UNKNOWN";
+
+export type JoinGameFromChatResponse =
+	| { status: "ok" }
+	| { status: "error"; reason: string; code: JoinGameFromChatErrorCode };
+
+export type GetPendingInviteResponse =
+  | { status: "ok"; gameId: string | null }
+  | { status: "error"; reason: string; code: "SELF" | "NOT_FRIEND" | "UNKNOWN" };
+
+  
+export type DeclineGameFromChatInput = {
+  gameId: string;
+};
+
+export type DeclineGameFromChatErrorCode =
+  | "GAME_NOT_FOUND"
+  | "NOT_INVITED"
+  | "UNKNOWN";
+
+export type DeclineGameFromChatResponse =
+  | { status: "ok" }
+  | { status: "error"; reason: string; code: DeclineGameFromChatErrorCode };
+

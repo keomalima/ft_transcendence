@@ -64,7 +64,7 @@ export class Router {
 		if (currentPath.startsWith('/game')) {
 			cleanGameWS();
 		}
-		if (currentPath === '/live-chat') {
+		if (currentPath.startsWith('/live-chat')) {
 			cleanLiveChatWS();
 		}
 		if (currentPath.startsWith('/tournament-room')) {

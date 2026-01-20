@@ -76,6 +76,59 @@ export async function chatPrivateRoutes(fastify: FastifyInstance) {
 		handler: chatController.deleteNotificationHandler
 	});
 
+	fastify.post('/join-game', {
+		schema: {
+			body: chatSchemas.request.joinGameFromChat,
+			response: { 200: chatSchemas.response.joinGameFromChat },
+			tags: ['Chat'],
+			description: 'Join a game from a chat invite using gameId',
+			summary: 'Join game from chat',
+			security: [{ cookieAuth: [] }],
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.joinGameFromChatHandler,
+	});
+
+	// GET pending invite gameId from friend -> me
+	fastify.get("/pending-invite/:friendId", {
+		schema: {
+			params: chatSchemas.request.getPendingInviteParams,
+			response: { 200: chatSchemas.response.getPendingInvite },
+			tags: ["Chat"],
+			description: "Get pending game invite (gameId) from friend -> me",
+			summary: "Pending invite",
+			security: [{ cookieAuth: [] }],
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.getPendingInviteHandler,
+	});
+
+	// GET go-to-game gameId (me -> friend)
+	fastify.get("/go-to-game/:friendId", {
+		schema: {
+			params: chatSchemas.request.getGoToGameParams,
+			response: { 200: chatSchemas.response.getGoToGame },
+			tags: ["Chat"],
+			description: "Get gameId to go to when I have an pending game with this friend",
+			summary: "Go to game",
+			security: [{ cookieAuth: [] }],
+		},
+		preHandler: userController.updateLastSeen,
+		handler: chatController.getGoToGameHandler,
+	});
+
+	fastify.post('/decline-game', {
+		schema: {
+			body: chatSchemas.request.declineGameFromChat,
+			response: { 200: chatSchemas.response.declineGameFromChat },
+			tags: ['Chat'],
+			description: 'Decline a game invite from chat (delete the game)',
+			summary: 'Decline game invite from chat',
+			security: [{ cookieAuth: [] }],
+		},
+			preHandler: userController.updateLastSeen,
+			handler: chatController.declineGameFromChatHandler,
+	});
 
 }
  

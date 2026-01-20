@@ -1,5 +1,5 @@
 import httpCall from './httpClient.js';
-import { ChatMessage, SendMessageError, SendMessageResponse } from '../types.js';
+import { ChatMessage, DeclineGameFromChatInput, DeclineGameFromChatResponse, GetPendingInviteResponse, JoinGameFromChatInput, JoinGameFromChatResponse, SendMessageError, SendMessageResponse } from '../types.js';
 import { buildApiError } from './apiError.js';
 
 const BASE_URL = '/chat';
@@ -65,6 +65,58 @@ export const chatApi = {
 			await httpCall.delete(`${BASE_URL}/notify`, { data: { senderId }});
 		} catch (error: unknown) {
 			throw buildApiError('delete notification', error);
+		}
+	},
+
+	joinGameFromChat: async (data: JoinGameFromChatInput): Promise<JoinGameFromChatResponse> => {
+		try {
+			const response = await httpCall.post(`${BASE_URL}/join-game`, data);
+			return response.data as JoinGameFromChatResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as JoinGameFromChatResponse;
+			}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
+		}
+	},
+
+	getPendingInvite: async (friendId: string): Promise<GetPendingInviteResponse> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/pending-invite/${friendId}`);
+			return response.data as GetPendingInviteResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as GetPendingInviteResponse;
+			}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
+		}
+	},
+
+	getGoToGameId: async (friendId: string): Promise<GetPendingInviteResponse> => {
+		try {
+			const response = await httpCall.get(`${BASE_URL}/go-to-game/${friendId}`);
+			return response.data as GetPendingInviteResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as GetPendingInviteResponse;
+			}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
+		}
+	},
+
+	declineGameFromChat: async (data: DeclineGameFromChatInput): Promise<DeclineGameFromChatResponse> => {
+		try {
+			const response = await httpCall.post(`${BASE_URL}/decline-game`, data);
+			return response.data as DeclineGameFromChatResponse;
+		} catch (error: any) {
+			const errData = error?.response?.data;
+			if (errData && (errData.status === "error" || errData.status === "ok")) {
+				return errData as DeclineGameFromChatResponse;
+		}
+			return { status: "error", reason: "Unknown error", code: "UNKNOWN" };
 		}
 	},
 
