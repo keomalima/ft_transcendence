@@ -14,10 +14,6 @@ export function TournamentPage(ctx: AppContext): string {
 
 	setTimeout(async () => {
 		const currentTournament = await getCurrentTournament();
-		if (!currentTournament) {
-			setTimeout(() => router.navigateTo('/'), 0);
-			return;
-		}
 		let participant = null;
 		if (currentTournament && typeof currentTournament.tournamentId === 'string') {
 			participant = await getParticipantInfo(currentTournament.tournamentId);

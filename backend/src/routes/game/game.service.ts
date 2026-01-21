@@ -333,7 +333,8 @@ async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) 
 async function notifyTournament(prisma: PrismaClient, tournamentId: string, gameId: string, currentGameId: string) {
 	const completeGame = await getCompleteGameData(prisma, gameId);
 	const nextCompleteGame = await getCompleteGameData(prisma, currentGameId);
-	
+
+	TournamentWsController.notifyNewGame(nextCompleteGame);
 	TournamentWsController.broadcastToRoom(tournamentId, {
 		type: 'tournament_update',
 		gameId: gameId,
@@ -343,22 +344,33 @@ async function notifyTournament(prisma: PrismaClient, tournamentId: string, game
 }
 
 async function completeTournament(prisma: PrismaClient, tournamentId: string, gameId: string, winner: any) {
-	await prisma.tournament.update({
+	const tournamentUpdated = await prisma.tournament.update({
 		where: { id: tournamentId },
 		data: {
 			status: 'COMPLETED',
 			completedAt: new Date(),
 			winnerId: winner.userId
+		},
+		include :{
+			winner: {
+				select: {
+					id: true,
+					displayName: true,
+					avatarUrl: true
+				}
+			}
 		}
 	})
+
 	console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
 
 	const completeGame = await getCompleteGameData(prisma, gameId);
 	TournamentWsController.broadcastToRoom(tournamentId, {
-		type: 'tournament_closed',
+		type: 'tournament_ended',
 		gameId: gameId,
 		game: completeGame,
-		nextGame: completeGame
+		nextGame: completeGame,
+		tournamentData: tournamentUpdated
 	});
 }
 
@@ -504,5 +516,6 @@ export const gameService = {
 	deletePendingGame,
 	finishGame,
 	updatePlayer,
-	findGamePlayerById
+	findGamePlayerById,
+	getCompleteGameData
 };
