@@ -287,6 +287,23 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 						`;
 						chatBox.appendChild(bubble);
 						chatBox.scrollTop = chatBox.scrollHeight;
+
+						const isInviteDecision =
+							content === "✅ Accepted the game invite" ||
+							content === "❌ Declined the game invite";
+
+						if (isInviteDecision) {
+							const v = selectVersion;
+							setTimeout(async () => {
+								if (_selectedFriend?.id !== fromUserId) return;
+								if (v !== selectVersion) return;
+
+								await refreshIsUserInGameOrTournament(ctx);
+								if (_selectedFriend?.id !== fromUserId) return;
+								await renderChatBox(_selectedFriend, ctx, selectVersion);
+							}, 0);
+						}
+
 					}
 					return;
 				}
@@ -459,14 +476,15 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 				${shouldHideInviteGameBtn ? "" : `
 				<button
 					id="invite-game-btn"
+					title="${(!isAnyInGame && !friend.isBlockedBy) ? "Create a short score-5-to-win game with your friend" : ""}"
 					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md
 					${isAnyInGame || friend.isBlockedBy
 						? 'bg-red-500 text-white cursor-not-allowed'
 						: 'bg-green-600 text-white hover:bg-green-700'}"
 					${(!canShowGoToGame && (isAnyInGame || friend.isBlockedBy)) ? 'disabled' : ''}
-				>
-					🎮 Invite Game
-				</button>
+					>
+						🎮 Invite Game
+					</button>
 				`}
 
 				<!-- Block / Unblock -->
@@ -625,6 +643,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 		// Case A: show Go to Game for user1
 		if (canShowGoToGame) {
 			inviteBtn.textContent = "🟢 Go to Game";
+			inviteBtn.removeAttribute("title");
 			inviteBtn.className =
 				"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
 			inviteBtn.disabled = false;
@@ -654,6 +673,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 						}
 
 						inviteBtn.textContent = "🟢 Go to Game";
+						inviteBtn.removeAttribute("title");
 						inviteBtn.className =
 							"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
 						inviteBtn.onclick = () => router.navigateTo(`/game-room/${res.gameId}`);
