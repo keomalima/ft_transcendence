@@ -32,26 +32,32 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 		const currentTournament = await getCurrentTournament(params['id']);
 		const tournamentGames = await getTournamentGames(params['id']);
 
-		if (!currentTournament)
-			return;
-
-		const isUserOnTournament = currentTournament.participants!.find((u: any) => u.user.id === currentUser!.id);
-		if (!isUserOnTournament)
+		if (!currentTournament) {
 			setTimeout(() => router.navigateTo('/'), 0);
+			return;
+		}
+		const isUserOnTournament = currentTournament.participants!.find((u: any) => u.user.id === currentUser!.id);
+		if (!isUserOnTournament) {
+			setTimeout(() => router.navigateTo('/'), 0);
+			return;
+		}
 
 		if (currentTournament?.status === 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament-room/${params['id']}`), 0);
+			return;
 		}
 		const participant = await getParticipantInfo(params['id']);
 		if (!participant || participant.isQuit) {
 			setTimeout(() => router.navigateTo(`/tournament`), 0);
+			return ;
 		}
 
 		renderTournamentContent(currentTournament);
+
 		passContext(ctx, tournamentGames, currentTournament);
 		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
 
-		setupTournamentEventListeners(ctx);
+		await setupTournamentEventListeners(ctx);
 	}, 0);
 
 	return (/*html*/`
@@ -64,25 +70,25 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	const content = document.getElementById('tournament-content');
 	content!.innerHTML = /*html*/`
-	<div class="flex flex-col min-h-screen">
-	    <header>
-	        <nav-bar id='nav-bar-component'></nav-bar>
-	    </header>
-	
-	    <div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
-	        <div class="text-center mb-2">
-	            <h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
-				<h3 class=" text-gray-500 mb-4">Round ${tournament?.currentRound}</h3>
-	        </div>
-			<div class="w-full overflow-x-auto">
-				<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
-			</div>
-	        <div class="w-full overflow-x-auto">
-	            <tournament-bracket id='tournament-game-component'></tournament-bracket>
-	        </div>
+		<div class="flex flex-col min-h-screen">
+			<header>
+				<nav-bar id='nav-bar-component'></nav-bar>
+			</header>
+		
+			<div class="flex-1 flex flex-col items-center justify-center h-full px-4 py-8">
+				<div class="text-center mb-2">
+					<h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
+					<h3 class=" text-gray-500 mb-4">Round ${tournament?.currentRound}</h3>
+				</div>
+				<div class="w-full overflow-x-auto">
+					<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
+				</div>
+				<div class="w-full overflow-x-auto">
+					<tournament-bracket id='tournament-game-component'></tournament-bracket>
+				</div>
 
-	    </div>
-	</div>
+			</div>
+		</div>
 	`
 	return content;
 }
@@ -187,7 +193,7 @@ export function cleantTournamentGlobalWs() {
 
 
 // ======== EVENT LISTENER ============
-function setupTournamentEventListeners(ctx: AppContext) {
+async function setupTournamentEventListeners(ctx: AppContext) {
 	// Start tournament game
 	const tournamentGameComponent = document.getElementById('tournament-next-game-component') as any;
 	tournamentGameComponent?.addEventListener('event-start-tournament-game', async (e: Event) => {

@@ -95,6 +95,32 @@ function notifyGameClosed(gameId: string, userId: string) {
 	});
 }
 
+function notifyTournamentClosed(gameId: string, userId: string) {
+
+	const sockets = gameRooms.get(gameId);
+	
+	if (!sockets) {
+		console.log(`❌ No sockets found for tournament room: ${gameId}`);
+		return;
+	}
+	
+	sockets.forEach(sock => {
+		const socketUserId = (sock as any).userId;
+		
+		if (socketUserId != userId) {
+			console.log(`✅ MATCH! Notifying user ${socketUserId} that tournament is closed`);
+			if (sock.readyState === WebSocket.OPEN) {
+				sock.send(JSON.stringify({
+					type: 'tournament_closed',
+					message: "The tournament has been deleted"
+				}));
+			} else {
+				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+			}
+		}
+	});
+}
+
 function notifyCreatorGameInvitationDenied(gameId: string, userId: string) {
 	const sockets = gameRooms.get(gameId);
 	
@@ -125,5 +151,6 @@ export const WaintingRoomWsController = {
 	waitingRoomHandler,
 	notifyPlayerRemoved,
 	notifyGameClosed,
-	notifyCreatorGameInvitationDenied
+	notifyCreatorGameInvitationDenied,
+	notifyTournamentClosed
 };

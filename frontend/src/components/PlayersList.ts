@@ -1,13 +1,14 @@
 import { AppContext } from "../types.js";
 import type { GameData, GameUsers, TournamentData, TournamentParticipant } from "../types.js";
 import { BUTTON_BLACK_CLASSES } from "../styles/tailwindStyles.js";
+import { API_BASE_URL } from "../config.js";
 
 export class PlayerList extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameData: GameData | null = null;
 	private _gamePlayers: GameUsers[] | null = null;
 	private _isCreator: boolean | null = false;
-	private _uploadsUrl: string = 'http://localhost:3000';
+	private _uploadsUrl: string = API_BASE_URL;
 
 	constructor() {
 		super();

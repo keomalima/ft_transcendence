@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config.js";
 import { AppContext } from "../types.js";
 import type { TournamentData, TournamentParticipant } from "../types.js";
 
@@ -6,7 +7,7 @@ export class TournamentPlayerList extends HTMLElement {
 	private _tournamentData: TournamentData | null = null;
 	private _participants: TournamentParticipant[] | null = null;
 	private _isCreator: boolean | null = false;
-	private _uploadsUrl: string = 'http://localhost:3000';
+	private _uploadsUrl: string = API_BASE_URL;
 
 	constructor() {
 		super();
