@@ -320,8 +320,9 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 							const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 							if (inviteBtn) {
-								inviteBtn.classList.add("hidden");
-								inviteBtn.disabled = true;
+								  inviteBtn.textContent = "⏳ Pending";
+									inviteBtn.disabled = true;
+									inviteBtn.onclick = null;
 							}
 
 							// 2) show accept/decline in header immediately
@@ -445,9 +446,6 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	]);
 	if (isStale()) return;
 
-	const canShowGoToGame = !!goToGameId && !pendingGameId && !friend.isBlockedBy;
-	const shouldHideInviteGameBtn = !!pendingGameId && !isUserInGameOrTournament;
-
 	chatRight.innerHTML = `
 		<!-- Header -->
 		<div class="flex justify-between items-center p-4 border-b">
@@ -456,7 +454,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
 			</div>
 
-			<div class="flex gap-2 items-center">
+			<div class="flex flex-wrap justify-end items-center gap-2">
 				<!-- See Profile -->
 				<button
 					id="see-profile-btn"
@@ -472,20 +470,13 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 				<!-- Invite actions placeholder (Accept/Decline will go here later) -->
 				<div id="invite-actions" class="flex gap-2 items-center"></div>
 
-				<!-- Invite Game -->
-				${shouldHideInviteGameBtn ? "" : `
+				<!-- Single Slot: Invite OR Go -->
 				<button
 					id="invite-game-btn"
-					title="${(!isAnyInGame && !friend.isBlockedBy) ? "Create a short score-5-to-win game with your friend" : ""}"
-					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md
-					${isAnyInGame || friend.isBlockedBy
-						? 'bg-red-500 text-white cursor-not-allowed'
-						: 'bg-green-600 text-white hover:bg-green-700'}"
-					${(!canShowGoToGame && (isAnyInGame || friend.isBlockedBy)) ? 'disabled' : ''}
-					>
-						🎮 Invite Game
-					</button>
-				`}
+					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md"
+				>
+				...
+				</button>
 
 				<!-- Block / Unblock -->
 				<button
@@ -640,80 +631,97 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 
 	if (inviteBtn) {
-		// Case A: show Go to Game for user1
-		if (canShowGoToGame) {
+		const inTournament = !!livechatTournamentId;
+		const receiverHasPending = !!pendingGameId && !isUserInGameOrTournament;
+
+		// Source of truth: if backend says you have a game to go -> GO
+		const shouldGo = !!goToGameId && !friend.isBlockedBy && !inTournament;
+
+		const enabledClass =
+			"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
+		const disabledClass =
+			"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm bg-gray-300 text-gray-600 cursor-not-allowed";
+
+		if (shouldGo) {
 			inviteBtn.textContent = "🟢 Go to Game";
-			inviteBtn.removeAttribute("title");
-			inviteBtn.className =
-				"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
+			inviteBtn.className = enabledClass;
 			inviteBtn.disabled = false;
 			inviteBtn.onclick = () => router.navigateTo(`/game-room/${goToGameId}`);
 		}
-		// Case B: normal Invite Game
 		else {
-			inviteBtn.onclick = async () => {
-				if (!_selectedFriend) return;
-				if (inviteBtn.disabled) return;
-				if (isStale()) return;
-				try {
+			const disableInvite = inTournament || friend.isBlockedBy || isAnyInGame || receiverHasPending;
+
+			// label depending on reason (optional but nice UX)
+			if (inTournament) inviteBtn.textContent = "🏆 In Tournament";
+			else if (friend.isBlockedBy) inviteBtn.textContent = "🚫 Blocked";
+			else if (receiverHasPending) inviteBtn.textContent = "⏳ Pending";
+			else if (isAnyInGame) inviteBtn.textContent = "⛔ In Game";
+			else inviteBtn.textContent = "🎮 Invite Game";
+
+			inviteBtn.className = disableInvite ? disabledClass : enabledClass;
+			inviteBtn.disabled = disableInvite;
+			inviteBtn.onclick = null;
+
+			if (!disableInvite) {
+				inviteBtn.onclick = async () => {
+					if (!_selectedFriend) return;
+					if (isStale()) return;
+
 					const res = await chatApi.sendMessage({
 						toUserId: _selectedFriend.id,
 						content: "I invite you to a game.",
 						type: "GAME_INVITE",
 					});
+
 					if (isStale()) return;
 
-					if (res.status === "ok") {
-						console.log("✅ Game invite sent successfully!");
+					if (res.status === "error") {
+						if (res.code === "BLOCKED") {
+							showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
 
-						if (!res.gameId) {
-							console.error("❌ Missing res.gameId for GAME_INVITE success:", res);
-							alert("Invite sent but missing gameId from server.");
+							const updatedFriendList = await friendshipApi.getList();
+							if (isStale()) return;
+							const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
+							if (updated) _selectedFriend = updated;
+
+							await renderChatBox(_selectedFriend, ctx, selectVersion);
 							return;
 						}
-
-						inviteBtn.textContent = "🟢 Go to Game";
-						inviteBtn.removeAttribute("title");
-						inviteBtn.className =
-							"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
-						inviteBtn.onclick = () => router.navigateTo(`/game-room/${res.gameId}`);
-						return;
-					}
-
-					if (res.code === "BLOCKED") {
-						showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
-
-						const updatedFriendList = await friendshipApi.getList();
-						const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
-						if (updated) {
-							_selectedFriend = updated;
+						if (res.code === "U_IN_GAME") {
+							showToast("❌ You are already in a game or tournament.", "block");
+							isUserInGameOrTournament = true;
 							renderChatBox(_selectedFriend, ctx, selectVersion);
+							return;
 						}
+						if (res.code === "F_IN_GAME") {
+							showToast(`❌ ${_selectedFriend.displayName} is already in a game or tournament.`, "block");
+							isFriendInGameOrTournament = true;
+							renderChatBox(_selectedFriend, ctx, selectVersion);
+							return;
+						}
+						showToast(res.reason || "❌ Failed to send invite.", "block");
 						return;
 					}
 
-					if (res.code === "U_IN_GAME") {
-						showToast("❌ You are already in a game or tournament.", "block");
-						isUserInGameOrTournament = true;
-						renderChatBox(_selectedFriend, ctx, selectVersion);
+					if (!res.gameId) {
+						showToast("Invite sent but missing gameId.", "block");
 						return;
 					}
 
-					if (res.code === "F_IN_GAME") {
-						showToast(`❌ ${_selectedFriend.displayName} is already in a game or tournament.`, "block");
-						isFriendInGameOrTournament = true;
-						renderChatBox(_selectedFriend, ctx, selectVersion);
-						return;
-					}
+					// now in a game -> align with normal render logic
+					isUserInGameOrTournament = true;
 
-				} catch (err) {
-					if (isStale()) return;
-					console.error("❌ Error sending game invite:", err);
-					alert("An error occurred. Please try again.");
-				}
-			};
+					// re-render the current chat using the normal rules
+					if (_selectedFriend) {
+						await renderChatBox(_selectedFriend, ctx, selectVersion);
+					}
+				};
+			}
+		
 		}
 	}
+
+
 
 
 	const seeProfileBtn = document.getElementById('see-profile-btn');
@@ -1028,8 +1036,9 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 
 			const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 			if (inviteBtn) {
-				inviteBtn.classList.remove("hidden");
-				inviteBtn.disabled = false;
+				inviteBtn.textContent = "🎮 Invite Game";
+				inviteBtn.disabled = true;
+				inviteBtn.onclick = null;
 			}
 
 			showToast("Invite declined", "block");
