@@ -29,7 +29,7 @@ export class TournamentNextGame extends HTMLElement {
 		}
 	}
 
-	public updateGame(updatedGame: TournamentGame, updatedTournament: TournamentData): void {
+	public updateNextGameCard(updatedGame: TournamentGame, updatedTournament: TournamentData): void {
 		if (!this._tournamentGamesData) return;
 
 		if (updatedTournament)

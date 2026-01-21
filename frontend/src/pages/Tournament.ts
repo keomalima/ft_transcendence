@@ -162,35 +162,27 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 	// Create Tournament Websocket
 	tournamentWsConnection = new TournamentWsConnection();
 	tournamentWsConnection.connect(tournamentGames[0].tournamentId, currentUser.id!,
-		// Tournament update
-		async (tournamentData) => {
-			if (tournamentData.gameId)
-				tournamentBracketComponent?.updateGameCard(tournamentData.game, tournamentData.nextGame);
+		async (update) => {
+			if (update) {
+				tournamentBracketComponent?.updateBrackets(update.game, update.nextGame);
+				tournamentNextGameComponent?.updateNextGameCard(update.game, update.tournamentData)
+			}
 		},
-		// New game for tournament
-		(newGame) => {
-			if (newGame.data)
-				tournamentNextGameComponent?.updateGame(newGame.data, newGame.tournamentData);
+		(opponent) => {
+			if (opponent.data)
+				tournamentNextGameComponent?.updateNextGameCard(opponent.data, opponent.tournamentData);
 		},
-		// Opponent ready
-		(game) => {
-			if (game.data)
-				tournamentNextGameComponent?.updateGame(game.data, game.tournamentData);
-		},
-		// Game started
 		(game) => {
 			cleantTournamentGlobalWs()
 			router.navigateTo(`/game/${game.data.id}`)
 		},
-		//Tournament started
 		() => {
 			console.log("tournament started");
 		},
-		// Tournament ended
 		(tournament) => {
 			if (tournament) {
-				tournamentNextGameComponent?.updateGame(tournament.game, tournament.tournamentData);
-				tournamentBracketComponent?.updateGameCard(tournament.game, tournament.nextGame);
+				tournamentNextGameComponent?.updateNextGameCard(tournament.game, tournament.tournamentData);
+				tournamentBracketComponent?.updateBrackets(tournament.game, tournament.nextGame);
 			}
 		},
 	)	

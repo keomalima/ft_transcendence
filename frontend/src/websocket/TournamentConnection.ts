@@ -5,7 +5,6 @@ export class TournamentWsConnection {
 
 	connect(tournamentId: string, userId: string,
 		onUpdate: (tournamentData: any) => void,
-		onNewGame: (game: any) => void,
 		opponentReady: (game: any) => void,
 		onStartGame: (game: any) => void,
 		onStartTournament: () => void,
@@ -25,10 +24,6 @@ export class TournamentWsConnection {
 			if (data.type === 'tournament_update') {
 				console.log('New tournament update');
 				onUpdate(data);
-			}
-			if (data.type == 'new_game') {
-				console.log('A new game is ready');
-				onNewGame(data);
 			}
 			if (data.type == 'opponent_ready') {
 				console.log('A player is ready to play the game');
