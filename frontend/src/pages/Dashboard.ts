@@ -12,6 +12,7 @@ import "../components/AddFriend.js";
 import "../components/JoinGamePopUp.js";
 import type { FriendData, GameHistory } from "../types.js";
 import { tournamentApi } from "../api/tournamentApi.js";
+import { API_BASE_URL } from "../config.js";
 
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
@@ -39,11 +40,12 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 	const content = document.getElementById('dashboard-content');
 
     const avatarRaw = currentUser.avatarUrl || '/uploads/avatars/default.jpg';
-    const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : (avatarRaw.startsWith('/') ? avatarRaw : `/${avatarRaw}`);
+    const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
 
+	console.log("Avatar picture URL", avatarSrc);
 	let link: string | null  = null;
 	if (tournamentId)
-		link = `/tournament/${tournamentId}`
+		link = `/tournament-room/${tournamentId}`
 	else if (currentGame) {
 		if (currentGame.type === 'LOCAL')
 			link = `/local-game/${currentGame.gameId}`;

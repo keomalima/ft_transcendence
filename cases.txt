@@ -1,0 +1,12 @@
+Case 1 - Player 1 wins the match agains player 2
+- All players get the news to update the brackelist (match won and next match)
+- Player 1 gets the next match updated to the next opponent or the empty next match card
+- Player 2 gets the you lost card
+
+Case 2 - Player 1 quits tournament
+- All players get the news to update the brackelist (match won and next match)
+- Player 1 gets the next match updated to the next opponent or the empty next match card
+
+Case 3 - Player 1 wins the tournament 
+- All players get the news to update the brackelist (match won)
+- All players display 'player 1 won the tournament' 

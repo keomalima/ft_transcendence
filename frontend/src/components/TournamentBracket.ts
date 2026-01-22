@@ -42,15 +42,18 @@ export class TournamentBracket extends HTMLElement {
 		`;
 	}
 
-	public updateGameCard(updatedGame: TournamentGame, nextUpdatedGame: TournamentGame) {
-		// Update internal state
-		console.log('next-game', nextUpdatedGame);
-		this.updateInternalGameData(updatedGame.id, updatedGame);
-		this.updateInternalGameData(nextUpdatedGame.id, nextUpdatedGame);
-
-		// Update DOM
-		this.updateCardInDOM(updatedGame.id, updatedGame);
-		this.updateCardInDOM(nextUpdatedGame.id, nextUpdatedGame);
+	public updateBrackets(updatedGame: TournamentGame, nextUpdatedGame: TournamentGame | null) {
+	    // Update internal state
+	    this.updateInternalGameData(updatedGame.id, updatedGame);
+	    if (nextUpdatedGame) {
+	        this.updateInternalGameData(nextUpdatedGame.id, nextUpdatedGame);
+	    }
+	
+	    // Update DOM
+	    this.updateCardInDOM(updatedGame.id, updatedGame);
+	    if (nextUpdatedGame) {
+	        this.updateCardInDOM(nextUpdatedGame.id, nextUpdatedGame);
+	    }
 	}
 
 	private updateInternalGameData(gameId: string, updatedGame: TournamentGame): void {

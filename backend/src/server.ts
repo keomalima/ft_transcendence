@@ -24,19 +24,19 @@ import { chatPrivateRoutes } from './routes/chat/chat.route.js';
 // import googleAuthPlugin from './plugins/googleAuth.plugin.js';
 
 const fastify = Fastify({
-  logger: true,
-  trustProxy: true
+  	logger: true,
+  	trustProxy: true
 }).withTypeProvider<ZodTypeProvider>();
 
 await fastify.register(cookie, {
-	secret: "my-secret",
+	secret: process.env.COOKIE_SECRET,
 } as FastifyCookieOptions)
 
 await fastify.register(cors, {
-  origin: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+	origin: true,
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
+	credentials: true
 });
 
 // await fastify.register(googleAuthPlugin);
@@ -82,8 +82,8 @@ fastify.register(async (protectedRoutes) => {
 });
 
 try {
-  await fastify.listen({ port: 3000, host: '0.0.0.0' })
+	await fastify.listen({ port: 3000, host: '0.0.0.0' })
 } catch (err) {
-  fastify.log.error(err)
-  process.exit(1)
+	fastify.log.error(err)
+	process.exit(1)
 }

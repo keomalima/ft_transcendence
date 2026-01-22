@@ -242,15 +242,11 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 		}
 		if (tournament.createdBy === userId) {
 			console.log('🔥 notify closed tournament (BY CREATOR)');
-			WaintingRoomWsController.notifyGameClosed(tournamentId, userId);
+			WaintingRoomWsController.notifyTournamentClosed(tournamentId, userId);
 			return reply.code(204).send(await tournamentService.deletePendingTournament(request.server.prisma, tournamentId));
 		}
 
 		console.log('🔥 notify closed tournament (BY PLAYER)');
-		WaintingRoomWsController.broadcasToRoom(tournament.id, {
-			type: 'room_update',
-			message: `Need to update the tournament - QUIT!`,
-		});
 		return reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, userId));
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete tournament"});
@@ -339,6 +335,11 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 		await tournamentService.matchMakeGames(request.server.prisma, userId, tournament);
 		await tournamentService.createEmptyGames(request.server.prisma, userId, tournament);
 
+		WaintingRoomWsController.broadcasToRoom(tournament.id, {
+			type: 'start_tournament',
+			message:'Tournament has started',
+		})
+		
 		TournamentWsController.broadcastToRoom(tournament.id, {
 			type: 'start_tournament',
 			message:'Tournament has started',

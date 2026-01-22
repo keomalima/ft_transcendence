@@ -40,7 +40,6 @@ function notifyGameReadiness(tournamentId: string, playersId:{user: string, oppo
 	const sockets = tournamentBracket.get(tournamentId);
 	if (!sockets) return;
 
-	console.log('User id', playersId.user, 'Opponent Id', playersId.opponent);
 	const targetUserIds = [playersId.user, playersId.opponent];
     
     sockets.forEach(socket => {
@@ -53,6 +52,20 @@ function notifyGameReadiness(tournamentId: string, playersId:{user: string, oppo
     });
 }
 
+function notifyNewGame(nextGame: Awaited<ReturnType<typeof gameService.getCompleteGameData >>
+) {
+	const sockets = tournamentBracket.get(nextGame.tournamentId);
+	if (!sockets) return;
+	const targetUserIds = nextGame.gameUsers.map((gu: any) => gu.userId);
+    sockets.forEach(socket => {
+        if (targetUserIds.includes(socket.userId) && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'new_game',
+                data: nextGame
+            }));
+        }
+    });
+}
 
 function broadcastToRoom(tournamentId: string, message: any) {
 	const sockets = tournamentBracket.get(tournamentId);
@@ -68,5 +81,6 @@ function broadcastToRoom(tournamentId: string, message: any) {
 export const TournamentWsController = {
 	broadcastToRoom,
 	tournamentBracketHandler,
-	notifyGameReadiness
+	notifyGameReadiness,
+	notifyNewGame
 };
