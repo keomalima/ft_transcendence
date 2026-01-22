@@ -1,6 +1,7 @@
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { INPUT_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { AppContext } from "../types.js";
+import { escapeHtml } from "../pages/LiveChat.js";
 
 export class RegisterPopUp extends HTMLElement {
 	private selectedAvatarFile: File | null = null;
@@ -153,12 +154,12 @@ export class RegisterPopUp extends HTMLElement {
 				formData.append('avatarFile', this.selectedAvatarFile!);
 				this.dispatchEvent(new CustomEvent('event-account-creation', {
 					detail: {
-						email: formData.get('email') as string,
-						firstName: formData.get('first_name') as string,
-						lastName: formData.get('last_name') as string,
-						password: formData.get('password') as string,
-						username: formData.get('username') as string,
-						avatarFile: this.selectedAvatarFile  // Direct file reference
+						email: escapeHtml(formData.get('email') as string),
+						firstName: escapeHtml(formData.get('first_name') as string),
+						lastName: escapeHtml(formData.get('last_name') as string),
+						password: escapeHtml(formData.get('password') as string),
+						username: escapeHtml(formData.get('username') as string),
+						avatarFile: this.selectedAvatarFile,
 					},
 					bubbles: true
 				}))
