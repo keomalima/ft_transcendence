@@ -84,6 +84,7 @@ function passContext(ctx: AppContext, gameHistory: GameHistory[], currentUser: U
 	if (latestMatchComponent) {
 		latestMatchComponent.ctx = ctx;
 		latestMatchComponent.gameHistory = gameHistory;
+		latestMatchComponent.user = currentUser;
 	}
 
 }

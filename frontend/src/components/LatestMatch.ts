@@ -3,6 +3,7 @@ import type { AppContext, GameHistory, UserState } from "../types.js";
 export class LatestMatch extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _gameHistory: GameHistory[] | null = null;
+	private _user: Partial<UserState> | null = null;
 	
 	constructor() {
 		super();
@@ -10,18 +11,25 @@ export class LatestMatch extends HTMLElement {
 
 	set ctx(value: AppContext) {
 		this._ctx = value;
-		if (this.isConnected && this._ctx && this._gameHistory)
+		if (this.isConnected && this._ctx && this._gameHistory && this._user)
 			this.loadAndRender();
 	}
 	
+	set user(value : Partial<UserState>)
+	{
+		this._user = value;
+		if (this.isConnected && this._ctx && this._gameHistory && this._user)
+			this.loadAndRender();
+	}
+
 	set gameHistory(value: GameHistory[]) {
 		this._gameHistory = value;
-		if (this.isConnected && this._ctx && this._gameHistory)
+		if (this.isConnected && this._ctx && this._gameHistory && this._user)
 			this.loadAndRender();
 	}
 
 	connectedCallback() {
-		if (this.isConnected && this._ctx && this._gameHistory)
+		if (this.isConnected && this._ctx && this._gameHistory && this._user)
 			this.loadAndRender();
 	}
 
@@ -63,7 +71,7 @@ export class LatestMatch extends HTMLElement {
 						<div id='last-match-scores' class='mt-3 overflow-x-auto whitespace-nowrap p-5'>
 							<span class='inline-grid grid-cols-1 grid-rows-3 mx-2 text-center'>
 								<span class='p-5 text-white'>.</span>
-								<span class='p-5 pl-0'>you</span>
+								<span class='p-5 pl-0'>${this._user?.displayName}</span>
 								<span class='p-5 pl-0'>opponent</span>
 							</span>
 						</div>

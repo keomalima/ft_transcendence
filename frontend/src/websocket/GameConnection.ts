@@ -94,6 +94,10 @@ export class GameConnection {
 					},
 					bubbles: true
 				}));
+			} if (data.type === 'already-in-game') {
+				document.dispatchEvent(new CustomEvent('event-already-in-game', {
+					bubbles: true
+				}));
 			}
 		}
 	}

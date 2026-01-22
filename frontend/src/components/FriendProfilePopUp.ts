@@ -1,4 +1,3 @@
-import { INPUT_CLASSES, BUTTON_BLACK_CLASSES } from "../styles/tailwindStyles.js";
 import { AppContext, GameHistory, UserState } from "../types.js";
 
 export class FriendProfilePopUp extends HTMLElement {
@@ -77,6 +76,7 @@ export class FriendProfilePopUp extends HTMLElement {
 		if (latestMatchComponent) {
 			latestMatchComponent.ctx = this._ctx;
 			latestMatchComponent.gameHistory = this._friendHistory;
+			latestMatchComponent.user = this._friend;
 		}
 		const matchHistoryComponent = document.getElementById('friend-match-history-component') as any;
 		if (matchHistoryComponent) {
