@@ -70,12 +70,12 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 				</div>
 				${tournamentId ?
 					`
-						<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+						<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer hover:shadow-lg">
 							<p class='text-white' >You have an ongoing tournament</p>
 							<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter tournament</p>
 						</a>
 
-						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+						<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer hover:shadow-lg">
 							<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
 						</a>
 
@@ -83,25 +83,25 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 					:
 					currentGame?.gameId ?
 						`
-							<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer">
+							<a data-link href='${link}' class="rounded-lg p-5 lg:p-0 bg-black order-2 lg:order-0 lg:row-span-2 flex flex-col items-center justify-center cursor-pointer hover:shadow-lg">
 								<p class='text-white' >You have a pending game</p>
 								<p class='font-[Calistoga] text-white text-3xl cursor-pointer'>Enter game</p>
 							</a>
 
-							<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+							<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer hover:shadow-lg">
 								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
 							</a>
 
 						`
 						:
 						`
-							<a data-link href='/create-game' class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer">
+							<a data-link href='/create-game' class="relative rounded-lg bg-black order-2 lg:order-0 flex items-center justify-center cursor-pointer hover:shadow-lg">
 								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Create new game</p>
 							</a>
-							<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer">
+							<a onclick="document.getElementById('join-game-dialog').showModal()" class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-2 flex items-center justify-center cursor-pointer hover:shadow-lg">
 								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Join a game</p>
 							</a>
-							<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer">
+							<a data-link href='/live-chat' class="relative rounded-lg bg-black order-3 lg:order-0 lg:col-start-2 lg:row-start-3 flex items-center justify-center cursor-pointer hover:shadow-lg">
 								<p class='font-[Calistoga] m-5 text-white text-3xl cursor-pointer'>Live Chat</p>
 							</a>
 

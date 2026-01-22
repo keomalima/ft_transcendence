@@ -5,6 +5,7 @@ import { BUTTON_CREAM_CLASSES, INPUT_CLASSES, LABEL_CLASSES, LINK_STYLED_CLASSES
 import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 import httpCall from "../api/httpClient.js";
+import { escapeHtml } from "./LiveChat.js";
 
 // Track the last attached "Get started" button element so we can reattach
 // listeners when the SPA recreates the DOM node during navigation.
@@ -148,8 +149,8 @@ function setupHomeEventListeners(ctx: AppContext) {
 		const emailInput = document.getElementById('email') as HTMLInputElement;
 		const passwordInput = document.getElementById('password') as HTMLInputElement;
 
-		const email = emailInput?.value;
-		const password = passwordInput?.value;
+		const email = escapeHtml(emailInput?.value);
+		const password = escapeHtml(passwordInput?.value);
 
 		try {
 			await userService.loginUser(email, password, ctx);

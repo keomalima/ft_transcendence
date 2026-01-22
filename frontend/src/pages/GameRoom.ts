@@ -156,8 +156,12 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData,
 			router.navigateTo('/home');
 		},
 		() => {
+			console.log('🎮 Game starting - navigating to game page');
 			cleanWaitingRoomWS();
-			router.navigateTo(`/game/${gameData.id}`)
+			// Small delay to ensure WebSocket cleanup completes
+			setTimeout(() => {
+				router.navigateTo(`/game/${gameData.id}`);
+			}, 100);
 		}
 	)
 }

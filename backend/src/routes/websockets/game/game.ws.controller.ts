@@ -20,6 +20,11 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 
 	let gameSession = gameSessions.get(gameId);
 
+	if (gameSession && gameSession.players.has(userId)) {
+		gameWsNotification.notifyPlayerAlreadyInGame(socket, gameId);
+		return;
+	}
+
 	if (!gameSession) {
 		gameSession = createGameSession(gameId, userId, parseInt(scoreToWin), socket);
 		gameSessions.set(gameId, gameSession);

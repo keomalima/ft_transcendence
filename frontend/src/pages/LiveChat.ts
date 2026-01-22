@@ -1200,7 +1200,7 @@ async function verifyStillFriend(friendId: string, friendListComponent: any, ctx
 }
 
 // ======== PROTECT sql INJECTIONS / XSS ATTACKS ===========
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
 	const str = String(s ?? "");
 	return str
 		.replaceAll("&", "&amp;")

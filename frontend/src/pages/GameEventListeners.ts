@@ -24,6 +24,19 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	let playerPauseInterval: number | null = null;
 	let opponentPauseInterval: number | null = null;
 
+	// **** ALREADY IN GAME ****
+	document.addEventListener('event-already-in-game', (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+
+		console.log('You already are in this game, redirection to home');
+		if (currentGame.type === 'TOURNAMENT') {
+			router.navigateTo(`/tournament/${currentGame.tournamentId}`);
+		} else {
+			router.navigateTo(`/home`);
+		}
+	})
+
 	// **** UPDATE GAME ****
 	document.addEventListener('event-update-game', (e: Event) => {
 		e.preventDefault();
@@ -110,15 +123,10 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
     		console.error('❌ Missing game users data');
 			return;
 		}
-		const isResponsiblePlayer = currentGame.gameUsers[0].user?.id === currentUser.id;
 
-		if (isResponsiblePlayer) {
-			if (!await finishGame('COMPLETED', e, ctx, gameId))
-				return;
-		} else {
-			console.log('⏭️ Player is not the game creator, skipping...')
-		}
-
+		// Both players try to finish, but the flag in finishGame prevents duplicates
+		if (!await finishGame('COMPLETED', e, ctx, gameId))
+			return;
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;
@@ -158,13 +166,16 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
     		console.error('❌ Missing game users data');
 			return;
 		}
-		const isResponsiblePlayer = currentGame.gameUsers[0].user?.id === currentUser.id;
 
-		if (isResponsiblePlayer) {
+		const customEvent = e as CustomEvent;
+		const isWinner = customEvent.detail.iswinner;
+
+		// Only the winner (non-quitter) should finish the game to avoid race condition
+		if (isWinner) {
 			if (!await finishGame('ABANDONED', e, ctx, gameId))
 				return;
 		} else {
-			console.log('⏭️ Player is not the game creator, skipping...')
+			console.log('⏭️ Player gave up, letting winner finish the game');
 		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
@@ -174,8 +185,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		if (!wonGameOverlay || !winner)
 			return;
 
-		const customEvent = e as CustomEvent;
-		const isWinner = customEvent.detail.iswinner;
 		if (isWinner === true)
 			winner.innerText = `Your opponent gave up`;
 		else
@@ -409,7 +418,7 @@ async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppC
 			console.error('❌ Error finishing game:', error);
 		}
 	} else {
-		console.log('👀 Game already finished, skipping finishGame API call');
+		console.log('👀 Game is not IN_PROGRESS, skipping finishGame API call');
 		setIsFinishing(true);
 	}
 	return true

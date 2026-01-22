@@ -33,6 +33,21 @@ function broadcastGameState(gameSession: GameSession): void {
 	})
 }
 
+function notifyPlayerAlreadyInGame(socket: WebSocket, gameId: string): void {
+	console.log('🙊 This player is already in game!');
+
+	if (socket.readyState === WebSocket.OPEN) {
+		socket.send(JSON.stringify({
+			type: 'already-in-game',
+			message: "You are already in game",
+			gameId,
+		}));
+	} else {
+		console.log(`❌ Socket is NOT open. ReadyState: ${socket.readyState}`);
+	}
+
+}
+
 function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 	console.log('🚀 All players are connected, game starts!');
 	gameSession.players.forEach((player) => {
@@ -203,6 +218,7 @@ function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void 
 
 export const gameWsNotification = {
 	broadcastGameState,
+	notifyPlayerAlreadyInGame,
 	notifyGameStarted,
 	notifyService,
 	notifyPlayerDisconnected,

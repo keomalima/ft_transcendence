@@ -3,10 +3,12 @@ import type { AppContext, GameData, UserState } from "../types.js";
 import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
-import { tournamentApi } from "../api/tournamentApi.js";
 import { sharedGameState, setGameConnection, setIsFinishing } from "../game/sharedGameState.js";
 import { setupGameEventListeners } from "./GameEventListeners.js";
 
+// Guard to prevent double initialization
+let isInitializing = false;
+let currentGameId: string | null = null;
 
 export function Game(ctx: AppContext, params?: Record<string, string>): string {
 
@@ -29,8 +31,24 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
 
+	// Prevent double initialization for the same game
+	if (isInitializing && currentGameId === params['id']) {
+		console.log('⏭️ Already initializing game', params['id']);
+		return '<div id="game-content"><p class="flex items-center justify-center h-screen">Loading Game ...</p></div>';
+	}
+
+	isInitializing = true;
+	currentGameId = params['id'];
 
 	setTimeout(async () => {
+		const userGame = await gameService.getCurrentGame(ctx);
+		// secure if the user do not belong to the game
+		if (params['id'] !== userGame?.gameId) {
+			console.log('User do not belong to this game')
+			setTimeout(() => router.navigateTo('/home'), 0);
+			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
+		}
+
 		let currentGame = await gameService.getGame(params['id'], ctx);
 		console.log('💫 current game = ', currentGame);
 		// secure if the ugame is not IN_PROGRESS
@@ -39,15 +57,12 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 			setTimeout(() => router.navigateTo('/'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
-		// secure if the user do not belong to the game
-		if (params['id'] !== currentGame?.id) {
-			console.log('User do not belong to this game')
-			setTimeout(() => router.navigateTo('/home'), 0);
-			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
-		}
 		let check = await userIsAuthorized(currentUser.id!, ctx);
 		if (check !== null)
 			return check;
+
+		// Reset game finishing flag for new game
+		setIsFinishing(false);
 		
 		// 1. Set game sockets
 		setGameSockets(params['id'], currentUser.id!, currentGame.scoreToWin!.toString());
@@ -63,6 +78,9 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		
 		// 5. Start game (show the start overlays)
 		startGame();
+
+		// Mark initialization as complete
+		isInitializing = false;
 	}, 0);
 
 	return (/*html*/`
@@ -86,14 +104,14 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Game</h1>
 			</div>
 			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
-				<div class='flex-1 justify-items-center'>
+				<div class='flex-1 text-center'>
 					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>-</p>
 					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 				<div class='flex-1 flex items-center justify-center'>
 					<p class="text-sm md:text-base">vs</p>
 				</div>
-				<div class='flex-1 justify-items-center'>
+				<div class='flex-1 text-center'>
 					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>-</p>
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
@@ -103,7 +121,6 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				<div id="paddleLeft" class='absolute w-[2%] h-1/5 bg-white rounded-xs' style="top: 40%"></div>
 				<div id="paddleRight" class='absolute w-[2%] h-1/5 bg-white right-[0px] rounded-xs' style="top: 40%"></div>
 				<div id='ball' class='absolute w-[2%] h-[4%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-				<!-- <div id='ball' class='absolute w-[2.5%] h-[5%] rounded-full bg-yellow-500' style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div> -->
 			</div>
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
@@ -330,30 +347,46 @@ function gameActionListener() {
 }
 
 // ======== START ============
+let startGameHandler: ((e: Event) => void) | null = null;
+
 function startGame() {
-	document.addEventListener('event-start-game', (e: Event) => {
+	// Remove old listener if it exists
+	if (startGameHandler) {
+		document.removeEventListener('event-start-game', startGameHandler);
+	}
+
+	// Store reference to current overlay
+	const waitingOpponentOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement | null;
+	
+	// Create new handler
+	startGameHandler = (e: Event) => {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 		const detail = customEvent.detail;
 
+		// Query DOM elements fresh when event fires (after new render)
 		const startOverlay = document.querySelector('#start-overlay') as HTMLDivElement | null;
 		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement | null;
-		const waitingOpponentOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement;
 
 		if (waitingOpponentOverlay) {
-			waitingOpponentOverlay.classList.add('hidden');
+			console.log('hide waiting for opponent overlay');
+			waitingOpponentOverlay.style.display = 'none';
 		}
 
 		if (playingSide) {
 			playingSide.innerHTML = `You play on ${detail.position} side ${detail.position === 'left' ? '⬅️' : '➡️' }`;
 		}
 
-		startOverlay?.classList.remove('hidden');
+		if (startOverlay) {
+			startOverlay.classList.remove('hidden');
+			setTimeout(() => {
+				startOverlay.classList.add('hidden');
+			}, 3000);
+		}
+	};
 
-		setTimeout(() => {
-			startOverlay?.classList.add('hidden');
-		}, 3000);
-	}, { once: true });
+	// Register the new listener (will only fire once)
+	document.addEventListener('event-start-game', startGameHandler, { once: true });
 }
 
 

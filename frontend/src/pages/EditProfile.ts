@@ -8,6 +8,7 @@ import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSE
 
 // import component
 import "../components/NavBar.js";
+import { escapeHtml } from "./LiveChat.js";
 
 
 export function EditProfile(ctx: AppContext) : string {
@@ -196,7 +197,7 @@ function setupEditEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		e.stopPropagation();
 		const formData = new FormData(updatePersonnalInfo);
-		const newDisplayName = formData.get('username') as string;
+		const newDisplayName = escapeHtml(formData.get('username') as string);
 		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
 		if (newDisplayName && newDisplayName.length > 20) {
 			if (errorMsg) {
@@ -206,9 +207,9 @@ function setupEditEventListeners(ctx: AppContext) {
 		}
 		try {
 			await userService.updateUser({
-				surname: formData.get('last_name') ? formData.get('last_name') as string : null,
-				displayName: formData.get('username') ? formData.get('username') as string : null,
-				name: formData.get('first_name') ? formData.get('first_name') as string : null
+				surname: formData.get('last_name') ? escapeHtml(formData.get('last_name') as string) : null,
+				displayName: formData.get('username') ? escapeHtml(formData.get('username') as string) : null,
+				name: formData.get('first_name') ? escapeHtml(formData.get('first_name') as string) : null
 			}, ctx);
 			console.log('test');
 			router.navigateTo('/profile');
@@ -228,9 +229,9 @@ function setupEditEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		e.stopPropagation();
 		const formData = new FormData(changePasswordForm);
-		const currentPassword = formData.get('current_password') as string;
-		const newPassword = formData.get('new_password') as string;
-		const confirmPassword = formData.get('confirm_password') as string;
+		const currentPassword = escapeHtml(formData.get('current_password') as string);
+		const newPassword = escapeHtml(formData.get('new_password') as string);
+		const confirmPassword = escapeHtml(formData.get('confirm_password') as string);
 		if (!currentPassword || !newPassword || !confirmPassword) {
 			changePwdMsg.innerText = 'Missing input';
 			changePwdMsg.className = 'pt-5 text-red-500 text-sm';
