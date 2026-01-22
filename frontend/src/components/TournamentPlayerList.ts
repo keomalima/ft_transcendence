@@ -35,6 +35,21 @@ export class TournamentPlayerList extends HTMLElement {
 		}
 	}
 
+	set participantData(participant: TournamentParticipant) {
+		if (this._participants) {
+			this._participants.push(participant);
+			this.loadAndRender();
+		}
+	}
+
+	set removeParticipantData(participantId: string) {
+		if (this._participants) {
+			console.log('participant id', participantId);
+			this._participants = this._participants.filter(p => p.user.id !== participantId);
+			this.loadAndRender();
+		}
+	}
+
 	async connectedCallback() {
 		if (this.isConnected && this._participants && this._participants && this._isCreator !== null) {
 			await this.loadAndRender();
@@ -80,7 +95,7 @@ export class TournamentPlayerList extends HTMLElement {
 							QUIT
 						</button>
 					</div>
-					<p id='error-start-game'></p>
+					<p id='error-start-tournament'></p>
 				</div>
 			`;
 		}
@@ -99,6 +114,7 @@ export class TournamentPlayerList extends HTMLElement {
 	private createPlayerCard(participant: TournamentParticipant): HTMLElement {
 
 		const card = document.createElement('div');
+		card.id = `participant-${participant.id}`;
 		card.className = 'relative flex items-center bg-stone-100 rounded space-x-3 my-2 py-2 px-3';
 
 		// profile picture ===========

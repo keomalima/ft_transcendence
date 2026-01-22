@@ -1,4 +1,4 @@
-import type { AppContext, TournamentData, UserState } from "../types.js";
+import type { AppContext, TournamentData, TournamentParticipant, UserState } from "../types.js";
 import { router } from "../main.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { TournamentWaitingRoomConnection } from "../websocket/TournamentWaitingConnections.js";
@@ -113,13 +113,18 @@ async function setTournamentRoomWebSockets(currentUser: UserState, tournamentDat
 	// Create websocket with gameid
 	wsConnection = new TournamentWaitingRoomConnection();
 	wsConnection.connect(tournamentData.id!, currentUser.id!,
-		async (updateGameData) => {
-			if (updateGameData.message) {
-				console.log('🔔', updateGameData);
-				const newTournamentData = await getTournamentData(tournamentData.id!);
-				if (newTournamentData)
-					tournamentData = newTournamentData;
-				updatePlayerList(tournamentData);
+		async (participant) => {
+			if (participant.player) {
+				updatePlayerList(participant.player);
+			}
+		},
+		(participant) => {
+			const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as TournamentPlayerList | null;
+			if (tournamentPlayerListComponent && participant)
+				tournamentPlayerListComponent.removeParticipantData = participant.playerId;
+			if (currentUser.id == participant.playerId && participant.type == 'player_remove') {
+				cleanTournamentWaitingRoomWS();
+				router.navigateTo('/home');
 			}
 		},
 		() => {
@@ -128,11 +133,7 @@ async function setTournamentRoomWebSockets(currentUser: UserState, tournamentDat
 		},
 		() => {
 			cleanTournamentWaitingRoomWS();
-			router.navigateTo('/home');
-		},
-		() => {
-			cleanTournamentWaitingRoomWS();
-			router.navigateTo(`/tournament-room/${tournamentData.id}`)
+			router.navigateTo(`/tournament/${tournamentData.id}`)
 		}
 	)
 }
@@ -167,11 +168,10 @@ function passContext(ctx: AppContext, tournamentData: TournamentData | null, isC
 }
 
 // ======== UPDATE PLAYER LIST ============
-function updatePlayerList(tournamentData: TournamentData) {
+function updatePlayerList(participant: TournamentParticipant) {
 	const tournamentPlayerListComponent = document.getElementById('tournament-player-list-component') as TournamentPlayerList | null;
-	if (tournamentPlayerListComponent && tournamentData) {
-		// Update the tournamentData property with the new data from websocket
-		tournamentPlayerListComponent.tournamentData = tournamentData;
+	if (tournamentPlayerListComponent && participant) {
+		tournamentPlayerListComponent.participantData = participant;
 	}
 }
 
@@ -237,8 +237,6 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 		const tournamentId = customEvent.detail;
 		try {
 			await tournamentApi.startTournament(tournamentId);
-			cleanTournamentWaitingRoomWS();
-			router.navigateTo(`/tournament/${tournamentId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-tournament') as HTMLParagraphElement;
 			if (errorMsgStartGame) {
@@ -259,7 +257,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 		try {
 			await tournamentApi.quitTournament(tournamentId);
 			cleanTournamentWaitingRoomWS();
-			router.navigateTo('/tournament');
+			router.navigateTo('/');
 		} catch (error) {
 			console.log(error);
 		}
@@ -277,9 +275,6 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			return;
 		try {
 			await tournamentApi.removePlayer(tournamentId, playerId);
-			const tournamentData = await getTournamentData(tournamentId);
-			if (tournamentData)
-				updatePlayerList(tournamentData);
 		} catch (error) {
 			console.log(error);
 		}
