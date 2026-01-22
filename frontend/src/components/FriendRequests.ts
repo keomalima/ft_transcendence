@@ -1,11 +1,12 @@
 import { friendshipApi } from "../api/friendshipApi.js";
+import { API_BASE_URL } from "../config.js";
 import { AppContext } from "../types.js";
 import type { RequestData } from "../types.js";
 
 export class FriendRequests extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<RequestData>[] | null = null;
-	private _uploadsUrl: string = 'http://localhost:3000';
+	private _uploadsUrl: string = API_BASE_URL;
 	private _isLoading: boolean = false;
 	
 	constructor() {

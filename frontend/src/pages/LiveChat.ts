@@ -789,9 +789,8 @@ function setTournamentWebSocket(tournamentId: string, userId: string, ctx: AppCo
 			showTournamentNotifBox(msg);
 			console.log("tournament_update payload:", data);
 		},
-
-		// onQuit -> player_quit (ignore for now)
 		() => {},
+		// onQuit -> player_quit (ignore for now)
 		() => {},
 		() => {},
 		// onTournamentEnd -> tournament_closed (ignore for now)

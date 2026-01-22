@@ -8,7 +8,7 @@ export class TournamentWsConnection {
 		opponentReady: (game: any) => void,
 		onStartGame: (game: any) => void,
 		onStartTournament: () => void,
-		onTournamentEnd: () => void)
+		onTournamentEnd: (game: any) => void)
 		{
 		const httpUrl = new URL(`/ws/tournament/${tournamentId}/${userId}`, API_BASE_URL);
 		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -37,9 +37,9 @@ export class TournamentWsConnection {
 				console.log('The tournament has started');
 				onStartTournament();
 			}
-			if (data.type === 'tournament_closed') {
+			if (data.type === 'tournament_ended') {
 				console.log('🚫 The tournament has finished');
-				onTournamentEnd();
+				onTournamentEnd(data);
 			}
 		}
 		

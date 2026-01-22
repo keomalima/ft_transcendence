@@ -1,11 +1,12 @@
 import { AppContext, UserState } from "../types.js";
 import { BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
+import { API_BASE_URL } from "../config.js";
 
 export class ProfileCard extends HTMLElement {
 
 	private _ctx: AppContext | null = null;
 	private _user: Partial<UserState> | null = null;
-	private _uploadsUrl: string = 'http://localhost:3000';
+	private _uploadsUrl: string = API_BASE_URL;
 	
 	constructor() {
 		super();

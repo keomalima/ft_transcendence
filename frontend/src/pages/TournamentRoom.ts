@@ -26,13 +26,18 @@ export function TournamentRoom(ctx: AppContext, params?: Record<string, string>)
 
 	setTimeout(async () => {
 		let tournamentData = await getTournamentData(params['id']);
-		if (!tournamentData)
-			return;
-		const isUserOnTournament = tournamentData.participants.find((u: any) => u.user.id === currentUser!.id);
-		if (!isUserOnTournament)
+		if (!tournamentData) {
 			setTimeout(() => router.navigateTo('/'), 0);
+			return;
+		}
+		const isUserOnTournament = tournamentData.participants.find((u: any) => u.user.id === currentUser!.id);
+		if (!isUserOnTournament) {
+			setTimeout(() => router.navigateTo('/'), 0);
+			return;
+		}
 		if (tournamentData.status !== 'REGISTRATION') {
 			setTimeout(() => router.navigateTo(`/tournament/${tournamentData.id}`), 0);
+			return;
 		}
 		renderTournamentRoomContent(tournamentData);
 		passContext(ctx, tournamentData, tournamentData.isCreator);

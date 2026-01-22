@@ -1,10 +1,11 @@
+import { API_BASE_URL } from "../config.js";
 import { AppContext, GameHistory } from "../types.js";
 
 export class MatchHistory extends HTMLElement {
 
 	private _ctx: AppContext | null = null;
 	private _gameHistory: GameHistory[] | null = null;
-	private _uploadsUrl: string = 'http://localhost:3000';
+	private _uploadsUrl: string = API_BASE_URL;
 	private _isLoading: boolean = false;
 
 	constructor() {
