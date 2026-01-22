@@ -76,7 +76,7 @@ function renderLiveChatContent(ctx: AppContext) {
 			<div id="tournament-notif" class="hidden mb-3 rounded-lg border border-gray-200 bg-yellow-50 p-3">
 				<div class="flex items-start justify-between gap-2">
 					<div>
-						<p class="font-semibold text-gray-900">🏆 Tournament Notification</p>
+						<p class="font-semibold text-gray-900">Tournament Notification</p>
 						<p id="tournament-notif-text" class="text-sm text-gray-700 mt-1">Loading...</p>
 					</div>
 				</div>
@@ -124,13 +124,14 @@ async function setupTournamentNotifAndWs(ctx: AppContext, currentUserId: string)
 	livechatTournamentId = t?.tournamentId ?? null;
 
 	if (livechatTournamentId) {
-		showTournamentNotifBox("Connected to tournament. Waiting for updates...");
+		showTournamentNotifBox("📡 Connected. Waiting for tournament updates...");
 		setTournamentWebSocket(livechatTournamentId, currentUserId, ctx);
 	} else {
 		hideTournamentNotifBox();
 		tournamentConnection?.disconnect();
 		tournamentConnection = null;
 		connectedTournamentId = null;
+		livechatTournamentId = null;
 	}
 }
 
@@ -171,14 +172,10 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 		const p = chatEmpty.querySelector("p");
 		if (p) {
-			p.innerHTML =
-			friends.length === 0
-			? `<span class="text-gray-900 text-xl font-semibold italic text-center block">
-					🫤 You have no friends yet. Add some to start chatting!
-				</span>`
-			: `<span class="text-gray-900 text-xl font-semibold italic text-center block">
-					👈 Select a friend to start chatting!
-				</span>`;
+			p.textContent =
+				friends.length === 0
+				? "🫤 You have no friends yet. Add some to start chatting!"
+				: "👈 Select a friend to start chatting!";
 		}
 	});
 
@@ -280,13 +277,31 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 					if (chatBox) {
 						const bubble = document.createElement("div");
 						bubble.className = "flex justify-start";
-						bubble.innerHTML = `
-							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-								${content}
-							</div>
-						`;
+
+						const inner = document.createElement("div");
+						inner.className = "px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words";
+						inner.textContent = content;
+
+						bubble.appendChild(inner);
 						chatBox.appendChild(bubble);
 						chatBox.scrollTop = chatBox.scrollHeight;
+
+						const isInviteDecision =
+							content === "✅ Accepted the game invite" ||
+							content === "❌ Declined the game invite";
+
+						if (isInviteDecision) {
+							const v = selectVersion;
+							setTimeout(async () => {
+								if (_selectedFriend?.id !== fromUserId) return;
+								if (v !== selectVersion) return;
+
+								await refreshIsUserInGameOrTournament(ctx);
+								if (_selectedFriend?.id !== fromUserId) return;
+								await renderChatBox(_selectedFriend, ctx, selectVersion);
+							}, 0);
+						}
+
 					}
 					return;
 				}
@@ -303,44 +318,47 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 							const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 							if (inviteBtn) {
-								inviteBtn.classList.add("hidden");
-								inviteBtn.disabled = true;
+								  inviteBtn.textContent = "⏳ Pending";
+									inviteBtn.disabled = true;
+									inviteBtn.onclick = null;
 							}
 
 							// 2) show accept/decline in header immediately
 							const inviteActions = document.getElementById("invite-actions");
 							if (inviteActions && !isUserInGameOrTournament) {
-								inviteActions.innerHTML = `
-									<button
-										id="accept-invite-btn"
-										class="px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-shadow shadow-sm hover:shadow-md"
-									>
-										✅ Accept
-									</button>
-									<button
-										id="decline-invite-btn"
-										class="px-4 py-1.5 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-shadow shadow-sm hover:shadow-md"
-									>
-										❌ Decline
-									</button>
-								`;
+								inviteActions.replaceChildren();
+
+								const accept = document.createElement("button");
+								accept.id = "accept-invite-btn";
+								accept.className =
+									"px-4 py-1.5 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-shadow shadow-sm hover:shadow-md";
+								accept.textContent = "✅ Accept";
+
+								const decline = document.createElement("button");
+								decline.id = "decline-invite-btn";
+								decline.className =
+									"px-4 py-1.5 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-shadow shadow-sm hover:shadow-md";
+								decline.textContent = "❌ Decline";
+
+								inviteActions.appendChild(accept);
+								inviteActions.appendChild(decline);
 
 								const v = selectVersion;
 								bindInviteActionButtons(fromUserId, gameId, ctx, v);
 							}
 						}
 
-						bubble.innerHTML = `
-							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-								🎮 Game invite received
-							</div>
-						`;
+						const inner = document.createElement("div");
+						inner.className = "px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words";
+						inner.textContent = "🎮 Game invite received";
+
+						bubble.appendChild(inner);
 					} else {
-						bubble.innerHTML = `
-							<div class="px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words">
-								${content}
-							</div>
-						`;
+						const inner = document.createElement("div");
+						inner.className = "px-4 py-2 rounded-lg bg-green-100 text-black max-w-xs break-words";
+						inner.textContent = content;
+
+						bubble.appendChild(inner);
 					}
 
 					chatBox.appendChild(bubble);
@@ -428,18 +446,15 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	]);
 	if (isStale()) return;
 
-	const canShowGoToGame = !!goToGameId && !pendingGameId && !friend.isBlockedBy;
-	const shouldHideInviteGameBtn = !!pendingGameId && !isUserInGameOrTournament;
-
 	chatRight.innerHTML = `
 		<!-- Header -->
 		<div class="flex justify-between items-center p-4 border-b">
 			<div>
-				<p class="font-bold text-lg">${friend.displayName}</p>
+				<p class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
 				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
 			</div>
 
-			<div class="flex gap-2 items-center">
+			<div class="flex flex-wrap justify-end items-center gap-2">
 				<!-- See Profile -->
 				<button
 					id="see-profile-btn"
@@ -455,19 +470,13 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 				<!-- Invite actions placeholder (Accept/Decline will go here later) -->
 				<div id="invite-actions" class="flex gap-2 items-center"></div>
 
-				<!-- Invite Game -->
-				${shouldHideInviteGameBtn ? "" : `
+				<!-- Single Slot: Invite OR Go -->
 				<button
 					id="invite-game-btn"
-					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md
-					${isAnyInGame || friend.isBlockedBy
-						? 'bg-red-500 text-white cursor-not-allowed'
-						: 'bg-green-600 text-white hover:bg-green-700'}"
-					${(!canShowGoToGame && (isAnyInGame || friend.isBlockedBy)) ? 'disabled' : ''}
+					class="px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md"
 				>
-					🎮 Invite Game
+				...
 				</button>
-				`}
 
 				<!-- Block / Unblock -->
 				<button
@@ -497,7 +506,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 		<!-- Input -->
 		${friend.isBlockedBy ? `
 			<div class="p-4 border-t text-center text-red-500 font-semibold">
-				${friend.displayName} has blocked you. You cannot send messages or invite to games.
+				${escapeHtml(friend.displayName ?? "")} has blocked you. You cannot send messages or invite to games.
 			</div>
 		` : `
 			<div class="p-4 border-t">
@@ -622,78 +631,100 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 
 	if (inviteBtn) {
-		// Case A: show Go to Game for user1
-		if (canShowGoToGame) {
+		const inTournament = !!livechatTournamentId;
+		const receiverHasPending = !!pendingGameId && !isUserInGameOrTournament;
+
+		// Source of truth: if backend says you have a game to go -> GO
+		const shouldGo = !!goToGameId && !friend.isBlockedBy && !inTournament;
+
+		const enabledClass =
+			"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
+		const disabledClass =
+			"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm bg-gray-300 text-gray-600 cursor-not-allowed";
+
+		if (shouldGo) {
 			inviteBtn.textContent = "🟢 Go to Game";
-			inviteBtn.className =
-				"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
+			inviteBtn.className = enabledClass;
 			inviteBtn.disabled = false;
-			inviteBtn.onclick = () => router.navigateTo(`/game-room/${goToGameId}`);
+			if (goToGameId) {
+				inviteBtn.onclick = () => router.navigateTo(`/game-room/${encodeURIComponent(goToGameId)}`);
+			}
+
 		}
-		// Case B: normal Invite Game
 		else {
-			inviteBtn.onclick = async () => {
-				if (!_selectedFriend) return;
-				if (inviteBtn.disabled) return;
-				if (isStale()) return;
-				try {
+			const disableInvite = inTournament || friend.isBlockedBy || isAnyInGame || receiverHasPending;
+
+			// label depending on reason (optional but nice UX)
+			if (inTournament) inviteBtn.textContent = "🏆 In Tournament";
+			else if (friend.isBlockedBy) inviteBtn.textContent = "🚫 Blocked";
+			else if (receiverHasPending) inviteBtn.textContent = "⏳ Pending";
+			else if (isAnyInGame) inviteBtn.textContent = "⛔ In Game";
+			else inviteBtn.textContent = "🎮 Invite Game";
+
+			inviteBtn.className = disableInvite ? disabledClass : enabledClass;
+			inviteBtn.disabled = disableInvite;
+			inviteBtn.onclick = null;
+
+			if (!disableInvite) {
+				inviteBtn.onclick = async () => {
+					if (!_selectedFriend) return;
+					if (isStale()) return;
+
 					const res = await chatApi.sendMessage({
 						toUserId: _selectedFriend.id,
 						content: "I invite you to a game.",
 						type: "GAME_INVITE",
 					});
+
 					if (isStale()) return;
 
-					if (res.status === "ok") {
-						console.log("✅ Game invite sent successfully!");
+					if (res.status === "error") {
+						if (res.code === "BLOCKED") {
+							showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
 
-						if (!res.gameId) {
-							console.error("❌ Missing res.gameId for GAME_INVITE success:", res);
-							alert("Invite sent but missing gameId from server.");
+							const updatedFriendList = await friendshipApi.getList();
+							if (isStale()) return;
+							const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
+							if (updated) _selectedFriend = updated;
+
+							await renderChatBox(_selectedFriend, ctx, selectVersion);
 							return;
 						}
-
-						inviteBtn.textContent = "🟢 Go to Game";
-						inviteBtn.className =
-							"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
-						inviteBtn.onclick = () => router.navigateTo(`/game-room/${res.gameId}`);
-						return;
-					}
-
-					if (res.code === "BLOCKED") {
-						showToast(`${_selectedFriend.displayName} has blocked you.`, "block");
-
-						const updatedFriendList = await friendshipApi.getList();
-						const updated = updatedFriendList.find((f) => f.id === _selectedFriend.id);
-						if (updated) {
-							_selectedFriend = updated;
+						if (res.code === "U_IN_GAME") {
+							showToast("❌ You are already in a game or tournament.", "block");
+							isUserInGameOrTournament = true;
 							renderChatBox(_selectedFriend, ctx, selectVersion);
+							return;
 						}
+						if (res.code === "F_IN_GAME") {
+							showToast(`❌ ${_selectedFriend.displayName} is already in a game or tournament.`, "block");
+							isFriendInGameOrTournament = true;
+							renderChatBox(_selectedFriend, ctx, selectVersion);
+							return;
+						}
+						showToast(res.reason || "❌ Failed to send invite.", "block");
 						return;
 					}
 
-					if (res.code === "U_IN_GAME") {
-						showToast("❌ You are already in a game or tournament.", "block");
-						isUserInGameOrTournament = true;
-						renderChatBox(_selectedFriend, ctx, selectVersion);
+					if (!res.gameId) {
+						showToast("Invite sent but missing gameId.", "block");
 						return;
 					}
 
-					if (res.code === "F_IN_GAME") {
-						showToast(`❌ ${_selectedFriend.displayName} is already in a game or tournament.`, "block");
-						isFriendInGameOrTournament = true;
-						renderChatBox(_selectedFriend, ctx, selectVersion);
-						return;
-					}
+					// now in a game -> align with normal render logic
+					isUserInGameOrTournament = true;
 
-				} catch (err) {
-					if (isStale()) return;
-					console.error("❌ Error sending game invite:", err);
-					alert("An error occurred. Please try again.");
-				}
-			};
+					// re-render the current chat using the normal rules
+					if (_selectedFriend) {
+						await renderChatBox(_selectedFriend, ctx, selectVersion);
+					}
+				};
+			}
+		
 		}
 	}
+
+
 
 
 	const seeProfileBtn = document.getElementById('see-profile-btn');
@@ -726,11 +757,12 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 					if (chatBox) {
 						const bubble = document.createElement("div");
 						bubble.className = "flex justify-end";
-						bubble.innerHTML = `
-							<div class="px-4 py-2 rounded-lg bg-blue-100 text-black max-w-xs break-words">
-								${content}
-							</div>
-						`;
+
+						const inner = document.createElement("div");
+						inner.className = "px-4 py-2 rounded-lg bg-blue-100 text-black max-w-xs break-words";
+						inner.textContent = content;
+
+						bubble.appendChild(inner);
 						chatBox.appendChild(bubble);
 						chatBox.scrollTop = chatBox.scrollHeight;
 					}
@@ -780,25 +812,57 @@ function setTournamentWebSocket(tournamentId: string, userId: string, ctx: AppCo
 		tournamentId,
 		userId,
 
-		// onUpdate -> tournament_update
+		// tournament_update
 		(data) => {
 			const myId = ctx.userStore.get()?.id;
 			if (!myId) return;
 
 			const msg = buildSimpleTournamentMsg(data, myId);
 			showTournamentNotifBox(msg);
-			console.log("tournament_update payload:", data);
+
+			// optional: keep state fresh for disabling invites etc.
+			refreshIsUserInGameOrTournament(ctx).catch(() => {});
 		},
-		() => {},
-		// onQuit -> player_quit (ignore for now)
-		() => {},
-		() => {},
-		// onTournamentEnd -> tournament_closed (ignore for now)
-		() => {}
+
+		// opponent_ready
+		(data) => {
+			showTournamentNotifBox("🟢 Opponent is ready. Go to the tournament page.");
+		},
+
+		// start_game
+		(data) => {
+			showTournamentNotifBox("🎮 Match is starting now. Go to the tournament page.");
+		},
+
+		// start_tournament
+		() => {
+			showTournamentNotifBox("🚀 Tournament started. Go to the tournament page.");
+		},
+
+		// tournament_closed
+		() => {
+			// 1) show notif
+			showTournamentNotifBox("🏁 Tournament finished.");
+
+			// 2) disconnect tournament WS + reset ids
+			tournamentConnection?.disconnect();
+			tournamentConnection = null;
+			livechatTournamentId = null;
+			connectedTournamentId = null;
+
+			// 3) refresh flags so invite buttons etc. become correct again
+			refreshIsUserInGameOrTournament(ctx)
+			.then(() => {
+				if (_selectedFriend) renderChatBox(_selectedFriend, ctx, selectVersion);
+			})
+			.catch(() => {});
+
+			// 4) hide the notif box after 5 sec
+			window.setTimeout(() => hideTournamentNotifBox(), 2000);
+		},
 	);
+
 }
-
-
 
 export function cleanLiveChatWS() {
 	if (chatConnection) {
@@ -868,7 +932,7 @@ function renderMessageBubbles(messages: ChatMessage[], currentUserId: string): s
 			return `
 				<div class="flex ${isSender ? 'justify-end' : 'justify-start'}">
 					<div class="px-4 py-2 rounded-lg ${bubbleColor} ${textColor} max-w-xs break-words">
-						${msg.content ?? ""}
+						${escapeHtml(msg.content ?? "")}
 					</div>
 				</div>
 			`;
@@ -942,7 +1006,7 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 			isUserInGameOrTournament = true;
 
 			// 3) Go to game room
-			router.navigateTo(`/game-room/${gameId}`);
+			router.navigateTo(`/game-room/${encodeURIComponent(gameId)}`);
 		} catch (err) {
 			console.error("❌ joinGameFromChat error:", err);
 			showToast("❌ Failed to join the game.", "block");
@@ -976,8 +1040,9 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 
 			const inviteBtn = document.getElementById("invite-game-btn") as HTMLButtonElement | null;
 			if (inviteBtn) {
-				inviteBtn.classList.remove("hidden");
-				inviteBtn.disabled = false;
+				inviteBtn.textContent = "🎮 Invite Game";
+				inviteBtn.disabled = true;
+				inviteBtn.onclick = null;
 			}
 
 			showToast("Invite declined", "block");
@@ -1053,8 +1118,10 @@ function showTournamentNotifBox(text: string) {
 
 function hideTournamentNotifBox() {
 	const box = document.getElementById("tournament-notif");
+	const textEl = document.getElementById("tournament-notif-text");
 	if (!box) return;
 	box.classList.add("hidden");
+	if (textEl) textEl.textContent = "";
 }
 
 
@@ -1068,9 +1135,9 @@ function buildSimpleTournamentMsg(data: any, myId: string): string {
 	const inCurrent = isMeInGame(data?.game, myId);
 	const inNext = isMeInGame(data?.nextGame, myId);
 
-	if (inNext) return "🟢 You have a coming game.";
-	if (inCurrent) return "🎮 You have a current game update.";
-	return "🏆 Tournament updated (not related to you).";
+	if (inNext) return "📣 Upcoming match assigned.";
+	if (inCurrent) return "📣 Current match updated.";
+	return "📣 Tournament updated.";
 }
 
 function patchChatHeader(friend: any) {
@@ -1089,17 +1156,17 @@ function renderChatShell(friend: any) {
 	chatRight.classList.remove("hidden");
 
 	chatRight.innerHTML = `
-	<div class="flex justify-between items-center p-4 border-b">
-		<div>
-			<p id="chat-friend-name" class="font-bold text-lg">${friend.displayName ?? ""}</p>
-			<p id="chat-friend-status" class="text-gray-500 text-sm">${friend.isOnline ? "Online" : "Offline"}</p>
+		<div class="flex justify-between items-center p-4 border-b">
+			<div>
+				<p id="chat-friend-name" class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
+				<p id="chat-friend-status" class="text-gray-500 text-sm">${friend.isOnline ? "Online" : "Offline"}</p>
+			</div>
+			<div class="text-sm text-gray-400">Loading…</div>
 		</div>
-		<div class="text-sm text-gray-400">Loading…</div>
-	</div>
 
-	<div class="flex-1 p-4 overflow-y-auto">
-		<p class="text-gray-400 text-center mt-4">Loading messages…</p>
-	</div>
+		<div class="flex-1 p-4 overflow-y-auto">
+			<p class="text-gray-400 text-center mt-4">Loading messages…</p>
+		</div>
 	`;
 }
 
@@ -1131,6 +1198,18 @@ async function verifyStillFriend(friendId: string, friendListComponent: any, ctx
 		console.error("verifyStillFriend failed:", err);
 	}
 }
+
+// ======== PROTECT sql INJECTIONS / XSS ATTACKS ===========
+function escapeHtml(s: string): string {
+	const str = String(s ?? "");
+	return str
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
 
 // ======== GET CURRENT GAME ============
 async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId: string, type: string, status: string, token: string | null} | null> {
