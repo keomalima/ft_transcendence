@@ -185,7 +185,18 @@ async function generateToken(prisma: PrismaClient, tournamentId: string, token: 
 }
 
 async function joinUserToTournament(prisma: PrismaClient, tournamentId: string, userId: string) {
-	return prisma.tournamentPlayer.create({ data: { tournamentId, userId}})
+    return prisma.tournamentPlayer.create({ 
+        data: { tournamentId, userId },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    displayName: true,
+                    avatarUrl: true
+                }
+            }
+        }
+    })
 }
 
 async function removePlayerFromTournament(prisma: PrismaClient, tournamentId: string, userId: string) {

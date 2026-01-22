@@ -186,17 +186,19 @@ async function startGame(prisma: PrismaClient, gameId: string, userId: string) {
 			}
 		});
 	}
-
-	if (game?.tournamentId)
-		notifyTournament(prisma, game.tournamentId, game.id, null);
 	
-	return prisma.game.update({
+	const updatedGame = await  prisma.game.update({
 		where: { id: gameId },
 		data: {
 			status: "IN_PROGRESS",
 			startedAt: new Date()
 		}
 	});
+
+	if (game?.tournamentId)
+		notifyTournament(prisma, game.tournamentId, updatedGame.id, null);
+
+	return updatedGame;
 }
 
 async function deletePendingGame(prisma: PrismaClient, gameId: string) {
@@ -339,6 +341,7 @@ async function notifyTournament(prisma: PrismaClient, tournamentId: string, game
 	if (currentGameId)
     	nextCompleteGame = await getCompleteGameData(prisma, currentGameId);
 
+	console.log('========== Updating game in notify tournament fil ===========', completeGame);
 	TournamentWsController.broadcastToRoom(tournamentId, {
 		type: 'tournament_update',
 		gameId: gameId,

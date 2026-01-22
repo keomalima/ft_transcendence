@@ -32,7 +32,6 @@ async function tournamentBracketHandler(socket: WebSocket, request: FastifyReque
 	socket.on('close', () => {
 		clearInterval(pingInterval);
 		tournamentBracket.get(tournamentId)?.delete(identifiedSocket);
-		console.log(`Player disconnected from tournament room: ${tournamentId}`);
 	})
 }
 

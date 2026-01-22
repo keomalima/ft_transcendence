@@ -5,7 +5,7 @@ export class TournamentWaitingRoomConnection {
 
 	connect(tournamentId: string, userId: string,
 		onUpdate: (tournamentData: any) => void,
-		onRemoved: () => void,
+		onRemoved: (participant: any) => void,
 		onTournamentClosed: () => void,
 		onStartTournament: () => void)
 		{
@@ -23,9 +23,9 @@ export class TournamentWaitingRoomConnection {
 			if (data.type === 'room_update') {
 				onUpdate(data);
 			}
-			if (data.type === 'player_remove') {
+			if (data.type === 'player_remove' || data.type == 'player_quit') {
 				console.log('🚫 You have been removed from the tournament');
-				onRemoved();
+				onRemoved(data);
 			}
 			if (data.type === 'tournament_closed') {
 				console.log('🚫 The tournament has been closed');

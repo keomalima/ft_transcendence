@@ -156,14 +156,15 @@ async function joinTournamentHandler (request: FastifyRequest<{ Params: { token:
 			}
 		}
 
+		const createdPlayer = await tournamentService.joinUserToTournament(request.server.prisma, tournament.id, userId);
+
 		WaintingRoomWsController.broadcasToRoom(tournament.id, {
 			type: 'room_update',
 			message: `${joinedUser.displayName} joined the tournament!`,
-			userId,
-			displayName: joinedUser.displayName,
-			avatarUrl: joinedUser.avatarUrl
+			player: createdPlayer
 		})
-		return  await tournamentService.joinUserToTournament(request.server.prisma, tournament.id, userId);
+
+		return createdPlayer;
 	} catch (error: any) {
 		console.error(error);
 		reply.code(500).send({ message: "Failed to join tournament"});
@@ -216,8 +217,11 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
 			});
 		}
 
-		WaintingRoomWsController.notifyPlayerRemoved(tournamentId, playerId);
-
+		WaintingRoomWsController.broadcasToRoom(tournamentId, {
+			type: 'player_remove',
+			message: `${userId} was removed from tournament!`,
+			playerId,
+		})
 		reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, playerId));
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to remove player from tournament"});
@@ -244,6 +248,12 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 			console.log('🔥 notify closed tournament (BY CREATOR)');
 			WaintingRoomWsController.notifyTournamentClosed(tournamentId, userId);
 			return reply.code(204).send(await tournamentService.deletePendingTournament(request.server.prisma, tournamentId));
+		} else {
+			WaintingRoomWsController.broadcasToRoom(tournamentId, {
+				type: 'player_quit',
+				message: `${userId} quit the tournament!`,
+				playerId: userId,
+			})
 		}
 
 		console.log('🔥 notify closed tournament (BY PLAYER)');
