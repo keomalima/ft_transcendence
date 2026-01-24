@@ -83,6 +83,9 @@ export async function userPublicRoutes(fastify: FastifyInstance){
             // 5. Finally delete Users
             await prisma.user.deleteMany();
             
+			// 6. Delete tournaments
+			await prisma.tournament.deleteMany();
+			
             return reply.send({ message: "Database cleaned successfully" });
         } catch (error: any) {
             req.log.error('Error cleaning database:', error);

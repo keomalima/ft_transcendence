@@ -993,14 +993,14 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     print(f"  • Eve → Henry")
     print(f"  • Jack → Charlie")
     
-    print(f"\n{MAGENTA}Games Created:{RESET}")
-    for i, game in enumerate(games_data, 1):
-        status_color = GREEN if game['status'] == 'IN_PROGRESS' else YELLOW
-        players_str = ' vs '.join(game['players'])
-        token_str = f" | Token: {BOLD}{game['token']}{RESET}" if game['token'] and game['status'] == 'PENDING' else ""
-        print(f"  {i}. {status_color}{game['status']}{RESET} - {game['type']} - {players_str}{token_str}")
-        if game['id']:
-            print(f"     {DIM}Game ID: {game['id']}{RESET}")
+    # print(f"\n{MAGENTA}Games Created:{RESET}")
+    # for i, game in enumerate(games_data, 1):
+    #     status_color = GREEN if game['status'] == 'IN_PROGRESS' else YELLOW
+    #     players_str = ' vs '.join(game['players'])
+    #     token_str = f" | Token: {BOLD}{game['token']}{RESET}" if game['token'] and game['status'] == 'PENDING' else ""
+    #     print(f"  {i}. {status_color}{game['status']}{RESET} - {game['type']} - {players_str}{token_str}")
+    #     if game['id']:
+    #         print(f"     {DIM}Game ID: {game['id']}{RESET}")
     
     print(f"\n{BLUE}Tournaments Created:{RESET}")
     for i, tourney in enumerate(tournaments_data, 1):
@@ -1024,32 +1024,32 @@ def create_mock_scenario(users: List[User]) -> List[User]:
     
     return users
 
-def display_game_info(game: dict) -> None:
-    """Display detailed game information."""
-    print(f"\n{BOLD}Game Information{RESET}")
-    print("-" * 80)
-    print(f"Game ID: {game.get('id', 'N/A')}")
-    print(f"Type: {game.get('type', 'N/A')}")
-    print(f"Status: {game.get('status', 'N/A')}")
-    print(f"Score to Win: {game.get('scoreToWin', 'N/A')}")
-    print(f"Token: {game.get('token', 'Not generated')}")
-    print(f"Created By: {game.get('createdBy', 'N/A')}")
-    print(f"Is Creator: {game.get('isCreator', False)}")
+# def display_game_info(game: dict) -> None:
+#     """Display detailed game information."""
+#     print(f"\n{BOLD}Game Information{RESET}")
+#     print("-" * 80)
+#     print(f"Game ID: {game.get('id', 'N/A')}")
+#     print(f"Type: {game.get('type', 'N/A')}")
+#     print(f"Status: {game.get('status', 'N/A')}")
+#     print(f"Score to Win: {game.get('scoreToWin', 'N/A')}")
+#     print(f"Token: {game.get('token', 'Not generated')}")
+#     print(f"Created By: {game.get('createdBy', 'N/A')}")
+#     print(f"Is Creator: {game.get('isCreator', False)}")
     
-    game_users = game.get('gameUsers', [])
-    if game_users:
-        print(f"\n{BOLD}Players:{RESET}")
-        for gu in game_users:
-            user = gu.get('user', {})
-            score = gu.get('score', 0)
-            is_winner = gu.get('isWinner', False)
-            winner_tag = f" {GREEN}[WINNER]{RESET}" if is_winner else ""
-            print(f"  • {user.get('displayName', 'Unknown')} - Score: {score}{winner_tag}")
+#     game_users = game.get('gameUsers', [])
+#     if game_users:
+#         print(f"\n{BOLD}Players:{RESET}")
+#         for gu in game_users:
+#             user = gu.get('user', {})
+#             score = gu.get('score', 0)
+#             is_winner = gu.get('isWinner', False)
+#             winner_tag = f" {GREEN}[WINNER]{RESET}" if is_winner else ""
+#             print(f"  • {user.get('displayName', 'Unknown')} - Score: {score}{winner_tag}")
     
-    print(f"\nCreated At: {game.get('createdAt', 'N/A')}")
-    print(f"Started At: {game.get('startedAt', 'N/A')}")
-    print(f"Completed At: {game.get('completedAt', 'N/A')}")
-    print()
+#     print(f"\nCreated At: {game.get('createdAt', 'N/A')}")
+#     print(f"Started At: {game.get('startedAt', 'N/A')}")
+#     print(f"Completed At: {game.get('completedAt', 'N/A')}")
+#     print()
 
 def display_tournament_info(tournament: dict) -> None:
     """Display detailed tournament information."""

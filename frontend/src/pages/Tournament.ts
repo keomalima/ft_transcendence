@@ -14,7 +14,6 @@ import { TournamentWsConnection } from "../websocket/TournamentConnection.js";
 import { TournamentBracket } from "../components/TournamentBracket.js";
 import { gameService } from "../services/GameService.js";
 
-let wsConnection: WaitingRoomConnection | null = null;
 let tournamentWsConnection: TournamentWsConnection | null = null;
 
 export function Tournament(ctx: AppContext, params?: Record<string, string>): string {
@@ -57,7 +56,7 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 		passContext(ctx, tournamentGames, currentTournament);
 		setGameRoomWebSockets(currentUser!, tournamentGames!, ctx);
 
-		await setupTournamentEventListeners(ctx);
+		await setupTournamentEventListeners(ctx, currentTournament);
 	}, 0);
 
 	return (/*html*/`
@@ -79,6 +78,7 @@ function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 				<div class="text-center mb-2">
 					<h1 class="text-5xl font-bold text-gray-800 mb-4">Tournament</h1>
 					<h3 class=" text-gray-500 mb-4">Round ${tournament?.currentRound}</h3>
+					<button id='reset-tournament'> Reset Tournament </button>
 				</div>
 				<div class="w-full overflow-x-auto">
 					<tournament-next-game id='tournament-next-game-component'></tournament-next-game>
@@ -197,7 +197,21 @@ export function cleantTournamentGlobalWs() {
 
 
 // ======== EVENT LISTENER ============
-async function setupTournamentEventListeners(ctx: AppContext) {
+async function setupTournamentEventListeners(ctx: AppContext, tournament: Partial<TournamentData | null>) {
+	// reset button
+	const resetButton = document.getElementById('reset-tournament') as any;
+	resetButton.addEventListener('click', async (e: Event) => {
+		e.preventDefault();
+		try {
+			if (tournament && tournament.id) {
+				await tournamentApi.resetTournament(tournament.id);
+				window.location.reload();
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	})
+	
 	// Start tournament game
 	const tournamentGameComponent = document.getElementById('tournament-next-game-component') as any;
 	tournamentGameComponent?.addEventListener('event-start-tournament-game', async (e: Event) => {
