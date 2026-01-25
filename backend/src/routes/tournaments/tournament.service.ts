@@ -77,7 +77,7 @@ async function findTournamentByUserId(prisma: PrismaClient, userId: string, tour
                         }
                     }
                 }
-            }
+            },
         }
 	});
 }
@@ -152,6 +152,7 @@ async function findTournamentGames(prisma: PrismaClient, tournamentId: string) {
 			type: true,
 			roundNumber: true,
 			matchNumber: true,
+			scoreToWin: true,
 			gameUsers: {
 				select: {
 					id: true,
@@ -259,7 +260,11 @@ async function findGameByRoundNMatch(prisma: PrismaClient, tournamentId: string,
 	})
 }
 
-async function matchMakeGames(prisma: PrismaClient, userId: string, tournament: Tournament) {
+async function matchMakeGames(prisma: PrismaClient, userId: string, tournament: { 
+        id: string; 
+        participants: Array<{ user: { id: string } }>; 
+        scoreToWin?: number 
+    }) {
 	return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 		const shuffled = [...tournament.participants];
 		for (let i = shuffled.length - 1; i > 0; i--) {
@@ -278,7 +283,7 @@ async function matchMakeGames(prisma: PrismaClient, userId: string, tournament: 
 			const game = await tx.game.create({ data: {
 				createdBy: userId, 
 				type: 'TOURNAMENT',
-				scoreToWin: tournament.scoreToWin,
+				scoreToWin: tournament.scoreToWin ?? null,
 				tournamentId: tournament.id,
 				roundNumber: 1,
 				matchNumber: i/2 + 1,
@@ -294,7 +299,12 @@ async function matchMakeGames(prisma: PrismaClient, userId: string, tournament: 
 	})
 }
 
-async function createEmptyGames(prisma: PrismaClient, userId: string, tournament: Tournament) {
+async function createEmptyGames(prisma: PrismaClient, userId: string, tournament: { 
+        id: string; 
+        participants: Array<any>; 
+        scoreToWin?: number;
+        totalRounds: number;
+    }) {
 	return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 		const totalParticipants = tournament.participants.length;
 
@@ -304,7 +314,7 @@ async function createEmptyGames(prisma: PrismaClient, userId: string, tournament
 				await tx.game.create({ data: {
 					createdBy: userId,
 					type: 'TOURNAMENT',
-					scoreToWin: tournament.scoreToWin,
+					scoreToWin: tournament.scoreToWin ?? null,
 					tournamentId: tournament.id,
 					roundNumber: i,
 					matchNumber: j

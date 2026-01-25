@@ -65,7 +65,7 @@ async function getFriendHistoryHandler(request: FastifyRequest<{Params: {id: str
 			&& (gp.game.status === "COMPLETED"
 			|| gp.game.status === "ABANDONED"));
 		const result = filteredGames.map((gp: typeof filteredGames[0]) => {
-			const opponent = gp.game.gameUsers.find((gu: typeof result[0])  => gu.userId !== friendId);
+			const opponent = gp.game.gameUsers.find((gu: typeof gp.game.gameUsers[0])  => gu.userId !== friendId);
 			let durationMs;
 			if (gp.game.completedAt && gp.game.startedAt)
 				durationMs = Math.round((new Date(gp.game.completedAt).getTime() - new Date(gp.game.startedAt).getTime()) / 60000);
@@ -79,13 +79,13 @@ async function getFriendHistoryHandler(request: FastifyRequest<{Params: {id: str
 				type: gp.game.type,
 				status: gp.game.status,
 				date: gp.game.createdAt,
-				opponent: {
+				opponent: opponent ? {
 					id: opponent.userId,
 					avatarUrl: opponent.user.avatarUrl,
 					name: opponent.user.displayName,
 					score: opponent.score,
 					isWinner: opponent.isWinner,
-				}
+				} : null
 			}
 		})
 		return reply.code(200).send(result)
