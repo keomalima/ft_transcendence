@@ -5,15 +5,20 @@ import type { MultipartFile } from '@fastify/multipart'
 // Request Schemas
 // =====================
 
+const safeString = () =>
+  z.string().refine((val) => !/[<>]/.test(val), {
+    message: "HTML tags are not allowed!",
+});
+
 const multipartField = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((val: any) => val?.value || val, schema);
 
 const createUserSchema = z.object({
 	email: multipartField(z.email()),
-	name: multipartField(z.string().min(3).max(20)),
+	name: multipartField(safeString().min(3).max(20)),
 	password: multipartField(z.string()),
-	surname: multipartField(z.string().nullable()),
-	displayName: multipartField(z.string().min(3)),
+	surname: multipartField(safeString().nullable()),
+	displayName: multipartField(safeString().min(3)),
 	avatarFile: z
 	.custom<MultipartFile>()
 	.optional()
@@ -33,9 +38,9 @@ const loginSchema = z.object({
 });
 
 const editUserSchema = z.object({
-	name: z.string().min(3).max(20).optional(),
-	displayName: z.string().optional(),
-	surname: z.string().nullable().optional()
+	name: safeString().min(3).max(20).optional(),
+	displayName: safeString().optional(),
+	surname: safeString().nullable().optional()
 });
 
 const changeUserPasswordSchema = z.object({
