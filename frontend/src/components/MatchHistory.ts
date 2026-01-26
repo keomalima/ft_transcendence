@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../config.js";
+import { escapeHtml } from "../pages/LiveChat.js";
 import { AppContext, GameHistory } from "../types.js";
 
 export class MatchHistory extends HTMLElement {
@@ -110,7 +111,7 @@ export class MatchHistory extends HTMLElement {
 
 		const opponent = document.createElement('p');
 		opponent.className = 'my-0';
-		let opponentName = match.opponent?.name;
+		let opponentName = match.opponent?.name ? escapeHtml(match.opponent?.name) : 'opponent';
 		if (opponentName && opponentName?.length > 15) {
 			opponentName = `${opponentName.substring(0, 15)}...`;
 		}

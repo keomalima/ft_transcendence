@@ -5,6 +5,7 @@ import { gameService } from "../services/GameService.js";
 import { getGameValue } from "../game/getLocalGameValue.js";
 import { calculateGame } from "../game/calculateLocalGame.js";
 import { FinishGameDto } from "../api/gameApi.js";
+import { escapeHtml } from "./LiveChat.js";
 
 export interface MapKeys {
 	s: boolean;
@@ -112,14 +113,14 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 			<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Local Game</h1>
 		</div>
 			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
-				<div class='flex-1 justify-items-center'>
-					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>${currentUser.displayName}</p>
+				<div class='flex-1 text-center'>
+					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>${currentUser.displayName ? escapeHtml(currentUser.displayName) : 'You'}</p>
 					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 				<div class='flex-1 flex items-center justify-center'>
 					<p class="text-sm md:text-base">vs</p>
 				</div>
-				<div class='flex-1 justify-items-center'>
+				<div class='flex-1 text-center'>
 					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>Guest</p>
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
@@ -275,7 +276,8 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 			const winner = document.getElementById('winner') as HTMLParagraphElement;
 			
 			if (winner && wonGameOverlay) {
-				game.scoreL > game.scoreR ? winner.innerText = `${currentUser.displayName} won the game !` : winner.innerText = 'Guest won the game!';
+				// innerText auto-escapes, so escapeHtml() is redundant here
+				game.scoreL > game.scoreR ? winner.innerText = `${currentUser.displayName || 'You'} won the game !` : winner.innerText = 'Guest won the game!';
 				wonGameOverlay.classList.remove('hidden');
 			}			
 			return;

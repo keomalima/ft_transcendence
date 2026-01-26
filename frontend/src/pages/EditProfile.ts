@@ -38,7 +38,7 @@ export function EditProfile(ctx: AppContext) : string {
 				<div></div>
 				<div class='md:col-span-2'>
 					<div class="col-span-full flex items-center gap-x-8">
-						<img id="avatar-preview" src="${profilePicture}" alt="profile picture" class="w-40 h-40 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
+						<img id="avatar-preview" src="${escapeHtml(profilePicture)}" alt="profile picture" class="w-40 h-40 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
 						<div>
 							<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
 							<label id='change-avatar-label' for="avatar-input" class='${BUTTON_CREAM_CLASSES}'>Change avatar</label>
@@ -60,17 +60,16 @@ export function EditProfile(ctx: AppContext) : string {
 
 						<div class="col-span-full">
 							<label class='${LABEL_CLASSES}' for="username">Username</label>
-							<input class='${INPUT_CLASSES}' id="username" type="text" name="username" autoComplete="username" placeholder=${currentUser?.displayName} maxlength="20">
+							<input class='${INPUT_CLASSES}' id="username" type="text" name="username" autoComplete="username" placeholder="${currentUser?.displayName ? escapeHtml(currentUser?.displayName) : ''}" maxlength="20">
 						</div>
-
 						<div class="sm:col-span-3">
 							<label class='${LABEL_CLASSES}' for="first-name">First name</label>
-							<input class='${INPUT_CLASSES}' id="first-name" type="text" name="first_name" autoComplete="given-name" placeholder=${currentUser?.name}>
+							<input class='${INPUT_CLASSES}' id="first-name" type="text" name="first_name" autoComplete="given-name" placeholder="${currentUser?.name ? escapeHtml(currentUser?.name) : ''}" >
 						</div>
 
 						<div class="sm:col-span-3">
 							<label class='${LABEL_CLASSES}' for="last-name">Last name</label>
-							<input class='${INPUT_CLASSES}' id="last-name" type="text" name="last_name" autoComplete="family-name" placeholder=${currentUser?.surname}>
+							<input class='${INPUT_CLASSES}' id="last-name" type="text" name="last_name" autoComplete="family-name" placeholder="${currentUser?.surname ? escapeHtml(currentUser?.surname) : ''}">
 						</div>
 
 					</div>
@@ -197,7 +196,7 @@ function setupEditEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		e.stopPropagation();
 		const formData = new FormData(updatePersonnalInfo);
-		const newDisplayName = escapeHtml(formData.get('username') as string);
+		const newDisplayName = formData.get('username') as string;
 		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
 		if (newDisplayName && newDisplayName.length > 20) {
 			if (errorMsg) {
@@ -207,9 +206,9 @@ function setupEditEventListeners(ctx: AppContext) {
 		}
 		try {
 			await userService.updateUser({
-				surname: formData.get('last_name') ? escapeHtml(formData.get('last_name') as string) : null,
-				displayName: formData.get('username') ? escapeHtml(formData.get('username') as string) : null,
-				name: formData.get('first_name') ? escapeHtml(formData.get('first_name') as string) : null
+				surname: formData.get('last_name') as string | null,
+				displayName: formData.get('username') as string | null,
+				name: formData.get('first_name') as string | null
 			}, ctx);
 			console.log('test');
 			router.navigateTo('/profile');
@@ -229,9 +228,9 @@ function setupEditEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		e.stopPropagation();
 		const formData = new FormData(changePasswordForm);
-		const currentPassword = escapeHtml(formData.get('current_password') as string);
-		const newPassword = escapeHtml(formData.get('new_password') as string);
-		const confirmPassword = escapeHtml(formData.get('confirm_password') as string);
+		const currentPassword = formData.get('current_password') as string;
+		const newPassword = formData.get('new_password') as string;
+		const confirmPassword = formData.get('confirm_password') as string;
 		if (!currentPassword || !newPassword || !confirmPassword) {
 			changePwdMsg.innerText = 'Missing input';
 			changePwdMsg.className = 'pt-5 text-red-500 text-sm';

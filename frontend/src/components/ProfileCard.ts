@@ -1,6 +1,7 @@
 import { AppContext, UserState } from "../types.js";
 import { BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { API_BASE_URL } from "../config.js";
+import { escapeHtml } from "../pages/LiveChat.js";
 
 export class ProfileCard extends HTMLElement {
 
@@ -39,8 +40,8 @@ export class ProfileCard extends HTMLElement {
 				<div class="bg-white rounded-lg p-6">
 					<div class="flex flex-col items-center">
 						<img src='${profilePicture}' class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover"></img>
-						<h1 class="text-xl font-bold truncate">${currentUser?.displayName}</h1>
-						<p class='truncate'>${currentUser?.name} ${currentUser?.surname}</p>
+						<h1 class="text-xl font-bold truncate">${currentUser?.displayName ? escapeHtml(currentUser?.displayName) : ''}</h1>
+						<p class='truncate'>${currentUser?.name ? escapeHtml(currentUser?.name) : ''} ${currentUser?.surname ? escapeHtml(currentUser?.surname) : ''}</p>
 						<div class="mt-6 flex flex-wrap gap-4 justify-center">
 							<a data-link href="/edit-profile" id='edit-btn' class="${BUTTON_WHITE_CLASSES} ">Edit profile</a>
 						</div>
@@ -54,8 +55,8 @@ export class ProfileCard extends HTMLElement {
 				<div class="bg-white rounded-lg p-6">
 					<div class="flex flex-col items-center">
 						<img src='${profilePicture}' class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover"></img>
-						<h1 class="text-xl font-bold">${this._user?.displayName}</h1>
-						<p>${this._user?.name} ${this._user?.surname}</p>
+						<h1 class="text-xl font-bold truncate">${this._user?.displayName ? escapeHtml(this._user.displayName) : ''}</h1>
+						<p class='truncate'>${this._user?.name ? escapeHtml(this._user.name) : ''} ${this._user?.surname ? escapeHtml(this._user.surname) : ''}</p>
 					</div>
 				</div>
 			`			

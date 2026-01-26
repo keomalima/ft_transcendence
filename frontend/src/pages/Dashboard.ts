@@ -13,6 +13,7 @@ import "../components/JoinGamePopUp.js";
 import type { FriendData, GameHistory } from "../types.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { API_BASE_URL } from "../config.js";
+import { escapeHtml } from "./LiveChat.js";
 
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
@@ -66,7 +67,7 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 			<div class="mt-10 grid gap-4 sm:mt-16 lg:gap-6 lg:grid-cols-3 lg:grid-rows-3">
 				<div class="lg:row-span-3 rounded-lg order-1 lg:order-0">
 					<img src='${avatarSrc}' class='w-20 h-20 bg-gray-300 rounded-full object-cover shrink-0'></img>
-					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words truncate'>Welcome,</br><span>${currentUser.name ?? 'User'}</span></h1>
+					<h1 class='mt-5 ml-5 text-4xl lg:text-4xl break-words truncate'>Welcome,</br><span>${currentUser.name ? escapeHtml(currentUser.name) : 'User'}</span></h1>
 				</div>
 				${tournamentId ?
 					`

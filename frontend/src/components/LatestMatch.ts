@@ -1,3 +1,4 @@
+import { escapeHtml } from "../pages/LiveChat.js";
 import type { AppContext, GameHistory, UserState } from "../types.js";
 
 export class LatestMatch extends HTMLElement {
@@ -71,7 +72,7 @@ export class LatestMatch extends HTMLElement {
 						<div id='last-match-scores' class='mt-3 overflow-x-auto whitespace-nowrap p-5'>
 							<span class='inline-grid grid-cols-1 grid-rows-3 mx-2 text-center'>
 								<span class='p-5 text-white'>.</span>
-								<span class='p-5 pl-0'>${this._user?.displayName}</span>
+								<span class='p-5 pl-0'>${this._user?.displayName ? escapeHtml(this._user?.displayName) : 'you'}</span>
 								<span class='p-5 pl-0'>opponent</span>
 							</span>
 						</div>

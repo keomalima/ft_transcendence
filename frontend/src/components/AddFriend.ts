@@ -1,6 +1,5 @@
 import { AppContext } from "../types.js";
 import { BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
-import { escapeHtml } from "../pages/LiveChat.js";
 
 export class AddFriend extends HTMLElement {
 	private _ctx: AppContext | null = null;
@@ -41,7 +40,7 @@ export class AddFriend extends HTMLElement {
 		form?.addEventListener('submit', (e) => {
 			e.preventDefault();
 			const formData = new FormData(form);
-			const friendName: string = escapeHtml(formData.get('friend_name') as string);
+			const friendName: string = formData.get('friend_name') as string;
 			if (!friendName || friendName == '') {
 				const errorMsg = this.querySelector('#add-friend-message') as HTMLParagraphElement;
 				errorMsg.className = 'text-red-500 text-sm mt-2';

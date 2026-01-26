@@ -55,9 +55,6 @@ export function Home(ctx: AppContext): string {
 								<div>
 									<div class="flex items-center justify-between">
 										<label for="password" class='${LABEL_CLASSES}'>Password</label>
-										<div class="text-sm">
-											<a data-link href="#" class="text-medium underline">Forgot password?</a>
-										</div>
 									</div>
 									<input id="password" type="password" name="password" autoComplete="current-password" class='${INPUT_CLASSES}' required/>
 								</div>

@@ -1,0 +1,94 @@
+### CREATE AN USER
+POST http://localhost:3000/api/users HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="email"
+
+tester@test.com
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+TesterName
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="surname"
+
+TesterSurname
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="password"
+
+test
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="displayName"
+
+Tester
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatarFile"; filename="ProfileCV.jpg"
+Content-Type: image/jpeg
+
+< /Users/keomalima/Downloads/keo.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### TEST WITH SQL INJECTION
+# Test1: SQL Injection in displayName
+POST http://localhost:3000/api/users HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="email"
+
+hacker1@test.com
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+Admin' OR '1'='1
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="surname"
+
+User
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="password"
+
+test123
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="displayName"
+
+TestSQLInjection
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatarFile"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< /Users/keomalima/Downloads/keo.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### TEST WITH XSS ATTACK
+# Test2: XSS attack in name
+POST http://localhost:3000/api/users HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="email"
+
+xsstest@test.com
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+XSSTest
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="surname"
+
+Hacker
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="password"
+
+test123
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="displayName"
+
+<script>alert('XSS Attack!')</script>
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatarFile"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< /Users/keomalima/Downloads/keo.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
