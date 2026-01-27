@@ -44,7 +44,7 @@ export class TournamentPlayerList extends HTMLElement {
 
 	set removeParticipantData(participantId: string) {
 		if (this._participants) {
-			console.log('participant id', participantId);
+			//console.log('participant id', participantId);
 			this._participants = this._participants.filter(p => p.user.id !== participantId);
 			this.loadAndRender();
 		}
@@ -163,7 +163,7 @@ export class TournamentPlayerList extends HTMLElement {
 
 		removeBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			console.log('remove trigger');
+			//console.log('remove trigger');
 			this.dispatchEvent(new CustomEvent('event-remove-player', {
 				detail: {
 					tournamentId: this._tournamentData?.id as string,

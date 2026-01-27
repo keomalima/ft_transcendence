@@ -117,7 +117,7 @@ export class NavBar extends HTMLElement {
 					logoutConfirmBtn?.removeEventListener('click', handleConfirm);
 					router.navigateTo('/');
 				} catch (error) {
-					console.log(error);
+					//console.log(error);
 				}				
 			};
 			
@@ -156,7 +156,7 @@ export class NavBar extends HTMLElement {
 					logoutConfirmBtn?.removeEventListener('click', handleConfirm);
 					router.navigateTo('/');
 				} catch (error) {
-					console.log(error);
+					//console.log(error);
 				}				
 			};
 			

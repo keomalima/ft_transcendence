@@ -21,7 +21,7 @@ async function waitingRoomHandler(socket: WebSocket, request: FastifyRequest<{Pa
 
 	const pingInterval = setInterval(() => {
 		if (socket.readyState === WebSocket.OPEN) {
-			console.log('Ping sent');
+			//console.log('Ping sent');
 			socket.ping();
 		}
 	}, 30000);
@@ -48,7 +48,7 @@ function notifyPlayerRemoved(gameId: string, playerId: string) {
 	const sockets = gameRooms.get(gameId);
 	
 	if (!sockets) {
-		console.log(`❌ No sockets found for game room: ${gameId}`);
+		//console.log(`❌ No sockets found for game room: ${gameId}`);
 		return;
 	}
 	
@@ -56,14 +56,14 @@ function notifyPlayerRemoved(gameId: string, playerId: string) {
 		const socketUserId = (sock as any).userId;
 		
 		if (socketUserId === playerId) {
-			console.log(`✅ MATCH! Notifying user ${playerId}`);
+			//console.log(`✅ MATCH! Notifying user ${playerId}`);
 			if (sock.readyState === WebSocket.OPEN) {
 				sock.send(JSON.stringify({
 					type: 'player_remove',
 					message: "You've been removed from the game"
 				}));
 			} else {
-				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+				//console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
 			}
 		}
 	});
@@ -74,7 +74,7 @@ function notifyGameClosed(gameId: string, userId: string) {
 	const sockets = gameRooms.get(gameId);
 	
 	if (!sockets) {
-		console.log(`❌ No sockets found for game room: ${gameId}`);
+		//console.log(`❌ No sockets found for game room: ${gameId}`);
 		return;
 	}
 	
@@ -82,14 +82,14 @@ function notifyGameClosed(gameId: string, userId: string) {
 		const socketUserId = (sock as any).userId;
 		
 		if (socketUserId != userId) {
-			console.log(`✅ MATCH! Notifying user ${socketUserId} that game is closed`);
+			//console.log(`✅ MATCH! Notifying user ${socketUserId} that game is closed`);
 			if (sock.readyState === WebSocket.OPEN) {
 				sock.send(JSON.stringify({
 					type: 'game_closed',
 					message: "The game has been deleted"
 				}));
 			} else {
-				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+				//console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
 			}
 		}
 	});
@@ -100,7 +100,7 @@ function notifyTournamentClosed(gameId: string, userId: string) {
 	const sockets = gameRooms.get(gameId);
 	
 	if (!sockets) {
-		console.log(`❌ No sockets found for tournament room: ${gameId}`);
+		//console.log(`❌ No sockets found for tournament room: ${gameId}`);
 		return;
 	}
 	
@@ -108,14 +108,14 @@ function notifyTournamentClosed(gameId: string, userId: string) {
 		const socketUserId = (sock as any).userId;
 		
 		if (socketUserId != userId) {
-			console.log(`✅ MATCH! Notifying user ${socketUserId} that tournament is closed`);
+			//console.log(`✅ MATCH! Notifying user ${socketUserId} that tournament is closed`);
 			if (sock.readyState === WebSocket.OPEN) {
 				sock.send(JSON.stringify({
 					type: 'tournament_closed',
 					message: "The tournament has been deleted"
 				}));
 			} else {
-				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+				//console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
 			}
 		}
 	});
@@ -125,7 +125,7 @@ function notifyCreatorGameInvitationDenied(gameId: string, userId: string) {
 	const sockets = gameRooms.get(gameId);
 	
 	if (!sockets) {
-		console.log(`❌ No sockets found for game room: ${gameId}`);
+		//console.log(`❌ No sockets found for game room: ${gameId}`);
 		return;
 	}
 	
@@ -133,14 +133,14 @@ function notifyCreatorGameInvitationDenied(gameId: string, userId: string) {
 		const socketUserId = (sock as any).userId;
 		
 		if (socketUserId == userId) {
-			console.log(`✅ MATCH! Notifying user ${socketUserId} that game is closed`);
+			//console.log(`✅ MATCH! Notifying user ${socketUserId} that game is closed`);
 			if (sock.readyState === WebSocket.OPEN) {
 				sock.send(JSON.stringify({
 					type: 'game_closed',
 					message: "The game has been deleted"
 				}));
 			} else {
-				console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
+				//console.log(`❌ Socket is NOT open. ReadyState: ${sock.readyState}`);
 			}
 		}
 	});

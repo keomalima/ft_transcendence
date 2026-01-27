@@ -135,7 +135,7 @@ function setupTournamentEventListeners(ctx: AppContext) {
 			const errorMsgCreateGame = document.querySelector('#error-create-tournament') as HTMLParagraphElement;
 			errorMsgCreateGame.className = 'text-red-500'
 			errorMsgCreateGame.innerText = error as string;
-			console.log(error);
+			//console.log(error);
 		}
 
 	})

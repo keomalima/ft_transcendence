@@ -16,7 +16,7 @@ export const chatApi = {
 			}
 
 			const response = await httpCall.get(url);
-			console.log("💬 fetchChatHistory success ✅", response.data);
+			//console.log("💬 fetchChatHistory success ✅", response.data);
 			return response.data || []; // defensive: return [] if data is undefined
 		} catch (error: unknown) {
 			throw buildApiError('fetch chat history', error);
@@ -27,7 +27,7 @@ export const chatApi = {
 	getFriendsWithNewMessages: async (): Promise<string[]> => {
 		try {
 			const response = await httpCall.get(`${BASE_URL}/unread`);
-			console.log("🔔 getFriendsWithNewMessages success ✅", response.data);
+			//console.log("🔔 getFriendsWithNewMessages success ✅", response.data);
 			return response.data as string[];
 		} catch (error: unknown) {
 			throw buildApiError('get unread message friends', error);

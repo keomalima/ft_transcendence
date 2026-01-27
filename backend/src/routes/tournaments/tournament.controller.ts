@@ -43,7 +43,7 @@ async function createTournamentHandler (request: FastifyRequest<{ Body: CreateTo
 		const newGame = await tournamentService.createTournament(request.server.prisma, body, userId, totalRounds);
 		return reply.code(201).send(newGame);
 	} catch (error: any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to create tournament"});
 	}
 }
@@ -103,7 +103,7 @@ async function getTournamentHandler (request: FastifyRequest<{Params: { id: stri
 		}
 		return response;
 	} catch (error:any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to get tournament"});
 	}
 }
@@ -194,7 +194,7 @@ async function getCurrentTournamentHandler(request: FastifyRequest, reply: Fasti
 
 		return response;
 	} catch (error:any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to fetch current tournament"});
 	}
 }
@@ -245,7 +245,7 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 			});
 		}
 		if (tournament.createdBy === userId) {
-			console.log('🔥 notify closed tournament (BY CREATOR)');
+			//console.log('🔥 notify closed tournament (BY CREATOR)');
 			WaintingRoomWsController.notifyTournamentClosed(tournamentId, userId);
 			return reply.code(204).send(await tournamentService.deletePendingTournament(request.server.prisma, tournamentId));
 		} else {
@@ -256,7 +256,7 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 			})
 		}
 
-		console.log('🔥 notify closed tournament (BY PLAYER)');
+		//console.log('🔥 notify closed tournament (BY PLAYER)');
 		return reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, userId));
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete tournament"});
@@ -268,7 +268,7 @@ async function getParticipantInfoHandler (request: FastifyRequest<{ Params: { id
 		const userId = request.user!.id;
 		const tournamentId = request.params.id;
 
-		console.log('=======',tournamentId)
+		//console.log('=======',tournamentId)
 		const participant = await tournamentService.findTournamentByParticipant(request.server.prisma, userId, tournamentId);
 		if (!participant) {
 			return reply.code(404).send({
@@ -277,7 +277,7 @@ async function getParticipantInfoHandler (request: FastifyRequest<{ Params: { id
 		}
 		return participant;
 	} catch (error: any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to get participant info"});
 	}
 }
@@ -417,7 +417,7 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 
 		return updatedGame;
 	} catch (error: any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to start tournament game"});
 	}
 }
@@ -473,7 +473,7 @@ async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: s
 		}
 		reply.code(200).send({ message: "Tournament advanced successfully"});
 	} catch (error: any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to advance tournament"});
 	}
 }
@@ -501,7 +501,7 @@ async function resetTournamentHandler(request: FastifyRequest<{Params: {id: stri
 		}
 		reply.code(200).send({ message: "Tournament reset successfully"});
 	} catch (error: any) {
-		console.log(error);
+		//console.log(error);
 		reply.code(500).send({ message: "Failed to reset the tournament "});		
 	}
 }

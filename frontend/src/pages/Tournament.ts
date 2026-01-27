@@ -103,7 +103,7 @@ async function getParticipantInfo(tournamentId: string): Promise<{isQuit: boolea
 			isEliminated: participantInfo.isEliminated ?? false
 		};
 	} catch(error) {
-		console.log(error);
+		//console.log(error);
 		return null;
 	}
 }
@@ -177,7 +177,7 @@ async function setGameRoomWebSockets(currentUser: UserState, tournamentGames: To
 			router.navigateTo(`/game/${game.data.id}`)
 		},
 		() => {
-			console.log("tournament started");
+			//console.log("tournament started");
 		},
 		(tournament) => {
 			if (tournament) {
@@ -208,7 +208,7 @@ async function setupTournamentEventListeners(ctx: AppContext, tournament: Partia
 				window.location.reload();
 			}
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 		}
 	})
 	
@@ -221,7 +221,7 @@ async function setupTournamentEventListeners(ctx: AppContext, tournament: Partia
 		try {
 			const response = await tournamentApi.startGame(gameId);
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 		}
 	})
 	
@@ -234,7 +234,7 @@ async function setupTournamentEventListeners(ctx: AppContext, tournament: Partia
 			gameService.cleanGame(ctx);
 			router.navigateTo(`/`)
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 		}
 	})
 

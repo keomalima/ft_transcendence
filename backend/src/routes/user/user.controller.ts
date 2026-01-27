@@ -93,13 +93,14 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 		const isProduction = process.env.NODE_ENV === 'production';
 		reply.setCookie('sessionId', session.id, {
 			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'none' : 'lax',
+			secure: true,
+			sameSite: 'lax',
 			path: '/',
 			maxAge: 60 * 60 * 24,
 		})
 		return safeUser;	
 	} catch (error: any) {
+		request.log.error(error);
 		reply.code(500).send({ message: "Failed to login user"});
 	}
 }
@@ -138,14 +139,13 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 		const isProduction = process.env.NODE_ENV === 'production';
 		reply.setCookie('sessionId', session.id, {
 			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'none' : 'lax',
+			secure: true,
+			sameSite: 'lax',
 			path: '/',
 			maxAge: 60 * 60 * 24,
 		})
-		return reply.redirect('http://localhost:5173/home');
+		return reply.redirect('https://localhost:8443/home');
 	} catch (err) {
-		console.log(err);
 		reply.code(500).send({ message: "Failed to login user with google"});
 	}
 }
@@ -198,6 +198,7 @@ async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInpu
 	} catch (error: any) {
 		if (error.code == 'P2002')
     		return reply.status(409).send({ message: 'User already exists' });
+		request.log.error(error);
 		reply.code(500).send({ message: "Failed to create user"});
 	}
 }

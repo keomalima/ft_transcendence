@@ -1,6 +1,7 @@
-import type { SocketStream } from "@fastify/websocket";
 import type { ChatWsMessage } from "./chat.ws.types.js";
 import type { PrismaClient } from "@prisma/client";
+
+type SocketStream = any;
 
 const chatConnections = new Map<string, SocketStream>();
 

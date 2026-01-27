@@ -14,12 +14,12 @@ let wsConnection: TournamentWaitingRoomConnection | null = null;
 export function TournamentRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
-	// console.log('game room user', currentUser);
+	// //console.log('game room user', currentUser);
 
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		console.log('no params available')
+		//console.log('no params available')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -144,7 +144,7 @@ async function getTournamentData(id: string): Promise<TournamentData | null> {
 		const tournamentData: TournamentData | null = await tournamentApi.getTournament(id);
 		return tournamentData;
 	} catch(error) {
-		console.log(error);
+		//console.log(error);
 		return null;
 	}
 }
@@ -161,7 +161,7 @@ function passContext(ctx: AppContext, tournamentData: TournamentData | null, isC
 		tournamentPlayerListComponent.ctx = ctx;
 		tournamentPlayerListComponent.isCreator = isCreator;
 		tournamentPlayerListComponent.tournamentData = tournamentData;
-		console.log('✅ Context passed to tournament player list');
+		//console.log('✅ Context passed to tournament player list');
 	} else {
 		console.error('❌ Tournament player list component not found!');
 	}
@@ -208,7 +208,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
 			errorMsgGenerateToken.className = 'mt-2 text-red-500'
 			errorMsgGenerateToken.innerText = error as string;
-			console.log(error);
+			//console.log(error);
 		}
 	});
 
@@ -225,7 +225,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
 			errorMsgGenerateToken.className = 'mt-2 text-red-500'
 			errorMsgGenerateToken.innerText = error as string;
-			console.log(error);
+			//console.log(error);
 		}
 	});
 
@@ -243,7 +243,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 				errorMsgStartGame.className = 'mt-2 text-red-500'
 				errorMsgStartGame.innerText = error as string;
 			}
-			console.log(error);
+			//console.log(error);
 		}
 	})
 
@@ -259,7 +259,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			cleanTournamentWaitingRoomWS();
 			router.navigateTo('/');
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 		}
 	})
 
@@ -270,13 +270,13 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 		const tournamentId = customEvent.detail.tournamentId;
 		const playerId = customEvent.detail.playerId;
 
-		console.log('Removing player with ID:', playerId);
+		//console.log('Removing player with ID:', playerId);
 		if (!tournamentId || !playerId)
 			return;
 		try {
 			await tournamentApi.removePlayer(tournamentId, playerId);
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 		}
 	})
 }

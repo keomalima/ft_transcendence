@@ -10,7 +10,7 @@ export class GameConnection {
 		this.ws = new WebSocket(httpUrl.href);
 
 		this.ws.onopen = () => {
-			console.log('🎮 Connected to game');
+			//console.log('🎮 Connected to game');
 		}
 
 		this.ws.onerror = (error) => {
@@ -18,13 +18,13 @@ export class GameConnection {
 		}
 
 		this.ws.onclose = () => {
-			// console.log('🎮 Disconnected from game');
+			// //console.log('🎮 Disconnected from game');
 		}
 
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 			if (data.type == 'start-game') {
-				console.log('🚀 game starts');
+				//console.log('🚀 game starts');
 				document.dispatchEvent(new CustomEvent('event-start-game', {
 					detail: {
 						gameId: data.gameId,
@@ -61,7 +61,7 @@ export class GameConnection {
 				}));
 			} if (data.type === 'abandoned-game') {
 				if (!data.winnerId) {
-					console.log(`🚨 winnerId undefined`);
+					//console.log(`🚨 winnerId undefined`);
 					return;
 				}
 				document.dispatchEvent(new CustomEvent('event-abandoned-game', {
@@ -106,14 +106,14 @@ export class GameConnection {
 		if (this.ws && this.ws.readyState == WebSocket.OPEN) {
 			this.ws.send(JSON.stringify(message));
 		} else {
-			console.log(`❌ Socket is NOT open. ReadyState: ${this.ws?.readyState}`);
+			//console.log(`❌ Socket is NOT open. ReadyState: ${this.ws?.readyState}`);
 		}
 	}
 
 	disconnect() {
 		this.ws?.close();
 		this.ws = null;
-		console.log('🎮 Disconnected from game');
+		//console.log('🎮 Disconnected from game');
 	}
 
 }

@@ -227,7 +227,7 @@ async function updatePlayer(prisma: PrismaClient, player: FinishGamePlayer, isWi
 }
 
 async function finishGame(prisma: PrismaClient, gameId: string, status: GameStatus) {
-	console.log(`🏁 Finishing game ${gameId} with status: ${status}`);
+	//console.log(`🏁 Finishing game ${gameId} with status: ${status}`);
 
 	const existingGame = await prisma.game.findUnique({
         where: { id: gameId },
@@ -279,30 +279,30 @@ async function finishGame(prisma: PrismaClient, gameId: string, status: GameStat
 }
 
 async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) {
-	console.log(`🏆 [advanceToNextRound] Tournament ${game.tournamentId}, Round ${game.roundNumber}, Match ${game.matchNumber}`);
-	console.log(`👤 Winner advancing: ${winner.userId}`);
+	//console.log(`🏆 [advanceToNextRound] Tournament ${game.tournamentId}, Round ${game.roundNumber}, Match ${game.matchNumber}`);
+	//console.log(`👤 Winner advancing: ${winner.userId}`);
 
 	const nextGame = await findNextBracketGame(prisma, game);
 	if (!nextGame) {
-		console.log('❌ No next game found in bracket. Stopping.');
+		//console.log('❌ No next game found in bracket. Stopping.');
 		return;
 	}
 	
-	console.log('🎯 Next bracket game detected:', { id: nextGame.id, round: nextGame.roundNumber, match: nextGame.matchNumber, status: nextGame.status });
+	//console.log('🎯 Next bracket game detected:', { id: nextGame.id, round: nextGame.roundNumber, match: nextGame.matchNumber, status: nextGame.status });
 
 	let currentGame: typeof nextGame | null = nextGame;
 
-	console.log(`📝 Adding winner ${winner.userId} to next game ${nextGame.id}`);
+	//console.log(`📝 Adding winner ${winner.userId} to next game ${nextGame.id}`);
 	await addWinnerToNextGame(prisma, nextGame.id, winner.userId);
 	await checkAndAdvanceRound(prisma, game.tournamentId, game.roundNumber);
 
 	while (currentGame?.status === 'ABANDONED' && currentGame.roundNumber && currentGame.matchNumber !== null) {
-		console.log(`⚠️ Game ${currentGame.id} is ABANDONED. Processing walkover...`);
+		//console.log(`⚠️ Game ${currentGame.id} is ABANDONED. Processing walkover...`);
 		await notifyTournament(prisma, game.tournamentId!, game.id, currentGame.id);
 		await markPlayerWinner(prisma, currentGame.id, winner.userId);
 
 		const abandonedRound = currentGame.roundNumber;
-		console.log(`🔍 Looking for next game after abandoned round ${abandonedRound}`);
+		//console.log(`🔍 Looking for next game after abandoned round ${abandonedRound}`);
 
 		const nextBracketGame = await findNextBracketGame(prisma, {
 			tournamentId: currentGame.tournamentId,
@@ -312,25 +312,25 @@ async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) 
 
 		currentGame = nextBracketGame;
 		if (!currentGame) {
-			console.log('❌ No subsequent game found after abandoned game. Breaking loop.');
+			//console.log('❌ No subsequent game found after abandoned game. Breaking loop.');
 			break;
 		}
 
-		console.log('🎯 Next bracket game detected in while loop:', { id: currentGame.id, round: currentGame.roundNumber, match: currentGame.matchNumber, status: currentGame.status });
+		//console.log('🎯 Next bracket game detected in while loop:', { id: currentGame.id, round: currentGame.roundNumber, match: currentGame.matchNumber, status: currentGame.status });
 		
-		console.log(`🔄 Checking round advancement for round ${abandonedRound}`);
+		//console.log(`🔄 Checking round advancement for round ${abandonedRound}`);
 		await checkAndAdvanceRound(prisma, game.tournamentId, abandonedRound);
 		
-		console.log(`📝 Adding winner ${winner.userId} to new current game ${currentGame.id}`);
+		//console.log(`📝 Adding winner ${winner.userId} to new current game ${currentGame.id}`);
 		await addWinnerToNextGame(prisma, currentGame.id, winner.userId);
 	}
 
 	if (currentGame && currentGame.status === 'PENDING') {
-		console.log('🔔 Notifying waiting room and tournament about pending game', currentGame);
+		//console.log('🔔 Notifying waiting room and tournament about pending game', currentGame);
 	    await notifyWaitingRoom(prisma, currentGame.id, winner.userId);
 		await notifyTournament(prisma, game.tournamentId!, game.id, currentGame.id);
 	} else {
-		console.log('🏁 No pending game found or game not pending. Completing tournament.');
+		//console.log('🏁 No pending game found or game not pending. Completing tournament.');
 	    await completeTournament(prisma,game.tournamentId!, game.id, winner);
 	}
 }
@@ -341,7 +341,7 @@ async function notifyTournament(prisma: PrismaClient, tournamentId: string, game
 	if (currentGameId)
     	nextCompleteGame = await getCompleteGameData(prisma, currentGameId);
 
-	console.log('========== Updating game in notify tournament fil ===========', completeGame);
+	//console.log('========== Updating game in notify tournament fil ===========', completeGame);
 	TournamentWsController.broadcastToRoom(tournamentId, {
 		type: 'tournament_update',
 		gameId: gameId,
@@ -369,7 +369,7 @@ async function completeTournament(prisma: PrismaClient, tournamentId: string, ga
 		}
 	})
 
-	console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
+	//console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
 
 	const completeGame = await getCompleteGameData(prisma, gameId);
 	TournamentWsController.broadcastToRoom(tournamentId, {
@@ -407,17 +407,17 @@ async function checkAndAdvanceRound(prisma: PrismaClient, tournamentId: string, 
 		}
 	});
 
-	console.log(`🔍 Remaining games in round ${currentRound}: ${remainingGames}`);
+	//console.log(`🔍 Remaining games in round ${currentRound}: ${remainingGames}`);
 
 	if (remainingGames === 0) {
 
-		console.log(`⚡ ADVANCING ROUND: ${currentRound} → ${currentRound + 1} for tournament ${tournamentId}`);
+		//console.log(`⚡ ADVANCING ROUND: ${currentRound} → ${currentRound + 1} for tournament ${tournamentId}`);
 		await prisma.tournament.update({
 			where: { id: tournamentId },
 			data: { currentRound: currentRound + 1 }
 		});
 		
-		console.log(`🎯 Tournament ${tournamentId} advanced to round ${currentRound + 1}`);
+		//console.log(`🎯 Tournament ${tournamentId} advanced to round ${currentRound + 1}`);
 	}
 }
 
@@ -456,7 +456,7 @@ async function findNextBracketGame(
 		game: { tournamentId: string | null; roundNumber: number; matchNumber: number }
 	) {
 
-	console.log('=====Findin next game with round ', game.roundNumber);
+	//console.log('=====Findin next game with round ', game.roundNumber);
 	return prisma.game.findFirst({
 		where: {
 			tournamentId: game.tournamentId,

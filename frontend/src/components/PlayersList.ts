@@ -144,7 +144,7 @@ export class PlayerList extends HTMLElement {
 
 		removeBtn.addEventListener('click', (e) => {
 			e.preventDefault();
-			console.log('remove triger');
+			//console.log('remove triger');
 			this.dispatchEvent(new CustomEvent('event-remove-player', {
 				detail: {
 					gameId: this._gameData?.id as string,

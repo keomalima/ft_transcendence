@@ -142,7 +142,7 @@ function wonGame(gameSession: GameSession, config: GameConfig): boolean {
 			
 			initBall(gameSession);
 			gameWsNotification.notifyWonGame(gameSession);
-			console.log('🏆 Winner notified, game session marked as finished');
+			//console.log('🏆 Winner notified, game session marked as finished');
 		}
 		
 		return true;
@@ -164,7 +164,7 @@ function calculateScored(gameSession: GameSession, config: GameConfig, ball: Gam
 		if (wonGame(gameSession, config))
 			return;
 
-		// console.log(`💥 BALL OUT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
+		// //console.log(`💥 BALL OUT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
 		service(gameSession);
 		return;
 	}
@@ -179,7 +179,7 @@ function calculateScored(gameSession: GameSession, config: GameConfig, ball: Gam
 		if (wonGame(gameSession, config))
 			return;
 			
-		// console.log(`💥 BALL OUT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
+		// //console.log(`💥 BALL OUT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
 		service(gameSession);
 		return;
 	}

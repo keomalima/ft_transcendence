@@ -15,7 +15,7 @@ export class TournamentWaitingRoomConnection {
 		this.ws = new WebSocket(httpUrl.href);
 		
 		this.ws.onopen = () => {
-			console.log('🔌 Connected to tournament waiting room');
+			//console.log('🔌 Connected to tournament waiting room');
 		}
 
 		this.ws.onmessage = (event) => {
@@ -24,15 +24,15 @@ export class TournamentWaitingRoomConnection {
 				onUpdate(data);
 			}
 			if (data.type === 'player_remove' || data.type == 'player_quit') {
-				console.log('🚫 You have been removed from the tournament');
+				//console.log('🚫 You have been removed from the tournament');
 				onRemoved(data);
 			}
 			if (data.type === 'tournament_closed') {
-				console.log('🚫 The tournament has been closed');
+				//console.log('🚫 The tournament has been closed');
 				onTournamentClosed();
 			}
 			if (data.type === 'start_tournament') {
-				console.log('🎮 Tournament is starting!');
+				//console.log('🎮 Tournament is starting!');
 				onStartTournament();
 			}
 		}
@@ -42,7 +42,7 @@ export class TournamentWaitingRoomConnection {
 		}
 
 		this.ws.onclose = () => {
-			console.log('🔌 Disconnected from tournament waiting room');
+			//console.log('🔌 Disconnected from tournament waiting room');
 		}
 	}
 	

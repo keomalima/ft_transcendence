@@ -2,6 +2,7 @@ import { AppContext } from "../types.js";
 import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
+import { API_BASE_URL } from "../config.js";
 
 // import style
 import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSES, BUTTON_DISABLED_CLASSES } from "../styles/tailwindStyles.js";
@@ -18,8 +19,10 @@ export function EditProfile(ctx: AppContext) : string {
 	const uploadsUrl: string = 'http://localhost:3000';
 	void userService.getUserState(ctx);
 	currentUser = ctx?.userStore.get();
-	const profilePicture: string = `${uploadsUrl}${currentUser?.avatarUrl}`;
+	const avatarRaw = currentUser?.avatarUrl || '/uploads/avatars/default.jpg';
+    const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
 
+	console.log("Avatar picture URL", avatarSrc);
 	setTimeout(() => {
 		passContext(ctx);
 		setupEditEventListeners(ctx);;
@@ -37,7 +40,7 @@ export function EditProfile(ctx: AppContext) : string {
 				<div></div>
 				<div class='md:col-span-2'>
 					<div class="col-span-full flex items-center gap-x-8">
-						<img id="avatar-preview" src="${profilePicture}" alt="profile picture" class="w-40 h-40 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
+						<img id="avatar-preview" src="${avatarSrc}" alt="profile picture" class="w-40 h-40 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
 						<div>
 							<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
 							<label id='change-avatar-label' for="avatar-input" class='${BUTTON_CREAM_CLASSES}'>Change avatar</label>
@@ -180,7 +183,7 @@ function setupEditEventListeners(ctx: AppContext) {
 			if (img)
 				img.src = imgBase64;
 		} catch(error) {
-			console.log(error);
+			//console.log(error);
 		} finally {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Change avatar';
@@ -210,14 +213,14 @@ function setupEditEventListeners(ctx: AppContext) {
 				displayName: formData.get('username') ? formData.get('username') as string : null,
 				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			}, ctx);
-			console.log('test');
+			//console.log('test');
 			router.navigateTo('/profile');
 		}
 		catch (error) {
 			if (errorMsg) {
 				errorMsg.innerText = `${error}`;
 			}
-			console.log(error);
+			//console.log(error);
 		}
 	})
 
@@ -283,7 +286,7 @@ function setupEditEventListeners(ctx: AppContext) {
 				const user = await userService.deleteUser(ctx);
 				router.navigateTo('/');
 			} catch (error) {
-				console.log(error);
+				//console.log(error);
 			}
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);

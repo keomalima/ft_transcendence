@@ -15,7 +15,7 @@ export class WaitingRoomConnection {
 		this.ws = new WebSocket(httpUrl.href);
 		
 		this.ws.onopen = () => {
-			console.log('🔌 Connected to waiting room');
+			//console.log('🔌 Connected to waiting room');
 		}
 
 		this.ws.onmessage = (event) => {
@@ -24,15 +24,15 @@ export class WaitingRoomConnection {
 				onUpdate(data);
 			}
 			if (data.type === 'player_remove') {
-				console.log('🚫 You have been removed from the game');
+				//console.log('🚫 You have been removed from the game');
 				onRemoved();
 			}
 			if (data.type === 'game_closed') {
-				console.log('🚫 Your game has been closed');
+				//console.log('🚫 Your game has been closed');
 				onGameClosed();
 			}
 			if (data.type === 'start_game') {
-				console.log('🔌 Your game just starts');
+				//console.log('🔌 Your game just starts');
 				onStartGame();
 			}
 		}
@@ -42,7 +42,7 @@ export class WaitingRoomConnection {
 		}
 
 		this.ws.onclose = () => {
-			console.log('🔌 Disconnected from waiting room');
+			//console.log('🔌 Disconnected from waiting room');
 		}
 	}
 	

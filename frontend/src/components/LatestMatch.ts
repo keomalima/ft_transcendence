@@ -82,7 +82,7 @@ export class LatestMatch extends HTMLElement {
 	}
 
 	private generateMatchCards() {
-		console.log('generate latest match', this._gameHistory);
+		//console.log('generate latest match', this._gameHistory);
 		const scores = document.getElementById('last-match-scores');
 		let count = 20;
 		this._gameHistory?.forEach((match) => {

@@ -9,7 +9,7 @@ export const friendshipApi = {
 	getList: async (): Promise<Partial<FriendData>[]> => {
 		try {
 			const response = await httpCall.get<Partial<FriendData>[]>(`${BASE_URL}`);
-			console.log('🧑‍🤝‍🧑 getFriendsList sucess ✅ ', response.data);
+			//console.log('🧑‍🤝‍🧑 getFriendsList sucess ✅ ', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('get list of friends', error);
@@ -19,7 +19,7 @@ export const friendshipApi = {
 	getFriendHistory: async (friendId: string): Promise<GameHistory[]> => {
 		try {
 			const response = await httpCall.get<GameHistory[]>(`${BASE_URL}/history/${friendId}`);
-			console.log('🧑‍🤝‍🧑 getFriendHistory sucess ✅ ', response.data);
+			//console.log('🧑‍🤝‍🧑 getFriendHistory sucess ✅ ', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('get friend history', error);
@@ -33,7 +33,7 @@ export const friendshipApi = {
 			await httpCall.post(`${BASE_URL}`, {
 				addresseeDisplayName: displayName
 			});
-			console.log('🧑‍🤝‍🧑 sendFriendshipRequest sucess ✅ ');
+			//console.log('🧑‍🤝‍🧑 sendFriendshipRequest sucess ✅ ');
 		} catch (error: unknown) {
 			throw buildApiError('send friendship request', error);
 		}
@@ -42,7 +42,7 @@ export const friendshipApi = {
 	getRequests: async (): Promise<Partial<FriendData>[]> => {
 		try {
 			const response = await httpCall.get<Partial<FriendData>[]>(`${BASE_URL}/requests`);
-			console.log('🧑‍🤝‍🧑 getFriendRequests sucess ✅ ', response.data);
+			//console.log('🧑‍🤝‍🧑 getFriendRequests sucess ✅ ', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('get friend requests', error);
@@ -54,7 +54,7 @@ export const friendshipApi = {
 			throw new Error('Request ID is required');
 		try {
 			await httpCall.put(`${BASE_URL}/accept/${id}`);
-			console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
+			//console.log('🧑‍🤝‍🧑 acceptFriend sucess ✅ ');
 		} catch (error: unknown) {
 			throw buildApiError('accept friend', error);
 		}
@@ -65,7 +65,7 @@ export const friendshipApi = {
 			throw new Error('Request ID is required');
 		try {
 			await httpCall.put(`${BASE_URL}/reject/${id}`);
-			console.log('🧑‍🤝‍🧑 rejectFriend sucess ✅ ');
+			//console.log('🧑‍🤝‍🧑 rejectFriend sucess ✅ ');
 		} catch (error: unknown) {
 			throw buildApiError('reject friend', error);
 		}
@@ -76,7 +76,7 @@ export const friendshipApi = {
 			throw new Error('Friendship ID is required');
 		try {
 			await httpCall.delete(`${BASE_URL}/${id}`);
-			console.log('🧑‍🤝‍🧑 deleteFriend sucess ✅ ');
+			//console.log('🧑‍🤝‍🧑 deleteFriend sucess ✅ ');
 		} catch (error: unknown) {
 			throw buildApiError('delete friend', error);
 		}
@@ -88,7 +88,7 @@ export const friendshipApi = {
 
 		try {
 			await httpCall.put(`${BASE_URL}/block/${friendId}`);
-			console.log('🧑‍🤝‍🧑 blockFriend success ✅');
+			//console.log('🧑‍🤝‍🧑 blockFriend success ✅');
 		} catch (error: unknown) {
 			throw buildApiError('block friend', error);
 		}
@@ -100,7 +100,7 @@ export const friendshipApi = {
 
 		try {
 			await httpCall.put(`${BASE_URL}/unblock/${friendId}`);
-			console.log('🧑‍🤝‍🧑 unblockFriend success ✅');
+			//console.log('🧑‍🤝‍🧑 unblockFriend success ✅');
 		} catch (error: unknown) {
 			throw buildApiError('unblock friend', error);
 		}

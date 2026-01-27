@@ -113,10 +113,10 @@ function setupHomeEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		try {
 			window.location.href = 'http://localhost:3000/api/users/login/google';
-			console.log('⭐ loginUser success! ✅');
+			//console.log('⭐ loginUser success! ✅');
 			router.navigateTo('/home');
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
@@ -128,7 +128,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 
 	startedBtn?.addEventListener('click', (e) => {
-		console.log('started triggered')
+		//console.log('started triggered')
 		e.preventDefault();
 		startedBtn.disabled = true;
 		startedBtn.classList.add('hidden');
@@ -156,7 +156,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 			await userService.loginUser(email, password, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
@@ -188,7 +188,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 			await userService.loginUser(data.email, data.password, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
-			console.log(error);
+			//console.log(error);
 			if (displayError)
 				displayError.innerText = `${error}`;
 		}

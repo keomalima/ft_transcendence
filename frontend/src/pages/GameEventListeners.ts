@@ -8,9 +8,9 @@ import { cleanGameWS } from "./Game.js";
 // ======== EVENT LISTENER ============
 export function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
 
-	console.log(currentGame);
+	//console.log(currentGame);
 	if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers.length < 2) {
-		console.log('❌ Missing current game');
+		//console.log('❌ Missing current game');
 		return;
 	}
 
@@ -29,7 +29,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 
-		console.log('You already are in this game, redirection to home');
+		//console.log('You already are in this game, redirection to home');
 		if (currentGame.type === 'TOURNAMENT') {
 			router.navigateTo(`/tournament/${currentGame.tournamentId}`);
 		} else {
@@ -148,7 +148,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		wonGameOverlay.classList.remove('hidden');
 		
 		backHomeBtn?.addEventListener('click', async () => {
-			console.log(currentGame);
+			//console.log(currentGame);
 			cleanGameWS();
 			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId) {
 				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
@@ -175,7 +175,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			if (!await finishGame('ABANDONED', e, ctx, gameId))
 				return;
 		} else {
-			console.log('⏭️ Player gave up, letting winner finish the game');
+			//console.log('⏭️ Player gave up, letting winner finish the game');
 		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
@@ -285,7 +285,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		if (!opponentPauseOverlay)
 			return;
 
-		console.log('opponent pause overlay');
+		//console.log('opponent pause overlay');
 		if (data.status === true) {
 			let count = 10;
 			timer.textContent = count.toString();
@@ -314,7 +314,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	let disconnectInterval: number | null = null;
 	document.addEventListener('event-player-disconnected', (e: Event) => {
 		e.preventDefault();
-		console.log('🔌 Player disconnected');
+		//console.log('🔌 Player disconnected');
 		
 		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
 		const disconnectTimer = document.querySelector('#disconnect-timer') as HTMLParagraphElement;
@@ -341,7 +341,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	// **** PLAYER RECONNECTED ****
 	document.addEventListener('event-player-reconnected', (e: Event) => {
 		e.preventDefault();
-		console.log('🔄 Player reconnected');
+		//console.log('🔄 Player reconnected');
 		
 		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
 		
@@ -371,10 +371,10 @@ function getGameWidth(): number
 
 async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppContext, gameId: string): Promise<boolean> {
 	e.preventDefault();
-	console.log(`🏆 FINISH GAME : ${status}`);
+	//console.log(`🏆 FINISH GAME : ${status}`);
 
 	if (sharedGameState.isFinishingGame) {
-		console.log('⏭️ Already finishing game, skipping...');
+		//console.log('⏭️ Already finishing game, skipping...');
 		return true;
 	}
 	setIsFinishing(true);
@@ -411,14 +411,14 @@ async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppC
 					}
 				]
 			};
-			console.log('🎮 Finishing game...');
+			//console.log('🎮 Finishing game...');
 			await gameService.finishGame(currentGame.id!, data, ctx);
-			console.log('✅ Game finished successfully');
+			//console.log('✅ Game finished successfully');
 		} catch (error) {
 			console.error('❌ Error finishing game:', error);
 		}
 	} else {
-		console.log('👀 Game is not IN_PROGRESS, skipping finishGame API call');
+		//console.log('👀 Game is not IN_PROGRESS, skipping finishGame API call');
 		setIsFinishing(true);
 	}
 	return true

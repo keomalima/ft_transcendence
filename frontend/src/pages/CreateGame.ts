@@ -133,7 +133,7 @@ function setupGameEventListeners(ctx: AppContext) {
 				router.navigateTo(`/game-room/${result!.id}`);
 		} catch (error) {
 			errorMsgCreateGame.innerText = error as string;
-			console.log(error);
+			//console.log(error);
 		}
 
 	})

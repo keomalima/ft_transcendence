@@ -148,7 +148,7 @@ async function sendMessageHandler(
 			const game = await gameService.createGame(request.server.prisma, {type: 'ONLINE' , scoreToWin: 5}, fromUserId);
 			if (!game)
 			{
-				console.log("Fail to create game");
+				//console.log("Fail to create game");
 				return reply.status(400).send({
 					status: "error",
 					reason: "Fail to create game",

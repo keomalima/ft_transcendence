@@ -37,7 +37,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		if (message.type === 'input') {
 			const player = gameSession.players.get(userId);
 			if (!player) {
-				console.log(`⚠️ Player ${userId} not found in game session`);
+				//console.log(`⚠️ Player ${userId} not found in game session`);
 				return;
 			}
 			if (message.action === 'up') {
@@ -54,7 +54,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			// Direct position control for touch devices
 			const player = gameSession.players.get(userId);
 			if (!player) {
-				console.log(`⚠️ Player ${userId} not found in game session`);
+				//console.log(`⚠️ Player ${userId} not found in game session`);
 				return;
 			}
 			// message.position is expected to be a percentage (0-100)
@@ -91,22 +91,22 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 	});
 
 	socket.on('close', () => {
-		console.log(`👋 Player ${userId} disconnected from game : ${gameId}`);
+		//console.log(`👋 Player ${userId} disconnected from game : ${gameId}`);
 		
 		const session = gameSessions.get(gameId);
 		if (!session) {
-			console.log(`⚠️ Game session ${gameId} already cleaned up`);
+			//console.log(`⚠️ Game session ${gameId} already cleaned up`);
 			return;
 		}
 		
 		if (session.gameState.status === 'playing') {
-			console.log(`⏱️ Starting disconnect timeout for player ${userId}`);
+			//console.log(`⏱️ Starting disconnect timeout for player ${userId}`);
 			
 			session.isPaused = true;
 			gameWsNotification.notifyPlayerDisconnected(session, userId);
 			session.disconnectedUserId = userId;
 			session.disconnectTimer = setTimeout(() => {
-				console.log(`⏰ Disconnect timeout expired for player ${userId}`);
+				//console.log(`⏰ Disconnect timeout expired for player ${userId}`);
 				const currentSession = gameSessions.get(gameId);
 				if (currentSession && currentSession.disconnectedUserId === userId) {
 					gameWsNotification.notifyAbandonnedGame(currentSession, userId);
@@ -115,11 +115,11 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 		} else {
 			// Game not in playing state, just remove player
 			session.players.delete(userId);
-			console.log(`�️ Player ${userId} removed from game session`);
+			//console.log(`�️ Player ${userId} removed from game session`);
 			
 			// If no players left, clean up the session
 			if (session.players.size === 0) {
-				console.log(`🧹 No players left, cleaning up game session ${gameId}`);
+				//console.log(`🧹 No players left, cleaning up game session ${gameId}`);
 				cleanupGameSession(gameId, session);
 			}
 		}
@@ -216,7 +216,7 @@ function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocke
 
 function checkForReconnection(gameSession: GameSession, userId: string, socket: WebSocket) {
 	if (gameSession.disconnectedUserId === userId && gameSession.disconnectTimer) {
-		console.log(`🔄 Player ${userId} reconnected! Clearing disconnect timeout`);
+		//console.log(`🔄 Player ${userId} reconnected! Clearing disconnect timeout`);
 		
 		// Clear the disconnect timeout
 		clearTimeout(gameSession.disconnectTimer);
@@ -249,10 +249,10 @@ async function runGame(gameSession: GameSession, gameId: string){
 		}
 		
 		if (!gameSession.gameLoop) {
-			console.log('🎮 Starting game loop...');
+			//console.log('🎮 Starting game loop...');
 			gameSession.gameLoop = setInterval(() => {
 				if (gameSession.gameState.status === 'finished') {
-					console.log('🏁 Game finished, stopping game loop');
+					//console.log('🏁 Game finished, stopping game loop');
 					if (gameSession.gameLoop) {
 						clearInterval(gameSession.gameLoop!);
 						gameSession.gameLoop = null;
@@ -273,7 +273,7 @@ async function runGame(gameSession: GameSession, gameId: string){
 
 // ======== CLEANUP GAME SESSION ============
 export function cleanupGameSession(gameId: string, gameSession: GameSession): void {
-	console.log(`🧹 Cleaning up game session: ${gameId}`);
+	//console.log(`🧹 Cleaning up game session: ${gameId}`);
 	
 	if (gameSession.gameLoop) {
 		clearInterval(gameSession.gameLoop);
@@ -293,13 +293,13 @@ export function cleanupGameSession(gameId: string, gameSession: GameSession): vo
 	// Close all WebSocket connections
 	gameSession.players.forEach((player, userId) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
-			console.log(`👋 Closing WebSocket for player ${userId}`);
+			//console.log(`👋 Closing WebSocket for player ${userId}`);
 			player.socket.close(1000, 'Game finished');
 		}
 	});
 	gameSession.players.clear();
 	gameSessions.delete(gameId);
-	console.log(`🧹 Game session ${gameId} cleaned up successfully`);
+	//console.log(`🧹 Game session ${gameId} cleaned up successfully`);
 }
 
 

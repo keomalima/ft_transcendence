@@ -139,7 +139,7 @@ async function getParticipantInfo(tournamentId: string): Promise<{isQuit: boolea
 			isEliminated: participantInfo.isEliminated ?? false
 		};
 	} catch(error) {
-		console.log(error);
+		//console.log(error);
 		return null;
 	}
 }
@@ -150,7 +150,7 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
 	} catch(error) {
-		console.log(error);
+		//console.log(error);
 		return null;
 	}
 }
@@ -195,7 +195,7 @@ function setupTournamentEventListeners(ctx: AppContext) {
 			const errorMsgJoinGame = document.querySelector('#error-join-tournament') as HTMLParagraphElement;
 			errorMsgJoinGame.className = 'mt-2 text-red-500'
 			errorMsgJoinGame.innerText = error as string;
-			console.log(error);
+			//console.log(error);
 		}
 	})
 }

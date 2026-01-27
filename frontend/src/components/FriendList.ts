@@ -88,7 +88,7 @@ export class FriendList extends HTMLElement {
 		try {
 			this._list = await friendshipApi.getList();
 		} catch(error) {
-			console.log(error);
+			//console.log(error);
 		}
 	}
 
@@ -128,7 +128,7 @@ export class FriendList extends HTMLElement {
 		'cursor-pointer transition-colors hover:bg-stone-200';
 
 		if (friend.id && friend.id === this._selectedFriendId) {
-			console.log('hoover');
+			//console.log('hoover');
 			card.classList.remove('bg-stone-100');
 			card.classList.add('bg-stone-300');
 		}

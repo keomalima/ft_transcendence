@@ -9,14 +9,14 @@ function calculateGame(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
 	if (!paddleA.userId || !paddleB.userId) {
-		console.log('❌ missing player 1');
+		//console.log('❌ missing player 1');
 		return;
 	}
 
 	const playerA = gameSession.players.get(paddleA.userId );
 	const playerB = gameSession.players.get(paddleB.userId!);
 	if (!playerA || !playerB) {
-		console.log('❌ missing player 2');
+		//console.log('❌ missing player 2');
 		return;
 	}
 	
