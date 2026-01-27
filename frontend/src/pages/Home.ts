@@ -107,6 +107,21 @@ function setupHomeEventListeners(ctx: AppContext) {
 	// Get the register component
 	const registerComponent = document.getElementById('register-component') as RegisterPopUp | null;
 
+	// **** GOOGLE LOGIN ****
+	const googleForm = document.getElementById('google-login-btn') as HTMLFormElement;
+	googleForm?.addEventListener('click', async (e) => {
+		e.preventDefault();
+		try {
+			window.location.href = 'http://localhost:3000/api/users/login/google';
+			console.log('⭐ loginUser success! ✅');
+			router.navigateTo('/home');
+		} catch (error) {
+			console.log(error);
+			const popUpLogin = document.getElementById('login-error');
+			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
+		}
+	});
+
 	// **** SHOW FORM ****
 	const startedBtn = document.getElementById('get-started-btn') as HTMLButtonElement;
 	const learnBtn = document.getElementById('learn-more-btn') as HTMLLinkElement;
@@ -122,21 +137,6 @@ function setupHomeEventListeners(ctx: AppContext) {
 		}
 		if (learnBtn)
 			learnBtn.style.display = 'none';
-	});
-
-	// **** GOOGLE LOGIN ****
-	const googleForm = document.getElementById('google-login-btn') as HTMLFormElement;
-	googleForm?.addEventListener('click', async (e) => {
-		e.preventDefault();
-		try {
-			window.location.href = 'http://localhost:3000/api/users/login/google';
-			console.log('⭐ loginUser success! ✅');
-			router.navigateTo('/home');
-		} catch (error) {
-			console.log(error);
-			const popUpLogin = document.getElementById('login-error');
-			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
-		}
 	});
 
 	// **** SIGN IN ****

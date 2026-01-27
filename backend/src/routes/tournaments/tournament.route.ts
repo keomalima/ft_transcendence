@@ -5,17 +5,29 @@ import { tournamentController } from "./tournament.controller.js";
 import { z } from "zod";
 
 export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
+
+	fastify.put('/:id/reset', {
+		schema: {
+			params: z.object({id: z.string()}),
+			tags: ['Tournament'],
+			description: 'Reset a tournament',
+			summary: 'Reset a tournament',
+			security: [{ cookieAuth: [] }]
+		},
+		handler: tournamentController.resetTournamentHandler
+	})
+
 	fastify.post('/', {
-			schema: {
-				body: tournamentSchemas.request.createTournament,
-				response : { 201: tournamentSchemas.response.createTournament},
-				tags: ['Tournament'],
-				description: 'Create a new tournament',
-				summary: 'Create tournament',
-				security: [{ cookieAuth: [] }]
-			},
-			preHandler: userController.updateLastSeen,
-			handler: tournamentController.createTournamentHandler
+		schema: {
+			body: tournamentSchemas.request.createTournament,
+			response : { 201: tournamentSchemas.response.createTournament},
+			tags: ['Tournament'],
+			description: 'Create a new tournament',
+			summary: 'Create tournament',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: tournamentController.createTournamentHandler
 	})
 
 	fastify.post('/:token/join', {

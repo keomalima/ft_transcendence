@@ -18,6 +18,15 @@ declare module 'fastify' {
   }
 }
 
+type GoogleUserData = {
+    email: string;
+    name: string;
+    id: string;
+    family_name: string;
+    given_name: string;
+    picture: string;
+};
+
 declare module 'fastify' {
   interface FastifyInstance {
     googleOAuth2: import('@fastify/oauth2').OAuth2Namespace;
@@ -105,10 +114,13 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 			}
 		});
 
-		const userData = await userResponse.json();
+		const userData = await userResponse.json() as GoogleUserData;
 
 		let newUser;
-		const user = await userService.findUserByEmail(request.server.prisma, {email: userData.email} );
+		const user = await userService.findUserByEmail(request.server.prisma, {
+			email: userData.email,
+			password: ''
+		} );
 		if (!user) {
 			newUser = await userService.createUser(request.server.prisma, {
 				email: userData.email,
@@ -238,7 +250,7 @@ async function changeUserPasswordHandler(request: FastifyRequest<{Body: ChangeUs
 		});
 	}
 	try {
-		return await userService.changeUserPassword(request.server.prisma, request.user.id, newPassword);
+		return await userService.changeUserPassword(request.server.prisma, request.user!.id, newPassword);
 	} catch (error : unknown) {
 		reply.code(500).send({ message: "Failed to change password"});
 	}

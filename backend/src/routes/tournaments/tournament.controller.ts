@@ -341,7 +341,7 @@ async function startTournamentHandler (request: FastifyRequest<{ Params: { id: s
 			});
 		}
 		let response = await tournamentService.startTournament(request.server.prisma, tournamentId);
-
+		
 		await tournamentService.matchMakeGames(request.server.prisma, userId, tournament);
 		await tournamentService.createEmptyGames(request.server.prisma, userId, tournament);
 
@@ -383,7 +383,7 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 		const userId = request.user!.id;
 		const gameId = request.params.id;
 		const game = await gameService.findGameById(request.server.prisma, gameId);
-		if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT' || !game.gameUsers.some((user: typeof game.GameUsers[0]) => user.user.id === userId)) {
+		if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT' || !game.gameUsers.some((user: typeof game.gameUsers[0]) => user.user.id === userId)) {
 			return reply.code(404).send({
 				message: "Game not found or unauthorized"
 			});
@@ -402,6 +402,10 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 
 		const updatedGame = await gameService.findGameById(request.server.prisma, gameId);
 		const updatedOpponent = updatedGame?.gameUsers.find((u: typeof updatedGame.gameUsers[0]) => u.user.id !== userId);
+
+		if (!game.tournamentId || !updatedOpponent) {
+		    return reply.code(500).send({ message: "Invalid game state" });
+		}
 
 		if (updatedOpponent?.isReady) {
 			await gameService.startGame(request.server.prisma, gameId, userId);
@@ -431,6 +435,8 @@ async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: s
 
 		// find if the correspondant game of the bracket is also finished
 		for (const game of finishedGames) {
+			if (game.matchNumber === null || game.roundNumber === null) continue;
+
 			const pairMatchNumber = game.matchNumber % 2 === 0 ? game.matchNumber - 1 : game.matchNumber + 1;
 			const pairGame = finishedGames.find((nextGame: typeof finishedGames[0]) => 
 				nextGame.roundNumber === game.roundNumber && nextGame.matchNumber === pairMatchNumber);
@@ -472,6 +478,34 @@ async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: s
 	}
 }
 
+async function resetTournamentHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+	try {	
+		const tournamentId = request.params.id;
+		const prisma = request.server.prisma;
+		const gamePlayers = await tournamentService.findAllGamePlayersByTournamentId(prisma, tournamentId);
+		if (gamePlayers) {
+			for (const game of gamePlayers) {
+				if (game.roundNumber != 1) {
+					for (const player of game.gameUsers)
+						await tournamentService.deleteGamePlayer(prisma, player.id);
+				} else {
+					for (const player of game.gameUsers)
+						await tournamentService.resetGamePlayer(prisma, player.id);
+				}
+				for (const participants of game.tournament!.participants)
+					await tournamentService.resetTournamentPlayer(prisma, participants.id);
+				await tournamentService.resetGame(prisma, game.id);
+			}
+			if (gamePlayers[0]?.tournament?.status != 'IN_PROGRESS')
+				await tournamentService.resetTournament(prisma, tournamentId);
+		}
+		reply.code(200).send({ message: "Tournament reset successfully"});
+	} catch (error: any) {
+		console.log(error);
+		reply.code(500).send({ message: "Failed to reset the tournament "});		
+	}
+}
+
 // =====================
 // Tournament Helpers
 // =====================
@@ -500,5 +534,6 @@ export const tournamentController = {
 	startTournamentGameHandler,
 	advanceTournamentHandler,
 	quitTournamentHandler,
-	getParticipantInfoHandler
+	getParticipantInfoHandler,
+	resetTournamentHandler
 };
