@@ -14,6 +14,44 @@ import type { FriendData, GameHistory } from "../types.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { API_BASE_URL } from "../config.js";
 
+export const PONG_MANTRAS: string[] = [
+  "Keep your eye on the ball.",
+  "Don't miss the bounce.",
+  "Master the angle, master the game.",
+  "Precision is your best paddle.",
+  "Deflect the noise, focus on the goal.",
+  "Ready Player One?",
+  "Winners never quit, quitters never win.",
+  "Level up your mindset.",
+  "Victory favors the focused.",
+  "Play hard, stay humble.",
+  "The paddle is an extension of your mind.",
+  "Simple game, infinite possibilities.",
+  "The wall is just a rebound away.",
+  "Speed is relative, timing is everything.",
+  "Control the bounce, control the world.",
+  "Physics doesn't lie.",
+  "Zero lag, pure focus.",
+  "Hit the corner, take the point.",
+  "Stay centered, play wide.",
+  "The table is your canvas.",
+  "Perfect timing beats raw speed.",
+  "Navigate the friction.",
+  "A steady hand wins the rally.",
+  "The screen has no limits.",
+  "Geometry is your secret weapon.",
+  "Find the rhythm in the ping-pong.",
+  "Paddle up, eyes forward."
+];
+
+/**
+ * Récupère un mantra aléatoire de la liste.
+ */
+export const getRandomMantra = (): string => {
+  const randomIndex = Math.floor(Math.random() * PONG_MANTRAS.length);
+  return PONG_MANTRAS[randomIndex];
+};
+
 export function Dashboard(ctx: AppContext): string{
     // get user data from store
     const currentUser: UserState | null = ctx.userStore.get();
@@ -107,8 +145,9 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 
 						`
 				}
-				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white p-4 lg:p-10 order-4 lg:order-0">
-					<h1>Your achievements</h1>
+				<div id='achievements' class="relative lg:row-span-3 rounded-lg bg-white bg-opacity-50 p-4 lg:p-10 order-4 lg:order-0">
+					<h1>Your mantra</h1>
+					<p class='font-[Calistoga] text-center mt-10 mb-10 lg:mb-0 text-2xl'>"${getRandomMantra()}"</p>
 				</div>
 			</div>
 		</div>
