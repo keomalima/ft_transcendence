@@ -11,7 +11,7 @@
 		"**/CVS": true,
 		"**/*.git": true,
 		"**/.vscode": true,
-		"docker-compose.yml": false,
+		"docker-compose.yml": true,
 		"**/*.json": true,
 		".gitignore": true,
 		"Makefile": true,

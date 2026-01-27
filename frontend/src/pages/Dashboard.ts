@@ -80,7 +80,7 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
     const avatarRaw = currentUser.avatarUrl || '/uploads/avatars/default.jpg';
     const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
 
-	console.log("Avatar picture URL", avatarSrc);
+	// console.log("Avatar picture URL", avatarSrc);
 	let link: string | null  = null;
 	if (tournamentId)
 		link = `/tournament-room/${tournamentId}`

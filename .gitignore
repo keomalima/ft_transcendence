@@ -16,8 +16,8 @@ frontend/node_modules/
 *.tsbuildinfo
 
 # Environment variables
-.env
-.env.*
+# .env
+# .env.*
 
 # Subject
 en.subject.pdf

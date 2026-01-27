@@ -13,7 +13,6 @@ RUN npx prisma generate
 COPY . .
 RUN npm run build
 
-
 # Production stage
 FROM node:20-alpine
 
@@ -26,6 +25,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/dist ./dist
 COPY prisma ./prisma/
+
+RUN mkdir -p /app/dist/uploads/avatars
+COPY uploads/avatars/ /app/dist/uploads/avatars
 
 EXPOSE 3000 5555
 

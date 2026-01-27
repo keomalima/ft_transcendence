@@ -222,7 +222,8 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
 			message: `${userId} was removed from tournament!`,
 			playerId,
 		})
-		reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, playerId));
+		await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, playerId);
+		reply.code(204).send();
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to remove player from tournament"});
 	}
@@ -247,7 +248,8 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 		if (tournament.createdBy === userId) {
 			//console.log('🔥 notify closed tournament (BY CREATOR)');
 			WaintingRoomWsController.notifyTournamentClosed(tournamentId, userId);
-			return reply.code(204).send(await tournamentService.deletePendingTournament(request.server.prisma, tournamentId));
+			await tournamentService.deletePendingTournament(request.server.prisma, tournamentId);
+			return reply.code(204).send();
 		} else {
 			WaintingRoomWsController.broadcasToRoom(tournamentId, {
 				type: 'player_quit',
@@ -257,7 +259,8 @@ async function deletePendingTournamentHandler (request: FastifyRequest<{ Params:
 		}
 
 		//console.log('🔥 notify closed tournament (BY PLAYER)');
-		return reply.code(204).send(await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, userId));
+		await tournamentService.removePlayerFromTournament(request.server.prisma, tournamentId, userId);
+		return reply.code(204).send();
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete tournament"});
 	}

@@ -65,7 +65,7 @@ async function protectedRouteHandler(request: FastifyRequest, reply: FastifyRepl
 async function validateSessionAuth ( request: FastifyRequest, reply: FastifyReply) {
 	if (request.user)
 		return reply.code(200).send(request.user);
-	else
+	else {
 		return reply.code(401).send({ message: "Unauthorized" });
 }
 

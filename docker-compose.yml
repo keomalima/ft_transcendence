@@ -13,8 +13,6 @@ services:
       - transcendence
     volumes:
       - prisma-data:/app/data
-      # - ./backend:/app
-      # - /app/node_modules
 
   nginx:
     build:

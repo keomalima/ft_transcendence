@@ -76,6 +76,14 @@ class User:
                 json_data = resp.json()
                 # Cookie is automatically stored in self.session
                 self.user_id = json_data.get("id")
+                self.token = "session"
+
+                # Fix: If backend sends Secure cookies (production mode), requests won't send them over HTTP.
+                # We manually force the sessionId cookie to be non-secure for localhost testing.
+                for cookie in self.session.cookies:
+                    if cookie.name == "sessionId":
+                        cookie.secure = False
+
                 print(f"{GREEN}✓{RESET} Logged in {self.email} (session cookie stored)")
                 return True
             else:
@@ -93,6 +101,7 @@ class User:
                 print(f"{GREEN}✓{RESET} Logged out {self.email}")
                 # Clear the session cookies
                 self.session.cookies.clear()
+                self.token = None
                 return True
             else:
                 print(f"{YELLOW}⚠{RESET} Logout {self.email}: {resp.status_code}")
@@ -1500,6 +1509,10 @@ def main():
                 print(f"{RED}✗{RESET} Cannot send friend request to yourself")
                 continue
                 
+            if not users[src].token:
+                print(f"{YELLOW}⚠{RESET} User must be logged in. Logging in...")
+                users[src].login()
+            
             users[src].send_friend_request(users[tgt].display_name)
             
         elif cmd == "accept":

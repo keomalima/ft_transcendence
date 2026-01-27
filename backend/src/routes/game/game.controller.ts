@@ -262,7 +262,8 @@ async function removePlayerHandler (request: FastifyRequest<{ Params: { id: stri
 
 		WaintingRoomWsController.notifyPlayerRemoved(gameId, playerId);
 
-		reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, playerId));
+		await gameService.removePlayerFromGame(request.server.prisma, gameId, playerId);
+		reply.code(204).send();
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to remove player from game"});
 	}
@@ -287,7 +288,8 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
 		if (game.createdBy === userId) {
 			//console.log('🔥 notify closed game (BY CREATOR)');
 			WaintingRoomWsController.notifyGameClosed(gameId, userId);
-			return reply.code(204).send(await gameService.deletePendingGame(request.server.prisma, gameId));
+			await gameService.deletePendingGame(request.server.prisma, gameId);
+			return reply.code(204).send();
 		}
 
 		//console.log('🔥 notify closed game (BY PLAYER)');
@@ -295,7 +297,8 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
 			type: 'room_update',
 			message: `Need to update the game - QUIT!`,
 		});
-		return reply.code(204).send(await gameService.removePlayerFromGame(request.server.prisma, gameId, userId));
+		await gameService.removePlayerFromGame(request.server.prisma, gameId, userId);
+		return reply.code(204).send();
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to delete game"});
 	}

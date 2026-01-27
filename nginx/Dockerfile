@@ -1,4 +1,3 @@
-# Stage 1: build the frontend assets
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
@@ -10,11 +9,11 @@ COPY frontend/index.html frontend/style.css ./
 
 RUN npm run build \
 	&& cp index.html dist/ \
-	&& cp style.css dist/ \
-	&& mkdir -p dist/src \
+	&& mkdir -p dist/src/styles \
+	&& mv dist/style.css dist/src/styles/tailwind.css \
 	&& cp -r src/images dist/src/
 
-# Stage 2: nginx runtime
+	
 FROM nginx:alpine
 RUN apk add --no-cache openssl
 RUN mkdir -p /etc/nginx/ssl \
