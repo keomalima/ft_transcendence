@@ -3,44 +3,7 @@
         "*": false
     },
     "files.exclude": {
-		"**/.git": true,
-		"**/.svn": true,
-		"**/.hg": true,
-		"**/.DS_Store": true,
-		"**/Thumbs.db": true,
-		"**/CVS": true,
-		"**/*.git": true,
-		"**/.vscode": true,
-		"docker-compose.yml": true,
-		"**/*.json": true,
-		".gitignore": true,
-		"Makefile": true,
-		"**/node_modules": true,
-		"**/dist": true,
-		"**/scripts": true,
-		"**/*.js": true,
-		"**/*.mjs": true,
-		"**/*.css": true,
-		"**/.gitignore": true,
-		"frontend/ARCHITECTURE.md": true,
-		"nginx": true,
-		"README.md": true,
-		"pong.py": true,
-		"**/*.html": true,
-		"**/Dockerfile": true,
-		"**/animationPlayground": true,
-		"**/docs": true,
-		"**/styles": true,
-		"frontend/src/config.ts": true,
-		"frontend/src/types.d.ts": true,
-		"frontend/src/utils": true,
-		"frontend/src/data": true,
-		"frontend/src/images": true,
-		"backend/.dockerignore": true,
-		"backend/.env": true,
-		"backend/uploads": true,
-		"backend/data": true,
-		"backend/src/generated": true
+	
 	},
     "explorerExclude.backup": {},
     "explorerExclude.backup": {},
@@ -49,6 +12,9 @@
 	"editor.insertSpaces": false,
 	"editor.tabSize": 4,
 	"editor.detectIndentation": false,
-	"editor.useTabStops": true
+	"editor.useTabStops": true,
+	"json.schemas": [
+
+	]
 
 }

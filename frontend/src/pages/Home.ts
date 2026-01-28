@@ -168,11 +168,37 @@ function setupHomeEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
-		if (data.username && data.username.length > 20) {
+		const {firstName, lastName, username, email, password} = data;
+		console.log('name', data);
+		if (!firstName || !lastName || !username || !email || !password) {
 			if (displayError) {
-				displayError.innerText = 'Error: Username is too long.'
-				return;
+				displayError.innerText = 'Error: Missing information.';
 			}
+			return;
+		}
+		if (username.length > 20 || username.length < 3) {
+			if (displayError) {
+				displayError.innerText = 'Error: Username lenght must be between 3 and 20 characters.'
+			}
+			return;
+		}
+		if (firstName.length > 20 || firstName.length < 3) {
+			if (displayError) {
+				displayError.innerText = 'Error: Name lenght must be between 3 and 20 characters.'
+			}
+			return;
+		}
+		if (lastName.length > 20 || lastName.length < 3) {
+			if (displayError) {
+				displayError.innerText = 'Error: Surname lenght must be between 3 and 20 characters.'
+			}
+			return;
+		}
+		if (!isPasswordValid(password)) {
+			if (displayError) {
+				displayError.innerText = 'Error: Password must contain at least 8 characters, 1 uppercase and 1 special character.'
+			}
+			return;			
 		}
 		try {
 			await userService.createUser({
@@ -193,5 +219,13 @@ function setupHomeEventListeners(ctx: AppContext) {
 				displayError.innerText = `${error}`;
 		}
 	});
-
 }
+
+function isPasswordValid(password: string): boolean {
+	const minLength = password.length >= 8;
+	const hasUppercase = /[A-Z]/.test(password);
+	const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+
+	return minLength && hasUppercase && hasSpecialChar;
+}
+
