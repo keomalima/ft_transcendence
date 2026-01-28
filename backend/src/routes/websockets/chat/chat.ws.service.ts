@@ -13,10 +13,14 @@ export async function removeChatConnectionAndUpdateTime(userId: string, prisma: 
 	if (chatConnections.has(userId)) {
 		chatConnections.delete(userId);
 
-		await prisma.user.update({
-			where: { id: userId },
-			data: { lastLiveChatOnlineAt: new Date() }
-		});
+		try {
+			await prisma.user.update({
+				where: { id: userId },
+				data: { lastLiveChatOnlineAt: new Date() }
+			});
+        } catch (err: any) {
+            console.log("❌ Failed to update the user", err);
+        }
 	}	
 }
 

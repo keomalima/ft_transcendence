@@ -55,9 +55,6 @@ export function Home(ctx: AppContext): string {
 								<div>
 									<div class="flex items-center justify-between">
 										<label for="password" class='${LABEL_CLASSES}'>Password</label>
-										<div class="text-sm">
-											<a data-link href="#" class="text-medium underline">Forgot password?</a>
-										</div>
 									</div>
 									<input id="password" type="password" name="password" autoComplete="current-password" class='${INPUT_CLASSES}' required/>
 								</div>
@@ -113,10 +110,10 @@ function setupHomeEventListeners(ctx: AppContext) {
 		e.preventDefault();
 		try {
 			window.location.href = 'http://localhost:3000/api/users/login/google';
-			//console.log('⭐ loginUser success! ✅');
+			// // console.log('⭐ loginUser success! ✅');
 			router.navigateTo('/home');
 		} catch (error) {
-			//console.log(error);
+			// // console.log(error);
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
@@ -128,7 +125,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 	const hidenForm = document.getElementById('hidden-form') as HTMLElement;
 
 	startedBtn?.addEventListener('click', (e) => {
-		//console.log('started triggered')
+		// // console.log('started triggered')
 		e.preventDefault();
 		startedBtn.disabled = true;
 		startedBtn.classList.add('hidden');
@@ -156,7 +153,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 			await userService.loginUser(email, password, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
-			//console.log(error);
+			// console.log(error);
 			const popUpLogin = document.getElementById('login-error');
 			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
 		}
@@ -168,11 +165,37 @@ function setupHomeEventListeners(ctx: AppContext) {
 		const customEvent = e as CustomEvent;
 		const data = customEvent.detail;
 		const displayError = document.querySelector('#register-error') as HTMLParagraphElement;
-		if (data.username && data.username.length > 20) {
+		const {firstName, lastName, username, email, password} = data;
+		// console.log('name', data);
+		if (!firstName || !lastName || !username || !email || !password) {
 			if (displayError) {
-				displayError.innerText = 'Error: Username is too long.'
-				return;
+				displayError.innerText = 'Error: Missing information.';
 			}
+			return;
+		}
+		if (username.length > 20 || username.length < 3) {
+			if (displayError) {
+				displayError.innerText = 'Error: Username lenght must be between 3 and 20 characters.'
+			}
+			return;
+		}
+		if (firstName.length > 20 || firstName.length < 3) {
+			if (displayError) {
+				displayError.innerText = 'Error: Name lenght must be between 3 and 20 characters.'
+			}
+			return;
+		}
+		if (lastName.length > 20 || lastName.length < 3) {
+			if (displayError) {
+				displayError.innerText = 'Error: Surname lenght must be between 3 and 20 characters.'
+			}
+			return;
+		}
+		if (!isPasswordValid(password)) {
+			if (displayError) {
+				displayError.innerText = 'Error: Password must contain at least 8 characters, 1 uppercase and 1 special character.'
+			}
+			return;			
 		}
 		try {
 			await userService.createUser({
@@ -188,10 +211,17 @@ function setupHomeEventListeners(ctx: AppContext) {
 			await userService.loginUser(data.email, data.password, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
-			//console.log(error);
+			// // console.log(error);
 			if (displayError)
 				displayError.innerText = `${error}`;
 		}
 	});
+}
 
+function isPasswordValid(password: string): boolean {
+	const minLength = password.length >= 8;
+	const hasUppercase = /[A-Z]/.test(password);
+	const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+
+	return minLength && hasUppercase && hasSpecialChar;
 }

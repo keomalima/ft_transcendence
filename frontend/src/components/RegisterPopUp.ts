@@ -134,6 +134,7 @@ export class RegisterPopUp extends HTMLElement {
 		if (createAccountForm)
 		{
 			createAccountForm.addEventListener('submit', async (e) => {
+				// console.log('create form submission');
 				e.preventDefault();
 				e.stopPropagation();
 
@@ -163,7 +164,7 @@ export class RegisterPopUp extends HTMLElement {
 					},
 					bubbles: true
 				}))
-			}, { once: true });
+			});
 		}
 	}
 
