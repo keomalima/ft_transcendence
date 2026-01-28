@@ -12,7 +12,6 @@ RUN npm run build \
 	&& mkdir -p dist/src/styles \
 	&& mv dist/style.css dist/src/styles/tailwind.css \
 	&& cp -r src/images dist/src/
-
 	
 FROM nginx:alpine
 RUN apk add --no-cache openssl

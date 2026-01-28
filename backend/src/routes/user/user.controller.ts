@@ -65,7 +65,7 @@ async function protectedRouteHandler(request: FastifyRequest, reply: FastifyRepl
 async function validateSessionAuth ( request: FastifyRequest, reply: FastifyReply) {
 	if (request.user)
 		return reply.code(200).send(request.user);
-	else {
+	else
 		return reply.code(401).send({ message: "Unauthorized" });
 }
 
@@ -154,7 +154,7 @@ async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		await userService.logoutUser(request.server.prisma, request.user!.id);
 		reply.clearCookie('sessionId', { path: '/' });
-		reply.code(204).send()
+		reply.code(204).send();
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });
