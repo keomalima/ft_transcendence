@@ -373,6 +373,19 @@ async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppC
 	e.preventDefault();
 	console.log(`🏆 FINISH GAME : ${status}`);
 
+	const playerPauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
+	if (playerPauseOverlay) {
+		playerPauseOverlay.classList.add('hidden');
+	}
+	const opponentPauseOverlay = document.querySelector('#opponent-set-pause-overlay') as HTMLDivElement;
+	if (opponentPauseOverlay) {
+		opponentPauseOverlay.classList.add('hidden');
+	}
+	const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
+	if (quitDialog) {
+		quitDialog.close();
+	}
+
 	if (sharedGameState.isFinishingGame) {
 		console.log('⏭️ Already finishing game, skipping...');
 		return true;

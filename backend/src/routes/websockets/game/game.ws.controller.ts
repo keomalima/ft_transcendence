@@ -20,9 +20,13 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 
 	let gameSession = gameSessions.get(gameId);
 
+	// Check if player is already connected with an ACTIVE socket
 	if (gameSession && gameSession.players.has(userId)) {
-		gameWsNotification.notifyPlayerAlreadyInGame(socket, gameId);
-		return;
+		const existingPlayer = gameSession.players.get(userId)!;	
+		// If the existing socket is still OPEN, this is a duplicate connection attempt
+		if (existingPlayer.socket.readyState === WebSocket.OPEN) {
+			gameWsNotification.notifyPlayerAlreadyInGame(socket, gameId);
+			return;
 	}
 
 	if (!gameSession) {
