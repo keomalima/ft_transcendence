@@ -316,12 +316,15 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		e.preventDefault();
 		console.log('🔌 Player disconnected');
 		
+		const customEvent = e as CustomEvent;
+		const timeoutSeconds = customEvent.detail?.timeoutSeconds || 30; // Use backend value or default to 30
+		
 		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
 		const disconnectTimer = document.querySelector('#disconnect-timer') as HTMLParagraphElement;
 		
 		if (!disconnectOverlay || !disconnectTimer) return;
 		
-		let count = 30;
+		let count = timeoutSeconds; // Start from backend's remaining time
 		disconnectTimer.textContent = count.toString();
 		disconnectOverlay.classList.remove('hidden');
 		

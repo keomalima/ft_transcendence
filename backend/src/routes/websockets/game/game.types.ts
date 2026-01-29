@@ -40,7 +40,6 @@ export interface GameSession {
 	isPaused: boolean;
 	pauseTimer: NodeJS.Timeout | null;
 	pausedByUserId: string | null;
-	disconnectTimer: NodeJS.Timeout | null;
-	disconnectedUserId: string | null;
+	disconnectTimers: Map<string, { timer: NodeJS.Timeout; startTime: number }>; // userId → {timer, startTime}
 	abandonedNotified: boolean;
 }
