@@ -22,6 +22,7 @@ export class Router {
 	private app: HTMLElement; // HTML element where the page is rendered
 	private ctx: AppContext; // Context with stores (user, friend, games, etc)
 	private guard?: Guard;
+	private lastPath?: string; // Track the previous path for cleanup on back/forward
 
 	constructor(appSelector: string, ctx: AppContext) {
 		// Find the container element where pages will be rendered
@@ -56,8 +57,8 @@ export class Router {
 	}
 
 	// Route to the correct new path and add the path to history
-	public async navigateTo(path: string, push = true) {
-		const currentPath = window.location.pathname;
+	public async navigateTo(path: string, push = true, fromPath?: string) {
+		const currentPath = fromPath || window.location.pathname;
 		if (currentPath.startsWith('/game-room')) {
 			cleanWaitingRoomWS();
 		}
@@ -83,6 +84,9 @@ export class Router {
 
 		if (push) history.pushState({}, "", path); // update url except for back/forward navigation
 		this.app.innerHTML = route.view(this.ctx, route.params); // render the new path view
+		
+		// Track current path for next navigation
+		this.lastPath = path;
 
 		// Emit a custom event so other code can react to page changes
 		// document.dispatchEvent(new CustomEvent("route:render", { detail: { path: route.path } }));
@@ -90,7 +94,9 @@ export class Router {
 
 	// Handle browser back/forward buttons
 	private onPopState() {
-		this.navigateTo(window.location.pathname, false);
+		const currentPath = window.location.pathname;
+		this.navigateTo(currentPath, false, this.lastPath);
+		this.lastPath = currentPath;
 	}
 
 	// Intercept clicks on <a data-link> elements for SPA navigation
