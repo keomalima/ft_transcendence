@@ -18,7 +18,7 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	// secure if no user
 	if (!currentUser?.id)
 	{
-		//console.log('No active session when accessing game')
+		console.log('No active session when accessing game')
 		setTimeout(() => router.navigateTo('/'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -26,14 +26,14 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		//console.log('No game id is provided')
+		console.log('No game id is provided')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
 
 	// Prevent double initialization for the same game
 	if (isInitializing && currentGameId === params['id']) {
-		//console.log('⏭️ Already initializing game', params['id']);
+		console.log('⏭️ Already initializing game', params['id']);
 		return '<div id="game-content"><p class="flex items-center justify-center h-screen">Loading Game ...</p></div>';
 	}
 
@@ -44,16 +44,16 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		const userGame = await gameService.getCurrentGame(ctx);
 		// secure if the user do not belong to the game
 		if (params['id'] !== userGame?.gameId) {
-			//console.log('User do not belong to this game')
+			console.log('User do not belong to this game')
 			setTimeout(() => router.navigateTo('/home'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
 
 		let currentGame = await gameService.getGame(params['id'], ctx);
-		//console.log('💫 current game = ', currentGame);
+		console.log('💫 current game = ', currentGame);
 		// secure if the ugame is not IN_PROGRESS
 		if (!currentGame || currentGame.status === 'ABANDONED' || currentGame.status === 'COMPLETED') {
-			//console.log('The game is not in progress');
+			console.log('The game is not in progress');
 			setTimeout(() => router.navigateTo('/'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
@@ -93,9 +93,10 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 // ======== UPDDATE CONTENT ============
 function renderGameContent(gameId: string, currentGame: GameData) {
 	if (!currentGame) {
-		//console.log('❌ Missing current game');
+		console.log('❌ Missing current game');
 		return;
 	}
+	const showWaitingOverlay = currentGame.status === 'PENDING';
 	const content = document.getElementById('game-content');
 	content!.innerHTML = 
 	/*html*/`
@@ -195,7 +196,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 			</div>
 
 			<!-- Waiting opponent overlay -->
-			<div id="waiting-opponent-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div id="waiting-opponent-overlay" class="${showWaitingOverlay ? '' : 'hidden'} fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 				<div class='flex flex-col gap-5'>
 					<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
 					<button id='go-back-btn' type='click' class='px-3.5 py-2.5 rounded-full bg-white outline outline-1 outline-black hover:font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'>go back</button>
@@ -369,7 +370,7 @@ function startGame() {
 		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement | null;
 
 		if (waitingOpponentOverlay) {
-			//console.log('hide waiting for opponent overlay');
+			console.log('hide waiting for opponent overlay');
 			waitingOpponentOverlay.style.display = 'none';
 		}
 
@@ -388,7 +389,6 @@ function startGame() {
 	// Register the new listener (will only fire once)
 	document.addEventListener('event-start-game', startGameHandler, { once: true });
 }
-
 
 
 
