@@ -96,6 +96,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 		console.log('❌ Missing current game');
 		return;
 	}
+	const showWaitingOverlay = currentGame.status === 'PENDING';
 	const content = document.getElementById('game-content');
 	content!.innerHTML = 
 	/*html*/`
@@ -195,7 +196,7 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 			</div>
 
 			<!-- Waiting opponent overlay -->
-			<div id="waiting-opponent-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div id="waiting-opponent-overlay" class="${showWaitingOverlay ? '' : 'hidden'} fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 				<div class='flex flex-col gap-5'>
 					<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
 					<button id='go-back-btn' type='click' class='px-3.5 py-2.5 rounded-full bg-white outline outline-1 outline-black hover:font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'>go back</button>

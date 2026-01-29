@@ -20,9 +20,14 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 
 	let gameSession = gameSessions.get(gameId);
 
+	// Check if player is already connected with an ACTIVE socket
 	if (gameSession && gameSession.players.has(userId)) {
-		gameWsNotification.notifyPlayerAlreadyInGame(socket, gameId);
-		return;
+		const existingPlayer = gameSession.players.get(userId)!;	
+		// If the existing socket is still OPEN, this is a duplicate connection attempt
+		if (existingPlayer.socket.readyState === WebSocket.OPEN) {
+			gameWsNotification.notifyPlayerAlreadyInGame(socket, gameId);
+			return;
+		}
 	}
 
 	if (!gameSession) {
@@ -104,18 +109,42 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			
 			session.isPaused = true;
 			gameWsNotification.notifyPlayerDisconnected(session, userId);
-			session.disconnectedUserId = userId;
-			session.disconnectTimer = setTimeout(() => {
+			
+			// Store disconnect timer for this specific player with start timestamp
+			const startTime = Date.now();
+			const timer = setTimeout(async () => {
 				console.log(`⏰ Disconnect timeout expired for player ${userId}`);
 				const currentSession = gameSessions.get(gameId);
-				if (currentSession && currentSession.disconnectedUserId === userId) {
-					gameWsNotification.notifyAbandonnedGame(currentSession, userId);
+				if (currentSession && currentSession.disconnectTimers.has(userId)) {
+					// Check if ANY player is still connected
+					const hasConnectedPlayer = Array.from(currentSession.players.values()).some(
+						player => player.socket.readyState === WebSocket.OPEN
+					);
+					
+					if (hasConnectedPlayer) {
+						// Someone is still connected, let frontend handle it
+						console.log(`📤 Notifying connected players about abandonment`);
+						gameWsNotification.notifyAbandonnedGame(currentSession, userId);
+					} else {
+						// Nobody connected, backend must finish the game
+						console.log(`🔒 No players connected, backend finishing abandoned game`);
+						try {
+							await gameService.finishGame(request.server.prisma, gameId, 'ABANDONED');
+							console.log(`✅ Game ${gameId} marked as ABANDONED in database`);
+						} catch (error) {
+							console.error(`❌ Failed to abandon game ${gameId}:`, error);
+						}
+						// Clean up the session
+						cleanupGameSession(gameId, currentSession);
+					}
 				}
 			}, 30000);
+			
+			session.disconnectTimers.set(userId, { timer, startTime });
 		} else {
 			// Game not in playing state, just remove player
 			session.players.delete(userId);
-			console.log(`�️ Player ${userId} removed from game session`);
+			console.log(`🗑️ Player ${userId} removed from game session`);
 			
 			// If no players left, clean up the session
 			if (session.players.size === 0) {
@@ -176,8 +205,7 @@ function createGameSession(gameId: string, userId: string, scoreToWin: number, s
 		isPaused: false,
 		pauseTimer: null,
 		pausedByUserId: null,
-		disconnectTimer: null,
-		disconnectedUserId: null,
+		disconnectTimers: new Map(), // Initialize the Map
 		abandonedNotified: false
 	};
 
@@ -215,13 +243,14 @@ function addNewPlayer(gameSession: GameSession, userId: string, socket: WebSocke
 }
 
 function checkForReconnection(gameSession: GameSession, userId: string, socket: WebSocket) {
-	if (gameSession.disconnectedUserId === userId && gameSession.disconnectTimer) {
+	const disconnectInfo = gameSession.disconnectTimers.get(userId);
+	
+	if (disconnectInfo) {
 		console.log(`🔄 Player ${userId} reconnected! Clearing disconnect timeout`);
 		
-		// Clear the disconnect timeout
-		clearTimeout(gameSession.disconnectTimer);
-		gameSession.disconnectTimer = null;
-		gameSession.disconnectedUserId = null;
+		// Clear this player's disconnect timeout
+		clearTimeout(disconnectInfo.timer);
+		gameSession.disconnectTimers.delete(userId);
 		
 		// Update the socket for this player
 		const player = gameSession.players.get(userId);
@@ -229,11 +258,28 @@ function checkForReconnection(gameSession: GameSession, userId: string, socket: 
 			player.socket = socket;
 		}
 		
-		// Resume the game
-		gameSession.isPaused = false;
-		
-		// Notify other players
-		gameWsNotification.notifyPlayerReconnected(gameSession, userId);
+		// Only unpause if ALL players are back (no more disconnect timers)
+		if (gameSession.disconnectTimers.size === 0) {
+			gameSession.isPaused = false;
+			gameWsNotification.notifyPlayerReconnected(gameSession, userId);
+		} else {
+			console.log(`⏳ Waiting for other players to reconnect (${gameSession.disconnectTimers.size} still disconnected)`);
+			
+			// For each still-disconnected player, calculate remaining time and notify
+			gameSession.disconnectTimers.forEach((info, disconnectedUserId) => {
+				const elapsed = (Date.now() - info.startTime) / 1000; // seconds
+				const remaining = Math.max(0, 30 - elapsed); // 30s timeout
+				
+				// Send notification to the reconnected player about this disconnected player
+				if (socket.readyState === WebSocket.OPEN) {
+					socket.send(JSON.stringify({
+						type: 'player-disconnected',
+						disconnectedUserId,
+						timeoutSeconds: Math.ceil(remaining)
+					}));
+				}
+			});
+		}
 	} else if (gameSession.players.size < 2 && !gameSession.players.has(userId)) {
 		addNewPlayer(gameSession, userId, socket);
 	}
@@ -285,10 +331,12 @@ export function cleanupGameSession(gameId: string, gameSession: GameSession): vo
 		gameSession.pauseTimer = null;
 	}
 
-	if (gameSession.disconnectTimer) {
-		clearTimeout(gameSession.disconnectTimer);
-		gameSession.disconnectTimer = null;
-	}
+	// Clear all disconnect timers
+	gameSession.disconnectTimers.forEach((info, userId) => {
+		console.log(`⏹️ Clearing disconnect timer for player ${userId}`);
+		clearTimeout(info.timer);
+	});
+	gameSession.disconnectTimers.clear();
 	
 	// Close all WebSocket connections
 	gameSession.players.forEach((player, userId) => {

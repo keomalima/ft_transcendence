@@ -77,13 +77,14 @@ function notifyService(gameSession: GameSession): void {
 	})
 }
 
-function notifyPlayerDisconnected(gameSession: GameSession, disconnectedUserId: string): void {
+function notifyPlayerDisconnected(gameSession: GameSession, disconnectedUserId: string, timeoutSeconds: number = 30): void {
 	console.log(`📢 Notifying remaining players that ${disconnectedUserId} disconnected`);
 	gameSession.players.forEach((player) => {
 		if (player.userId !== disconnectedUserId && player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
 				type: 'player-disconnected',
-				disconnectedUserId
+				disconnectedUserId,
+				timeoutSeconds
 			}));
 		}
 	});

@@ -83,7 +83,8 @@ export class GameConnection {
 			} if (data.type === 'player-disconnected') {
 				document.dispatchEvent(new CustomEvent('event-player-disconnected', {
 					detail: {
-						disconnectedUserId: data.disconnectedUserId
+						disconnectedUserId: data.disconnectedUserId,
+						timeoutSeconds: data.timeoutSeconds // Pass through the timeout from backend
 					},
 					bubbles: true
 				}));
