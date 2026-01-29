@@ -45,12 +45,12 @@ export class RegisterPopUp extends HTMLElement {
 
 						<div class="sm:col-span-3">
 							<label for="first-name">First name</label>
-							<input id="first-name" type="text" name="first_name" autoComplete="given-name" class='${INPUT_CLASSES}'/>
+							<input id="first-name" type="text" name="first_name" autoComplete="given-name" class='${INPUT_CLASSES}' maxlength="20"/>
 						</div>
 
 						<div class="sm:col-span-3">
 							<label for="last-name">Last name</label>
-							<input id="last-name" type="text" name="last_name" autoComplete="family-name" class='${INPUT_CLASSES}'/>
+							<input id="last-name" type="text" name="last_name" autoComplete="family-name" class='${INPUT_CLASSES}' maxlength="20"/>
 						</div>
 
 						<div class="col-span-full">
@@ -65,7 +65,7 @@ export class RegisterPopUp extends HTMLElement {
 
 						<div class="col-span-full">
 							<label for="sign-in-password">Password</label>
-							<input id="sign-in-password" type="password" name="password" autoComplete="current-password" class='${INPUT_CLASSES}'/>
+							<input id="sign-in-password" type="password" name="password" autoComplete="current-password" class='${INPUT_CLASSES}' maxlength="20"/>
 						</div>
 
 						<div class="col-span-full">
@@ -134,15 +134,15 @@ export class RegisterPopUp extends HTMLElement {
 		if (createAccountForm)
 		{
 			createAccountForm.addEventListener('submit', async (e) => {
-				console.log('create form submission');
+				// console.log('create form submission');
 				e.preventDefault();
 				e.stopPropagation();
 
 				const displayError = this.querySelector('#register-error');
 				const formData = new FormData(createAccountForm);
 				if (displayError) {
-						displayError.textContent = '';
-					}
+					displayError.textContent = '';
+				}
 				// check for form data
 				const errorMsg = this.checkFormData(formData);
 				if (errorMsg)
