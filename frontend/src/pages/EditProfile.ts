@@ -3,6 +3,7 @@ import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { API_BASE_URL } from "../config.js";
+import { containDigit } from "./Home.js";
 
 // import style
 import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSES, BUTTON_DISABLED_CLASSES } from "../styles/tailwindStyles.js";
@@ -67,12 +68,12 @@ export function EditProfile(ctx: AppContext) : string {
 
 						<div class="sm:col-span-3">
 							<label class='${LABEL_CLASSES}' for="first-name">First name</label>
-							<input class='${INPUT_CLASSES}' id="first-name" type="text" name="first_name" autoComplete="given-name" placeholder=${currentUser?.name}>
+							<input class='${INPUT_CLASSES}' id="first-name" type="text" name="first_name" autoComplete="given-name" placeholder=${currentUser?.name} maxlength="20">
 						</div>
 
 						<div class="sm:col-span-3">
 							<label class='${LABEL_CLASSES}' for="last-name">Last name</label>
-							<input class='${INPUT_CLASSES}' id="last-name" type="text" name="last_name" autoComplete="family-name" placeholder=${currentUser?.surname}>
+							<input class='${INPUT_CLASSES}' id="last-name" type="text" name="last_name" autoComplete="family-name" placeholder=${currentUser?.surname} maxlength="20">
 						</div>
 
 					</div>
@@ -99,12 +100,12 @@ export function EditProfile(ctx: AppContext) : string {
 
 				<div class="col-span-full">
 					<label class='${LABEL_CLASSES}' for="new-password">New password</label>
-					<input class='${INPUT_CLASSES}' id="new-password" type="password" name="new_password" autoComplete="new-password"/>
+					<input class='${INPUT_CLASSES}' id="new-password" type="password" name="new_password" autoComplete="new-password" maxlength="20"/>
 				</div>
 
 				<div class="col-span-full">
 					<label class='${LABEL_CLASSES}' for="confirm-password">Confirm password</label>
-					<input class='${INPUT_CLASSES}' id="confirm-password" type="password" name="confirm_password" autoComplete="new-password"/>
+					<input class='${INPUT_CLASSES}' id="confirm-password" type="password" name="confirm_password" autoComplete="new-password" maxlength="20"/>
 				</div>
 				</div>
 
@@ -200,10 +201,24 @@ function setupEditEventListeners(ctx: AppContext) {
 		e.stopPropagation();
 		const formData = new FormData(updatePersonnalInfo);
 		const newDisplayName = formData.get('username') as string;
+		const newFisrtName = formData.get('first_name') as string;
+		const newLastName = formData.get('last_name') as string;
 		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
 		if (newDisplayName && newDisplayName.length > 20) {
 			if (errorMsg) {
 				errorMsg.innerText = 'Error: New Display name is too long';
+				return;
+			}
+		}
+		if (newFisrtName && containDigit(newFisrtName)) {
+			if (errorMsg) {
+				errorMsg.innerText = 'Error: First name cannot contain digit';
+				return;
+			}
+		}
+		if (newLastName && containDigit(newLastName)) {
+			if (errorMsg) {
+				errorMsg.innerText = 'Error: Last name cannot contain digit';
 				return;
 			}
 		}

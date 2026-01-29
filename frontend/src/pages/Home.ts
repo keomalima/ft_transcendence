@@ -173,6 +173,12 @@ function setupHomeEventListeners(ctx: AppContext) {
 			}
 			return;
 		}
+		if (containDigit(firstName) || containDigit(lastName)) {
+			if (displayError) {
+				displayError.innerText = 'Error: First name and surname cannot contain digit.'
+			}
+			return;		
+		}
 		if (username.length > 20 || username.length < 3) {
 			if (displayError) {
 				displayError.innerText = 'Error: Username lenght must be between 3 and 20 characters.'
@@ -224,4 +230,10 @@ function isPasswordValid(password: string): boolean {
 	const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
 
 	return minLength && hasUppercase && hasSpecialChar;
+}
+
+export function containDigit(str: string): boolean {
+	const hasDigit = /[0-9]/.test(str);
+
+	return hasDigit;
 }

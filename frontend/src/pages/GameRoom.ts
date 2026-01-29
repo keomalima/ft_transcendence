@@ -36,6 +36,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	setTimeout(async () => {
 		cleanWaitingRoomWS();
 		let gameData = await getGameData(params['id'], ctx);
+		const userGame = await gameService.getCurrentGame(ctx);
 		//console.log('fail');
 		//console.log(gameData);
 		// secure if the game is not valid 
@@ -45,8 +46,8 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
 		// secure if the user do not belong to the game
-		if (params['id'] !== gameData.id) {
-			//console.log('User do not belong to this game')
+		if (params['id'] !== userGame?.gameId) {
+			console.log('User do not belong to this game')
 			setTimeout(() => router.navigateTo('/home'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
@@ -216,7 +217,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
 	generateBtn?.addEventListener('click', async (e) => {
 		e.preventDefault();
-		//console.log('click, is generated = ', isGenerated);
+		// console.log('click, is generated = ', isGenerated);
 		try {
 			let result = null;
 			if (isGenerated == false) {
