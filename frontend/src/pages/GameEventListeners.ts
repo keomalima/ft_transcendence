@@ -124,9 +124,16 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			return;
 		}
 
-		// Both players try to finish, but the flag in finishGame prevents duplicates
-		if (!await finishGame('COMPLETED', e, ctx, gameId))
-			return;
+		const customEvent = e as CustomEvent;
+		const isWinner = customEvent.detail.iswinner;
+
+		// Only the winner should finish the game to avoid race condition
+		if (isWinner) {
+			if (!await finishGame('COMPLETED', e, ctx, gameId))
+				return;
+		} else {
+			// console.log('⏭️ Loser waiting for winner to finish the game');
+		}
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;
@@ -139,8 +146,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		if (!wonGameOverlay || !winner)
 			return;
 
-		const customEvent = e as CustomEvent;
-		const isWinner = customEvent.detail.iswinner;
 		if (isWinner === true)
 			winner.innerText = `Congratulation you won the game !`;
 		else
@@ -376,6 +381,14 @@ async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppC
 	e.preventDefault();
 	// console.log(`🏆 FINISH GAME : ${status}`);
 
+	if (sharedGameState.isFinishingGame) {
+		// console.log('⏭️ Already finishing game, skipping...');
+		return true;
+	}
+	setIsFinishing(true);
+
+	// console.log('finishing');
+
 	const playerPauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
 	if (playerPauseOverlay) {
 		playerPauseOverlay.classList.add('hidden');
@@ -388,12 +401,6 @@ async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppC
 	if (quitDialog) {
 		quitDialog.close();
 	}
-
-	if (sharedGameState.isFinishingGame) {
-		// console.log('⏭️ Already finishing game, skipping...');
-		return true;
-	}
-	setIsFinishing(true);
 
 	const customEvent = e as CustomEvent;
 	const detail = customEvent.detail;
