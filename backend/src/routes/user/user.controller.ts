@@ -93,8 +93,8 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 		const isProduction = process.env.NODE_ENV === 'production';
 		reply.setCookie('sessionId', session.id, {
 			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'none' : 'lax',
+			secure: true,
+			sameSite: 'lax',
 			path: '/',
 			maxAge: 60 * 60 * 24,
 		})
@@ -145,7 +145,6 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 		})
 		return reply.redirect('http://localhost:5173/home');
 	} catch (err) {
-		console.log(err);
 		reply.code(500).send({ message: "Failed to login user with google"});
 	}
 }
@@ -154,7 +153,7 @@ async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		await userService.logoutUser(request.server.prisma, request.user!.id);
 		reply.clearCookie('sessionId', { path: '/' });
-		reply.code(204).send()
+		reply.code(204).send();
 	} catch (error: unknown) {
 		if (error instanceof Error)
 			return reply.code(401).send({ message: error.message });

@@ -43,7 +43,7 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 	// secure if no access token or user ID
 	if (!currentUser?.id)
 	{
-		console.log('no session when accessing /game-room')
+		// console.log('no session when accessing /game-room')
 		setTimeout(() => router.navigateTo('/'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -51,7 +51,7 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		console.log('no params available')
+		// console.log('no params available')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -59,7 +59,7 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 
 	setTimeout(async () => {
 		let currentGame = await gameService.getGame(params['id'], ctx);
-		console.log('💫 current game = ', currentGame);
+		// console.log('💫 current game = ', currentGame);
 		if (!currentGame || currentGame.status === 'ABANDONED' || currentGame.status === 'COMPLETED' || !currentUser.id) {
 			setTimeout(() => router.navigateTo('/'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
@@ -74,7 +74,7 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 			try {
 				await gameService.startGame(currentGame.id!, ctx);
 			} catch (error) {
-				console.log(error);
+				// console.log(error);
 			}
 		}
 
@@ -101,7 +101,7 @@ export function LocalGame(ctx: AppContext, params?: Record<string, string>): str
 // ======== UPDDATE CONTENT ============
 function renderGameContent(gameId: string, currentGame: GameData, currentUser: UserState) {
 	if (!currentGame) {
-		console.log('❌ Missing current game');
+		// console.log('❌ Missing current game');
 		return;
 	}
 	const content = document.getElementById('game-content');
@@ -270,7 +270,7 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 	function gameLoop() {
 
 		if (game.status === 'finished' || game.status === 'abandoned') {
-			console.log('game over');
+			// console.log('game over');
 			const wonGameOverlay = document.getElementById('won-game-overlay') as HTMLDivElement;
 			const winner = document.getElementById('winner') as HTMLParagraphElement;
 			
@@ -335,7 +335,7 @@ function gameActionListener(mapKeys: MapKeys, game: LocalGameData) {
 	const handleTouchStart = (e: TouchEvent) => {
 		const arena = document.getElementById('arena');
 		if (!arena) {
-			console.log('❌ Arena not found');
+			// console.log('❌ Arena not found');
 			return;
 		}
 
@@ -496,7 +496,7 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 		
 		// Handle confirm
 		const handleConfirm = async () => {
-			console.log('quit game trigger');
+			// console.log('quit game trigger');
 			quitDialog.close();
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);
@@ -529,9 +529,9 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 					]
 				};
 				await gameService.finishGame(currentGame.id!, data, ctx);
-				console.log('✅ Game finished successfully');
+				// console.log('✅ Game finished successfully');
 			} catch (error) {
-				console.log(error);
+				// console.log(error);
 			}
 		};
 
@@ -584,7 +584,7 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 				]
 			};
 			await gameService.finishGame(currentGame.id!, data, ctx);
-			console.log('✅ Game finished successfully');
+			// console.log('✅ Game finished successfully');
 		} catch (error) {
 			console.error('Failed to finish game:', error);
 		}

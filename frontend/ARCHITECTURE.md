@@ -253,7 +253,7 @@ export function Dashboard(ctx: AppStores): string {
 ```typescript
 const user = ctx.user.get();
 ctx.user.subscribe((newUser) => {
-    console.log('User changed:', newUser);
+    // console.log('User changed:', newUser);
 });
 ```
 

@@ -144,7 +144,7 @@ export const ChatWsController = {
 		request: FastifyRequest<{ Params: { userId: string } }>
 	) {
 		const userId = request.params.userId;
-		console.log(`User ${userId} connected to chat.`);
+		// console.log(`User ${userId} connected to chat.`);
 
 		// Store this user's connection
 		chatConnections.set(userId, connection);
@@ -158,7 +158,7 @@ export const ChatWsController = {
 		// Optional: handle socket close (clean up)
 		connection.on('close', () => {
 			chatConnections.delete(userId);
-			console.log(`User ${userId} disconnected from chat.`);
+			// console.log(`User ${userId} disconnected from chat.`);
 		});
 	}
 };

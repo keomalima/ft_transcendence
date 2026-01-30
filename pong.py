@@ -467,7 +467,7 @@ def generate_random_user() -> User:
     name = rand_str.capitalize()
     surname = generate_random_string(6).capitalize()
     display_name = f"{name}{random.randint(100, 999)}"
-    return User(email, "password123", name, surname, display_name)
+    return User(email, "Password123!", name, surname, display_name)
 
 def fetch_existing_users() -> List[User]:
     """Fetch existing users from the database."""
@@ -478,7 +478,7 @@ def fetch_existing_users() -> List[User]:
             for u in resp.json():
                 user = User(
                     email=u.get("email"),
-                    password="password123",
+                    password="Password123!",
                     name=u.get("name"),
                     surname=u.get("surname"),
                     display_name=u.get("displayName"),
@@ -546,7 +546,7 @@ def create_manual_user(users: List[User]) -> List[User]:
         print(f"{YELLOW}⚠{RESET} User with email {email} already exists")
         return users
     
-    password = input(f"Password (default: password123): ").strip() or "password123"
+    password = input(f"Password (default: Password123!): ").strip() or "Password123!"
     name = input(f"Name: ").strip()
     surname = input(f"Surname: ").strip()
     display_name = input(f"Display Name: ").strip()
@@ -708,7 +708,7 @@ def create_mock_scenario(users: List[User]) -> List[User]:
         
         user = User(
             email=user_data["email"],
-            password="password123",
+            password="Password123!",
             name=user_data["name"],
             surname=user_data["surname"],
             display_name=user_data["display"]

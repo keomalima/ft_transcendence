@@ -53,6 +53,7 @@ function notifyGameReadiness(tournamentId: string, playersId:{user: string, oppo
 
 function notifyNewGame(nextGame: Awaited<ReturnType<typeof gameService.getCompleteGameData >>
 ) {
+	if (!nextGame || !nextGame.tournamentId) return;
 	const sockets = tournamentBracket.get(nextGame.tournamentId);
 	if (!sockets) return;
 	const targetUserIds = nextGame.gameUsers.map((gu: any) => gu.userId);

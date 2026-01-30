@@ -11,7 +11,7 @@ export class ChatConnection {
 		this.ws = new WebSocket(url.href);
 
 		this.ws.onopen = () => {
-			console.log('[Chat WS] ✅ Connected to backend');
+			// console.log('[Chat WS] ✅ Connected to backend');
 		};
 
 		this.ws.onmessage = (event) => {
@@ -20,11 +20,11 @@ export class ChatConnection {
 
 				switch (data.type) {
 					case "connected":
-						console.log("[Chat WS] ✅", data.message);
+						// console.log("[Chat WS] ✅", data.message);
 						break;
 
 					case "chat-message":
-						console.log("[Chat WS] 💬 Chat message:", data);
+						// console.log("[Chat WS] 💬 Chat message:", data);
 
 						// Forward this message to the UI
 						const evt = new CustomEvent("ws-new-message", {
@@ -47,7 +47,7 @@ export class ChatConnection {
 		};
 
 		this.ws.onclose = () => {
-			console.log('[Chat WS] 🔌 Connection closed');
+			// console.log('[Chat WS] 🔌 Connection closed');
 		};
 	}
 
@@ -62,7 +62,7 @@ export class ChatConnection {
 	disconnect() {
 		this.ws?.close();
 		this.ws = null;
-		console.log('[Chat WS] 🔌 Disconnected from backend');
+		// console.log('[Chat WS] 🔌 Disconnected from backend');
 	}
 }
 

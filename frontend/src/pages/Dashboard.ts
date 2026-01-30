@@ -80,7 +80,7 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
     const avatarRaw = currentUser.avatarUrl || '/uploads/avatars/default.jpg';
     const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
 
-	console.log("Avatar picture URL", avatarSrc);
+	// console.log("Avatar picture URL", avatarSrc);
 	let link: string | null  = null;
 	if (tournamentId)
 		link = `/tournament-room/${tournamentId}`
@@ -177,7 +177,7 @@ async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId:
 		const currentGame = await gameService.getCurrentGame(ctx);
 		return currentGame;
 	} catch(error) {
-		console.log(error);
+		// console.log(error);
 		return null;
 	}
 }
@@ -188,7 +188,7 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
 	} catch(error) {
-		console.log(error);
+		// console.log(error);
 		return null;
 	}
 }
@@ -246,7 +246,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error) {
-			console.log('Error deleting friend:', error);
+			// console.log('Error deleting friend:', error);
 		}
 	});
 
@@ -267,7 +267,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error) {
-			console.log('Error accepting friend:', error);
+			// console.log('Error accepting friend:', error);
 		}
 	});
 
@@ -288,7 +288,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error) {
-			console.log('Error rejecting friend:', error);
+			// console.log('Error rejecting friend:', error);
 		}
 	});
 
@@ -309,7 +309,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				errorMsg.className = 'text-red-500';
 				errorMsg.innerText = error instanceof Error ? error.message : 'Failed to send friend request';
 			}
-			console.log('Error send friendship request:', error);
+			// console.log('Error send friendship request:', error);
 		}
 	});
 
@@ -324,7 +324,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;
 			errorMsgJoinGame.className = 'mt-2 text-red-500'
 			errorMsgJoinGame.innerText = error as string;
-			console.log(error);
+			// console.log(error);
 		}
 	})
 
