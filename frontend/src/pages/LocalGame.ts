@@ -33,6 +33,7 @@ export interface LocalGameData {
 	scoreToWin: number;
 	status: 'waiting' | 'playing' | 'finished' | 'abandoned';
 	isPaused: boolean;
+	gameEnded: boolean;
 }
 
 export function LocalGame(ctx: AppContext, params?: Record<string, string>): string {
@@ -227,7 +228,8 @@ function initGame(scoreToWin: number, gameId: string): LocalGameData {
 		nextService: 'left',
 		scoreToWin,
 		status: 'waiting',
-		isPaused: false
+		isPaused: false,
+		gameEnded: false,
 	}
 	return game;
 }
@@ -502,8 +504,9 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 			confirmBtn?.removeEventListener('click', handleConfirm);
 			game.status = 'abandoned';
 			const currentGame = await gameService.getGame(gameId, ctx);
-			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2)
+			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2 || game.gameEnded)
 				return;
+			game.gameEnded =true;
 			try {
 				const leftPlayer = currentGame.gameUsers.find(gu => gu.user?.id === ctx.userStore.get()?.id);
 				const rightPlayer = currentGame.gameUsers.find(gu => gu.user?.id !== ctx.userStore.get()?.id);
@@ -554,8 +557,10 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 		
 		try {
 			const currentGame = await gameService.getGame(finalGame.id, ctx);
-			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2)
+			if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers?.length < 2 || currentGame.status !== 'IN_PROGRESS' || game.gameEnded)
 				return;
+
+			game.gameEnded = true;
 			
 			// Find which gameUser is the current user and which is the guest
 			const currentUserId = ctx.userStore.get()?.id;

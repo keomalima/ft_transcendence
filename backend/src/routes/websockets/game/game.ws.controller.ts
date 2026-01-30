@@ -112,6 +112,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			
 			// Store disconnect timer for this specific player with start timestamp
 			const startTime = Date.now();
+			console.log(`⏰ Start disconnect countdown for user ${userId} !`);
 			const timer = setTimeout(async () => {
 				console.log(`⏰ Disconnect timeout expired for player ${userId}`);
 				const currentSession = gameSessions.get(gameId);
@@ -129,6 +130,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 						// Nobody connected, backend must finish the game
 						console.log(`🔒 No players connected, backend finishing abandoned game`);
 						try {
+							// set winner
 							await gameService.finishGame(request.server.prisma, gameId, 'ABANDONED');
 							console.log(`✅ Game ${gameId} marked as ABANDONED in database`);
 						} catch (error) {
