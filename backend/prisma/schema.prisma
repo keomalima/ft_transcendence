@@ -129,7 +129,6 @@ model Game {
 	updatedAt DateTime @updatedAt
 	gameUsers GamePlayer[]
 	messages Message[] @relation("GameMessages")
-
 }
 
 model GamePlayer {

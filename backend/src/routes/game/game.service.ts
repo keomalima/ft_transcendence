@@ -50,7 +50,7 @@ async function findGameById(prisma: PrismaClient, gameId: string) {
                     	}
 					}
 				}
-			}
+			},
 		}
 	});
 }
@@ -217,6 +217,7 @@ async function findGamePlayerById(prisma: PrismaClient, playerId: string) {
 }
 
 async function updatePlayer(prisma: PrismaClient, playerId: string, score: number, isWinner: boolean) {
+	console.log('updating player', playerId, isWinner)
 	return prisma.gamePlayer.update({
 		where: { id: playerId },
 		data: {
@@ -238,15 +239,26 @@ async function findGamePlayerByUserAndGameId(prisma: PrismaClient, userId: strin
 	})
 }
 
+async function updateParticipantEliminated(prisma: PrismaClient, userId: string, tournamentId: string, eliminatedInRound: number) {
+	return await prisma.tournamentPlayer.update({
+		where: {
+			tournamentId_userId: {
+				userId,
+				tournamentId
+			}
+		},
+		data: {
+			isEliminated: true,
+			eliminatedInRound
+		}
+	})
+}
+
 async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGameInput) {
 	const { status, gamePlayers, winnerId } = data;
-	console.log(`🏁 Finishing game ${gameId} with status: ${status}`);
 
-	const existingGame = await prisma.game.findUnique({
-        where: { id: gameId },
-        select: { status: true }
-    });
-    
+	const existingGame = await findGameById(prisma, gameId);
+	
     if (existingGame?.status === 'COMPLETED' || existingGame?.status === 'ABANDONED') {
         return getCompleteGameData(prisma, gameId);
     }
@@ -256,17 +268,11 @@ async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGame
 		if (!gp && gp?.gameId !== gameId) {
 			throw new Error("Player does not belong to the game");
 		}
-		const isWinner = player.userId === winnerId;
+		const isWinner = gp.id === winnerId;
 		await updatePlayer(prisma, gp.id, player.score, isWinner);
 	}
 
-	await prisma.game.update({
-		where: { id: gameId },
-		data: {
-			status,
-			completedAt: status === "COMPLETED" || status === 'ABANDONED' ? new Date() : null
-		}
-	})
+	await updateGame(prisma, gameId, {status, completedAt: status === "COMPLETED" || status === 'ABANDONED' ? new Date() : null});
 
 	const game = await getGameWithTournamentInfo(prisma, gameId);
 	if (game && game.tournamentId && game.tournament?.totalRounds) {
@@ -276,20 +282,9 @@ async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGame
 		const winner = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.isWinner);
 		const loser = game.gameUsers.find((u: typeof game.gameUsers[0]) => !u.isWinner);
 
-		if (!winner || !loser) return 
+		if (!winner || !loser) return ;
 
-		await prisma.tournamentPlayer.update({
-			where: {
-				tournamentId_userId: {
-					userId: loser.userId, 
-					tournamentId: game.tournamentId
-				}
-			},
-			data: {
-				isEliminated: true,
-				eliminatedInRound: game.tournament.currentRound
-			}
-		})
+		await updateParticipantEliminated(prisma, loser.userId, game.tournamentId, game.tournament.currentRound);
 
 		if (isLastRound) {
 			await completeTournament(prisma, game.tournamentId!, game.id, winner);
@@ -302,30 +297,19 @@ async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGame
 }
 
 async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) {
-	// console.log(`🏆 [advanceToNextRound] Tournament ${game.tournamentId}, Round ${game.roundNumber}, Match ${game.matchNumber}`);
-	// console.log(`👤 Winner advancing: ${winner.userId}`);
-
 	const nextGame = await findNextBracketGame(prisma, game);
-	if (!nextGame) {
-		// console.log('❌ No next game found in bracket. Stopping.');
-		return;
-	}
-	
-	// console.log('🎯 Next bracket game detected:', { id: nextGame.id, round: nextGame.roundNumber, match: nextGame.matchNumber, status: nextGame.status });
+	if (!nextGame) return;
 
 	let currentGame: typeof nextGame | null = nextGame;
 
-	// console.log(`📝 Adding winner ${winner.userId} to next game ${nextGame.id}`);
 	await addWinnerToNextGame(prisma, nextGame.id, winner.userId);
 	await checkAndAdvanceRound(prisma, game.tournamentId, game.roundNumber);
 
 	while (currentGame?.status === 'ABANDONED' && currentGame.roundNumber && currentGame.matchNumber !== null) {
-		// console.log(`⚠️ Game ${currentGame.id} is ABANDONED. Processing walkover...`);
 		await notifyTournament(prisma, game.tournamentId!, game.id, currentGame.id);
 		await markPlayerWinner(prisma, currentGame.id, winner.userId);
 
 		const abandonedRound = currentGame.roundNumber;
-		// console.log(`🔍 Looking for next game after abandoned round ${abandonedRound}`);
 
 		const nextBracketGame = await findNextBracketGame(prisma, {
 			tournamentId: currentGame.tournamentId,
@@ -334,26 +318,16 @@ async function advanceToNextRound(prisma: PrismaClient, game: any, winner: any) 
 		});
 
 		currentGame = nextBracketGame;
-		if (!currentGame) {
-			// console.log('❌ No subsequent game found after abandoned game. Breaking loop.');
-			break;
-		}
+		if (!currentGame) break;
 
-		// console.log('🎯 Next bracket game detected in while loop:', { id: currentGame.id, round: currentGame.roundNumber, match: currentGame.matchNumber, status: currentGame.status });
-		
-		// console.log(`🔄 Checking round advancement for round ${abandonedRound}`);
 		await checkAndAdvanceRound(prisma, game.tournamentId, abandonedRound);
-		
-		// console.log(`📝 Adding winner ${winner.userId} to new current game ${currentGame.id}`);
 		await addWinnerToNextGame(prisma, currentGame.id, winner.userId);
 	}
 
 	if (currentGame && currentGame.status === 'PENDING') {
-		// console.log('🔔 Notifying waiting room and tournament about pending game', currentGame);
 	    await notifyWaitingRoom(prisma, currentGame.id, winner.userId);
 		await notifyTournament(prisma, game.tournamentId!, game.id, currentGame.id);
 	} else {
-		// console.log('🏁 No pending game found or game not pending. Completing tournament.');
 	    await completeTournament(prisma,game.tournamentId!, game.id, winner);
 	}
 }
@@ -364,7 +338,6 @@ async function notifyTournament(prisma: PrismaClient, tournamentId: string, game
 	if (currentGameId)
     	nextCompleteGame = await getCompleteGameData(prisma, currentGameId);
 
-	// console.log('========== Updating game in notify tournament fil ===========', completeGame);
 	TournamentWsController.broadcastToRoom(tournamentId, {
 		type: 'tournament_update',
 		gameId: gameId,

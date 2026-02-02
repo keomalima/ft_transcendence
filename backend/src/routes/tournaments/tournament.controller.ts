@@ -310,10 +310,11 @@ async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: st
 			const game = await tournamentService.findCurrentGameByUserTournamentId(request.server.prisma, userId, tournamentId);
 			if (!game) return;
 			const winner = game?.gameUsers.find((u: any) => u.userId !== userId);
-			if (winner) {
-				await gameService.updatePlayer(request.server.prisma, {userId: winner.userId ,playerId: winner.id, score: 0}, true);
-			}
-			await gameService.finishGame(request.server.prisma, game.id, 'ABANDONED');
+			await gameService.finishGame(request.server.prisma, game.id, {
+				status: 'ABANDONED',
+				winnerId: winner ? winner.id : null,
+				gamePlayers: game.gameUsers
+			});
 		} 
 		
 		await tournamentService.quitTournamentByParticipantId(request.server.prisma, tournamentPlayer.id);

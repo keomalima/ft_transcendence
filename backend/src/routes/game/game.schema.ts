@@ -12,6 +12,7 @@ const createGameSchema = z.object({
 });
 
 const updateGameSchema = z.object({
+	completedAt: z.date().nullable(),
 	scoreToWin: z.number().int().optional(),
 	status: z.enum(GameStatus).optional()
 });
@@ -22,7 +23,7 @@ const removePlayerRequestSchema = z.object({
 
 const finishGameReqSchema = z.object({
     status: z.enum(GameStatus),
-	winnerId: z.string(),
+	winnerId: z.string().nullable(),
     gamePlayers: z.array(
         z.object({
 			userId: z.string(),
