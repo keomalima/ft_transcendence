@@ -307,7 +307,7 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
 async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInput, Params: { id: string}} >, reply: FastifyReply) {
 	try {
 		const gameId = request.params.id;
-		const { gamePlayers, status, winnerId } = request.body;
+		const { gamePlayers, winnerId } = request.body;
 		const [player1, player2] = gamePlayers;
 
 		if (!player1 || !player2) {
@@ -327,29 +327,12 @@ async function finishGameHandler (request: FastifyRequest< {Body: FinishGameInpu
 		if (winnerId != player1.userId && winnerId != player2.userId) {
 			return reply.code(400).send({ message: "Winner does not belong to the game"});
 		}
-		const gamePlayer1 = await gameService.findGamePlayerById(request.server.prisma, player1.playerId);
-		const gamePlayer2 = await gameService.findGamePlayerById(request.server.prisma, player2.playerId);
-		
-		if (gameId === gamePlayer1?.gameId && gameId === gamePlayer2?.gameId) {
-			const player1Winner = player1.userId === winnerId;
-			const updatePlayer1 = await gameService.updatePlayer(request.server.prisma, player1, player1Winner);
-			if (!updatePlayer1) {
-				return reply.code(404).send({
-					message: "Player does not belong to the game"
-				});
-			}
-			const updatePlayer2 = await gameService.updatePlayer(request.server.prisma, player2, !player1Winner);
-			if (!updatePlayer2) {
-				return reply.code(404).send({
-					message: "Player does not belong to the game"
-				});
-			}
 
-			const finishedGame = await gameService.finishGame(request.server.prisma, game.id, status);
-			return reply.code(200).send(finishedGame);
-		}
-		return reply.code(400).send({ message: "Player does not belong to the game"});
+		const finishedGame = await gameService.finishGame(request.server.prisma, game.id, request.body);
+		return reply.code(200).send(finishedGame);
 	} catch (error: any) {
+		if (error instanceof Error && error.message === "Player does not belong to the game")
+			return reply.code(400).send({ message: error.message });
 		reply.code(500).send({ message: "Failed to finish game"});
 	}
 }

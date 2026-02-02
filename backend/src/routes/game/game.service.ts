@@ -216,17 +216,30 @@ async function findGamePlayerById(prisma: PrismaClient, playerId: string) {
 	});
 }
 
-async function updatePlayer(prisma: PrismaClient, player: FinishGamePlayer, isWinner: boolean) {
+async function updatePlayer(prisma: PrismaClient, playerId: string, score: number, isWinner: boolean) {
 	return prisma.gamePlayer.update({
-		where: { id: player.playerId },
+		where: { id: playerId },
 		data: {
-			score: player.score,
+			score: score,
 			isWinner,
 		}
 	})
 }
 
-async function finishGame(prisma: PrismaClient, gameId: string, status: GameStatus) {
+async function findGamePlayerByUserAndGameId(prisma: PrismaClient, userId: string, gameId: string) {
+	return prisma.gamePlayer.findUnique({
+		where: {
+			gameId_userId : {
+				gameId,
+				userId
+			}
+		},
+		select: { id: true, gameId: true }
+	})
+}
+
+async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGameInput) {
+	const { status, gamePlayers, winnerId } = data;
 	console.log(`🏁 Finishing game ${gameId} with status: ${status}`);
 
 	const existingGame = await prisma.game.findUnique({
@@ -237,6 +250,15 @@ async function finishGame(prisma: PrismaClient, gameId: string, status: GameStat
     if (existingGame?.status === 'COMPLETED' || existingGame?.status === 'ABANDONED') {
         return getCompleteGameData(prisma, gameId);
     }
+
+	for (const player of gamePlayers) {
+		const gp = await findGamePlayerByUserAndGameId(prisma, player.userId, gameId);
+		if (!gp && gp?.gameId !== gameId) {
+			throw new Error("Player does not belong to the game");
+		}
+		const isWinner = player.userId === winnerId;
+		await updatePlayer(prisma, gp.id, player.score, isWinner);
+	}
 
 	await prisma.game.update({
 		where: { id: gameId },

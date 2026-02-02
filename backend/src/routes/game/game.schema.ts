@@ -26,7 +26,6 @@ const finishGameReqSchema = z.object({
     gamePlayers: z.array(
         z.object({
 			userId: z.string(),
-            playerId: z.string(),
             score: z.number().int().nonnegative()
         })
     ).length(2)

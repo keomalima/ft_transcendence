@@ -93,8 +93,8 @@ async function loginUserHandler ( request: FastifyRequest<{ Body: LoginInput }>,
 		const isProduction = process.env.NODE_ENV === 'production';
 		reply.setCookie('sessionId', session.id, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'lax',
+			secure: isProduction,
+			sameSite: isProduction ? 'none' : 'lax',
 			path: '/',
 			maxAge: 60 * 60 * 24,
 		})
