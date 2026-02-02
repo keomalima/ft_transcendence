@@ -31,7 +31,7 @@ export const gameApi = {
 	createGame: async (data: CreateGameDto): Promise<CreateGameResp> => {
 		try {
 			const response = await httpCall.post<CreateGameResp>(`${BASE_URL}`, data);
-			console.log('🎮 createGame sucess ✅ ', response.data);
+			// console.log('🎮 createGame sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('create new game', error);
@@ -39,9 +39,10 @@ export const gameApi = {
 	},
 
 	finishGame: async (gameId: string, data: FinishGameDto): Promise<FinishGameResp> => {
+		console.log("Finish game API called", data);
 		try {
 			const response = await httpCall.post<FinishGameResp>(`${BASE_URL}/${gameId}/finish`, data);
-			console.log('🎮 finishGame sucess ✅ ', response.data);
+			// console.log('🎮 finishGame sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('finish game', error);
@@ -51,7 +52,7 @@ export const gameApi = {
 	getGame: async (gameId: string): Promise<GameData> => {
 		try {
 			const response = await httpCall.get<GameData>(`${BASE_URL}/${gameId}`);
-			console.log('🎮 getGame sucess ✅ ', response.data);
+			// console.log('🎮 getGame sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('get game', error);
@@ -61,7 +62,7 @@ export const gameApi = {
 	getCurrentGame: async (): Promise<{ userId: string; gameId: string; type: string; status: string; token: string | null }> => {
 		try {
 			const response = await httpCall.get<{ userId: string; gameId: string; type: string; status: string; token: string | null }>(`${BASE_URL}/current`);
-			console.log('🎮 getCurrentGame sucess ✅ ', response.data);
+			// console.log('🎮 getCurrentGame sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('get current game', error);
@@ -71,7 +72,7 @@ export const gameApi = {
 	generateToken: async (gameId: string): Promise<GameToken> => {
 		try {
 			const response = await httpCall.post<GameToken>(`${BASE_URL}/${gameId}/token`);
-			console.log('🎮 generate token sucess ✅ ', response.data);
+			// console.log('🎮 generate token sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('generate token', error);
@@ -81,7 +82,7 @@ export const gameApi = {
 	joinGame: async (gameToken: string): Promise<{ id: string; gameId: string; userId: string }> => {
 		try {
 			const response = await httpCall.post<{ id: string; gameId: string; userId: string }>(`${BASE_URL}/${gameToken}/join`);
-			console.log('🎮 join game sucess ✅ ', response.data);
+			// console.log('🎮 join game sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('join game', error);
@@ -91,7 +92,7 @@ export const gameApi = {
 	startGame: async (gameId: string): Promise<Partial<GameData>> => {
 		try {
 			const response = await httpCall.put<Partial<GameData>>(`${BASE_URL}/${gameId}/start`);
-			console.log('🎮 start game sucess ✅ ', response.data);
+			// console.log('🎮 start game sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('start game', error);
@@ -101,7 +102,7 @@ export const gameApi = {
 	quitPendingGame: async (gameId: string): Promise<void> => {
 		try {
 			await httpCall.delete(`${BASE_URL}/${gameId}`);
-			console.log('🎮 quit / delete pending game sucess ✅ ');
+			// console.log('🎮 quit / delete pending game sucess ✅ ');
 		} catch (error) {
 			throw buildApiError('quit / delete pending game', error);
 		}
@@ -110,7 +111,7 @@ export const gameApi = {
 	removePlayer: async (gameId: string, playerId: string): Promise<void> => {
 		try {
 			await httpCall.put(`${BASE_URL}/${gameId}/remove`, { playerId });
-			console.log('🎮 remove player from game sucess ✅ ');
+			// console.log('🎮 remove player from game sucess ✅ ');
 		} catch (error) {
 			throw buildApiError('remove player from game', error);
 		}
@@ -119,7 +120,7 @@ export const gameApi = {
 	getHistory: async (): Promise<GameHistory[]> => {
 		try {
 			const response = await httpCall.get<GameHistory[]>(`${BASE_URL}/history`);
-			console.log('🎮 Get Game history sucess ✅ ', response.data);
+			// console.log('🎮 Get Game history sucess ✅ ', response.data);
 			return response.data;
 		} catch (error) {
 			throw buildApiError('get game history', error);

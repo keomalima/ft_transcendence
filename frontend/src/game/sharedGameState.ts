@@ -9,6 +9,6 @@ export function setGameConnection(conn: GameConnection | null) {
 	sharedGameState.gameConnection = conn;
 }
 export function setIsFinishing(state: boolean) {
-	console.log(`💬 Set is finishing to ${state}`);
+	// console.log(`💬 Set is finishing to ${state}`);
 	sharedGameState.isFinishingGame = state;
 }

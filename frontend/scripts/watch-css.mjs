@@ -12,20 +12,20 @@ async function copyCSS() {
     try {
         await mkdir(dirname(destFile), { recursive: true });
         await copyFile(srcFile, destFile);
-        // console.log('✅ CSS copied to dist/');
+        // // console.log('✅ CSS copied to dist/');
     } catch (err) {
         console.error('❌ Error copying CSS:', err.message);
     }
 }
 
 // Initial copy
-console.log('👀 Watching style.css for changes...');
+// console.log('👀 Watching style.css for changes...');
 await copyCSS();
 
 // Watch for changes
 watch(srcFile, async (eventType) => {
     if (eventType === 'change') {
-        // console.log('🔄 CSS changed, copying...');
+        // // console.log('🔄 CSS changed, copying...');
         await copyCSS();
     }
 });

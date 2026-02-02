@@ -38,7 +38,7 @@ export const userApi = {
 
 		try {
 			const response = await httpCall.post<LoginUserResp> (`${BASE_URL}/login`, {email, password });
-			console.log('⭐ loginUser success! ✅', response.data);
+			// console.log('⭐ loginUser success! ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('login', error);
@@ -48,7 +48,7 @@ export const userApi = {
 	me: async (): Promise<getUserResp | null> => {
 		try {
 			const response = await httpCall.get<getUserResp | null>(`${BASE_URL}/me`);
-			console.log('⭐ user validated! ✅', response.data);
+			// console.log('⭐ user validated! ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('validation', error);
@@ -58,7 +58,7 @@ export const userApi = {
 	get: async (userId: string):Promise<getUserResp | null> => {
 		try {
 			const response = await httpCall.get<getUserResp> (`${BASE_URL}/${userId}`);
-			console.log('⭐ getUser success ✅', response.data);
+			// console.log('⭐ getUser success ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('get user info', error);
@@ -68,7 +68,7 @@ export const userApi = {
 	logout: async (): Promise<void> => {
 		try {
 			await httpCall.post (`${BASE_URL}/logout`);
-			console.log('⭐ logoutUser success ✅ (no response body)');
+			// console.log('⭐ logoutUser success ✅ (no response body)');
 		} catch (error: unknown) {
 			throw buildApiError('logout', error);
 		}
@@ -88,7 +88,7 @@ export const userApi = {
 			const response = await httpCall.post<CreateUserResp> (`${BASE_URL}`, formData, {
 				headers: { 'Content-Type': 'multipart/form-data' }
 			});
-			console.log('⭐ createUser success ✅', response.data);
+			// console.log('⭐ createUser success ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('create a user', error);
@@ -98,7 +98,7 @@ export const userApi = {
 	delete: async (): Promise<void> => {
 		try {
 			await httpCall.delete (`${BASE_URL}`);
-			console.log('⭐ deleteUser success ✅, (no response body)');
+			// console.log('⭐ deleteUser success ✅, (no response body)');
 		} catch (error: unknown) {
 			throw buildApiError('delete user', error);
 		};
@@ -117,7 +117,7 @@ export const userApi = {
 				throw new Error('No fields to update');
 			}
 			const response = await httpCall.put<updateUserResp> (`${BASE_URL}/me`, cleanData);
-			console.log('⭐ updateUser success ✅', response.data);
+			// console.log('⭐ updateUser success ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('update user', error);
@@ -128,7 +128,7 @@ export const userApi = {
 		try {
 			const body = { currentPassword, newPassword };
 			const response = await httpCall.put<changePasswordResp> (`${BASE_URL}/password`, body);
-			console.log('⭐ changeUserPassword success ✅', response.data);
+			// console.log('⭐ changeUserPassword success ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('change user password user', error);
@@ -144,7 +144,7 @@ export const userApi = {
 			const response = await httpCall.post<updateAvatarResp> (`${BASE_URL}/upload`, formData, {
 				headers: { 'Content-Type': 'multipart/form-data' }
 			});
-			console.log('⭐ updateAvatar success ✅', response.data);
+			// console.log('⭐ updateAvatar success ✅', response.data);
 			return response.data;
 		} catch (error: unknown) {
 			throw buildApiError('update avatar', error);

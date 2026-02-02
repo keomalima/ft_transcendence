@@ -10,15 +10,25 @@ const safeString = () =>
     message: "HTML tags are not allowed!",
 });
 
+const passwordSchema = () => z.string().refine(
+	(val) =>
+		val.length >= 8 &&
+		/[A-Z]/.test(val) &&
+		/[^A-Za-z0-9]/.test(val),
+	{
+		message: "Password must be at least 8 characters, include an uppercase letter and a special character."
+	}
+);
+
 const multipartField = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((val: any) => val?.value || val, schema);
 
 const createUserSchema = z.object({
 	email: multipartField(z.email()),
 	name: multipartField(safeString().min(3).max(20)),
-	password: multipartField(z.string()),
-	surname: multipartField(safeString().nullable()),
-	displayName: multipartField(safeString().min(3)),
+	password: multipartField(passwordSchema()),
+	surname: multipartField(safeString().min(3).max(20)),
+	displayName: multipartField(safeString().min(3).max(20)),
 	avatarFile: z
 	.custom<MultipartFile>()
 	.optional()

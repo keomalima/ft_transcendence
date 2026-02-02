@@ -195,7 +195,7 @@ export class Statistics extends HTMLElement {
 			}
 			monthMap.get(day)!.push(game);
 		})
-		console.log('📆 timeGameHistory ', this._timeGameHistory);
+		// console.log('📆 timeGameHistory ', this._timeGameHistory);
 	}
 
 	private getWeekGameHistory() {
@@ -269,7 +269,7 @@ export class Statistics extends HTMLElement {
 			lastMonthGames.set(day, count);
 		}
 		const data = [currentMonthGames, lastMonthGames];
-		console.log(data);
+		// console.log(data);
 		return data;
 	}
 
@@ -302,7 +302,7 @@ export class Statistics extends HTMLElement {
 			lastYearGames.set(month, count);
 		}
 		const data = [currentYearGames, lastYearGames];
-		console.log(data);
+		// console.log(data);
 		return data;
 	}
 	

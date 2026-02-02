@@ -194,7 +194,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error) {
-			console.log('Error deleting friend (LiveChat):', error);
+			// console.log('Error deleting friend (LiveChat):', error);
 		}
 	});
 
@@ -568,7 +568,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 			if (chatBox.scrollTop !== 0) return;
 			if (!state?.hasMoreMessages || !state.oldestMessageId) return;
 
-			console.log("🔼 Scrolled to top — loading older messages...");
+			// console.log("🔼 Scrolled to top — loading older messages...");
 
 			const olderMessages = await chatApi.fetchChatHistory(thisFriendId, state.oldestMessageId);
 
@@ -577,7 +577,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 
 			if (olderMessages.length === 0) {
 				paginationMap[thisFriendId].hasMoreMessages = false;
-				console.log("🛑 No more older messages.");
+				// console.log("🛑 No more older messages.");
 				return;
 			}
 
@@ -1217,7 +1217,7 @@ async function getCurrentGame(ctx: AppContext): Promise<{userId: string, gameId:
 		const currentGame = await gameService.getCurrentGame(ctx);
 		return currentGame;
 	} catch(error) {
-		console.log(error);
+		// console.log(error);
 		return null;
 	}
 }
@@ -1228,7 +1228,7 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 		const currentTournament = await tournamentApi.getCurrentTournament();
 		return currentTournament;
 	} catch(error) {
-		console.log(error);
+		// console.log(error);
 		return null;
 	}
 }

@@ -23,7 +23,7 @@ export function EditProfile(ctx: AppContext) : string {
 	const avatarRaw = currentUser?.avatarUrl || '/uploads/avatars/default.jpg';
     const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
 
-	// console.log("Avatar picture URL", avatarSrc);
+	// // console.log("Avatar picture URL", avatarSrc);
 	setTimeout(() => {
 		passContext(ctx);
 		setupEditEventListeners(ctx);;
@@ -184,7 +184,7 @@ function setupEditEventListeners(ctx: AppContext) {
 			if (img)
 				img.src = imgBase64;
 		} catch(error) {
-			//console.log(error);
+			//// console.log(error);
 		} finally {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Change avatar';
@@ -228,14 +228,14 @@ function setupEditEventListeners(ctx: AppContext) {
 				displayName: formData.get('username') ? formData.get('username') as string : null,
 				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			}, ctx);
-			//console.log('test');
+			//// console.log('test');
 			router.navigateTo('/profile');
 		}
 		catch (error) {
 			if (errorMsg) {
 				errorMsg.innerText = `${error}`;
 			}
-			//console.log(error);
+			//// console.log(error);
 		}
 	})
 
@@ -301,7 +301,7 @@ function setupEditEventListeners(ctx: AppContext) {
 				const user = await userService.deleteUser(ctx);
 				router.navigateTo('/');
 			} catch (error) {
-				//console.log(error);
+				//// console.log(error);
 			}
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);

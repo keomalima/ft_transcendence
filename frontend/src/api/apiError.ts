@@ -12,6 +12,6 @@ export const extractApiErrorMessage = (error: unknown, fallback: string): string
 
 export const buildApiError = (action: string, error: unknown): Error => {
 	const fallback = `Failed to ${action}`;
-	console.log(`❌ ${fallback}`);
+	// console.log(`❌ ${fallback}`);
 	return new Error(extractApiErrorMessage(error, fallback));
 };

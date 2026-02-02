@@ -15,13 +15,13 @@ export class FriendProfilePopUp extends HTMLElement {
 	}
 
 	set friend(value: Partial<UserState>) {
-		console.log('friend : ', value);
+		// console.log('friend : ', value);
 		this._friend = value;
 		this.render();
 	}
 
 	set friendHistory(value: GameHistory[]) {
-		console.log('friend history : ', value);
+		// console.log('friend history : ', value);
 		this._friendHistory = value;
 		this.render();
 	}
@@ -70,7 +70,7 @@ export class FriendProfilePopUp extends HTMLElement {
 		if (profileCardComponent) {
 			profileCardComponent.ctx = this._ctx;
 			profileCardComponent.user = this._friend;
-			console.log('passing context friend', this._friend);
+			// console.log('passing context friend', this._friend);
 		}
 		const latestMatchComponent = document.getElementById('friend-latest-match-component') as any;
 		if (latestMatchComponent) {
