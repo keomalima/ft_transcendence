@@ -39,6 +39,7 @@ export const gameApi = {
 	},
 
 	finishGame: async (gameId: string, data: FinishGameDto): Promise<FinishGameResp> => {
+		console.log("Finish game API called", data);
 		try {
 			const response = await httpCall.post<FinishGameResp>(`${BASE_URL}/${gameId}/finish`, data);
 			// console.log('🎮 finishGame sucess ✅ ', response.data);

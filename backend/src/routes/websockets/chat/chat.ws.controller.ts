@@ -1,5 +1,4 @@
 import type { FastifyRequest } from "fastify";
-import type { SocketStream } from "@fastify/websocket";
 import { registerChatConnection, removeChatConnectionAndUpdateTime } from "./chat.ws.service.js";
 import type { ChatWsMessage } from "./chat.ws.types.js";
 import { chatService } from "../../chat/chat.service.js";
@@ -12,7 +11,7 @@ const payload: ChatWsMessage = {
 
 export const ChatWsController = {
 	async chatHandler(
-		connection: SocketStream,
+		connection: any,
 		request: FastifyRequest<{ Params: { userId: string } }>
 	) {
 		const userId = request.params.userId;

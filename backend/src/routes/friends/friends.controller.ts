@@ -181,7 +181,8 @@ async function rejectFriendHandler(request: FastifyRequest<{Params: {id: string}
                 message: "Friendship request is not pending"
             });
 		}
-		reply.code(204).send(await friendsService.deleteRequest(request.server.prisma, requestId))
+		await friendsService.deleteRequest(request.server.prisma, requestId);
+		reply.code(204).send();
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to reject friendship request"});
 	}
