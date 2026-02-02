@@ -1,4 +1,5 @@
-import type { FastifyRequest } from 'fastify'
+import type { FastifyRequest } from 'fastify';
+import { PrismaClient } from '@prisma/client';
 import { WebSocket } from 'ws';
 import type { GameSession, PlayerConnection } from './game.types.js';
 import { gameAlgo } from './game.algo.js';
@@ -31,7 +32,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 	}
 
 	if (!gameSession) {
-		gameSession = createGameSession(gameId, userId, parseInt(scoreToWin), socket);
+		gameSession = createGameSession(gameId, userId, parseInt(scoreToWin), socket, request.server.prisma);
 		gameSessions.set(gameId, gameSession);
 	}
 
@@ -75,7 +76,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			if (message.action === 'stop') {
 				gameSession.isPaused = true;
 				gameSession.pausedByUserId = message.pausedby;
-				gameSession.pauseTimer = setTimeout(() => gameWsNotification.notifyAbandonnedGame(gameSession, gameSession.pausedByUserId!), 10000);
+				gameSession.pauseTimer = setTimeout(() => gameWsNotification.notifyFinishingGame(gameSession, 'ABANDONED', gameSession.pausedByUserId!), 10000);
 				gameWsNotification.notifyPause(gameSession, userId, true);
 			}
 			if (message.action === 'resume') {
@@ -91,7 +92,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 				clearInterval(gameSession.gameLoop!);
 				gameSession.gameLoop = null;
 			}
-			gameWsNotification.notifyAbandonnedGame(gameSession, message.looser);
+			gameWsNotification.notifyFinishingGame(gameSession, 'ABANDONED', message.looser);
 		}
 	});
 
@@ -112,6 +113,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			
 			// Store disconnect timer for this specific player with start timestamp
 			const startTime = Date.now();
+			// console.log(`⏰ Start disconnect countdown for user ${userId} !`);
 			const timer = setTimeout(async () => {
 				// console.log(`⏰ Disconnect timeout expired for player ${userId}`);
 				const currentSession = gameSessions.get(gameId);
@@ -124,11 +126,12 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 					if (hasConnectedPlayer) {
 						// Someone is still connected, let frontend handle it
 						// console.log(`📤 Notifying connected players about abandonment`);
-						gameWsNotification.notifyAbandonnedGame(currentSession, userId);
+						gameWsNotification.notifyFinishingGame(currentSession, 'ABANDONED', userId);
 					} else {
 						// Nobody connected, backend must finish the game
 						// console.log(`🔒 No players connected, backend finishing abandoned game`);
 						try {
+							// set winner
 							await gameService.finishGame(request.server.prisma, gameId, 'ABANDONED');
 							// console.log(`✅ Game ${gameId} marked as ABANDONED in database`);
 						} catch (error) {
@@ -157,7 +160,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 	runGame(gameSession, gameId);
 }
 
-function createGameSession(gameId: string, userId: string, scoreToWin: number, socket: WebSocket): GameSession{
+function createGameSession(gameId: string, userId: string, scoreToWin: number, socket: WebSocket, prisma: any): GameSession{
 	const arenaWidth = 200;
 	const arenaHeight = 100;
 	const paddleWidth = arenaWidth * (2/100);
@@ -206,7 +209,8 @@ function createGameSession(gameId: string, userId: string, scoreToWin: number, s
 		pauseTimer: null,
 		pausedByUserId: null,
 		disconnectTimers: new Map(), // Initialize the Map
-		abandonedNotified: false
+		abandonedNotified: false,
+		prisma,
 	};
 
 	const firstPlayer: PlayerConnection = {

@@ -141,7 +141,7 @@ function wonGame(gameSession: GameSession, config: GameConfig): boolean {
 			gameSession.winnerNotified = true;
 			
 			initBall(gameSession);
-			gameWsNotification.notifyWonGame(gameSession);
+			gameWsNotification.notifyFinishingGame(gameSession, 'WON');
 			// console.log('🏆 Winner notified, game session marked as finished');
 		}
 		

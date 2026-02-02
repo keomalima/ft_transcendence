@@ -1,4 +1,5 @@
 import { WebSocket } from 'ws';
+import { PrismaClient } from '@prisma/client';
 
 export interface GameState {
 	paddleA: {y: number, userId: string, side: 'right' | 'left'};
@@ -42,4 +43,5 @@ export interface GameSession {
 	pausedByUserId: string | null;
 	disconnectTimers: Map<string, { timer: NodeJS.Timeout; startTime: number }>; // userId → {timer, startTime}
 	abandonedNotified: boolean;
+	prisma: PrismaClient;
 }
