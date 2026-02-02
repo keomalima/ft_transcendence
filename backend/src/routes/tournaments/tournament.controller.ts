@@ -312,7 +312,7 @@ async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: st
 			const winner = game?.gameUsers.find((u: any) => u.userId !== userId);
 			await gameService.finishGame(request.server.prisma, game.id, {
 				status: 'ABANDONED',
-				winnerId: winner ? winner.id : null,
+				winnerId: winner ? winner.userId : null,
 				gamePlayers: game.gameUsers
 			});
 		} 

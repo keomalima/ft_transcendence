@@ -217,7 +217,6 @@ async function findGamePlayerById(prisma: PrismaClient, playerId: string) {
 }
 
 async function updatePlayer(prisma: PrismaClient, playerId: string, score: number, isWinner: boolean) {
-	console.log('updating player', playerId, isWinner)
 	return prisma.gamePlayer.update({
 		where: { id: playerId },
 		data: {
@@ -235,7 +234,7 @@ async function findGamePlayerByUserAndGameId(prisma: PrismaClient, userId: strin
 				userId
 			}
 		},
-		select: { id: true, gameId: true }
+		select: { id: true, userId: true, gameId: true }
 	})
 }
 
@@ -265,10 +264,9 @@ async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGame
 
 	for (const player of gamePlayers) {
 		const gp = await findGamePlayerByUserAndGameId(prisma, player.userId, gameId);
-		if (!gp && gp?.gameId !== gameId) {
+		if (!gp)
 			throw new Error("Player does not belong to the game");
-		}
-		const isWinner = gp.id === winnerId;
+		const isWinner = gp.userId === winnerId;
 		await updatePlayer(prisma, gp.id, player.score, isWinner);
 	}
 
@@ -278,7 +276,13 @@ async function finishGame(prisma: PrismaClient, gameId: string, data: FinishGame
 	if (game && game.tournamentId && game.tournament?.totalRounds) {
 		const isLastRound = game.tournament.totalRounds === game.tournament.currentRound;
 
-		// mark loser as eliminated
+		if (!winnerId && game.gameUsers.length == 1) {
+			const abandoner = game.gameUsers[0];
+			if (abandoner)
+				await updateParticipantEliminated(prisma, abandoner.userId, game.tournamentId, game.tournament.currentRound);
+			return ;
+		}
+
 		const winner = game.gameUsers.find((u: typeof game.gameUsers[0]) => u.isWinner);
 		const loser = game.gameUsers.find((u: typeof game.gameUsers[0]) => !u.isWinner);
 
@@ -365,7 +369,7 @@ async function completeTournament(prisma: PrismaClient, tournamentId: string, ga
 		}
 	})
 
-	// console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
+	//console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
 
 	const completeGame = await getCompleteGameData(prisma, gameId);
 	TournamentWsController.broadcastToRoom(tournamentId, {
