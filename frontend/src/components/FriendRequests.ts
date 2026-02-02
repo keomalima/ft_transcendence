@@ -66,7 +66,7 @@ export class FriendRequests extends HTMLElement {
 		try {
 			this._list = await friendshipApi.getRequests();
 		} catch(error) {
-			console.log(error);
+			// console.log(error);
 		}
 	}
 

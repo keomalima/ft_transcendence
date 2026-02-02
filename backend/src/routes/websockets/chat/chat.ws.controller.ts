@@ -16,7 +16,7 @@ export const ChatWsController = {
 		request: FastifyRequest<{ Params: { userId: string } }>
 	) {
 		const userId = request.params.userId;
-		console.log(`User ${userId} connected to chat.`);
+		// console.log(`User ${userId} connected to chat.`);
 
 		registerChatConnection(userId, connection);
 
@@ -24,7 +24,7 @@ export const ChatWsController = {
 
 		connection.on('close', () => {
 			removeChatConnectionAndUpdateTime(userId, request.server.prisma);
-			console.log(`User ${userId} disconnected from chat.`);
+			// console.log(`User ${userId} disconnected from chat.`);
 		});
 	}
 };

@@ -93,14 +93,14 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Dev server running at http://localhost:${PORT}`);
+    // console.log(`Dev server running at http://localhost:${PORT}`);
 });
 
 // Graceful shutdown handlers
 const shutdown = (signal) => {
-    console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
+    // console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
     server.close(() => {
-        console.log('✅ Server closed');
+        // console.log('✅ Server closed');
         process.exit(0);
     });
     

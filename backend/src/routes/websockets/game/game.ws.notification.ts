@@ -29,13 +29,13 @@ function broadcastGameState(gameSession: GameSession): void {
 				ballY: gameSession.gameState.ball.y
 			}));
 		} else {
-			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	})
 }
 
 function notifyPlayerAlreadyInGame(socket: WebSocket, gameId: string): void {
-	console.log('🙊 This player is already in game!');
+	// console.log('🙊 This player is already in game!');
 
 	if (socket.readyState === WebSocket.OPEN) {
 		socket.send(JSON.stringify({
@@ -44,13 +44,13 @@ function notifyPlayerAlreadyInGame(socket: WebSocket, gameId: string): void {
 			gameId,
 		}));
 	} else {
-		// console.log(`❌ Socket is NOT open. ReadyState: ${socket.readyState}`);
+		// // console.log(`❌ Socket is NOT open. ReadyState: ${socket.readyState}`);
 	}
 
 }
 
 function notifyGameStarted(gameSession: GameSession, gameId: string): void {
-	console.log('🚀 All players are connected, game starts!');
+	// console.log('🚀 All players are connected, game starts!');
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
@@ -60,7 +60,7 @@ function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 				position: player.position
 			}));
 		} else {
-			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	})
 }
@@ -73,13 +73,13 @@ function notifyService(gameSession: GameSession): void {
 				message: "Service countdown"
 			}));
 		} else {
-			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	})
 }
 
 function notifyPlayerDisconnected(gameSession: GameSession, disconnectedUserId: string, timeoutSeconds: number = 30): void {
-	console.log(`📢 Notifying remaining players that ${disconnectedUserId} disconnected`);
+	// console.log(`📢 Notifying remaining players that ${disconnectedUserId} disconnected`);
 	gameSession.players.forEach((player) => {
 		if (player.userId !== disconnectedUserId && player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
@@ -92,7 +92,7 @@ function notifyPlayerDisconnected(gameSession: GameSession, disconnectedUserId: 
 }
 
 function notifyPlayerReconnected(gameSession: GameSession, reconnectedUserId: string): void {
-	console.log(`📢 Notifying players that ${reconnectedUserId} reconnected`);
+	// console.log(`📢 Notifying players that ${reconnectedUserId} reconnected`);
 	gameSession.players.forEach((player) => {
 		if (player.userId !== reconnectedUserId && player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
@@ -106,7 +106,7 @@ function notifyPlayerReconnected(gameSession: GameSession, reconnectedUserId: st
 function notifyPause(gameSession: GameSession, pausingUserId: string, status: boolean): void {
 	gameSession.players.forEach((player) => {
 		if (player.userId !== pausingUserId) {
-			console.log(`📢 Sending pause notification to player ${player.userId}`);
+			// console.log(`📢 Sending pause notification to player ${player.userId}`);
 			if (player.socket.readyState === WebSocket.OPEN) {
 				player.socket.send(JSON.stringify({
 					type: 'pause',
@@ -114,27 +114,27 @@ function notifyPause(gameSession: GameSession, pausingUserId: string, status: bo
 
 				}));
 			} else {
-				// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+				// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 			}
 		} else {
-			console.log(`⏭️ Skipping pause notification for player ${player.userId} (they initiated the pause)`);
+			// console.log(`⏭️ Skipping pause notification for player ${player.userId} (they initiated the pause)`);
 		}
 	})
 }
 
 async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' | 'ABANDONED', looserId?: string): Promise<void> {
-	console.log('✴️ Notify finishing game');
+	// console.log('✴️ Notify finishing game');
 	
 	let winnerId: string | null = null;
 
 	if (gameStatus === 'ABANDONED') {
 		if (gameSession.abandonedNotified) {
-			console.log('⏭️ Game already abandoned, skipping notification');
+			// console.log('⏭️ Game already abandoned, skipping notification');
 			return;
 		}
 		
 		gameSession.abandonedNotified = true;
-		console.log('👎 Someone gave up the game!');
+		// console.log('👎 Someone gave up the game!');
 
 		gameSession.players.forEach((player) => {
 			if (player.userId !== looserId) {
@@ -152,7 +152,7 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 	}
 
 	if (!winnerId) {
-		console.log('⛔ Missing winner ID');
+		// console.log('⛔ Missing winner ID');
 		return;
 	}
 
@@ -178,7 +178,7 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 				players: playersInfo
 			}));
 		} else {
-			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	});
 

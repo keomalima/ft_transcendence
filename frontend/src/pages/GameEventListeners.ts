@@ -8,9 +8,9 @@ import { cleanGameWS } from "./Game.js";
 // ======== EVENT LISTENER ============
 export function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
 
-	console.log(currentGame);
+	// console.log(currentGame);
 	if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers.length < 2) {
-		console.log('❌ Missing current game');
+		// console.log('❌ Missing current game');
 		return;
 	}
 
@@ -29,7 +29,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 
-		console.log('You already are in this game, redirection to home');
+		// console.log('You already are in this game, redirection to home');
 		if (currentGame.type === 'TOURNAMENT') {
 			router.navigateTo(`/tournament/${currentGame.tournamentId}`);
 		} else {
@@ -146,7 +146,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		wonGameOverlay.classList.remove('hidden');
 		
 		backHomeBtn?.addEventListener('click', async () => {
-			console.log(currentGame);
+			// console.log(currentGame);
 			cleanGameWS();
 			if (currentGame.type === 'TOURNAMENT' && currentGame.tournamentId) {
 				router.navigateTo(`/tournament/${currentGame.tournamentId}`);
@@ -276,7 +276,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		if (!opponentPauseOverlay)
 			return;
 
-		console.log('opponent pause overlay');
+		// console.log('opponent pause overlay');
 		if (data.status === true) {
 			let count = 10;
 			timer.textContent = count.toString();
@@ -305,7 +305,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	let disconnectInterval: number | null = null;
 	document.addEventListener('event-player-disconnected', (e: Event) => {
 		e.preventDefault();
-		console.log('🔌 Player disconnected');
+		// console.log('🔌 Player disconnected');
 		
 		const customEvent = e as CustomEvent;
 		const timeoutSeconds = customEvent.detail?.timeoutSeconds || 30; // Use backend value or default to 30
@@ -335,7 +335,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	// **** PLAYER RECONNECTED ****
 	document.addEventListener('event-player-reconnected', (e: Event) => {
 		e.preventDefault();
-		console.log('🔄 Player reconnected');
+		// console.log('🔄 Player reconnected');
 		
 		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
 		

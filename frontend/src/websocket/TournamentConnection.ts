@@ -16,30 +16,30 @@ export class TournamentWsConnection {
 		this.ws = new WebSocket(httpUrl.href);
 		
 		this.ws.onopen = () => {
-			console.log('🔌 Connected to tournament room');
+			// console.log('🔌 Connected to tournament room');
 		}
 
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 
 			if (data.type === 'tournament_update') {
-				console.log('New tournament update');
+				// console.log('New tournament update');
 				onUpdate(data);
 			}
 			if (data.type == 'opponent_ready') {
-				console.log('A player is ready to play the game');
+				// console.log('A player is ready to play the game');
 				opponentReady(data);
 			}
 			if (data.type == 'start_game') {
-				console.log('The game will start..');
+				// console.log('The game will start..');
 				onStartGame(data);
 			}
 			if (data.type === 'start_tournament') {
-				console.log('The tournament has started');
+				// console.log('The tournament has started');
 				onStartTournament();
 			}
 			if (data.type === 'tournament_ended') {
-				console.log('🚫 The tournament has finished');
+				// console.log('🚫 The tournament has finished');
 				onTournamentEnd(data);
 			}
 		}
@@ -49,7 +49,7 @@ export class TournamentWsConnection {
 		}
 
 		this.ws.onclose = () => {
-			console.log('🔌 Disconnected from tournament room');
+			// console.log('🔌 Disconnected from tournament room');
 		}
 	}
 	

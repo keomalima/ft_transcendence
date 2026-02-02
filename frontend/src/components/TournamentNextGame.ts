@@ -92,7 +92,7 @@ export class TournamentNextGame extends HTMLElement {
 		this._tournamentGamesData?.forEach((game, index) => {
 			if (!nextGame && (game.status === 'PENDING' || game.status === 'IN_PROGRESS')) {
 				if (game.gameUsers.some(gameUser => gameUser.user.id === currentUser.id)) {
-					console.log('   ✅ Match found!');
+					// console.log('   ✅ Match found!');
 					nextGame = game; 
 				}
 			}
@@ -169,7 +169,7 @@ export class TournamentNextGame extends HTMLElement {
 		const card = document.createElement('div');
 		card.className = `flex w-[32rem] items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-md`;
 
-		console.log(nextGame);
+		// console.log(nextGame);
 		const player = nextGame.gameUsers.find(game => game.user.id === currentUser.id);
 		const opponent = nextGame.gameUsers.find(game => game.user.id !== currentUser.id);
 		if (!opponent || !player) return card;
@@ -340,7 +340,7 @@ export class TournamentNextGame extends HTMLElement {
 	}
 
 	private createWonCard(currentUser: UserState): HTMLElement {
-		console.log(this._tournamentData)
+		// console.log(this._tournamentData)
 		const isUserWinner = currentUser.id === this._tournamentData?.winner?.id ? true : false;
 
 		const card = document.createElement('div');

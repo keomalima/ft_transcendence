@@ -145,7 +145,7 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 		})
 		return reply.redirect('http://localhost:5173/home');
 	} catch (err) {
-		console.log(err);
+		// console.log(err);
 		reply.code(500).send({ message: "Failed to login user with google"});
 	}
 }

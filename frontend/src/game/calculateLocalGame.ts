@@ -139,7 +139,7 @@ function wonGame(game: LocalGameData): boolean {
 	if (game.scoreL >= game.scoreToWin || game.scoreR >= game.scoreToWin) {
 		initBall(game);
 		game.status = 'finished';
-		console.log('🏆 Game finished, status set to finished');
+		// console.log('🏆 Game finished, status set to finished');
 		window.dispatchEvent(new CustomEvent('event-game-completed', {
 			detail: { finalGame: game }
 		}));
@@ -172,7 +172,7 @@ function service(game: LocalGameData) {
 	game.ball.x = getGameValue.arenaWidth() / 2;
 	game.ball.y = getGameValue.arenaHeight() / 2;
 
-	// console.log(`🥎 ball centered : x=${game.ball.x} | y=${game.ball.y}`);
+	// // console.log(`🥎 ball centered : x=${game.ball.x} | y=${game.ball.y}`);
 
 	// Wait before serving
 	setTimeout(() => {
@@ -190,7 +190,7 @@ function service(game: LocalGameData) {
 		game.ball.vx = (game.ball.vx / currentSpeed) * speed;
 		game.ball.vy = (game.ball.vy / currentSpeed) * speed;
 
-		// console.log(`🏓 Service complete - Ball velocity: X=${game.ball.vx.toFixed(2)} | Y=${game.ball.vy.toFixed(2)}`);
+		// // console.log(`🏓 Service complete - Ball velocity: X=${game.ball.vx.toFixed(2)} | Y=${game.ball.vy.toFixed(2)}`);
 	}, 2000);
 }
 

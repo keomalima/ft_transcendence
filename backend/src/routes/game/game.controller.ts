@@ -285,12 +285,12 @@ async function deletePendingGameHandler (request: FastifyRequest<{ Params: { id:
         	});
 		}
 		if (game.createdBy === userId) {
-			console.log('🔥 notify closed game (BY CREATOR)');
+			// console.log('🔥 notify closed game (BY CREATOR)');
 			WaintingRoomWsController.notifyGameClosed(gameId, userId);
 			return reply.code(204).send(await gameService.deletePendingGame(request.server.prisma, gameId));
 		}
 
-		console.log('🔥 notify closed game (BY PLAYER)');
+		// console.log('🔥 notify closed game (BY PLAYER)');
 		WaintingRoomWsController.broadcasToRoom(game.id, {
 			type: 'room_update',
 			message: `Need to update the game - QUIT!`,
