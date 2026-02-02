@@ -124,9 +124,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			return;
 		}
 
-		// Both players try to finish, but the flag in finishGame prevents duplicates
-		if (!await finishGame('COMPLETED', e, ctx, gameId))
-			return;
+		hideAllOverlays();
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;
@@ -161,7 +159,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 
 	// **** ADANDONNED GAME ****
 	document.addEventListener('event-abandoned-game', async (e: Event) => {
-		
 		if (!currentGame.gameUsers || currentGame.gameUsers.length < 2) {
     		console.error('❌ Missing game users data');
 			return;
@@ -170,13 +167,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		const customEvent = e as CustomEvent;
 		const isWinner = customEvent.detail.iswinner;
 
-		// Only the winner (non-quitter) should finish the game to avoid race condition
-		if (isWinner) {
-			if (!await finishGame('ABANDONED', e, ctx, gameId))
-				return;
-		} else {
-			console.log('⏭️ Player gave up, letting winner finish the game');
-		}
+		hideAllOverlays();
 
 		const wonGameOverlay = document.querySelector('#won-game-overlay') as HTMLDivElement;
 		const winner = document.querySelector('#winner') as HTMLParagraphElement;
@@ -372,10 +363,7 @@ function getGameWidth(): number
 	return (gameArea!.clientWidth);
 }
 
-async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppContext, gameId: string): Promise<boolean> {
-	e.preventDefault();
-	console.log(`🏆 FINISH GAME : ${status}`);
-
+function hideAllOverlays(): void {
 	const playerPauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
 	if (playerPauseOverlay) {
 		playerPauseOverlay.classList.add('hidden');
@@ -388,54 +376,4 @@ async function finishGame(status: 'COMPLETED' | 'ABANDONED', e: Event, ctx: AppC
 	if (quitDialog) {
 		quitDialog.close();
 	}
-
-	if (sharedGameState.isFinishingGame) {
-		console.log('⏭️ Already finishing game, skipping...');
-		return true;
-	}
-	setIsFinishing(true);
-
-	const customEvent = e as CustomEvent;
-	const detail = customEvent.detail;
-	const currentGame = await gameService.getGame(gameId, ctx);
-	if (!currentGame) {
-		router.navigateTo('/home');
-		return false;
-	}
-
-	if (currentGame.status === 'IN_PROGRESS') {
-		try {
-			if (!currentGame.gameUsers || currentGame.gameUsers.length !== 2) {
-				console.error('❌ Missing game users data');
-				router.navigateTo('/home');
-				return false;
-			}
-
-			const data: FinishGameDto = {
-				status,
-				winnerId: detail.winnerId,
-				gamePlayers: [
-					{
-							userId: currentGame.gameUsers[0].user?.id!,
-							playerId: currentGame.gameUsers[0].id!,
-							score: currentGame.gameUsers[0].user?.id === detail.players[0].userId ? parseInt(detail.players[0].score!) : parseInt(detail.players[1].score!)
-					},
-					{
-							userId: currentGame.gameUsers[1].user?.id!,
-						playerId: currentGame.gameUsers[1].id!,
-						score: currentGame.gameUsers[1].user?.id === detail.players[1].userId ? parseInt(detail.players[1].score!) : parseInt(detail.players[0].score!)
-					}
-				]
-			};
-			console.log('🎮 Finishing game...');
-			await gameService.finishGame(currentGame.id!, data, ctx);
-			console.log('✅ Game finished successfully');
-		} catch (error) {
-			console.error('❌ Error finishing game:', error);
-		}
-	} else {
-		console.log('👀 Game is not IN_PROGRESS, skipping finishGame API call');
-		setIsFinishing(true);
-	}
-	return true
 }

@@ -50,7 +50,6 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		}
 
 		let currentGame = await gameService.getGame(params['id'], ctx);
-		console.log('💫 current game = ', currentGame);
 		// secure if the ugame is not IN_PROGRESS
 		if (!currentGame || currentGame.status === 'ABANDONED' || currentGame.status === 'COMPLETED') {
 			console.log('The game is not in progress');
@@ -370,7 +369,6 @@ function startGame() {
 		const playingSide = document.querySelector('#start-side') as HTMLParagraphElement | null;
 
 		if (waitingOpponentOverlay) {
-			console.log('hide waiting for opponent overlay');
 			waitingOpponentOverlay.style.display = 'none';
 		}
 

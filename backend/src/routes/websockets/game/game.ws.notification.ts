@@ -1,6 +1,7 @@
 import { WebSocket } from 'ws';
 import type { GameSession } from "./game.types.js";
 import { cleanupGameSession } from "./game.ws.controller.js";
+import { gameService } from '../../game/game.service.js';
 
 function broadcastGameState(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
@@ -121,84 +122,52 @@ function notifyPause(gameSession: GameSession, pausingUserId: string, status: bo
 	})
 }
 
-function notifyWonGame(gameSession: GameSession): void {
-	console.log('🚀 Game has a winner!');
+async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' | 'ABANDONED', looserId?: string): Promise<void> {
+	console.log('✴️ Notify finishing game');
 	
-	// Prepare both players' info (without socket)
-	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
-		userId: player.userId,
-		isCreator: player.isCreator,
-		position: player.position,
-		score: player.score
-	}));
-
 	let winnerId: string | null = null;
-	gameSession.players.forEach((player) => {
-		if (player.score >= gameSession.gameConfig.scoreToWin) {
-			winnerId = player.userId;
+
+	if (gameStatus === 'ABANDONED') {
+		if (gameSession.abandonedNotified) {
+			console.log('⏭️ Game already abandoned, skipping notification');
 			return;
 		}
-	})
-	
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'won-game',
-				iswinner: player.score >= gameSession.gameConfig.scoreToWin,
-				winnerId,
-				currentPlayer: {
-					userId: player.userId,
-					isCreator: player.isCreator,
-					position: player.position,
-					score: player.score
-				},
-				players: playersInfo
-			}));
-		} else {
-			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	});
-	
-	setTimeout(() => {
-		cleanupGameSession(gameSession.gameId, gameSession);
-	}, 2000);
-}
+		
+		gameSession.abandonedNotified = true;
+		console.log('👎 Someone gave up the game!');
 
-function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void {
-	
-	if (gameSession.abandonedNotified) {
-		console.log('⏭️ Game already abandoned, skipping notification');
-		return;
+		gameSession.players.forEach((player) => {
+			if (player.userId !== looserId) {
+				winnerId = player.userId;
+				return;
+			}
+		})
+	} if (gameStatus === 'WON') {
+		gameSession.players.forEach((player) => {
+			if (player.score >= gameSession.gameConfig.scoreToWin) {
+				winnerId = player.userId;
+				return;
+			}
+		})		
 	}
-	
-	gameSession.abandonedNotified = true;
-	console.log('👎 Someone gave up the game!');
-	
-	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
-		userId: player.userId,
-		isCreator: player.isCreator,
-		position: player.position,
-		score: player.score
-	}));
-
-	let winnerId: string | null = null;
-	gameSession.players.forEach((player) => {
-		if (player.userId !== looserId) {
-			winnerId = player.userId;
-			return;
-		}
-	})
 
 	if (!winnerId) {
-		console.log(`🚨 winnerId undefined`);
+		console.log('⛔ Missing winner ID');
 		return;
 	}
-	
+
+	const playersInfo = Array.from(gameSession.players.values()).map(player => ({
+		userId: player.userId,
+		isCreator: player.isCreator,
+		position: player.position,
+		score: player.score
+	}));
+
 	gameSession.players.forEach((player) => {
 		if (player.socket.readyState === WebSocket.OPEN) {
 			player.socket.send(JSON.stringify({
-				type: 'abandoned-game',
-				iswinner: looserId !== player.userId,
+				type: gameStatus === 'WON' ? 'won-game' : 'abandoned-game',
+				iswinner: gameStatus === 'WON' ? player.score >= gameSession.gameConfig.scoreToWin : looserId !== player.userId,
 				winnerId,
 				currentPlayer: {
 					userId: player.userId,
@@ -212,10 +181,15 @@ function notifyAbandonnedGame(gameSession: GameSession, looserId: string): void 
 			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	});
+
+	await gameService.finishGame(gameSession.prisma, gameSession.gameId, gameStatus === 'ABANDONED' ? 'ABANDONED' : 'COMPLETED');
+
 	setTimeout(() => {
 		cleanupGameSession(gameSession.gameId, gameSession);
 	}, 2000);
 }
+	
+
 
 export const gameWsNotification = {
 	broadcastGameState,
@@ -225,6 +199,7 @@ export const gameWsNotification = {
 	notifyPlayerDisconnected,
 	notifyPlayerReconnected,
 	notifyPause,
-	notifyWonGame,
-	notifyAbandonnedGame
+	// notifyWonGame,
+	// notifyAbandonnedGame,
+	notifyFinishingGame
 }
