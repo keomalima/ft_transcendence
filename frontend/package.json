@@ -7,8 +7,9 @@
         "dev": "tsc --watch",
         "serve": "npm run dev & node server.mjs",
         "start": "node scripts/dev.mjs",
-        "build": "rm -rf dist && tsc && npx tailwindcss -i ./src/input.css -o ./dist/style.css --minify",
-        "preview": "node server.mjs"
+        "build": "rm -rf dist && tsc && npx tailwindcss -i ./style.css -o ./dist/style.css --minify",
+        "preview": "node server.mjs",
+		"build:css": "tailwindcss -i ./style.css -o ./src/styles/tailwind.css --minify"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.22",

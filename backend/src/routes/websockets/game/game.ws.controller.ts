@@ -132,7 +132,9 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 						// console.log(`🔒 No players connected, backend finishing abandoned game`);
 						try {
 							// set winner
-							await gameService.finishGame(request.server.prisma, gameId, 'ABANDONED');
+							const looserId = [...gameSession.disconnectTimers.entries()]
+												.sort((a, b) => a[1].startTime - b[1].startTime)[0]?.[0];
+							await gameWsNotification.notifyFinishingGame(gameSession, "ABANDONED", looserId);
 							// console.log(`✅ Game ${gameId} marked as ABANDONED in database`);
 						} catch (error) {
 							console.error(`❌ Failed to abandon game ${gameId}:`, error);

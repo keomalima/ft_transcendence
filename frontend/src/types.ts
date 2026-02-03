@@ -122,6 +122,7 @@ export interface TournamentGame {
     isWinner: boolean;
     joinedAt: Date;
 	isReady: boolean;
+	readyAt: Date;
     user: {
       id: string;
       displayName: string;

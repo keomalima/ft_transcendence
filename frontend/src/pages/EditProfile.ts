@@ -124,8 +124,9 @@ export function EditProfile(ctx: AppContext) : string {
 				<p class="mt-1 text-sm/6 text-medium">No longer want to use our service? You can delete your account here. This action is not reversible. All information related to this account will be deleted permanently.</p>
 			</div>
 
-			<form class="flex items-start md:col-span-2">
-				<button id="delete" type="click" class="${BUTTON_BLACK_CLASSES}">Yes, delete my account</button>
+			<form class="flex flex-col items-start md:col-span-2">
+				<button id="delete" type="click" class="${BUTTON_BLACK_CLASSES} mb-5">Yes, delete my account</button>
+				<p id="delete-account-error" class="text-red-500 text-sm"></p>
 			</form>
 			</div>
 
@@ -294,6 +295,7 @@ function setupEditEventListeners(ctx: AppContext) {
 			confirmBtn?.removeEventListener('click', handleConfirm);
 		};
 		
+		const errorMsg = document.getElementById('delete-account-error') as HTMLParagraphElement;
 		// Handle confirm
 		const handleConfirm = async () => {
 			dialog.close();
@@ -301,7 +303,8 @@ function setupEditEventListeners(ctx: AppContext) {
 				const user = await userService.deleteUser(ctx);
 				router.navigateTo('/');
 			} catch (error) {
-				//// console.log(error);
+				// console.log(error);
+				errorMsg.innerText = error?.toString() || "Failed to delete account.";
 			}
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);

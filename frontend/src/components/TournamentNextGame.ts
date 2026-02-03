@@ -1,6 +1,9 @@
 import { AppContext, TournamentData, TournamentGame, UserState } from "../types.js";
 
 export class TournamentNextGame extends HTMLElement {
+	private _wo_limit_sec: number = 60;
+	private _timerInterval: ReturnType<typeof setInterval> | null = null;
+	private _activeTimerButton: HTMLButtonElement | null = null;
 	private _tournamentData: TournamentData | null = null;
 	private _tournamentGamesData: TournamentGame[] | null = null;
 	private _imageUrl: string = 'http://localhost:3000';
@@ -229,12 +232,14 @@ export class TournamentNextGame extends HTMLElement {
 		matchBtn.className = 'rounded-lg bg-stone-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-700 disabled:bg-creamgrey disabled:text-medium disabled:cursor-not-allowed disabled:hover:bg-creamgrey';
 		actionContainer.appendChild(matchBtn);
 
-
-		const statusText = document.createElement('span');
-		statusText.innerText = 'Waiting opponent';
-		statusText.hidden = opponent.isReady && player.isReady ? true : false;
-		statusText.className = player.isReady ? 'text-xs text-gray-500' : 'hidden';
-		actionContainer.appendChild(statusText);
+		// TIMER BUTTON
+		const timerButton = document.createElement('button') as HTMLButtonElement;
+		this._activeTimerButton = timerButton;
+		if (player.isReady && !opponent.isReady)
+			this.startCountdown(timerButton, player.readyAt);
+		timerButton.hidden = opponent.isReady && player.isReady ? true : false;
+		timerButton.className = player.isReady ? 'text-xs text-gray-500' : 'hidden';
+		actionContainer.appendChild(timerButton);
 
 		// Quit Button
 		const quitBtn = document.createElement('button');
@@ -256,6 +261,19 @@ export class TournamentNextGame extends HTMLElement {
 
 		card.appendChild(actionContainer);
 
+		timerButton.addEventListener('click', (e) => {
+			e.preventDefault();
+			timerButton.disabled = true;
+	
+			this.dispatchEvent(new CustomEvent('claim-tournament-game', {
+				detail: {	
+					gameId: nextGame.id,
+					playerId: currentUser.id as string,
+				},
+				bubbles: true
+			}));
+		})
+
 		readyBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 			this.dispatchEvent(new CustomEvent('event-start-tournament-game', {
@@ -268,6 +286,48 @@ export class TournamentNextGame extends HTMLElement {
 		});
 
 		return card;
+	}
+
+	private startCountdown(timerButton: HTMLButtonElement, isReadyAt: Date) {
+		this.stopCountdown();
+
+		const update = () => {
+			const start = new Date(isReadyAt).getTime();
+			const now = Date.now();
+			const elapsed = Math.floor((now - start) / 1000);
+			const remaining = this._wo_limit_sec - elapsed;
+
+			if (remaining > 0) {
+				timerButton.innerText = `Waiting (${remaining}s)`;
+				timerButton.disabled = true;
+			} else {
+				this.stopCountdown();
+				timerButton.innerText = "Claim Victory";
+				timerButton.disabled = false;
+			}
+		};
+
+		update();
+		this._timerInterval = setInterval(update, 1000);
+	}
+
+    private stopCountdown() {
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
+            this._timerInterval = null;
+        }
+    }
+
+	public showErrorFeedback(message: string) {
+		if (!this._activeTimerButton) return;
+		
+		this._activeTimerButton.innerText = message;
+		this._activeTimerButton.classList.add('text-red-500');
+		this._activeTimerButton.disabled = true;
+
+		setTimeout(() => {
+        	location.reload(); 
+    	}, 500);
 	}
 
 	private createEmptyNextMatchCard(): HTMLElement {

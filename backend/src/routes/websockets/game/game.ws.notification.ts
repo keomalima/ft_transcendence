@@ -182,7 +182,11 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 		}
 	});
 
-	await gameService.finishGame(gameSession.prisma, gameSession.gameId, gameStatus === 'ABANDONED' ? 'ABANDONED' : 'COMPLETED');
+	await gameService.finishGame(gameSession.prisma, gameSession.gameId, {
+		status: gameStatus === 'WON' ? 'COMPLETED' : 'ABANDONED',
+		winnerId,
+		gamePlayers: playersInfo
+	});
 
 	setTimeout(() => {
 		cleanupGameSession(gameSession.gameId, gameSession);

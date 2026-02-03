@@ -141,5 +141,13 @@ export const tournamentApi = {
 		} catch (error) {
 			throw buildApiError('advance tournament', error);
 		}
-	}	
+	},
+
+	claimVictory: async (gameId: string): Promise<void> => {
+		try {
+			await httpCall.put(`${BASE_URL}/${gameId}/claim-victory`)
+		} catch (error) {
+			throw buildApiError('claim tournament game victory', error);
+		}
+	}
 };
