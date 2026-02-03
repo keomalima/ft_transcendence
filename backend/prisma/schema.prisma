@@ -179,10 +179,10 @@ enum MessageType {
 model Message {
   id         String      @id @default(uuid())
   senderId   String
-  sender     User        @relation("MessageSender", fields: [senderId], references: [id])
+  sender     User        @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   
   receiverId String
-  receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id])
+  receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   
   type       MessageType
   content    String?

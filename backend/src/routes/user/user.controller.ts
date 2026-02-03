@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import { verifyPassword } from '../../plugins/hash.plugin.js';
 import path from 'path';
 import fs from 'fs/promises';
+import { gameService } from '../game/game.service.js';
+import { tournamentService } from '../tournaments/tournament.service.js';
 
 // =====================
 // Type Declarations
@@ -289,9 +291,20 @@ async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: {
 	try {
 		const userId = request.user!.id;
         
+		const game = await gameService.findActiveGameByUserId(request.server.prisma, userId);
+		if (game) {
+			return reply.code(400).send({
+                message: "Cannot delete account: ongoing game or tournament detected",
+            });
+		}
+		const tournament = await tournamentService.findOnGoingTournamentByUserId(request.server.prisma, userId);
+		if (tournament) {
+			return reply.code(400).send({
+                message: "Cannot delete account: ongoing game or tournament detected",
+            });
+		}
         await deleteOldAvatar(userId, request.server.prisma);
         await userService.deleteUser(request.server.prisma, userId);
-        
         reply.code(204).send();
 	} catch (error: unknown) {
 		if (error instanceof Error)
