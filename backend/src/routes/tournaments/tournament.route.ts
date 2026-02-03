@@ -182,4 +182,17 @@ export async function tournamentPrivateRoutes(fastify: FastifyInstance) {
 		preHandler: userController.updateLastSeen,
 		handler: tournamentController.advanceTournamentHandler
 	})
+
+	fastify.put('/:id/claim-victory', {
+		schema: {
+			params: z.object({ id: z.string()}),
+			response: {200: tournamentSchemas.response.advanceTournament },
+			tags: ['Tournament'],
+			description: 'Claim tournament game victory',
+			summary: 'Claim victory',
+			security: [{ cookieAuth: [] }]
+		},
+		preHandler: userController.updateLastSeen,
+		handler: tournamentController.claimVictoryHandler
+	})
 }

@@ -140,6 +140,7 @@ model GamePlayer {
 	score Int @default(0)
 	isWinner Boolean @default(false)
 	isReady Boolean @default(false)
+	readyAt DateTime?
 	joinedAt DateTime @default(now())
 	
 	@@unique([gameId, userId])

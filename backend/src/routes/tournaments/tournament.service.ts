@@ -160,6 +160,7 @@ async function findTournamentGames(prisma: PrismaClient, tournamentId: string) {
 					isWinner: true,
 					joinedAt: true,
 					isReady: true,
+					readyAt: true,
 					user: {
 						select: {
 							id: true,
@@ -246,6 +247,7 @@ async function markPlayerReadyByGamePlayerId(prisma: PrismaClient, gamePlayerId:
 		},
 		data: {
 			isReady: true,
+			readyAt: new Date()
 		}
 	})
 }

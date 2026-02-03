@@ -48,7 +48,7 @@ async function findGameById(prisma: PrismaClient, gameId: string) {
                         	displayName: true,
 							avatarUrl: true,
                     	}
-					}
+					},
 				}
 			},
 		}
