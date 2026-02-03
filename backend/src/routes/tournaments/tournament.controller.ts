@@ -310,10 +310,11 @@ async function quitTournamentHandler (request: FastifyRequest<{ Params: { id: st
 			const game = await tournamentService.findCurrentGameByUserTournamentId(request.server.prisma, userId, tournamentId);
 			if (!game) return;
 			const winner = game?.gameUsers.find((u: any) => u.userId !== userId);
-			if (winner) {
-				await gameService.updatePlayer(request.server.prisma, {userId: winner.userId ,playerId: winner.id, score: 0}, true);
-			}
-			await gameService.finishGame(request.server.prisma, game.id, 'ABANDONED');
+			await gameService.finishGame(request.server.prisma, game.id, {
+				status: 'ABANDONED',
+				winnerId: winner ? winner.userId : null,
+				gamePlayers: game.gameUsers
+			});
 		} 
 		
 		await tournamentService.quitTournamentByParticipantId(request.server.prisma, tournamentPlayer.id);
@@ -420,7 +421,6 @@ async function startTournamentGameHandler (request: FastifyRequest<{Params: {id:
 
 		return updatedGame;
 	} catch (error: any) {
-		// console.log(error);
 		reply.code(500).send({ message: "Failed to start tournament game"});
 	}
 }
@@ -504,9 +504,55 @@ async function resetTournamentHandler(request: FastifyRequest<{Params: {id: stri
 		}
 		reply.code(200).send({ message: "Tournament reset successfully"});
 	} catch (error: any) {
-		// console.log(error);
 		reply.code(500).send({ message: "Failed to reset the tournament "});		
 	}
+}
+
+async function claimVictoryHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
+    try {
+        const userId = request.user!.id;
+        const gameId = request.params.id;
+        const prisma = request.server.prisma;
+
+        const game = await gameService.findGameById(prisma, gameId);
+
+        if (!game || game.status !== 'PENDING' || game.type !== 'TOURNAMENT') {
+            return reply.code(404).send({ message: "Game not found or already processed" });
+        }
+
+        const player = game.gameUsers.find(u => u.user.id === userId);
+        const opponent = game.gameUsers.find(u => u.user.id !== userId);
+
+        if (!player || !opponent) {
+            return reply.code(404).send({ message: "Participants not found" });
+        }
+
+        if (opponent.isReady) {
+            return reply.code(400).send({ message: "Opponent is ready. Play the match!" });
+        }
+
+        if (!player.readyAt) {
+            return reply.code(400).send({ message: "You haven't readied up yet." });
+        }
+
+        const elapsed = Date.now() - new Date(player.readyAt).getTime();
+        const ONE_MINUTE = 60000;
+
+        if (elapsed < ONE_MINUTE) {
+            const remaining = Math.ceil((ONE_MINUTE - elapsed) / 1000);
+            return reply.code(400).send({ message: `Wait another ${remaining}s` });
+        }
+
+        await gameService.finishGame(prisma, gameId, {
+            status: 'ABANDONED',
+            winnerId: userId,
+            gamePlayers: game.gameUsers
+        });
+
+        return reply.code(200).send({ message: "Victory claimed successfully" });
+    } catch (error: any) {
+        return reply.code(500).send({ message: "Failed to claim victory" });
+    }
 }
 
 // =====================
@@ -538,5 +584,6 @@ export const tournamentController = {
 	advanceTournamentHandler,
 	quitTournamentHandler,
 	getParticipantInfoHandler,
-	resetTournamentHandler
+	resetTournamentHandler,
+	claimVictoryHandler
 };

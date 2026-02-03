@@ -219,12 +219,26 @@ async function setupTournamentEventListeners(ctx: AppContext, tournament: Partia
 		const customEvent = e as CustomEvent;
 		const {id:gameId} = customEvent.detail.game;
 		try {
-			const response = await tournamentApi.startGame(gameId);
+			await tournamentApi.startGame(gameId);
 		} catch (error) {
 			// console.log(error);
 		}
 	})
+
+	// Claim tournament game victory
+	tournamentGameComponent?.addEventListener('claim-tournament-game', async (e: Event) => {
+		e.preventDefault();
+		const customEvent = e as CustomEvent;
+		const {gameId} = customEvent.detail;
+		try {
+			await tournamentApi.claimVictory(gameId);
+		} catch (error: any) {
+			const errorMessage = error?.message || "Action failed";
+        	tournamentGameComponent.showErrorFeedback(errorMessage);
+		}
+	})
 	
+	// Quit tournament
 	tournamentGameComponent?.addEventListener('event-quit-tournament', async (e: Event) => {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
