@@ -134,6 +134,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 							// set winner
 							const looserId = [...gameSession.disconnectTimers.entries()]
 												.sort((a, b) => a[1].startTime - b[1].startTime)[0]?.[0];
+
 							await gameWsNotification.notifyFinishingGame(gameSession, "ABANDONED", looserId);
 							// console.log(`✅ Game ${gameId} marked as ABANDONED in database`);
 						} catch (error) {
