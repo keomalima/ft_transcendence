@@ -146,7 +146,10 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 			path: '/',
 			maxAge: 60 * 60 * 24,
 		})
-		return reply.redirect('http://localhost:5173/home');
+		const redirectUrl = process.env.NODE_ENV === 'production' 
+		    ? 'https://localhost:8443/home'
+		    : 'http://localhost:5173/home';
+		return reply.redirect(redirectUrl);
 	} catch (err) {
 		reply.code(500).send({ message: "Failed to login user with google"});
 	}

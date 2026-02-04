@@ -9,7 +9,6 @@ import fastifyMultipart from '@fastify/multipart';
 import fastifyWebsocket from '@fastify/websocket';
 import type { FastifyCookieOptions } from '@fastify/cookie';
 import cookie from '@fastify/cookie';
-import cors from '@fastify/cors';
 
 // Fastify plugins
 import prismaPlugin from './plugins/prisma.plugin.js';
@@ -37,14 +36,6 @@ fastify.register(fastifyStatic, { root: path.join(__dirname, '../uploads'), pref
 fastify.register(fastifyWebsocket);
 fastify.register(fastifyMultipart, { attachFieldsToBody: true, limits: { fileSize: 10 * 1024 * 1024 } });
 fastify.register(prismaPlugin);
-
-// CORS FOR DEV
-await fastify.register(cors, {
-	origin: true,
-	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-	allowedHeaders: ['Content-Type', 'Authorization'],
-	credentials: true
-});
 
 // Utility setup
 fastify.setValidatorCompiler(validatorCompiler);

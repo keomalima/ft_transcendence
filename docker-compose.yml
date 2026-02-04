@@ -4,15 +4,15 @@ services:
     ports:
       - "3000:3000"
       - "5555:5555"
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=file:/app/data/dev.db
-      - NODE_ENV=development
+      - NODE_ENV=production
     networks:
       - transcendence
     volumes:
       - prisma-data:/app/data
-      - ./backend:/app
-      - /app/node_modules
 
   nginx:
     build:
@@ -23,20 +23,6 @@ services:
     ports:
       - "8000:80"
       - "8443:443"
-    networks:
-      - transcendence
-
-  frontend:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - API_BASE_URL=http://localhost:3000
-    ports:
-      - "5173:5173"
-    command: sh -c "npm install && npm run start"
     networks:
       - transcendence
 

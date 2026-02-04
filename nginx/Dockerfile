@@ -13,7 +13,6 @@ COPY frontend/index.html frontend/style.css ./
 # Build the app, ensure index/style land in dist, and copy static images for runtime
 RUN npm run build \
 	&& cp index.html dist/ \
-	&& cp style.css dist/ \
 	&& mkdir -p dist/src \
 	&& cp -r src/images dist/src/
 

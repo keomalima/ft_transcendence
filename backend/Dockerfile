@@ -1,17 +1,32 @@
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY tsconfig.json ./
+RUN npm ci
+
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+COPY . .
+RUN npm run build
+
+# Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/dist ./dist
 
-COPY . .
+RUN mkdir -p /app/dist/uploads/avatars
+COPY uploads/avatars/ /app/dist/uploads/avatars
 
-RUN mkdir -p /app/uploads/avatars
+EXPOSE 3000 5555
 
-COPY uploads/avatars/ /app/uploads/avatars
-
-EXPOSE 3000
-
-CMD npx prisma migrate deploy && npx prisma generate && npm run dev
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
