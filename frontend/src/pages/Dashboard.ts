@@ -13,6 +13,9 @@ import "../components/JoinGamePopUp.js";
 import type { FriendData, GameHistory } from "../types.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { API_BASE_URL } from "../config.js";
+import { DashboardConnection } from "../websocket/DashboardConnections.js";
+
+let wsConnection: DashboardConnection | null = null;
 
 export const PONG_MANTRAS: string[] = [
   "Keep your eye on the ball.",
@@ -62,6 +65,7 @@ export function Dashboard(ctx: AppContext): string{
 		renderDashboardContent(currentUser!, currentGame, currentTournament?.tournamentId);
 		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
+		setupDashboardWS(currentUser!, ctx);
 		setupDashboardEventListeners(ctx);
 	}, 0);
 
@@ -245,8 +249,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 					await friendListComponent.loadAndRender();
 				}
 			}
-		} catch (error) {
-			// console.log('Error deleting friend:', error);
+		} catch (error: any) {
 		}
 	});
 
@@ -302,12 +305,21 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				if (errorMsg) {
 					errorMsg.className = 'text-green-500 text-sm mt-2';
 					errorMsg.innerText = `Friend request sent successfully to ${data.friendName}!`;
+					setTimeout(() => {
+				        errorMsg.innerText = '';
+				        errorMsg.className = '';
+				    }, 3000);
 				}
 			}
 		} catch (error) {
 			if (errorMsg) {
 				errorMsg.className = 'text-red-500';
 				errorMsg.innerText = error instanceof Error ? error.message : 'Failed to send friend request';
+
+				setTimeout(() => {
+			        errorMsg.innerText = '';
+			        errorMsg.className = '';
+			    }, 3000);
 			}
 			// console.log('Error send friendship request:', error);
 		}
@@ -327,25 +339,89 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			// console.log(error);
 		}
 	})
+}
 
-	// **** Show msg for block/unblock at left-up corner ***
-	function showToast(message: string, type: 'block' | 'unblock') {
-		const toast = document.createElement('div');
-		toast.textContent = message;
+// ======== SET WEBSOCKET CONNECTION ============
+async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
 
-		toast.className = `
-			fixed top-4 left-4 z-50
-			min-w-[200px] text-center
-			px-4 py-2 rounded shadow-lg
-			text-white font-medium
-			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
-		`;
+	const requestsComponent = document.getElementById('requests-component') as any;
+	const friendListComponent = document.getElementById('friend-list-component') as any;
+	// Create websocket with gameid
+	wsConnection = new DashboardConnection();
+	wsConnection.connect(
+		currentUser.id!,
+		(friendshipRequest) => {
+			requestsComponent.addRequest(friendshipRequest.data);
 
-		document.body.appendChild(toast);
+			showToast(
+                `New friend request from ${friendshipRequest.data.friend.displayName}`,
+                'request'
+            );
+		},
+		(friendshipRequest) => {
+			friendListComponent.addFriend(friendshipRequest.data);
 
-		setTimeout(() => {
-			toast.remove();
-		}, 2000);
+			showToast(
+			    `${friendshipRequest.data.friend.displayName} accepted your friend request!`,
+			    'request'
+			);
+		},
+		(friendshipRequest) => {
+			friendListComponent.removeFriend(friendshipRequest.data.friendshipId);
+		}
+	)
+}
+
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanDashboardWS() {
+	if (wsConnection) {
+		wsConnection.disconnect();
+		wsConnection = null;
 	}
+}
 
+// ======== Helper Functions ========
+function showToast(message: string, type: 'block' | 'unblock' | 'request') {
+	const toast = document.createElement('div');
+
+	let bgColor = 'bg-black';
+	if (type === 'block') bgColor = 'bg-red-500';
+	if (type === 'unblock') bgColor = 'bg-green-500';
+
+	toast.textContent = message;
+
+	toast.className = `
+		fixed top-6 right-6 z-[9999]
+		min-w-[280px] max-w-[400px]
+		px-5 py-4
+		${bgColor} text-white
+		rounded-lg 
+		shadow-[0_8px_30px_rgb(0,0,0,0.12)]
+		border border-white/20
+		font-[Inter] text-sm font-medium
+		backdrop-blur-sm
+	`;
+
+	// Simple fade + slide animation
+	toast.style.cssText += `
+		transform: translateX(400px);
+		opacity: 0;
+		transition: all 0.3s ease-out;
+	`;
+
+	document.body.appendChild(toast);
+
+	setTimeout(() => {
+		toast.style.transform = 'translateX(0)';
+		toast.style.opacity = '1';
+	}, 10);
+
+	setTimeout(() => {
+		toast.style.transform = 'translateX(400px)';
+		toast.style.opacity = '0';
+	}, 2700);
+
+	setTimeout(() => {
+		toast.remove();
+	}, 3000);
 }

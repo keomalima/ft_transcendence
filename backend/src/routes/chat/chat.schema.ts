@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const sendMessageRequestSchema = z.object({
 	toUserId: z.string(),
-	content: z.string().min(1).max(1000), // set the content min and max length
+	content: z.string().min(1).max(1000),
 	type: z.enum(["TEXT", "GAME_INVITE"]).optional(),
 });
 

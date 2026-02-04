@@ -192,9 +192,9 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 		e.preventDefault();
 		try {
 			let result = null;
-			if (isGenerated == false) {
+			const currentTournamentData = await getTournamentData(tournamentId);
+			if (!currentTournamentData?.token) {
 				result = await tournamentApi.generateToken(tournamentId);
-				isGenerated = true;
 			}
 			if (result) {
 				const tokenText = document.getElementById('token-text') as HTMLParagraphElement;
@@ -208,7 +208,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, tournamentId: string
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
 			errorMsgGenerateToken.className = 'mt-2 text-red-500'
 			errorMsgGenerateToken.innerText = error as string;
-			// console.log(error);
+
 		}
 	});
 

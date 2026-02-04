@@ -5,6 +5,8 @@ import { cleanTournamentWaitingRoomWS } from "./pages/TournamentRoom.js";
 import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
 import { cleantTournamentGlobalWs } from "./pages/Tournament.js";
 import { clearAllIntervals } from "./pages/GameEventListeners.js";
+import { cleanDashboardWS } from "./pages/Dashboard.js";
+
 
 // Define a new function type to make sure that the function sent to route is well designed
 // (here the function must take an AppContext parameter and return a string e.g. a HTML content)
@@ -59,6 +61,9 @@ export class Router {
 	// Route to the correct new path and add the path to history
 	public async navigateTo(path: string, push = true, fromPath?: string) {
 		const currentPath = fromPath || window.location.pathname;
+		if (currentPath.startsWith('/home')) {
+			cleanDashboardWS();
+		}
 		if (currentPath.startsWith('/game-room')) {
 			cleanWaitingRoomWS();
 		}
