@@ -13,6 +13,28 @@ export class RegisterPopUp extends HTMLElement {
 		this.render();
 	}
 
+	// ======== CLEAR / RESET FORM ==========
+	private clearForm() {
+		// Reset selected file
+		this.selectedAvatarFile = null;
+
+		// Reset avatar preview to default image
+		const img = this.querySelector('#avatar-preview') as HTMLImageElement | null;
+		if (img) img.src = '/src/images/defaultProfile.webp';
+
+		// Reset inputs inside the form
+		const form = this.querySelector('#create-new-account-form') as HTMLFormElement | null;
+		if (form) form.reset();
+
+		// Clear file input value explicitly (some browsers keep the file otherwise)
+		const fileInput = this.querySelector('#avatar-input') as HTMLInputElement | null;
+		if (fileInput) fileInput.value = '';
+
+		// Clear error message
+		const displayError = this.querySelector('#register-error') as HTMLElement | null;
+		if (displayError) displayError.textContent = '';
+	}
+
 	set ctx(value: AppContext) {
 		this._ctx = value;
 		if (!this.listenersAttached) {
@@ -24,7 +46,7 @@ export class RegisterPopUp extends HTMLElement {
 	private render() {
 		this.innerHTML = /*html*/`
 			<div>
-				<button onclick="this.closest('dialog').close()" class="outline-none float-right p-10">
+				<button id="register-close-btn" type="button" class="outline-none float-right p-10">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
 					</svg>
@@ -97,6 +119,26 @@ export class RegisterPopUp extends HTMLElement {
 		// Get the avatar image - use querySelector scoped to this component
 		const avatarInput = this.querySelector('#avatar-input') as HTMLInputElement;
 		const saveBtn = this.querySelector('#save-btn') as HTMLButtonElement;
+		const closeBtn = this.querySelector('#register-close-btn') as HTMLButtonElement | null;
+		const dialogEl = this.closest('dialog') as HTMLDialogElement | null;
+
+		// Helper to clear form values and reset preview
+		const clearForm = () => this.clearForm();
+
+		// If the dialog itself is closed by other means, ensure the form is reset
+		if (dialogEl) {
+			dialogEl.addEventListener('close', () => {
+				clearForm();
+			});
+		}
+
+		// Close button: close dialog and clear values
+		if (closeBtn) {
+			closeBtn.addEventListener('click', () => {
+				if (dialogEl) dialogEl.close();
+				clearForm();
+			});
+		}
 
 		// **** LOAD AVATAR ****
 		avatarInput?.addEventListener('change', async (e) =>  {
@@ -126,7 +168,7 @@ export class RegisterPopUp extends HTMLElement {
 				saveBtn.className = `${BUTTON_WHITE_CLASSES}`;
 				saveBtn.textContent = 'Save';
 			}
-		}, { once: true });
+		});
 
 
 		// **** CREATE NEW ACCOUNT ****
