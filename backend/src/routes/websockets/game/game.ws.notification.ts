@@ -3,6 +3,17 @@ import type { GameSession } from "./game.types.js";
 import { cleanupGameSession } from "./game.ws.controller.js";
 import { gameService } from '../../game/game.service.js';
 
+function notifyNumberOfPlayer(gameSession: GameSession): void {
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			player.socket.send(JSON.stringify({
+				type: 'number-of-players',
+				numberofplayer: gameSession.players.size
+			}));
+		}
+	})
+}
+
 function broadcastGameState(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
@@ -65,19 +76,6 @@ function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 	})
 }
 
-function notifyService(gameSession: GameSession): void {
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'service',
-				message: "Service countdown"
-			}));
-		} else {
-			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	})
-}
-
 function notifyPlayerDisconnected(gameSession: GameSession, disconnectedUserId: string, timeoutSeconds: number = 30): void {
 	// console.log(`📢 Notifying remaining players that ${disconnectedUserId} disconnected`);
 	gameSession.players.forEach((player) => {
@@ -123,7 +121,7 @@ function notifyPause(gameSession: GameSession, pausingUserId: string, status: bo
 }
 
 async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' | 'ABANDONED', looserId?: string): Promise<void> {
-	// console.log('✴️ Notify finishing game');
+	console.log('✴️ Notify finishing game');
 	
 	let winnerId: string | null = null;
 
@@ -196,10 +194,10 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 
 
 export const gameWsNotification = {
+	notifyNumberOfPlayer,
 	broadcastGameState,
 	notifyPlayerAlreadyInGame,
 	notifyGameStarted,
-	notifyService,
 	notifyPlayerDisconnected,
 	notifyPlayerReconnected,
 	notifyPause,

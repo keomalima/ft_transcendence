@@ -38,6 +38,8 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 
 	checkForReconnection(gameSession, userId, socket);
 
+	gameWsNotification.notifyNumberOfPlayer(gameSession);
+
 	socket.on('message', (data: Buffer) => {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
@@ -76,7 +78,16 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			if (message.action === 'stop') {
 				gameSession.isPaused = true;
 				gameSession.pausedByUserId = message.pausedby;
-				gameSession.pauseTimer = setTimeout(() => gameWsNotification.notifyFinishingGame(gameSession, 'ABANDONED', gameSession.pausedByUserId!), 10000);
+				gameSession.pauseTimer = setTimeout(() => {
+					if (gameSession.disconnectTimers.size === 0) {
+						gameSession.isPaused = false;
+						if (gameSession.pauseTimer) {
+							clearTimeout(gameSession.pauseTimer);
+							gameSession.pauseTimer = null;
+						}
+						gameWsNotification.notifyPause(gameSession, userId, false);
+					}
+				}, 10000);
 				gameWsNotification.notifyPause(gameSession, userId, true);
 			}
 			if (message.action === 'resume') {
@@ -109,6 +120,10 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			// console.log(`⏱️ Starting disconnect timeout for player ${userId}`);
 			
 			session.isPaused = true;
+			if (session.pauseTimer) {
+				clearTimeout(session.pauseTimer);
+				session.pauseTimer = null;
+			}
 			gameWsNotification.notifyPlayerDisconnected(session, userId);
 			
 			// Store disconnect timer for this specific player with start timestamp
@@ -125,7 +140,6 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 					
 					if (hasConnectedPlayer) {
 						// Someone is still connected, let frontend handle it
-						// console.log(`📤 Notifying connected players about abandonment`);
 						gameWsNotification.notifyFinishingGame(currentSession, 'ABANDONED', userId);
 					} else {
 						// Nobody connected, backend must finish the game

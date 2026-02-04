@@ -1,9 +1,23 @@
 import type { UserState, GameData, AppContext } from "../types";
-import { sharedGameState, setGameConnection, setIsFinishing } from "../game/sharedGameState.js";
+import { sharedGameState } from "../game/sharedGameState.js";
 import { router } from "../main.js";
 import { gameService } from "../services/GameService.js";
 import { FinishGameDto } from "../api/gameApi.js";
 import { cleanGameWS } from "./Game.js";
+
+// Simple global interval registry so router can clear intervals on navigation
+function registerInterval(id: number) {
+	(window as any).__gameIntervals = (window as any).__gameIntervals || [];
+	(window as any).__gameIntervals.push(id);
+}
+
+export function clearAllIntervals() {
+	const arr: number[] = (window as any).__gameIntervals || [];
+	arr.forEach((id) => {
+		try { clearInterval(id); } catch (e) {}
+	});
+	(window as any).__gameIntervals = [];
+}
 
 // ======== EVENT LISTENER ============
 export function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
@@ -23,6 +37,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 
 	let playerPauseInterval: number | null = null;
 	let opponentPauseInterval: number | null = null;
+	let disconnectInterval: number | null = null;
 
 	// **** ALREADY IN GAME ****
 	document.addEventListener('event-already-in-game', (e: Event) => {
@@ -192,39 +207,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 
 	}, { once: true });
 
-	// **** COUNTDOWN ****
-	document.addEventListener('event-service-countdown', (e: Event) => {
-		e.preventDefault();
-		const customEvent = e as CustomEvent;
-		const data = customEvent.detail;
-
-		const countdownOverlay = document.querySelector('#countdown-overlay') as HTMLDivElement;
-		const countdownNumber = document.querySelector('#countdown-number') as HTMLParagraphElement;
-		const quitDialog = document.querySelector('#quit-game-dialog') as HTMLDialogElement;
-		const pauseOverlay = document.querySelector('#player-set-pause-overlay') as HTMLDivElement;
-
-		if (!countdownOverlay || !countdownNumber || !quitDialog || !pauseOverlay
-			|| quitDialog?.open || !pauseOverlay.classList.contains('hidden'))
-			return;
-
-		let count = data.count;
-
-		countdownOverlay?.classList.remove('hidden');
-		countdownNumber.textContent = count.toString();
-
-		const interval = setInterval(() => {
-			count--;
-			if (count > 0) {
-				countdownNumber.textContent = count.toString();
-			} else {
-				countdownNumber.textContent = 'GO!';
-				setTimeout(() => {
-					countdownOverlay?.classList.add('hidden');
-				}, 800);
-				clearInterval(interval);
-			}
-		}, 1000);
-	})
 
 	// **** CURRENT USER SET PAUSE ****
 	const pauseBtn = document.querySelector('#pause-btn') as HTMLButtonElement;
@@ -240,18 +222,19 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 
 		let count = 10;
 		timer.textContent = count.toString();
-		playerPauseInterval = setInterval(() => {
+		playerPauseInterval = window.setInterval(() => {
 			count--;
-			if (count >= 0) {
+			if (count > 0) {
 				timer.textContent = count.toString();
 			} else {
+				playerPauseOverlay?.classList.add('hidden');
 				if (playerPauseInterval) {
 					clearInterval(playerPauseInterval);
 					playerPauseInterval = null;
-					sharedGameState.gameConnection?.send({ type: 'quit', looser: currentUser.id});
 				}
 			}
-		}, 1000);
+		}, 900);
+		registerInterval(playerPauseInterval as number);
 
 		stopPauseBtn.addEventListener('click', (e) => {
 			e.preventDefault();
@@ -281,7 +264,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			let count = 10;
 			timer.textContent = count.toString();
 			opponentPauseOverlay.classList.remove('hidden');
-			opponentPauseInterval = setInterval(() => {
+			opponentPauseInterval = window.setInterval(() => {
 				count--;
 				if (count >= 0) {
 					timer.textContent = count.toString();
@@ -292,6 +275,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 					}
 				}
 			}, 1000)
+			registerInterval(opponentPauseInterval as number);
 		} if (data.status === false) {
 			opponentPauseOverlay.classList.add('hidden');
 			if (opponentPauseInterval) {
@@ -302,7 +286,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	})
 
 	// **** PLAYER DISCONNECTED ****
-	let disconnectInterval: number | null = null;
 	document.addEventListener('event-player-disconnected', (e: Event) => {
 		e.preventDefault();
 		// console.log('🔌 Player disconnected');
@@ -313,13 +296,22 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
 		const disconnectTimer = document.querySelector('#disconnect-timer') as HTMLParagraphElement;
 		
+		hideAllOverlays();
+		if (playerPauseInterval) {
+			clearInterval(playerPauseInterval);
+			playerPauseInterval = null;
+		}
+		if (opponentPauseInterval) {
+			clearInterval(opponentPauseInterval);
+			opponentPauseInterval = null;
+		}
 		if (!disconnectOverlay || !disconnectTimer) return;
 		
 		let count = timeoutSeconds; // Start from backend's remaining time
 		disconnectTimer.textContent = count.toString();
 		disconnectOverlay.classList.remove('hidden');
 		
-		disconnectInterval = setInterval(() => {
+		disconnectInterval = window.setInterval(() => {
 			count--;
 			if (count >= 0) {
 				disconnectTimer.textContent = count.toString();
@@ -330,6 +322,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 				}
 			}
 		}, 1000);
+		registerInterval(disconnectInterval as number);
 	});
 
 	// **** PLAYER RECONNECTED ****
@@ -377,3 +370,5 @@ function hideAllOverlays(): void {
 		quitDialog.close();
 	}
 }
+
+// Legacy helper removed - use exported clearAllIntervals() above which clears the global registry.

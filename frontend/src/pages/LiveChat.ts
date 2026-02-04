@@ -446,21 +446,21 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	]);
 	if (isStale()) return;
 
-	chatRight.innerHTML = `
+	chatRight.innerHTML = /*html*/`
 		<!-- Header -->
-		<div class="flex justify-between items-center p-4 border-b">
+		<div class="flex flex-col lg:flex-row justify-between items-center p-4 border-b gap-3 mb-20">
 			<div>
 				<p class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
 				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
 			</div>
 
-			<div class="flex flex-wrap justify-end items-center gap-2">
+			<div class="flex flex-wrap justify-center lg:justify-end items-center gap-1 lg:gap-2">
 				<!-- See Profile -->
 				<button
 					id="see-profile-btn"
-					class="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-shadow shadow-sm hover:shadow-md"
+					class="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-1.5 text-xs lg:text-sm font-medium text-gray-700 hover:bg-gray-100 transition-shadow shadow-sm hover:shadow-md"
 				>
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<svg xmlns="http://www.w3.org/2000/svg" class="hidden lg:block h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M5.121 17.804A13.937 13.937 0 0112 15c2.57 0 4.947.723 6.879 1.96M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
 					</svg>
@@ -486,8 +486,8 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 						text-sm font-medium
 						transition-shadow shadow-sm hover:shadow-md
 						${friend.isBlocked
-							? 'bg-green-600 text-white hover:bg-green-700'
-							: 'bg-red-600 text-white hover:bg-red-700'}
+							? 'bg-green-600 text-white text-xs lg:text-sm hover:bg-green-700'
+							: 'bg-red-600 text-white text-xs lg:text-sm hover:bg-red-700'}
 					"
 				>
 					${friend.isBlocked ? 'Unblock your friend' : 'Block your friend'}
@@ -638,9 +638,9 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 		const shouldGo = !!goToGameId && !friend.isBlockedBy && !inTournament;
 
 		const enabledClass =
-			"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
+			"px-4 py-1.5 text-xs lg:text-sm font-medium rounded-full transition-shadow shadow-sm hover:shadow-md bg-black text-white hover:bg-gray-800";
 		const disabledClass =
-			"px-4 py-1.5 text-sm font-medium rounded-full transition-shadow shadow-sm bg-gray-300 text-gray-600 cursor-not-allowed";
+			"px-4 py-1.5 text-xs lg:text-sm font-medium rounded-full transition-shadow shadow-sm bg-gray-300 text-gray-600 cursor-not-allowed";
 
 		if (shouldGo) {
 			inviteBtn.textContent = "🟢 Go to Game";
@@ -1232,7 +1232,3 @@ async function getCurrentTournament(): Promise<{userId: string, tournamentId: st
 		return null;
 	}
 }
-
-// ======== CLEANUP HOOKS ==========
-// when close the tab/page, close the ws
-window.addEventListener("beforeunload", cleanLiveChatWS);
