@@ -14,7 +14,7 @@ let wsConnection: TournamentWaitingRoomConnection | null = null;
 export function TournamentRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser: UserState | null = ctx.userStore.get();
-	// // console.log('game room user', currentUser);
+	// console.log('game room user', currentUser);
 
 	// secure if no params
 	if (!params || !params['id'])
@@ -163,7 +163,7 @@ function passContext(ctx: AppContext, tournamentData: TournamentData | null, isC
 		tournamentPlayerListComponent.tournamentData = tournamentData;
 		// console.log('✅ Context passed to tournament player list');
 	} else {
-		console.error('❌ Tournament player list component not found!');
+		// console.error('❌ Tournament player list component not found!');
 	}
 }
 

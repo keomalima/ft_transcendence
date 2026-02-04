@@ -139,7 +139,7 @@ async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequest
 
 		return reply.code(201).send(friendship);
 	} catch (error: any) {
-		console.log(error);
+		// console.log(error);
 		reply.code(500).send({ message: "Failed to send friendship request"});
 	}
 }

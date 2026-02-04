@@ -106,7 +106,7 @@ const shutdown = (signal) => {
     
     // Force exit after 5 seconds if server doesn't close
     setTimeout(() => {
-        console.error('⚠️  Forcing shutdown...');
+        // console.error('⚠️  Forcing shutdown...');
         process.exit(1);
     }, 5000);
 };

@@ -15,7 +15,7 @@ export class DashboardConnection {
 		this.ws = new WebSocket(httpUrl.href);
 
 		this.ws.onopen = () => {
-			console.log('🔌 Connected to dashboard');
+			// console.log('🔌 Connected to dashboard');
 		};
 
 		this.ws.onmessage = (event) => {
@@ -32,7 +32,7 @@ export class DashboardConnection {
 		}
 		
 		this.ws.onclose = () => {
-			console.log('🔌 Disconnected from dashboard');
+			// console.log('🔌 Disconnected from dashboard');
 		}
 	}
 	

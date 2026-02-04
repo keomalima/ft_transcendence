@@ -40,7 +40,7 @@ function broadcastGameState(gameSession: GameSession): void {
 				ballY: gameSession.gameState.ball.y
 			}));
 		} else {
-			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	})
 }
@@ -55,7 +55,7 @@ function notifyPlayerAlreadyInGame(socket: WebSocket, gameId: string): void {
 			gameId,
 		}));
 	} else {
-		// // console.log(`❌ Socket is NOT open. ReadyState: ${socket.readyState}`);
+		// console.log(`❌ Socket is NOT open. ReadyState: ${socket.readyState}`);
 	}
 
 }
@@ -71,7 +71,7 @@ function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 				position: player.position
 			}));
 		} else {
-			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	})
 }
@@ -112,7 +112,7 @@ function notifyPause(gameSession: GameSession, pausingUserId: string, status: bo
 
 				}));
 			} else {
-				// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+				// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 			}
 		} else {
 			// console.log(`⏭️ Skipping pause notification for player ${player.userId} (they initiated the pause)`);
@@ -121,7 +121,7 @@ function notifyPause(gameSession: GameSession, pausingUserId: string, status: bo
 }
 
 async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' | 'ABANDONED', looserId?: string): Promise<void> {
-	console.log('✴️ Notify finishing game');
+	// console.log('✴️ Notify finishing game');
 	
 	let winnerId: string | null = null;
 
@@ -176,7 +176,7 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 				players: playersInfo
 			}));
 		} else {
-			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
+			// console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
 		}
 	});
 

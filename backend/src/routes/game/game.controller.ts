@@ -26,7 +26,7 @@ async function getGameHandler (request: FastifyRequest<{ Body: UpdateGameInput, 
 		}
 		return response;
 	} catch (error: any) {
-		console.error('❌ Error in getGameHandler:', error);
+		// console.error('❌ Error in getGameHandler:', error);
 		reply.code(500).send({ message: "Failed to get game"});
 	}
 }
@@ -149,7 +149,7 @@ async function joinGameHandler (request: FastifyRequest<{ Params: { token: strin
 		})
 		return  updatedGame;
 	} catch (error: any) {
-		console.error(error);
+		// console.error(error);
 		reply.code(500).send({ message: "Failed to join"});
 	}
 }

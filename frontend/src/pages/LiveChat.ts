@@ -229,7 +229,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 					popup2.friendHistory = history;
 				}
 			} catch (err) {
-				console.error("getFriendHistory failed:", err);
+				// console.error("getFriendHistory failed:", err);
 			}
 		}, 0);
 
@@ -237,7 +237,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 			unreadNotificationSet.delete(clickedFriend.id);
 
 			chatApi.deleteNotification(clickedFriend.id).catch((err) => {
-				console.error("deleteNotification failed:", err);
+				// console.error("deleteNotification failed:", err);
 				unreadNotificationSet.add(clickedFriend.id);
 			});
 
@@ -378,7 +378,7 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 				try {
 					await chatApi.createNotification(fromUserId);
 				} catch (err) {
-					console.error("❌ Failed to create notification in backend:", err);
+					// console.error("❌ Failed to create notification in backend:", err);
 				}
 
 				const friendList = document.getElementById("friend-list-component") as any;
@@ -404,7 +404,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	const currentUserId = ctx.userStore.get()?.id;
 	
 	if (!currentUserId) {
-		console.error('❌ No currentUserId found, cannot render chat box.');
+		// console.error('❌ No currentUserId found, cannot render chat box.');
 		return;
 	}
 
@@ -428,7 +428,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 		}
 	} catch (error) {
 		if (isStale()) return;
-		console.error('❌ Failed to load chat history:', error);
+		// console.error('❌ Failed to load chat history:', error);
 		paginationMap[friend.id] = {
 			oldestMessageId: null,
 			hasMoreMessages: false,
@@ -625,7 +625,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 					renderChatBox(_selectedFriend, ctx, selectVersion);
 				}
 				} catch (error) {
-					console.error('Error block/unblock:', error);
+					// console.error('Error block/unblock:', error);
 					showToast('Action failed', 'block');
 			}
 		});
@@ -783,7 +783,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 			}
 			catch (err) {
 				if (isStale()) return;
-				//console.error("send text failed:", err);
+				// console.error("send text failed:", err);
 			}
 		});
 
@@ -963,7 +963,7 @@ async function fetchUnreadSendersFromBackend(ctx: AppContext) {
 			await friendList.loadAndRender();
 		}
 	} catch (err) {
-		console.error("❌ Failed to fetch unread senders from backend:", err);
+		// console.error("❌ Failed to fetch unread senders from backend:", err);
 	}
 }
 
@@ -991,7 +991,7 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 			if (isStale()) return;
 
 			if (res.status !== "ok") {
-				console.error("❌ joinGameFromChat failed:", res);
+				// console.error("❌ joinGameFromChat failed:", res);
 				showToast(res.reason || "❌ Failed to join the game.", "block");
 				acceptBtn.disabled = false;
 				declineBtn.disabled = false;
@@ -1008,7 +1008,7 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 			// 3) Go to game room
 			router.navigateTo(`/game-room/${encodeURIComponent(gameId)}`);
 		} catch (err) {
-			console.error("❌ joinGameFromChat error:", err);
+			// console.error("❌ joinGameFromChat error:", err);
 			showToast("❌ Failed to join the game.", "block");
 			acceptBtn.disabled = false;
 			declineBtn.disabled = false;
@@ -1052,7 +1052,7 @@ function bindInviteActionButtons(friendId: string, gameId: string, ctx: AppConte
 				renderChatBox(_selectedFriend, ctx, selectVersion);
 			}
 		} catch (err) {
-			console.error("❌ declineGameFromChat error:", err);
+			// console.error("❌ declineGameFromChat error:", err);
 			showToast("❌ Failed to decline invite.", "block");
 			declineBtn.disabled = false;
 			acceptBtn.disabled = false;
@@ -1080,7 +1080,7 @@ async function syncPendingInviteFromBackend(friendId: string): Promise<string | 
 
 		return gameId;
 	} catch (err) {
-		console.error("❌ syncPendingInviteFromBackend error:", err);
+		// console.error("❌ syncPendingInviteFromBackend error:", err);
 		return cached;
 	}
 }
@@ -1093,7 +1093,7 @@ async function syncGoToGameFromBackend(friendId: string): Promise<string | null>
 		const gameId = (res.gameId && res.gameId.trim() !== "") ? res.gameId : null;
 		return gameId;
 	} catch (err) {
-		console.error("❌ syncGoToGameFromBackend error:", err);
+		// console.error("❌ syncGoToGameFromBackend error:", err);
 		return null;
 	}
 }
@@ -1195,7 +1195,7 @@ async function verifyStillFriend(friendId: string, friendListComponent: any, ctx
 			patchChatHeader(fresh);
 		}
 	} catch (err) {
-		console.error("verifyStillFriend failed:", err);
+		// console.error("verifyStillFriend failed:", err);
 	}
 }
 

@@ -20,11 +20,11 @@ export class GameConnection {
 			}
 
 			this.ws!.onerror = (error) => {
-				console.error('❌ WebSocket error:', error);
+				// console.error('❌ WebSocket error:', error);
 			}
 
 			this.ws!.onclose = () => {
-				// // console.log('🎮 Disconnected from game');
+				// console.log('🎮 Disconnected from game');
 			}
 
 			this.ws!.onmessage = (event) => {

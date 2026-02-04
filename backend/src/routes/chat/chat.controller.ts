@@ -186,7 +186,7 @@ async function getFriendsWithNewMessagesHandler(request: FastifyRequest, reply: 
 
 		return reply.code(200).send(unreadFriendIds);
 	} catch (error: any) {
-		console.error("Error fetching unread friends:", error);
+		// console.error("Error fetching unread friends:", error);
 		return reply.status(500).send({ message: "Failed to get unread friends" });
 	}
 }
@@ -204,7 +204,7 @@ async function createNotificationHandler(request: FastifyRequest<{ Body: { sende
 
 		return reply.status(200).send({ status: "ok" });
 	} catch (err) {
-		console.error("❌ Failed to create notification:", err);
+		// console.error("❌ Failed to create notification:", err);
 		return reply.status(500).send({ status: "error", reason: "Internal error" });
 	}
 }
@@ -232,7 +232,7 @@ async function deleteNotificationHandler(request: FastifyRequest<{ Body: { sende
 
 		return reply.status(200).send({ status: "ok" });
 	} catch (err) {
-		console.error("❌ Failed to delete notification:", err);
+		// console.error("❌ Failed to delete notification:", err);
 		return reply.status(500).send({
 			status: "error",
 			reason: "Internal server error",
@@ -327,7 +327,7 @@ async function joinGameFromChatHandler(request: FastifyRequest<{ Body: JoinGameF
 
 		return reply.code(200).send({ status: "ok" });
 	} catch (error: any) {
-		console.error("❌ joinGameFromChatHandler error:", error);
+		// console.error("❌ joinGameFromChatHandler error:", error);
 		return reply.status(500).send({
 			status: "error",
 			reason: "Internal server error",
@@ -382,7 +382,7 @@ async function getPendingInviteHandler( request: FastifyRequest<{ Params: { frie
 
 		return reply.code(200).send({ status: "ok", gameId: game.id });
 	} catch (err) {
-		console.error("getPendingInviteHandler error:", err);
+		// console.error("getPendingInviteHandler error:", err);
 			return reply.status(500).send({
 				status: "error",
 				reason: "Internal server error",
@@ -418,7 +418,7 @@ async function getGoToGameHandler(request: FastifyRequest<{ Params: { friendId: 
 
 		return reply.code(200).send({ status: "ok", gameId });
 	} catch (err) {
-		console.error("getGoToGameHandler error:", err);
+		// console.error("getGoToGameHandler error:", err);
 		return reply.status(500).send({
 			status: "error",
 			reason: "Internal server error",
@@ -488,7 +488,7 @@ async function declineGameFromChatHandler(request: FastifyRequest<{ Body: Declin
 
 		return reply.code(200).send({ status: "ok" });
 	} catch (error: any) {
-		console.error("❌ declineGameFromChatHandler error:", error);
+		// console.error("❌ declineGameFromChatHandler error:", error);
 		return reply.status(500).send({
 			status: "error",
 			reason: "Internal server error",

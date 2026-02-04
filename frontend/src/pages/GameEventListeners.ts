@@ -135,7 +135,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	// **** WON GAME ****
 	document.addEventListener('event-won-game', async (e: Event) => {
 		if (!currentGame.gameUsers || currentGame.gameUsers.length < 2) {
-    		console.error('❌ Missing game users data');
+    		// console.error('❌ Missing game users data');
 			return;
 		}
 
@@ -175,7 +175,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 	// **** ADANDONNED GAME ****
 	document.addEventListener('event-abandoned-game', async (e: Event) => {
 		if (!currentGame.gameUsers || currentGame.gameUsers.length < 2) {
-    		console.error('❌ Missing game users data');
+    		// console.error('❌ Missing game users data');
 			return;
 		}
 

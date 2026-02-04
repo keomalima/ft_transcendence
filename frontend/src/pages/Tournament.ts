@@ -141,7 +141,7 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 		tournamentGameComponent.tournamentGamesData = tournamentGames;
 		tournamentGameComponent.tournamentData = tournament;
 	} else {
-		console.error('❌ Tournament games component not found!');
+		// console.error('❌ Tournament games component not found!');
 	}
 
 	const tournamentNextGameComponent = document.getElementById('tournament-next-game-component') as any
@@ -150,7 +150,7 @@ function passContext(ctx: AppContext, tournamentGames: TournamentGame[] | null, 
 		tournamentNextGameComponent.tournamentGamesData = tournamentGames;
 		tournamentNextGameComponent.tournamentData = tournament;
 	} else {
-		console.error('❌ Tournament games component not found!');
+		// console.error('❌ Tournament games component not found!');
 	}
 }
 

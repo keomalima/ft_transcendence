@@ -9,7 +9,7 @@ const httpCall = axios.create({
 });
 
 function handleUnauthorized() {
-  console.warn('Session expired, redirecting to landing page');
+  // console.warn('Session expired, redirecting to landing page');
   localStorage.removeItem('userId');
   // Broadcast to other tabs and local app state.
   localStorage.setItem('session-cleared', Date.now().toString());
@@ -22,9 +22,8 @@ httpCall.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      handleUnauthorized();
-
-      return Promise.reject(error);
+    	handleUnauthorized();
+    	return Promise.reject(error);
     }
 
     return Promise.reject(error);

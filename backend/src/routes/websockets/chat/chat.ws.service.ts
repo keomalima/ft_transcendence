@@ -48,7 +48,7 @@ export async function sendMessageToUser(prisma: PrismaClient, receiverId: string
 					});
 				}
 			} catch (err) {
-				console.error(`❌ Failed to create notification for ${receiverId}:`, err);
+				// console.error(`❌ Failed to create notification for ${receiverId}:`, err);
 			}
 		}
 
@@ -58,6 +58,6 @@ export async function sendMessageToUser(prisma: PrismaClient, receiverId: string
 	try {
 		connection.send(JSON.stringify(payload));
 	} catch (err) {
-		console.error(`❌ Failed to send message to user ${receiverId}:`, err);
+		// console.error(`❌ Failed to send message to user ${receiverId}:`, err);
 	}
 }

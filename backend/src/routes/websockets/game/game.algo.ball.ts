@@ -162,7 +162,7 @@ function calculateScored(gameSession: GameSession, config: GameConfig, ball: Gam
 		if (wonGame(gameSession, config))
 			return;
 
-		// // console.log(`💥 BALL OUT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
+		// console.log(`💥 BALL OUT LEFT : ballX=${ball.x} | ballY=${ball.y}`)
 		service(gameSession);
 		return;
 	}
@@ -177,7 +177,7 @@ function calculateScored(gameSession: GameSession, config: GameConfig, ball: Gam
 		if (wonGame(gameSession, config))
 			return;
 			
-		// // console.log(`💥 BALL OUT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
+		// console.log(`💥 BALL OUT RIGHT : ballX=${ball.x} | ballY=${ball.y}`)
 		service(gameSession);
 		return;
 	}

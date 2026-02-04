@@ -152,7 +152,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 							await gameWsNotification.notifyFinishingGame(gameSession, "ABANDONED", looserId);
 							// console.log(`✅ Game ${gameId} marked as ABANDONED in database`);
 						} catch (error) {
-							console.error(`❌ Failed to abandon game ${gameId}:`, error);
+							// console.error(`❌ Failed to abandon game ${gameId}:`, error);
 						}
 						// Clean up the session
 						cleanupGameSession(gameId, currentSession);

@@ -166,7 +166,7 @@ async function joinTournamentHandler (request: FastifyRequest<{ Params: { token:
 
 		return createdPlayer;
 	} catch (error: any) {
-		console.error(error);
+		// console.error(error);
 		reply.code(500).send({ message: "Failed to join tournament"});
 	}
 }

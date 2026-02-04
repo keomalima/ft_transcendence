@@ -14,12 +14,12 @@ let wsConnection: WaitingRoomConnection | null = null;
 export function GameRoom(ctx: AppContext, params?: Record<string, string>): string{
 	// get user data from store
 	const currentUser = ctx.userStore.get();
-	//// console.log('Game store = ', ctx.gameStore.get());
+	// console.log('Game store = ', ctx.gameStore.get());
 
 	// secure if no user
 	if (!currentUser?.id)
 	{
-		//// console.log('No active session when accessing game')
+		// console.log('No active session when accessing game')
 		setTimeout(() => router.navigateTo('/'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -27,7 +27,7 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		//// console.log('No game id is provided')
+		// console.log('No game id is provided')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -37,11 +37,11 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		cleanWaitingRoomWS();
 		let gameData = await getGameData(params['id'], ctx);
 		const userGame = await gameService.getCurrentGame(ctx);
-		//// console.log('fail');
-		//// console.log(gameData);
+		// console.log('fail');
+		// console.log(gameData);
 		// secure if the game is not valid 
 		if (!gameData) {
-			//// console.log('This game is not valid')
+			// console.log('This game is not valid')
 			setTimeout(() => router.navigateTo('/home'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
@@ -54,11 +54,11 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 		// secure if the game is not PENDING
 		if (gameData.status !== "PENDING") {
 			if (gameData.status === 'IN_PROGRESS') {
-				//// console.log('The game has already started')
+				// console.log('The game has already started')
 				setTimeout(() => router.navigateTo(`/game/${params['id']}`), 0);
 				return '<div class="flex items-center justify-center h-screen"><p>Redirecting to game...</p></div>';
 			} else {
-				//// console.log('This game is not pending')
+				// console.log('This game is not pending')
 				setTimeout(() => router.navigateTo('/home'), 0);
 				return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 			}
@@ -141,7 +141,7 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData,
 	wsConnection.connect(gameData.id!, currentUser.id!,
 		async (updateGameData) => {
 			if (updateGameData.message) {
-				//// console.log('🔔', updateGameData);
+				// console.log('🔔', updateGameData);
 				const newGameData = await getGameData(gameData.id!, ctx);
 				if (newGameData)
 					gameData = newGameData;
@@ -157,7 +157,7 @@ async function setGameRoomWebSockets(currentUser: UserState, gameData: GameData,
 			router.navigateTo('/home');
 		},
 		() => {
-			//// console.log('🎮 Game starting - navigating to game page');
+			// console.log('🎮 Game starting - navigating to game page');
 			cleanWaitingRoomWS();
 			// Small delay to ensure WebSocket cleanup completes
 			setTimeout(() => {
@@ -181,7 +181,7 @@ async function getGameData(id: string, ctx: AppContext): Promise<GameData | null
 		const gameData: GameData | null = await gameService.getGame(id, ctx);
 		return gameData;
 	} catch(error) {
-		//// console.log(error);
+		// console.log(error);
 		return null;
 	}
 }
@@ -217,7 +217,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
 	generateBtn?.addEventListener('click', async (e) => {
 		e.preventDefault();
-		// // console.log('click, is generated = ', isGenerated);
+		// console.log('click, is generated = ', isGenerated);
 		try {
 			let result = null;
 			if (isGenerated == false) {
@@ -236,7 +236,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
 			errorMsgGenerateToken.className = 'mt-2 text-red-500'
 			errorMsgGenerateToken.innerText = error as string;
-			//// console.log(error);
+			// console.log(error);
 		}
 	});
 
@@ -253,7 +253,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
 			errorMsgGenerateToken.className = 'mt-2 text-red-500'
 			errorMsgGenerateToken.innerText = error as string;
-			//// console.log(error);
+			// console.log(error);
 		}
 	});
 
@@ -272,7 +272,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
 			errorMsgStartGame.className = 'mt-2 text-red-500'
 			errorMsgStartGame.innerText = error as string;
-			//// console.log(error);
+			// console.log(error);
 		}
 	})
 
@@ -288,7 +288,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			isGenerated = false;
 			router.navigateTo('/home');
 		} catch (error) {
-			//// console.log(error);
+			// console.log(error);
 		}
 	})
 
@@ -299,7 +299,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 		const gameId = customEvent.detail.gameId;
 		const playerId = customEvent.detail.playerId;
 
-		//// console.log('Removing player with ID:', playerId);
+		// console.log('Removing player with ID:', playerId);
 		if (!gameId || !playerId)
 			return;
 		try {
@@ -307,7 +307,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			const gameData = await getGameData(gameId, ctx);
 			updatePlayerList(gameData);
 		} catch (error) {
-			//// console.log(error);
+			// console.log(error);
 		}
 	})
 

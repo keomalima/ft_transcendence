@@ -515,7 +515,7 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 				const leftPlayer = currentGame.gameUsers.find(gu => gu.user?.id === ctx.userStore.get()?.id);
 				const rightPlayer = currentGame.gameUsers.find(gu => gu.user?.id !== ctx.userStore.get()?.id);
 				if (!leftPlayer || !rightPlayer) {
-					console.error('Could not determine left/right player');
+					// console.error('Could not determine left/right player');
 					return;
 				}
 				const winnerId: string = game.scoreL >= game.scoreR ? leftPlayer.user?.id! : rightPlayer.user?.id!;
@@ -572,7 +572,7 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 			const guestGamePlayer = currentGame.gameUsers.find(gu => gu.user?.id !== currentUserId);
 			
 			if (!currentUserGamePlayer || !guestGamePlayer) {
-				console.error('Failed to identify players');
+				// console.error('Failed to identify players');
 				return;
 			}
 			const winnerId: string = game.scoreL >= game.scoreR ? currentUserGamePlayer.user?.id! : guestGamePlayer.user?.id!;
@@ -595,7 +595,7 @@ function setupLocalGameEventListeners(ctx: AppContext, game: LocalGameData, game
 			await gameService.finishGame(currentGame.id!, data, ctx);
 			// console.log('✅ Game finished successfully');
 		} catch (error) {
-			console.error('Failed to finish game:', error);
+			// console.error('Failed to finish game:', error);
 		}
 	});
 

@@ -369,7 +369,7 @@ async function completeTournament(prisma: PrismaClient, tournamentId: string, ga
 		}
 	})
 
-	//console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
+	// console.log(`🎉 Tournament ${tournamentId} completed! Winner: ${winner.userId}`);
 
 	const completeGame = await getCompleteGameData(prisma, gameId);
 	TournamentWsController.broadcastToRoom(tournamentId, {

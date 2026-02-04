@@ -370,7 +370,7 @@ async function deleteOldAvatar(userId: string, prisma: any): Promise<void> {
         const filePath = path.join(__dirname, '../../..', user.avatarUrl);
         await fs.unlink(filePath);
     } catch (error) {
-        console.warn(`Failed to delete old avatar: ${user.avatarUrl}`, error);
+        // console.warn(`Failed to delete old avatar: ${user.avatarUrl}`, error);
     }
 }
 

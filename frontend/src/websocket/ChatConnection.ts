@@ -34,16 +34,16 @@ export class ChatConnection {
 						break;
 
 					default:
-						console.warn("[Chat WS] Unknown WS message:", data);
+						// console.warn("[Chat WS] Unknown WS message:", data);
 				}
 			} catch (err) {
-				console.error("[Chat WS] ❌ Failed to parse WS message:", event.data, err);
+				// console.error("[Chat WS] ❌ Failed to parse WS message:", event.data, err);
 			}
 		};
 
 
 		this.ws.onerror = (err) => {
-			console.error('[Chat WS] ❌ WebSocket error:', err);
+			// console.error('[Chat WS] ❌ WebSocket error:', err);
 		};
 
 		this.ws.onclose = () => {
@@ -55,7 +55,7 @@ export class ChatConnection {
 		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
 			this.ws.send(JSON.stringify(message));
 		} else {
-			console.warn('[Chat WS] ❌ Cannot send, socket not open');
+			// console.warn('[Chat WS] ❌ Cannot send, socket not open');
 		}
 	}
 
