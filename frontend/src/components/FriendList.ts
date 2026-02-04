@@ -1,6 +1,6 @@
 import { friendshipApi } from "../api/friendshipApi.js";
 import { AppContext } from "../types.js";
-import type { FriendData } from "../types.js";
+import type { FriendData, RequestData } from "../types.js";
 import { unreadNotificationSet } from "../pages/LiveChat.js";
 import { API_BASE_URL } from "../config.js";
 
@@ -29,6 +29,25 @@ export class FriendList extends HTMLElement {
 		if (this._ctx && !this._isLoading) {
 			await this.loadAndRender();
 		}
+	}
+
+	public addFriend(newRequest: { requestId: string, friend: any }): void {
+		if (!this._list) this._list = [];
+		
+		const friendToAdd = newRequest.friend;
+
+		const exists = this._list.some(req => req.id === friendToAdd.id);
+		if (exists) return;
+		
+		this._list.unshift(friendToAdd);
+		this.displayFriendCards();
+	}
+
+	public removeFriend(friendId: string): void {
+	    if (!this._list) return;
+	    
+	    this._list = this._list.filter(friend => friend.friendshipId !== friendId);
+	    this.displayFriendCards();
 	}
 
 	public async loadAndRender() {
@@ -96,6 +115,8 @@ export class FriendList extends HTMLElement {
 		const friendCards = this.querySelector('#friend-cards');
 		if (!friendCards)
 			return;
+
+		friendCards.innerHTML = '';
 
 		// Check if there are no friend
 		if (!this._list || this._list.length === 0) {

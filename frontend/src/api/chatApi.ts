@@ -42,8 +42,13 @@ export const chatApi = {
 		} catch (error: any) {
 			if (error.response?.data?.status === "error") {
 				return error.response.data as SendMessageError;
+			} else if (error.response?.data.statusCode === 400 && error.response?.data.message) {
+				return {
+					status: "error",
+					reason: error.response.data.message,
+					code: "MSG_TOO_LONG"
+				} as SendMessageError
 			}
-
 			return {
 				status: "error",
 				reason: "Unknown error",
