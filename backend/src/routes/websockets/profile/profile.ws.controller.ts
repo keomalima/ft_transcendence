@@ -14,24 +14,24 @@ async function dashboardHandler(socket: WebSocket, request: FastifyRequest<{Para
 	dashboardConnections.set(userId, socket);
 
 	const pingInterval = setInterval(() => {
-	if (socket.readyState === WebSocket.OPEN) {
-		socket.ping();
-	}
-	}, 30000);
+		if (socket.readyState === WebSocket.OPEN) {
+			socket.ping();
+		}
+		}, 30000);
 
-	socket.on('close', () => {
-	clearInterval(pingInterval);
-	dashboardConnections.delete(userId);
+		socket.on('close', () => {
+		clearInterval(pingInterval);
+		dashboardConnections.delete(userId);
 	});
 }
 
 // Broadcast to specific user
-function notifyUser(user: {requesterId: string, userId: string, avatarUrl: string , displayName: string, isOnline: boolean}, message: any) {
-	const socket = dashboardConnections.get(user.requesterId);
+function notifyUser(recipientId: string, message: string, data: any) {
+	const socket = dashboardConnections.get(recipientId);
 	if (socket?.readyState === WebSocket.OPEN) {
 		socket.send(JSON.stringify({
 			type: message,
-			data: user
+			data
 		}));
 	}
 }

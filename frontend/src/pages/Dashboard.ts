@@ -331,27 +331,6 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			// console.log(error);
 		}
 	})
-
-	// **** Show msg for block/unblock at left-up corner ***
-	function showToast(message: string, type: 'block' | 'unblock') {
-		const toast = document.createElement('div');
-		toast.textContent = message;
-
-		toast.className = `
-			fixed top-4 left-4 z-50
-			min-w-[200px] text-center
-			px-4 py-2 rounded shadow-lg
-			text-white font-medium
-			${type === 'block' ? 'bg-red-600' : 'bg-green-600'}
-		`;
-
-		document.body.appendChild(toast);
-
-		setTimeout(() => {
-			toast.remove();
-		}, 2000);
-	}
-
 }
 
 // ======== SET WEBSOCKET CONNECTION ============
@@ -364,8 +343,12 @@ async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
 	wsConnection.connect(
 		currentUser.id!,
 		(friendshipRequest) => {
-			console.log(friendshipRequest);
-			//updatePlayerList();
+			requestsComponent.addRequest(friendshipRequest.data);
+
+			showToast(
+                `New friend request from ${friendshipRequest.data.friend.displayName}`,
+                'request'
+            );
 		},
 		(friendshipData) => {
 			cleanDashboardWS();
@@ -380,4 +363,50 @@ export function cleanDashboardWS() {
 		wsConnection.disconnect();
 		wsConnection = null;
 	}
+}
+
+// ======== Helper Functions ========
+function showToast(message: string, type: 'block' | 'unblock' | 'request') {
+	const toast = document.createElement('div');
+
+	let bgColor = 'bg-black';
+	if (type === 'block') bgColor = 'bg-red-500';
+	if (type === 'unblock') bgColor = 'bg-green-500';
+
+	toast.textContent = message;
+
+	toast.className = `
+		fixed top-6 right-6 z-[9999]
+		min-w-[280px] max-w-[400px]
+		px-5 py-4
+		${bgColor} text-white
+		rounded-lg 
+		shadow-[0_8px_30px_rgb(0,0,0,0.12)]
+		border border-white/20
+		font-[Inter] text-sm font-medium
+		backdrop-blur-sm
+	`;
+
+	// Simple fade + slide animation
+	toast.style.cssText += `
+		transform: translateX(400px);
+		opacity: 0;
+		transition: all 0.3s ease-out;
+	`;
+
+	document.body.appendChild(toast);
+
+	setTimeout(() => {
+		toast.style.transform = 'translateX(0)';
+		toast.style.opacity = '1';
+	}, 10);
+
+	setTimeout(() => {
+		toast.style.transform = 'translateX(400px)';
+		toast.style.opacity = '0';
+	}, 2700);
+
+	setTimeout(() => {
+		toast.remove();
+	}, 3000);
 }

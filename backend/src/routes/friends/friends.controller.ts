@@ -122,13 +122,21 @@ async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequest
 		const friendship = await friendsService.sendRequest(request.server.prisma, 
             requester.id,
             addresseeUser.id)
-		DashboardWsController.notifyUser({
-			requesterId: addresseeUser.id,
-			userId: requester.id,
-			avatarUrl: requester.avatarUrl ?? "", 
-			displayName: requester.displayName, 
-			isOnline: addresseeUser.isOnline}, 
-			'friendship-request');
+
+		DashboardWsController.notifyUser(
+			addresseeUser.id,                    
+			'friendship-request',
+			{   
+				requestId: friendship.id,
+				friend: {
+					id: requester.id,
+					displayName: requester.displayName,
+					avatarUrl: requester.avatarUrl ?? "",
+					isOnline: isFriendOnline(requester.lastSeenAt)
+				}
+			}
+		);
+
 		return reply.code(201).send(friendship);
 	} catch (error: any) {
 		console.log(error);

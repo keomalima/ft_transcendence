@@ -29,6 +29,22 @@ export class FriendRequests extends HTMLElement {
 		}
 	}
 
+	public addRequest(newRequest: { requestId: string, friend: any }): void {
+		if (!this._list) this._list = [];
+		
+		const mappedRequest: Partial<RequestData> = {
+			id: newRequest.requestId,
+			createdAt: null,
+			friend: newRequest.friend
+		};
+
+		const exists = this._list.some(req => req.id === mappedRequest.id);
+		if (exists) return;
+		
+		this._list.unshift(mappedRequest);
+		this.displayFriendCards();
+	}
+
 	public async loadAndRender() {
 		if (this._isLoading) return;
 		this._isLoading = true;
@@ -65,6 +81,7 @@ export class FriendRequests extends HTMLElement {
 	private async getRequests(): Promise<void> {
 		try {
 			this._list = await friendshipApi.getRequests();
+			console.log(this._list);
 		} catch(error) {
 			// console.log(error);
 		}
@@ -73,6 +90,8 @@ export class FriendRequests extends HTMLElement {
 	private displayFriendCards(): void {
 		const requestsCards = document.getElementById('requests-list');
 		if (!requestsCards) return;
+
+		requestsCards.innerHTML = '';
 
 		 // Check if there are no requests
 		if (!this._list || this._list.length === 0) {
