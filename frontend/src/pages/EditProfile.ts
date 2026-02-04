@@ -79,7 +79,7 @@ export function EditProfile(ctx: AppContext) : string {
 					</div>
 					<p id='update-personnal-info-error' class='pt-5 text-red-500 text-sm'></p>
 					<div class="mt-8 flex">
-						<button type="submit" class="${BUTTON_CREAM_CLASSES}">Save</button>
+						<button type="submit" class="${BUTTON_BLACK_CLASSES}">Save personnal informations</button>
 					</div>
 				</form>
 			</div>
@@ -111,7 +111,7 @@ export function EditProfile(ctx: AppContext) : string {
 
 				<p id='change-password-msg' class='pt-5 text-red-500 text-sm'></p>
 				<div class="mt-8 flex">
-					<button type="submit" class="${BUTTON_CREAM_CLASSES}">Save</button>
+					<button type="submit" class="${BUTTON_BLACK_CLASSES}">Save password</button>
 				</div>
 			</form>
 			</div>
@@ -125,7 +125,7 @@ export function EditProfile(ctx: AppContext) : string {
 			</div>
 
 			<form class="flex flex-col items-start md:col-span-2">
-				<button id="delete" type="click" class="${BUTTON_BLACK_CLASSES} mb-5">Yes, delete my account</button>
+				<button id="delete" type="click" class="px-3.5 py-2.5 rounded-full outline outline-1 text-red-500 outline-red-500 hover:bg-red-500 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2">Yes, delete my account</button>
 				<p id="delete-account-error" class="text-red-500 text-sm"></p>
 			</form>
 			</div>
