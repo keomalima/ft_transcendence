@@ -29,6 +29,22 @@ export class FriendRequests extends HTMLElement {
 		}
 	}
 
+	public addRequest(newRequest: { requestId: string, friend: any }): void {
+		if (!this._list) this._list = [];
+		
+		const mappedRequest: Partial<RequestData> = {
+			id: newRequest.requestId,
+			createdAt: null,
+			friend: newRequest.friend
+		};
+
+		const exists = this._list.some(req => req.id === mappedRequest.id);
+		if (exists) return;
+		
+		this._list.unshift(mappedRequest);
+		this.displayFriendCards();
+	}
+
 	public async loadAndRender() {
 		if (this._isLoading) return;
 		this._isLoading = true;
@@ -49,7 +65,7 @@ export class FriendRequests extends HTMLElement {
 			</div>
 
 			<!-- Confirmation Dialog -->
-			<dialog id="reject-friend-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+			<dialog id="reject-friend-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
 					<h2 class="text-xl font-semibold">Reject request</h2>
 					<p id="reject-friend-message" class="text-gray-600">Are you sure you want to reject this friendship request?</p>
@@ -73,6 +89,8 @@ export class FriendRequests extends HTMLElement {
 	private displayFriendCards(): void {
 		const requestsCards = document.getElementById('requests-list');
 		if (!requestsCards) return;
+
+		requestsCards.innerHTML = '';
 
 		 // Check if there are no requests
 		if (!this._list || this._list.length === 0) {

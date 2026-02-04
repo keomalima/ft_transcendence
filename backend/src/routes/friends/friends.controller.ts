@@ -3,6 +3,7 @@ import type { FriendsRequestInput } from './friends.schema.js';
 import { friendsService } from './friends.service.js'
 import { gameService } from '../game/game.service.js';
 import type { User } from '@prisma/client';
+import { DashboardWsController } from '../websockets/profile/profile.ws.controller.js';
 
 // =====================
 // Friends CRUD Handlers
@@ -97,7 +98,7 @@ async function getFriendHistoryHandler(request: FastifyRequest<{Params: {id: str
 async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequestInput }>, reply: FastifyReply) {
 	try {
 		const { addresseeDisplayName } = request.body
-		const requesterId = request.user!.id;
+		const requester = request.user!;
 
 		const addresseeUser = await friendsService.findUserByDisplayName(request.server.prisma, addresseeDisplayName)
 		if (!addresseeUser) {
@@ -106,23 +107,39 @@ async function sendRequestHandler(request: FastifyRequest<{ Body: FriendsRequest
 			});
 		}
 
-		if (addresseeUser.id === requesterId) {
+		if (addresseeUser.id === requester.id) {
 			return reply.code(400).send({
                 message: "Cannot send friend request to yourself"
             });
 		}
 
-		const existingFriendship = await friendsService.findFriendshipRequest(request.server.prisma, addresseeUser.id, requesterId);
+		const existingFriendship = await friendsService.findFriendshipRequest(request.server.prisma, addresseeUser.id, requester.id);
 		if (existingFriendship) {
 			return reply.code(409).send({
 				message: "Friendship request already exists"
 			});
 		}
 		const friendship = await friendsService.sendRequest(request.server.prisma, 
-            requesterId,
+            requester.id,
             addresseeUser.id)
+
+		DashboardWsController.notifyUser(
+			addresseeUser.id,                    
+			'friendship-request',
+			{   
+				requestId: friendship.id,
+				friend: {
+					id: requester.id,
+					displayName: requester.displayName,
+					avatarUrl: requester.avatarUrl ?? "",
+					isOnline: isFriendOnline(requester.lastSeenAt)
+				}
+			}
+		);
+
 		return reply.code(201).send(friendship);
 	} catch (error: any) {
+		console.log(error);
 		reply.code(500).send({ message: "Failed to send friendship request"});
 	}
 }
@@ -151,6 +168,22 @@ async function acceptFriendHandler(request: FastifyRequest<{Params: {id: string}
                 message: "Friendship request is not pending"
             });
 		}
+
+		DashboardWsController.notifyUser(
+		    friendship.requesterId,                    
+		    'friendship-accept',
+		    {   
+		        requestId: friendship.id,
+		        friend: {
+		            id: friendship.addresseeId,
+					friendshipId: friendship.id,
+		            displayName: friendship.addressee.displayName,
+		            avatarUrl: friendship.addressee.avatarUrl ?? "",
+		            isOnline: isFriendOnline(friendship.addressee.lastSeenAt)
+		        }
+		    }
+		);
+
 		return await friendsService.acceptRequest(request.server.prisma, requestId)
 	} catch (error: any) {
 		reply.code(500).send({ message: "Failed to accept friendship request"});
@@ -217,6 +250,7 @@ async function getPendingRequestsHandler(request: FastifyRequest, reply: Fastify
 
 async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
 	try {
+		const userId = request.user!.id;
 		const requestId = request.params.id;
 		if (!requestId) {
 			return reply.code(400).send({
@@ -247,6 +281,15 @@ async function deleteFriendHandler(request: FastifyRequest<{Params: {id: string}
 				message: "Friendship does not exist"
 			});
 		}
+
+		const otherId = friendship.addresseeId === userId ? friendship.requesterId : friendship.addresseeId;
+		DashboardWsController.notifyUser(
+		    otherId,                    
+		    'friendship-delete',
+		    {   
+				friendshipId: friendship.id,
+		    }
+		);
 
 		return reply.code(204).send();
 

@@ -9,6 +9,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
+import sharp from 'sharp';
 
 // =====================
 // Type Declarations
@@ -188,6 +189,10 @@ async function createUserHandler (request: FastifyRequest<{ Body: CreateUserInpu
             if (fileBuffer && fileBuffer.length > 0) {
                 avatarUrl = await saveAvatarFile(avatarFile, fileBuffer);
             }
+			const validation = await validateImage(fileBuffer);
+			if (!validation.valid) {
+				return reply.code(400).send({ message: validation.error });
+			}
         }
 
 		const newUser = await userService.createUser(request.server.prisma, {
@@ -275,6 +280,11 @@ async function uploadAvatarHandler(request: FastifyRequest<{Body: UploadInput}>,
             });
         }
 
+		const validation = await validateImage(fileBuffer);
+		if (!validation.valid) {
+			return reply.code(400).send({ message: validation.error });
+		}
+
         await deleteOldAvatar(userId, request.server.prisma);
 
         const avatarUrl = await saveAvatarFile(avatarFile, fileBuffer);
@@ -316,6 +326,28 @@ async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: {
 // =====================
 // Helper Functions
 // =====================
+
+async function validateImage(buffer: Buffer): Promise<{ valid: boolean; error?: string }> {
+    try {
+        const metadata = await sharp(buffer).metadata();
+        const allowedFormats = ['jpeg', 'jpg', 'png', 'webp'];
+        if (!metadata.format || !allowedFormats.includes(metadata.format)) {
+            return { valid: false, error: `Invalid image format: ${metadata.format}` };
+        }
+        
+        if (!metadata.width || !metadata.height) {
+            return { valid: false, error: 'Could not determine image dimensions' };
+        }
+        
+        if (metadata.width > 4096 || metadata.height > 4096) {
+            return { valid: false, error: 'Image dimensions too large' };
+        }
+        
+        return { valid: true };
+    } catch (error: any) {
+        return { valid: false, error: 'Invalid or corrupted image file' };
+    }
+}
 
 async function updateLastSeen(request: FastifyRequest, reply: FastifyReply) {
 	try {
