@@ -45,7 +45,8 @@ export function EditProfile(ctx: AppContext) : string {
 						<div>
 							<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
 							<label id='change-avatar-label' for="avatar-input" class='${BUTTON_CREAM_CLASSES}'>Change avatar</label>
-							<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
+							<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 10MB max.</p>
+							<p id='avatar-info-error' class='pt-3 text-sm'></p>
 						</div>
 					</div>
 				</div>
@@ -172,6 +173,7 @@ function setupEditEventListeners(ctx: AppContext) {
 		// store selected avatar
 		selectedAvatarFile = file;
 
+		const errorMsg = document.getElementById('avatar-info-error') as HTMLParagraphElement;
 		try {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Loading ...';
@@ -184,8 +186,18 @@ function setupEditEventListeners(ctx: AppContext) {
 			const img = document.getElementById('avatar-preview') as HTMLImageElement;
 			if (img)
 				img.src = imgBase64;
-		} catch(error) {
-			//// console.log(error);
+			errorMsg.innerText = 'Avatar updated successfully';
+			errorMsg.style.color = '#22c55e';
+			setTimeout(() => {
+				errorMsg.innerText = '';
+			}, 3000);
+		} catch(error: any) {
+			const errorMessage = error?.message || error || 'Failed to upload avatar';
+			errorMsg.innerText = `Error: ${errorMessage}`;
+			errorMsg.style.color = '#ef4444';
+			setTimeout(() => {
+				errorMsg.innerText = '';
+			}, 3000);
 		} finally {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Change avatar';
