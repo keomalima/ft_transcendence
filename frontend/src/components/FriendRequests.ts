@@ -65,7 +65,7 @@ export class FriendRequests extends HTMLElement {
 			</div>
 
 			<!-- Confirmation Dialog -->
-			<dialog id="reject-friend-dialog" class="rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
+			<dialog id="reject-friend-dialog" class="fixed inset-0 m-auto w-fit h-fit rounded-lg shadow-lg p-6 backdrop:bg-black backdrop:bg-opacity-50">
 				<div class="flex flex-col gap-4">
 					<h2 class="text-xl font-semibold">Reject request</h2>
 					<p id="reject-friend-message" class="text-gray-600">Are you sure you want to reject this friendship request?</p>
