@@ -249,8 +249,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 					await friendListComponent.loadAndRender();
 				}
 			}
-		} catch (error) {
-			// console.log('Error deleting friend:', error);
+		} catch (error: any) {
 		}
 	});
 
@@ -306,12 +305,21 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				if (errorMsg) {
 					errorMsg.className = 'text-green-500 text-sm mt-2';
 					errorMsg.innerText = `Friend request sent successfully to ${data.friendName}!`;
+					setTimeout(() => {
+				        errorMsg.innerText = '';
+				        errorMsg.className = '';
+				    }, 3000);
 				}
 			}
 		} catch (error) {
 			if (errorMsg) {
 				errorMsg.className = 'text-red-500';
 				errorMsg.innerText = error instanceof Error ? error.message : 'Failed to send friend request';
+
+				setTimeout(() => {
+			        errorMsg.innerText = '';
+			        errorMsg.className = '';
+			    }, 3000);
 			}
 			// console.log('Error send friendship request:', error);
 		}
@@ -337,7 +345,7 @@ function setupDashboardEventListeners(ctx: AppContext) {
 async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
 
 	const requestsComponent = document.getElementById('requests-component') as any;
-	
+	const friendListComponent = document.getElementById('friend-list-component') as any;
 	// Create websocket with gameid
 	wsConnection = new DashboardConnection();
 	wsConnection.connect(
@@ -350,10 +358,17 @@ async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
                 'request'
             );
 		},
-		(friendshipData) => {
-			cleanDashboardWS();
-			router.navigateTo('/home');
+		(friendshipRequest) => {
+			friendListComponent.addFriend(friendshipRequest.data);
+
+			showToast(
+			    `${friendshipRequest.data.friend.displayName} accepted your friend request!`,
+			    'request'
+			);
 		},
+		(friendshipRequest) => {
+			friendListComponent.removeFriend(friendshipRequest.data.friendshipId);
+		}
 	)
 }
 

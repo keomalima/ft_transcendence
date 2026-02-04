@@ -6,7 +6,8 @@ export class DashboardConnection {
 	connect(
 		userId: string,
 		onNewFriendRequest: (friendRequest: any) => void,
-		onAcceptFriend: (friend: any) => void
+		onAcceptFriend: (friend: any) => void,
+		onDeleteFriend: (friend: any) => void
 	){
 		const httpUrl = new URL(`/ws/dashboard/${userId}`, API_BASE_URL);
 		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -22,8 +23,11 @@ export class DashboardConnection {
 			if (data.type === 'friendship-request') {
 				onNewFriendRequest(data);
 			}
-			if (data.type === 'friendship-approved') {
+			if (data.type === 'friendship-accept') {
 				onAcceptFriend(data);
+			}
+			if (data.type === 'friendship-delete') {
+				onDeleteFriend(data);
 			}
 		}
 		

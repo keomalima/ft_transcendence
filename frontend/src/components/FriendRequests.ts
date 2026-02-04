@@ -81,7 +81,6 @@ export class FriendRequests extends HTMLElement {
 	private async getRequests(): Promise<void> {
 		try {
 			this._list = await friendshipApi.getRequests();
-			console.log(this._list);
 		} catch(error) {
 			// console.log(error);
 		}

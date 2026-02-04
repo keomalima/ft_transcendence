@@ -7,7 +7,17 @@ import type { FriendsRequestInput } from './friends.schema.js';
 
 async function findRequestById(prisma: PrismaClient, id: string) {
 	return prisma.friendship.findUnique({
-		where: {id}
+		where: {id},
+		include: {
+			addressee: {
+				select: {
+					displayName: true,
+					avatarUrl: true,
+					isOnline: true,
+					lastSeenAt: true
+				}
+			}
+		}
 	})
 }
 
