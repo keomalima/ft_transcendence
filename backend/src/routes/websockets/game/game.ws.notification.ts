@@ -3,6 +3,17 @@ import type { GameSession } from "./game.types.js";
 import { cleanupGameSession } from "./game.ws.controller.js";
 import { gameService } from '../../game/game.service.js';
 
+function notifyNumberOfPlayer(gameSession: GameSession): void {
+	gameSession.players.forEach((player) => {
+		if (player.socket.readyState === WebSocket.OPEN) {
+			player.socket.send(JSON.stringify({
+				type: 'number-of-players',
+				numberofplayer: gameSession.players.size
+			}));
+		}
+	})
+}
+
 function broadcastGameState(gameSession: GameSession): void {
 	const paddleA = gameSession.gameState.paddleA;
 	const paddleB = gameSession.gameState.paddleB;
@@ -183,6 +194,7 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 
 
 export const gameWsNotification = {
+	notifyNumberOfPlayer,
 	broadcastGameState,
 	notifyPlayerAlreadyInGame,
 	notifyGameStarted,

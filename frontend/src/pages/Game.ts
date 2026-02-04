@@ -60,20 +60,33 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		if (check !== null)
 			return check;
 
-		// 1. Set game sockets
-		setGameSockets(params['id'], currentUser.id!, currentGame.scoreToWin!.toString());
-		
 		// 2. Start listener for action up and down arrows
 		gameActionListener();
 		
 		// 3. Render the initial game
-		renderGameContent(params['id'], currentGame!);
+			// 3. Render the initial game
+			renderGameContent(params['id'], currentGame!);
 		
-		// 4. Set all the event listeners
-		setupGameEventListeners(currentUser, currentGame!, params['id'], ctx);
-		
-		// 5. Start game (show the start overlays)
-		startGame();
+			// 4. Set all the event listeners
+			setupGameEventListeners(currentUser, currentGame!, params['id'], ctx);
+
+			// 5. Now start the websocket connection (don't block rendering) and keep the promise
+			const playersPromise = setGameSockets(params['id'], currentUser.id!, currentGame.scoreToWin!.toString());
+
+			// When the server reports players count, update the waiting overlay if needed
+			playersPromise.then((playersInfo) => {
+				const playersCount = (playersInfo && typeof (playersInfo as any).numberOfPlayers === 'number') ? (playersInfo as any).numberOfPlayers : 1;
+				const waitingOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement | null;
+				if (waitingOverlay) {
+					if (playersCount >= 2) waitingOverlay.classList.add('hidden');
+					else waitingOverlay.classList.remove('hidden');
+				}
+			}).catch(() => {
+				// ignore — fallback behavior already in UI
+			});
+
+			// 6. Start game (show the start overlays)
+			startGame();
 
 		// Mark initialization as complete
 		isInitializing = false;
@@ -87,12 +100,14 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 }
 
 // ======== UPDDATE CONTENT ============
-function renderGameContent(gameId: string, currentGame: GameData) {
+function renderGameContent(gameId: string, currentGame: GameData, playersCount?: number) {
 	if (!currentGame) {
 		// console.log('❌ Missing current game');
 		return;
 	}
-	const showWaitingOverlay = currentGame.status === 'PENDING';
+	// Show waiting overlay when server reports less than 2 connected players.
+	// If we don't have server info, fall back to DB status (PENDING).
+	const showWaitingOverlay = typeof playersCount === 'number' ? (playersCount < 2) : (currentGame.status === 'PENDING');
 	const content = document.getElementById('game-content');
 	content!.innerHTML = 
 	/*html*/`
@@ -136,16 +151,6 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 				</div>
 			</div>
 
-			<!-- Countdown overlay -->
-			<div id="countdown-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-				<div class="bg-white rounded-lg shadow-2xl p-12 min-w-[400px]">
-					<div class="flex flex-col items-center justify-center gap-6">
-						<p class="text-3xl font-[Calistoga] font-bold text-gray-500 tracking-wide">Get Ready</p>
-						<p class="text-8xl font-[Calistoga] font-black text-black animate-pulse" id="countdown-number">3</p>
-					</div>
-				</div>
-			</div>
-
 			<!-- Player set pause overlay -->
 			<div id="player-set-pause-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 				<div class="bg-white rounded-lg shadow-2xl p-12 min-w-[400px]">
@@ -156,7 +161,6 @@ function renderGameContent(gameId: string, currentGame: GameData) {
 					</div>
 				</div>
 			</div>
-
 
 			<!-- Opponent set pause overlay -->
 			<div id="opponent-set-pause-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -236,13 +240,26 @@ async function userIsAuthorized(userId: string, ctx: AppContext): Promise<string
 	return null;
 }
 
-// ======== SET WEBSOCKET CONNECTION ============
+// ======== SET WEBSOCKET CONNECTION ==========
+// Returns the initial players info received from the server (or a sensible default)
 async function setGameSockets(gameId: string, userId: string, scoreToWin: string) {
 
 	// Create websocket
 	const gameConnection = new GameConnection();
-	gameConnection.connect(gameId, userId, scoreToWin);
-	setGameConnection(gameConnection);
+	// Connect and wait for initial players info (the promise resolves when server sends it)
+	try {
+		// race the server response with a short timeout to avoid hanging if server doesn't send initial info
+		const playersInfo = await Promise.race([
+			gameConnection.connect(gameId, userId, scoreToWin),
+			new Promise<any>((resolve) => setTimeout(() => resolve({ numberOfPlayers: 1 }), 1500))
+		]);
+		setGameConnection(gameConnection);
+		return playersInfo;
+	} catch (err) {
+		// If connect fails, still attach the connection object and return a safe default
+		setGameConnection(gameConnection);
+		return { numberOfPlayers: 1 };
+	}
 }
 
 // ======== CLEANUP WEBSOCKET CONNECTION ============

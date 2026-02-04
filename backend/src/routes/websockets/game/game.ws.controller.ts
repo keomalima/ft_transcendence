@@ -38,6 +38,8 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 
 	checkForReconnection(gameSession, userId, socket);
 
+	gameWsNotification.notifyNumberOfPlayer(gameSession);
+
 	socket.on('message', (data: Buffer) => {
 		const message = JSON.parse(data.toString());
 		if (message.type === 'input') {
