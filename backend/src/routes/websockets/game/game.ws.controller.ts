@@ -118,6 +118,10 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 			// console.log(`⏱️ Starting disconnect timeout for player ${userId}`);
 			
 			session.isPaused = true;
+			if (session.pauseTimer) {
+				clearTimeout(session.pauseTimer);
+				session.pauseTimer = null;
+			}
 			gameWsNotification.notifyPlayerDisconnected(session, userId);
 			
 			// Store disconnect timer for this specific player with start timestamp

@@ -3,7 +3,7 @@ import type { AppContext, GameData, UserState } from "../types.js";
 import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
-import { sharedGameState, setGameConnection, setIsFinishing } from "../game/sharedGameState.js";
+import { sharedGameState, setGameConnection } from "../game/sharedGameState.js";
 import { setupGameEventListeners } from "./GameEventListeners.js";
 
 // Guard to prevent double initialization
@@ -60,9 +60,6 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		if (check !== null)
 			return check;
 
-		// Reset game finishing flag for new game
-		setIsFinishing(false);
-		
 		// 1. Set game sockets
 		setGameSockets(params['id'], currentUser.id!, currentGame.scoreToWin!.toString());
 		
@@ -254,8 +251,6 @@ export function cleanGameWS() {
 		sharedGameState.gameConnection.disconnect();
 		setGameConnection(null);
 	}
-	// Reset the flag when cleaning up
-	sharedGameState.isFinishingGame = false;
 }
 
 // ======== GAME ACTION ============

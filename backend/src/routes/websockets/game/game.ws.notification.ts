@@ -65,19 +65,6 @@ function notifyGameStarted(gameSession: GameSession, gameId: string): void {
 	})
 }
 
-function notifyService(gameSession: GameSession): void {
-	gameSession.players.forEach((player) => {
-		if (player.socket.readyState === WebSocket.OPEN) {
-			player.socket.send(JSON.stringify({
-				type: 'service',
-				message: "Service countdown"
-			}));
-		} else {
-			// // console.log(`❌ Socket is NOT open. ReadyState: ${player.socket.readyState}`);
-		}
-	})
-}
-
 function notifyPlayerDisconnected(gameSession: GameSession, disconnectedUserId: string, timeoutSeconds: number = 30): void {
 	// console.log(`📢 Notifying remaining players that ${disconnectedUserId} disconnected`);
 	gameSession.players.forEach((player) => {
@@ -199,7 +186,6 @@ export const gameWsNotification = {
 	broadcastGameState,
 	notifyPlayerAlreadyInGame,
 	notifyGameStarted,
-	notifyService,
 	notifyPlayerDisconnected,
 	notifyPlayerReconnected,
 	notifyPause,

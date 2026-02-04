@@ -22,8 +22,6 @@ async function service(gameSession: GameSession) {
 	ball.x = config.arenawidth / 2;
 	ball.y = config.arenaheight / 2;
 
-	// gameWsNotification.notifyService(gameSession);
-
 	// Wait before serving
 	await sleep(2000);
 

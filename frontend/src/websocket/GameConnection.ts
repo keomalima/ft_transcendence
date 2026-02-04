@@ -42,13 +42,6 @@ export class GameConnection {
 					},
 					bubbles: true
 				}));
-			} if (data.type === 'service') {
-				document.dispatchEvent(new CustomEvent('event-service-countdown', {
-					detail: {
-						count: 3
-					},
-					bubbles: true
-				}));
 			} if (data.type === 'won-game') {
 				document.dispatchEvent(new CustomEvent('event-won-game', {
 					detail: {
