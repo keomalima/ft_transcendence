@@ -4,6 +4,7 @@ import { cleanLiveChatWS } from "./pages/LiveChat.js";
 import { cleanTournamentWaitingRoomWS } from "./pages/TournamentRoom.js";
 import { cleanWaitingRoomWS } from "./pages/GameRoom.js";
 import { cleantTournamentGlobalWs } from "./pages/Tournament.js";
+import { clearAllIntervals } from "./pages/GameEventListeners.js";
 import { cleanDashboardWS } from "./pages/Dashboard.js";
 
 
@@ -67,6 +68,7 @@ export class Router {
 			cleanWaitingRoomWS();
 		}
 		if (currentPath.startsWith('/game')) {
+			clearAllIntervals()
 			cleanGameWS();
 		}
 		if (currentPath.startsWith('/live-chat')) {

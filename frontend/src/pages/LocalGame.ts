@@ -258,10 +258,12 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 		game.ball.y = getGameValue.arenaHeight() / 2;
 		
 		// Set initial centered positions
-		paddleLeft.style.top = `${game.paddleL}px`;
-		paddleRight.style.top = `${game.paddleR}px`;
-		ball.style.left = `${game.ball.x}px`;
-		ball.style.top = `${game.ball.y}px`;
+		if (paddleLeft)	paddleLeft.style.top = `${game.paddleL}px`;
+		if (paddleRight) paddleRight.style.top = `${game.paddleR}px`;
+		if (ball) {
+			ball.style.left = `${game.ball.x}px`;
+			ball.style.top = `${game.ball.y}px`;
+		}
 		
 		// Start the game loop after initialization
 		calculateGame.service(game);
@@ -286,9 +288,11 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 		calculateGame.calculatePaddle(game, mapKeys);
 		calculateGame.calculateBall(game);
 
-		ball.style.left = `${game.ball.x}px`;
-		ball.style.top = `${game.ball.y}px`;
-
+		if (ball) {
+			ball.style.left = `${game.ball.x}px`;
+			ball.style.top = `${game.ball.y}px`;
+		}
+		
 		leftScore.innerText = game.scoreL.toString();
 		rightScore.innerText = game.scoreR.toString();
 

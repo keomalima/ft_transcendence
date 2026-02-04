@@ -14,7 +14,8 @@ function calculatePaddle(game: LocalGameData, mapKeys: MapKeys) {
 	if (game.paddleL < 0) game.paddleL = 0;
 	if (game.paddleL > getGameValue.bottomLimit()) game.paddleL = getGameValue.bottomLimit();
 
-	paddleLeft!.style.top = `${game.paddleL}px`;
+	if (paddleLeft) {paddleLeft.style.top = `${game.paddleL}px`;}
+	
 
 	// --- RIGHT PADDLE ---
 	if (mapKeys.up)   game.paddleR -= paddleSpeed;
@@ -23,7 +24,7 @@ function calculatePaddle(game: LocalGameData, mapKeys: MapKeys) {
 	if (game.paddleR < 0) game.paddleR = 0;
 	if (game.paddleR > getGameValue.bottomLimit()) game.paddleR = getGameValue.bottomLimit();
 
-	paddleRight!.style.top = `${game.paddleR}px`;
+	if (paddleRight) {paddleRight!.style.top = `${game.paddleR}px`;}
 }
 
 function calculateBall(game: LocalGameData) {
@@ -158,8 +159,11 @@ function initBall(game: LocalGameData) {
 	game.ball.y = getGameValue.arenaHeight() / 2;
 
 	const ball = document.getElementById('ball') as HTMLDivElement;
-	ball.style.left = `${game.ball.x}px`;
-	ball.style.top = `${game.ball.y}px`;
+	if (ball) {
+		ball.style.left = `${game.ball.x}px`;
+		ball.style.top = `${game.ball.y}px`;
+	}
+
 }
 
 function service(game: LocalGameData) {
