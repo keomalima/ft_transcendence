@@ -173,9 +173,15 @@ function setupHomeEventListeners(ctx: AppContext) {
 			}
 			return;
 		}
-		if (containDigit(firstName) || containDigit(lastName)) {
+		if (!isValidName(firstName) || !isValidName(lastName)) {
 			if (displayError) {
-				displayError.innerText = 'Error: First name and surname cannot contain digit.'
+				displayError.innerText = 'Error: First name and surname cannot contain digits, spaces or special characters.'
+			}
+			return;		
+		}
+		if (!isValidUsername(username)) {
+			if (displayError) {
+				displayError.innerText = 'Error: Username cannot contain spaces or special characters.'
 			}
 			return;		
 		}
@@ -236,4 +242,14 @@ export function containDigit(str: string): boolean {
 	const hasDigit = /[0-9]/.test(str);
 
 	return hasDigit;
+}
+
+export function isValidName(str: string): boolean {
+    const isValid = /^[a-zA-Z]+(-[a-zA-Z]+)*$/.test(str);
+    return isValid;
+}
+
+export function isValidUsername(str: string): boolean {
+    const isValid = /^[a-zA-Z0-9_-]+$/.test(str);
+    return isValid;
 }

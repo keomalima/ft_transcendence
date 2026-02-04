@@ -3,7 +3,7 @@ import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { API_BASE_URL } from "../config.js";
-import { containDigit } from "./Home.js";
+import { containDigit, isValidName, isValidUsername } from "./Home.js";
 
 // import style
 import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSES, BUTTON_DISABLED_CLASSES } from "../styles/tailwindStyles.js";
@@ -205,21 +205,29 @@ function setupEditEventListeners(ctx: AppContext) {
 		const newFisrtName = formData.get('first_name') as string;
 		const newLastName = formData.get('last_name') as string;
 		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
-		if (newDisplayName && newDisplayName.length > 20) {
+		if (newDisplayName) {
+			if (newDisplayName.length > 20) {
+				if (errorMsg) {
+					errorMsg.innerText = 'Error: New Display name is too long';
+					return;
+				}
+			}
+			if (!isValidUsername(newDisplayName)) {
+				if (errorMsg) {
+					errorMsg.innerText = 'Error: User name cannot contain spaces or special characters';
+					return;
+				}
+			}
+		}
+		if (newFisrtName && !isValidName(newFisrtName)) {
 			if (errorMsg) {
-				errorMsg.innerText = 'Error: New Display name is too long';
+				errorMsg.innerText = 'Error: First name cannot contain digits, spaces or special characters';
 				return;
 			}
 		}
-		if (newFisrtName && containDigit(newFisrtName)) {
+		if (newLastName && !isValidName(newLastName)) {
 			if (errorMsg) {
-				errorMsg.innerText = 'Error: First name cannot contain digit';
-				return;
-			}
-		}
-		if (newLastName && containDigit(newLastName)) {
-			if (errorMsg) {
-				errorMsg.innerText = 'Error: Last name cannot contain digit';
+				errorMsg.innerText = 'Error: Last name cannot contain digits, spaces or special characters';
 				return;
 			}
 		}
