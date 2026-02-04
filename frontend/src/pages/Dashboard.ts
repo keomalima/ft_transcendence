@@ -13,6 +13,9 @@ import "../components/JoinGamePopUp.js";
 import type { FriendData, GameHistory } from "../types.js";
 import { tournamentApi } from "../api/tournamentApi.js";
 import { API_BASE_URL } from "../config.js";
+import { DashboardConnection } from "../websocket/DashboardConnections.js";
+
+let wsConnection: DashboardConnection | null = null;
 
 export const PONG_MANTRAS: string[] = [
   "Keep your eye on the ball.",
@@ -62,6 +65,7 @@ export function Dashboard(ctx: AppContext): string{
 		renderDashboardContent(currentUser!, currentGame, currentTournament?.tournamentId);
 		const gameHistory: GameHistory[] = await gameService.getHistory();
 		passContext(ctx, gameHistory);
+		setupDashboardWS(currentUser!, ctx);
 		setupDashboardEventListeners(ctx);
 	}, 0);
 
@@ -348,4 +352,32 @@ function setupDashboardEventListeners(ctx: AppContext) {
 		}, 2000);
 	}
 
+}
+
+// ======== SET WEBSOCKET CONNECTION ============
+async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
+
+	const requestsComponent = document.getElementById('requests-component') as any;
+	
+	// Create websocket with gameid
+	wsConnection = new DashboardConnection();
+	wsConnection.connect(
+		currentUser.id!,
+		(friendshipRequest) => {
+			console.log(friendshipRequest);
+			//updatePlayerList();
+		},
+		(friendshipData) => {
+			cleanDashboardWS();
+			router.navigateTo('/home');
+		},
+	)
+}
+
+// ======== CLEANUP WEBSOCKET CONNECTION ============
+export function cleanDashboardWS() {
+	if (wsConnection) {
+		wsConnection.disconnect();
+		wsConnection = null;
+	}
 }
