@@ -123,7 +123,7 @@ function notifyPause(gameSession: GameSession, pausingUserId: string, status: bo
 }
 
 async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' | 'ABANDONED', looserId?: string): Promise<void> {
-	// console.log('✴️ Notify finishing game');
+	console.log('✴️ Notify finishing game');
 	
 	let winnerId: string | null = null;
 

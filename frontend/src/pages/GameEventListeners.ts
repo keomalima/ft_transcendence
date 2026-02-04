@@ -242,16 +242,18 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		timer.textContent = count.toString();
 		playerPauseInterval = setInterval(() => {
 			count--;
-			if (count >= 0) {
+			if (count > 0) {
 				timer.textContent = count.toString();
 			} else {
+				playerPauseOverlay?.classList.add('hidden');
 				if (playerPauseInterval) {
+					console.log('=======clean pause interval=====');
 					clearInterval(playerPauseInterval);
 					playerPauseInterval = null;
-					sharedGameState.gameConnection?.send({ type: 'quit', looser: currentUser.id});
+					// sharedGameState.gameConnection?.send({ type: 'quit', looser: currentUser.id});
 				}
 			}
-		}, 1000);
+		}, 900);
 
 		stopPauseBtn.addEventListener('click', (e) => {
 			e.preventDefault();
@@ -287,6 +289,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 					timer.textContent = count.toString();
 				} else {
 					if (opponentPauseInterval) {
+						console.log('=======clean paused interval=====');
 						clearInterval(opponentPauseInterval);
 						opponentPauseInterval = null;
 					}
@@ -313,6 +316,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		const disconnectOverlay = document.querySelector('#player-disconnected-overlay') as HTMLDivElement;
 		const disconnectTimer = document.querySelector('#disconnect-timer') as HTMLParagraphElement;
 		
+		hideAllOverlays();
 		if (!disconnectOverlay || !disconnectTimer) return;
 		
 		let count = timeoutSeconds; // Start from backend's remaining time
