@@ -155,19 +155,6 @@ async function sendMessageHandler(
 					code: "UNKNOWN",
 				});
 			}
-	
-			// let attempts = 0;
-    		// const maxAttempts = 10;
-			// let token;
-			// while (attempts < maxAttempts) {
-			// 	token = gameController.generateGameToken();
-			// 	const existingGame = await gameService.findGameByToken(request.server.prisma, token);
-			// 	if (!existingGame){
-			// 		await gameService.generateToken(request.server.prisma, game.id, token);
-			// 		break;
-			// 	}
-			// 	attempts++;
-			// }
 
 			// Save message to database
 			const message = await chatService.saveMessage(request.server.prisma, fromUserId, toUserId, content, "GAME_INVITE", game.id);
@@ -183,7 +170,6 @@ async function sendMessageHandler(
 			return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(), gameId: game.id});
 		}		
 	} catch (error: any) {
-		console.error("Error sending message:", error);
 		return reply.status(500).send({
 			status: "error",
 			reason: "Internal server error",

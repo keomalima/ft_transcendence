@@ -515,11 +515,14 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 						type="text"
 						id="chat-input"
 						placeholder="Type your message here"
+						maxlength="1000"
 						class="flex-grow border rounded px-3 py-2"
 					/>
 					<button type="submit"
-						class="text-xl px-3 py-2 bg-black text-white rounded-full hover:bg-gray-800">
-						⬆️
+						class="flex items-center justify-center w-10 h-10 bg-black text-white rounded-full hover:bg-gray-800 transition-all hover:scale-105 shadow-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+							<path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+						</svg>
 					</button>
 				</form>
 			</div>
@@ -724,9 +727,6 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 		}
 	}
 
-
-
-
 	const seeProfileBtn = document.getElementById('see-profile-btn');
 	if (seeProfileBtn) {
 		seeProfileBtn.addEventListener('click', () => {
@@ -783,7 +783,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 			}
 			catch (err) {
 				if (isStale()) return;
-					console.error("send text failed:", err);
+				//console.error("send text failed:", err);
 			}
 		});
 
