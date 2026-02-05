@@ -6,7 +6,6 @@ import type { RequestData } from "../types.js";
 export class FriendRequests extends HTMLElement {
 	private _ctx: AppContext | null = null;
 	private _list: Partial<RequestData>[] | null = null;
-	private _uploadsUrl: string = API_BASE_URL;
 	private _isLoading: boolean = false;
 	
 	constructor() {
@@ -122,7 +121,9 @@ export class FriendRequests extends HTMLElement {
 		avatar.className = 'shrink-0';
 
 		const image = document.createElement('img');
-		image.src = `${this._uploadsUrl}${request.friend?.avatarUrl}`;
+		const avatarRaw = request.friend?.avatarUrl || '/uploads/avatars/default.jpg';
+    	const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+		image.src = avatarSrc;
 		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
 		avatar.appendChild(image);
 		// ===========================

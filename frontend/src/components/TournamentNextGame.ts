@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config.js";
 import { AppContext, TournamentData, TournamentGame, UserState } from "../types.js";
 
 export class TournamentNextGame extends HTMLElement {
@@ -6,7 +7,6 @@ export class TournamentNextGame extends HTMLElement {
 	private _activeTimerButton: HTMLButtonElement | null = null;
 	private _tournamentData: TournamentData | null = null;
 	private _tournamentGamesData: TournamentGame[] | null = null;
-	private _imageUrl: string = 'http://localhost:3000';
 	private _ctx: AppContext | null = null;
 
 	constructor() {
@@ -183,7 +183,9 @@ export class TournamentNextGame extends HTMLElement {
 
 		// Avatar
 		const avatar = document.createElement('img');
-		avatar.src = `${this._imageUrl}${opponent.user.avatarUrl}`;
+		const avatarRaw = opponent.user.avatarUrl || '/uploads/avatars/default.jpg';
+		const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+		avatar.src = avatarSrc;
 		avatar.className = 'h-16 w-16 rounded-full border-2 border-indigo-50 object-cover shadow-sm';
 		infoContainer.appendChild(avatar);
 

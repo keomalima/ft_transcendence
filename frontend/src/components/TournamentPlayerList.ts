@@ -122,8 +122,9 @@ export class TournamentPlayerList extends HTMLElement {
 		avatar.className = 'shrink-0';
 
 		const image = document.createElement('img');
-		if (participant.user?.avatarUrl)
-			image.src = `${this._uploadsUrl}${participant.user.avatarUrl}`;
+		const avatarRaw = participant.user?.avatarUrl || '/uploads/avatars/default.jpg';
+    	const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+		image.src = avatarSrc
 		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
 		avatar.appendChild(image);
 		// ===========================

@@ -103,8 +103,9 @@ export class PlayerList extends HTMLElement {
 		avatar.className = 'shrink-0';
 
 		const image = document.createElement('img');
-		if (player.user?.avatarUrl)
-			image.src = `${this._uploadsUrl}${player.user.avatarUrl}`;
+		const avatarRaw = player.user?.avatarUrl || '/uploads/avatars/default.jpg';
+    	const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+		image.src = avatarSrc;
 		image.className = 'w-10 h-10 bg-gray-300 rounded-full object-cover';
 		avatar.appendChild(image);
 		// ===========================

@@ -106,7 +106,9 @@ export class MatchHistory extends HTMLElement {
 
 		const img = document.createElement('img');
 		img.className = 'w-10 h-10 bg-gray-300 rounded-full shrink-0 object-cover';
-		img.src = `${this._uploadsUrl}${match.opponent?.avatarUrl}`;
+		const avatarRaw = match.opponent?.avatarUrl || '/uploads/avatars/default.jpg';
+    	const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+		img.src = avatarSrc;
 
 		const opponent = document.createElement('p');
 		opponent.className = 'my-0';

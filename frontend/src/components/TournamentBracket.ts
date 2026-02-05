@@ -1,9 +1,9 @@
 import { AppContext, TournamentData, TournamentGame } from "../types.js";
+import { API_BASE_URL } from "../config.js";
 
 export class TournamentBracket extends HTMLElement {
 	private _tournamentData: TournamentData | null = null;
 	private _tournamentGamesData: TournamentGame[] | null = null;
-	private _imageUrl: string = 'http://localhost:3000';
 	private _ctx: AppContext | null = null;
 
 	constructor() {
@@ -198,7 +198,9 @@ export class TournamentBracket extends HTMLElement {
 
 			// avatar content ==============
 			const avatar = document.createElement('img');
-	        avatar.src = `${this._imageUrl}${player.user.avatarUrl}`;
+			const avatarRaw = player.user.avatarUrl || '/uploads/avatars/default.jpg';
+			const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+	        avatar.src = avatarSrc;
 	        avatar.className = `h-8 w-8 rounded-full object-cover ring-2 ${isWinner ? 'ring-indigo-100' : 'ring-gray-100'}`;
 
 			// name content ==============
@@ -252,7 +254,9 @@ export class TournamentBracket extends HTMLElement {
 			// avatar content ==============
 			if (user) {
 				const avatar = document.createElement('img');
-				avatar.src = `${this._imageUrl}${user.user.avatarUrl}`;
+				const avatarRaw = user.user.avatarUrl || '/uploads/avatars/default.jpg';
+				const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+				avatar.src = avatarSrc;
 				avatar.className = 'h-8 w-8 rounded-full object-cover ring-2 ring-indigo-100';
 				playerInfo.appendChild(avatar);
 			} else {
