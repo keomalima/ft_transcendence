@@ -250,6 +250,12 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error: any) {
+			if (requestsComponent.loadAndRender)
+				await friendListComponent.loadAndRender();
+			showToast(
+			    'Problem deleting your friend request!',
+			    'request'
+			);
 		}
 	});
 
@@ -270,7 +276,12 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error) {
-			// console.log('Error accepting friend:', error);
+			if (requestsComponent.loadAndRender)
+				await requestsComponent.loadAndRender();
+			showToast(
+			    'Problem accepting your friend request!',
+			    'request'
+			);
 		}
 	});
 
@@ -291,7 +302,12 @@ function setupDashboardEventListeners(ctx: AppContext) {
 				}
 			}
 		} catch (error) {
-			// console.log('Error rejecting friend:', error);
+			if (requestsComponent.loadAndRender)
+				await requestsComponent.loadAndRender();
+			showToast(
+			    'Problem rejecting your friend request!',
+			    'request'
+			);
 		}
 	});
 
