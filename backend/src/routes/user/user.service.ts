@@ -26,6 +26,17 @@ async function findUserById(prisma: PrismaClient, id: string) {
   });
 }
 
+async function findUserByDisplayName(prisma: PrismaClient, displayName: string){
+	return prisma.user.findUnique({
+		where: { displayName },
+		select: {
+			id: true,
+			displayName: true,
+			email: true,
+		}
+	})
+}
+
 async function createUser(prisma: PrismaClient, data: CreateUserData) {
   const { hash, salt } = hashPassword(data.password);
 
@@ -167,6 +178,7 @@ export const userService = {
   deleteUser,
   editUserAvatar,
   updateLastSeen,
+  findUserByDisplayName,
   
   // Session operations
   createSession,

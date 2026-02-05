@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { ChangeUserPassword, CreateUserData, CreateUserInput, EditInput, LoginInput, UploadInput } from './user.schema.js';
 import { userService } from './user.service.js'
-import type { User } from '@prisma/client';
+import type { PrismaClient, User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { verifyPassword } from '../../plugins/hash.plugin.js';
@@ -138,13 +138,19 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 			email: userData.email,
 			password: ''
 		} );
+
 		if (!user) {
+			const uniqueDisplayName = await generateUniqueDisplayName(
+				request.server.prisma,
+				userData.given_name
+			);
+
 			newUser = await userService.createUser(request.server.prisma, {
 				email: userData.email,
 				name: userData.name,
 				password: userData.id,
 				surname: userData.family_name,
-				displayName: userData.given_name,
+				displayName: uniqueDisplayName,
 				avatarUrl: localAvatarUrl,
 			} as CreateUserData);
 		} else {
@@ -164,8 +170,8 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 		    ? 'https://localhost:8443/home'
 		    : 'http://localhost:5173/home';
 		return reply.redirect(redirectUrl);
-	} catch (err) {
-		reply.code(500).send({ message: "Failed to login user with google"});
+	} catch (err: any) {
+		return reply.redirect('http://localhost:5173/');
 	}
 }
 
@@ -343,6 +349,18 @@ async function deleteHandler(request: FastifyRequest<{Body: EditInput, Params: {
 // =====================
 // Helper Functions
 // =====================
+
+async function generateUniqueDisplayName(prisma: PrismaClient, baseName: string): Promise<string> {
+	let displayName = baseName;
+	let counter = 1;
+
+	while (await userService.findUserByDisplayName(prisma, displayName)) {
+		displayName = `${baseName}${counter}`;
+		counter++;
+	}
+
+	return displayName;
+}
 
 async function validateImage(buffer: Buffer): Promise<{ valid: boolean; error?: string }> {
     try {
