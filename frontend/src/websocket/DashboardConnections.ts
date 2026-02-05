@@ -34,6 +34,8 @@ export class DashboardConnection {
 		this.ws.onclose = () => {
 			// console.log('🔌 Disconnected from dashboard');
 		}
+
+		this.ws.onerror = (error) => {};
 	}
 	
 	disconnect() {

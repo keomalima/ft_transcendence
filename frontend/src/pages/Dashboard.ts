@@ -346,6 +346,10 @@ async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
 
 	const requestsComponent = document.getElementById('requests-component') as any;
 	const friendListComponent = document.getElementById('friend-list-component') as any;
+
+	if (document.readyState !== 'complete')
+        await new Promise(resolve => window.addEventListener('load', resolve, { once: true }));
+
 	// Create websocket with gameid
 	wsConnection = new DashboardConnection();
 	wsConnection.connect(
