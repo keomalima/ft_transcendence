@@ -3,7 +3,7 @@ import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { API_BASE_URL } from "../config.js";
-import { containDigit, isValidName, isValidUsername } from "./Home.js";
+import { isValidName, isValidUsername, isPasswordValid } from "./Home.js";
 
 // import style
 import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSES, BUTTON_DISABLED_CLASSES } from "../styles/tailwindStyles.js";
@@ -269,6 +269,11 @@ function setupEditEventListeners(ctx: AppContext) {
 		}
 		if (newPassword != confirmPassword) {
 			changePwdMsg.innerText = 'Password confirmation is wrong';
+			changePwdMsg.className = 'pt-5 text-red-500 text-sm';
+			return;
+		}
+		if (!isPasswordValid(newPassword) || !isPasswordValid(confirmPassword)) {
+			changePwdMsg.innerText = 'Password must contain at least 8 characters, 1 uppercase and 1 special character.';
 			changePwdMsg.className = 'pt-5 text-red-500 text-sm';
 			return;
 		}

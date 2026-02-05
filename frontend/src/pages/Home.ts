@@ -230,7 +230,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 	});
 }
 
-function isPasswordValid(password: string): boolean {
+export function isPasswordValid(password: string): boolean {
 	const minLength = password.length >= 8;
 	const hasUppercase = /[A-Z]/.test(password);
 	const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
