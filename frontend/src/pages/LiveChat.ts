@@ -778,7 +778,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 						renderChatBox(_selectedFriend, ctx, selectVersion);
 					}
 				} else {
-					alert(`Failed to send message: ${res.reason}`);
+					showToast(res.reason ? `Failed to send message: ${res.reason}` : "Failed to send message.", "block");
 				}
 			}
 			catch (err) {
