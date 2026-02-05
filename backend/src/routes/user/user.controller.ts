@@ -177,6 +177,7 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 
 async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 	try {
+		await userService.cleanLastSeen(request.server.prisma, request.user!.id);
 		await userService.logoutUser(request.server.prisma, request.user!.id);
 		reply.clearCookie('sessionId', { path: '/' });
 		reply.code(204).send();

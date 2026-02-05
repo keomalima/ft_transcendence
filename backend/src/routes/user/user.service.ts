@@ -20,6 +20,15 @@ async function findUserByEmail(prisma: PrismaClient, data: LoginInput) {
   });
 }
 
+async function cleanLastSeen(prisma: PrismaClient, userId: string){
+	return prisma.user.update({
+		where: {id: userId},
+		data: {
+			lastSeenAt: null
+		}
+	})
+}
+
 async function findUserById(prisma: PrismaClient, id: string) {
   return prisma.user.findUnique({
     where: { id }
@@ -179,6 +188,7 @@ export const userService = {
   editUserAvatar,
   updateLastSeen,
   findUserByDisplayName,
+  cleanLastSeen,
   
   // Session operations
   createSession,
