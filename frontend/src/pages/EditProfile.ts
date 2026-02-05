@@ -217,31 +217,25 @@ function setupEditEventListeners(ctx: AppContext) {
 		const newFisrtName = formData.get('first_name') as string;
 		const newLastName = formData.get('last_name') as string;
 		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
+
+		const fail = (msg: string) => {
+			if (errorMsg) errorMsg.innerText = msg;
+			return false;
+		};
+
 		if (newDisplayName) {
-			if (newDisplayName.length > 20) {
-				if (errorMsg) {
-					errorMsg.innerText = 'Error: New Display name is too long';
-					return;
+			if (newDisplayName.length < 3 || newDisplayName.length > 20) return fail('Error: User name should contain 3 to 20 characters');
+			if (!isValidUsername(newDisplayName)) return fail('Error: User name cannot contain spaces or special characters');
 				}
+
+		if (newFisrtName) {
+			if (newFisrtName.length < 3 || newFisrtName.length > 20) return fail('Error: First name should contain 3 to 20 characters');
+			if (!isValidName(newFisrtName)) return fail('Error: First name cannot contain digits, spaces or special characters');
 			}
-			if (!isValidUsername(newDisplayName)) {
-				if (errorMsg) {
-					errorMsg.innerText = 'Error: User name cannot contain spaces or special characters';
-					return;
-				}
-			}
-		}
-		if (newFisrtName && !isValidName(newFisrtName)) {
-			if (errorMsg) {
-				errorMsg.innerText = 'Error: First name cannot contain digits, spaces or special characters';
-				return;
-			}
-		}
-		if (newLastName && !isValidName(newLastName)) {
-			if (errorMsg) {
-				errorMsg.innerText = 'Error: Last name cannot contain digits, spaces or special characters';
-				return;
-			}
+
+		if (newLastName) {
+			if (newLastName.length < 3 || newLastName.length > 20) return fail('Error: Last name should contain 3 to 20 characters');
+			if (!isValidName(newLastName)) return fail('Error: Last name cannot contain digits, spaces or special characters');
 		}
 		try {
 			await userService.updateUser({
@@ -249,14 +243,12 @@ function setupEditEventListeners(ctx: AppContext) {
 				displayName: formData.get('username') ? formData.get('username') as string : null,
 				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			}, ctx);
-			// console.log('test');
 			router.navigateTo('/profile');
 		}
 		catch (error) {
 			if (errorMsg) {
 				errorMsg.innerText = `${error}`;
 			}
-			// console.log(error);
 		}
 	})
 
