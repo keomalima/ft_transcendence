@@ -171,7 +171,7 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 		    : 'http://localhost:5173/home';
 		return reply.redirect(redirectUrl);
 	} catch (err: any) {
-		return reply.redirect('http://localhost:5173/');
+		return reply.redirect('https://localhost:8443/');
 	}
 }
 

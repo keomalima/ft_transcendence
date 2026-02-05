@@ -3,7 +3,7 @@ import type { AppContext, GameData, UserState } from "../types.js";
 import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
-import { sharedGameState, setGameConnection } from "../game/sharedGameState.js";
+import { sharedGameState, setGameConnection } from "../pong/sharedGameState.js";
 import { setupGameEventListeners } from "./GameEventListeners.js";
 
 // Guard to prevent double initialization

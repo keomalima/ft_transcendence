@@ -2,8 +2,8 @@ import { router } from "../main.js";
 import type { AppContext, GameData, UserState } from "../types.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
-import { getGameValue } from "../game/getLocalGameValue.js";
-import { calculateGame } from "../game/calculateLocalGame.js";
+import { getGameValue } from "../pong/getLocalGameValue.js";
+import { calculateGame } from "../pong/calculateLocalGame.js";
 import { FinishGameDto } from "../api/gameApi.js";
 
 export interface MapKeys {

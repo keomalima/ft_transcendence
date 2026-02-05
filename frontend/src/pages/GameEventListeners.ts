@@ -1,5 +1,5 @@
 import type { UserState, GameData, AppContext } from "../types";
-import { sharedGameState } from "../game/sharedGameState.js";
+import { sharedGameState } from "../pong/sharedGameState.js";
 import { router } from "../main.js";
 import { gameService } from "../services/GameService.js";
 import { FinishGameDto } from "../api/gameApi.js";
