@@ -238,12 +238,6 @@ function isPasswordValid(password: string): boolean {
 	return minLength && hasUppercase && hasSpecialChar;
 }
 
-export function containDigit(str: string): boolean {
-	const hasDigit = /[0-9]/.test(str);
-
-	return hasDigit;
-}
-
 export function isValidName(str: string): boolean {
     const isValid = /^[a-zA-Z]+(-[a-zA-Z]+)*$/.test(str);
     return isValid;

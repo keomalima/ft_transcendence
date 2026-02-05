@@ -3,7 +3,7 @@ import { router } from "../main.js";
 import { userService } from "../services/UserService.js";
 import { fileToBase64 } from "../utils/fileToBase64.js";
 import { API_BASE_URL } from "../config.js";
-import { containDigit, isValidName, isValidUsername } from "./Home.js";
+import { isValidName, isValidUsername } from "./Home.js";
 
 // import style
 import { INPUT_CLASSES, LABEL_CLASSES, BUTTON_CREAM_CLASSES, BUTTON_BLACK_CLASSES, BUTTON_DISABLED_CLASSES } from "../styles/tailwindStyles.js";
@@ -45,8 +45,7 @@ export function EditProfile(ctx: AppContext) : string {
 						<div>
 							<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
 							<label id='change-avatar-label' for="avatar-input" class='${BUTTON_CREAM_CLASSES}'>Change avatar</label>
-							<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 10MB max.</p>
-							<p id='avatar-info-error' class='pt-3 text-sm'></p>
+							<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>
 						</div>
 					</div>
 				</div>
@@ -173,7 +172,6 @@ function setupEditEventListeners(ctx: AppContext) {
 		// store selected avatar
 		selectedAvatarFile = file;
 
-		const errorMsg = document.getElementById('avatar-info-error') as HTMLParagraphElement;
 		try {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Loading ...';
@@ -186,18 +184,8 @@ function setupEditEventListeners(ctx: AppContext) {
 			const img = document.getElementById('avatar-preview') as HTMLImageElement;
 			if (img)
 				img.src = imgBase64;
-			errorMsg.innerText = 'Avatar updated successfully';
-			errorMsg.style.color = '#22c55e';
-			setTimeout(() => {
-				errorMsg.innerText = '';
-			}, 3000);
-		} catch(error: any) {
-			const errorMessage = error?.message || error || 'Failed to upload avatar';
-			errorMsg.innerText = `Error: ${errorMessage}`;
-			errorMsg.style.color = '#ef4444';
-			setTimeout(() => {
-				errorMsg.innerText = '';
-			}, 3000);
+		} catch(error) {
+			//// console.log(error);
 		} finally {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Change avatar';
@@ -217,31 +205,25 @@ function setupEditEventListeners(ctx: AppContext) {
 		const newFisrtName = formData.get('first_name') as string;
 		const newLastName = formData.get('last_name') as string;
 		const errorMsg = document.getElementById('update-personnal-info-error') as HTMLParagraphElement;
+
+		const fail = (msg: string) => {
+			if (errorMsg) errorMsg.innerText = msg;
+			return false;
+		};
+
 		if (newDisplayName) {
-			if (newDisplayName.length > 20) {
-				if (errorMsg) {
-					errorMsg.innerText = 'Error: New Display name is too long';
-					return;
-				}
-			}
-			if (!isValidUsername(newDisplayName)) {
-				if (errorMsg) {
-					errorMsg.innerText = 'Error: User name cannot contain spaces or special characters';
-					return;
-				}
-			}
+			if (newDisplayName.length < 3 || newDisplayName.length > 20) return fail('Error: User name should contain 3 to 20 characters');
+			if (!isValidUsername(newDisplayName)) return fail('Error: User name cannot contain spaces or special characters');
 		}
-		if (newFisrtName && !isValidName(newFisrtName)) {
-			if (errorMsg) {
-				errorMsg.innerText = 'Error: First name cannot contain digits, spaces or special characters';
-				return;
-			}
+
+		if (newFisrtName) {
+			if (newFisrtName.length < 3 || newFisrtName.length > 20) return fail('Error: First name should contain 3 to 20 characters');
+			if (!isValidName(newFisrtName)) return fail('Error: First name cannot contain digits, spaces or special characters');
 		}
-		if (newLastName && !isValidName(newLastName)) {
-			if (errorMsg) {
-				errorMsg.innerText = 'Error: Last name cannot contain digits, spaces or special characters';
-				return;
-			}
+
+		if (newLastName) {
+			if (newLastName.length < 3 || newLastName.length > 20) return fail('Error: Last name should contain 3 to 20 characters');
+			if (!isValidName(newLastName)) return fail('Error: Last name cannot contain digits, spaces or special characters');
 		}
 		try {
 			await userService.updateUser({
@@ -249,14 +231,12 @@ function setupEditEventListeners(ctx: AppContext) {
 				displayName: formData.get('username') ? formData.get('username') as string : null,
 				name: formData.get('first_name') ? formData.get('first_name') as string : null
 			}, ctx);
-			//// console.log('test');
 			router.navigateTo('/profile');
 		}
 		catch (error) {
 			if (errorMsg) {
 				errorMsg.innerText = `${error}`;
 			}
-			//// console.log(error);
 		}
 	})
 
