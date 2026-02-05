@@ -34,6 +34,7 @@ export class ProfileCard extends HTMLElement {
 		const currentUser = this._ctx?.userStore.get();
 		const avatarRaw = currentUser?.avatarUrl || '/uploads/avatars/default.jpg';
     	const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
+		console.log('AvatarSrc', avatarSrc);
 		if (this._user?.id === currentUser?.id) {
 			this.innerHTML =
 			/*html*/`

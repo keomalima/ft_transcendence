@@ -119,6 +119,20 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 
 		const userData = await userResponse.json() as GoogleUserData;
 
+        let localAvatarUrl = '/uploads/avatars/default.jpg';
+        try {
+            const imageResponse = await fetch(userData.picture);
+            if (imageResponse.ok) {
+                const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+                
+                const validation = await validateImage(imageBuffer);
+                if (validation.valid) {
+                    const fakeAvatarFile = { filename: `google-${userData.id}.jpg` };
+                    localAvatarUrl = await saveAvatarFile(fakeAvatarFile, imageBuffer);
+                }
+            }
+        } catch (error: any) {}
+
 		let newUser;
 		const user = await userService.findUserByEmail(request.server.prisma, {
 			email: userData.email,
@@ -131,7 +145,7 @@ async function loginGoogleHandler (request: FastifyRequest, reply: FastifyReply)
 				password: userData.id,
 				surname: userData.family_name,
 				displayName: userData.given_name,
-				avatarUrl: userData.picture,
+				avatarUrl: localAvatarUrl,
 			} as CreateUserData);
 		} else {
 			newUser = user;
