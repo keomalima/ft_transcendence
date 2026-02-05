@@ -180,7 +180,7 @@ function setupEditEventListeners(ctx: AppContext) {
 				avatarLabel.className = `${BUTTON_DISABLED_CLASSES}`;
 			}
 			// update avatar method
-			const result = await userService.updateAvatar(file, ctx);
+			await userService.updateAvatar(file, ctx);
 			// convert to Base64
 			const imgBase64: string = await fileToBase64(file);
 			const img = document.getElementById('avatar-preview') as HTMLImageElement;
@@ -192,7 +192,13 @@ function setupEditEventListeners(ctx: AppContext) {
 				errorMsg.innerText = '';
 			}, 3000);
 		} catch(error: any) {
-			const errorMessage = error?.message || error || 'Failed to upload avatar';
+			let errorMessage = 'Failed to upload avatar';
+
+		    if (error?.status === 413 || error?.message?.includes('413')) {
+		        errorMessage = 'Image is too large. Maximum file size is 10MB.';
+		    } else {
+		        errorMessage = error?.message || error || errorMessage;
+		    }
 			errorMsg.innerText = `Error: ${errorMessage}`;
 			errorMsg.style.color = '#ef4444';
 			setTimeout(() => {

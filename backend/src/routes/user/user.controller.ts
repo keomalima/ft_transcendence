@@ -251,7 +251,6 @@ async function editUserHandler(request: FastifyRequest<{Body: EditInput}>, reply
 		return await userService.editUser(request.server.prisma, request.user!.id, request.body);
 	} catch (error: unknown) {
 		if (error instanceof Error) {
-			// Display name conflict should return 409, not 401
 			if (error.message.includes("Display name's not available")) {
 				return reply.code(409).send({ message: error.message });
 			}
