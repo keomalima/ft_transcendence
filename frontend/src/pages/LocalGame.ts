@@ -113,14 +113,14 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 			<h1 class="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 md:mt-4 hidden portrait:block landscape:md:block">Local Game</h1>
 		</div>
 			<div class='flex flex-row w-full max-w-[90vw] lg:max-w-[80vw] mx-auto flex-shrink-0'>
-				<div class='flex-1 justify-items-center'>
+				<div class='flex-1 text-center'>
 					<p id='left-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>${currentUser.displayName}</p>
 					<p id='left-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
 				<div class='flex-1 flex items-center justify-center'>
 					<p class="text-sm md:text-base">vs</p>
 				</div>
-				<div class='flex-1 justify-items-center'>
+				<div class='flex-1 text-center'>
 					<p id='right-player' class='font-[Inter] text-sm md:text-base lg:text-xl'>Guest</p>
 					<p id='right-score' class='font-[Calistoga] text-2xl md:text-3xl lg:text-5xl mt-1'>0</p>
 				</div>
