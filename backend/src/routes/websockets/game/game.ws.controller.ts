@@ -313,28 +313,29 @@ async function runGame(gameSession: GameSession, gameId: string){
 		if (gameSession.gameState.status === 'waiting') {
 			gameSession.gameState.status = 'playing';
 			gameWsNotification.notifyGameStarted(gameSession, gameId);
-		}
-		
-		if (!gameSession.gameLoop) {
-			// console.log('🎮 Starting game loop...');
-			gameSession.gameLoop = setInterval(() => {
-				if (gameSession.gameState.status === 'finished') {
-					// console.log('🏁 Game finished, stopping game loop');
-					if (gameSession.gameLoop) {
-						clearInterval(gameSession.gameLoop!);
-						gameSession.gameLoop = null;
+			
+			// Only start game loop and initial ball service when game first starts
+			if (!gameSession.gameLoop) {
+				// console.log('🎮 Starting game loop...');
+				gameSession.gameLoop = setInterval(() => {
+					if (gameSession.gameState.status === 'finished') {
+						// console.log('🏁 Game finished, stopping game loop');
+						if (gameSession.gameLoop) {
+							clearInterval(gameSession.gameLoop!);
+							gameSession.gameLoop = null;
+						}
+						return;
 					}
-					return;
-				}
-				
-				if (gameSession.players.size === 2) {
-					gameAlgo.calculateGame(gameSession);
-					gameWsNotification.broadcastGameState(gameSession);
-				}
-			}, 1000 / 60);
+					
+					if (gameSession.players.size === 2) {
+						gameAlgo.calculateGame(gameSession);
+						gameWsNotification.broadcastGameState(gameSession);
+					}
+				}, 1000 / 60);
+			}
+			await sleep(3000);
+			await ballAlgo.service(gameSession);
 		}
-		await sleep(3000);
-		await ballAlgo.service(gameSession);
 	}
 }
 
