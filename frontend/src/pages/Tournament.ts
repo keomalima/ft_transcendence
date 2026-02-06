@@ -68,7 +68,8 @@ export function Tournament(ctx: AppContext, params?: Record<string, string>): st
 
 function renderTournamentContent(tournament: Partial<TournamentData | null>) {
 	const content = document.getElementById('tournament-content');
-	content!.innerHTML = /*html*/`
+	if (!content) return;
+	content.innerHTML = /*html*/`
 		<div class="flex flex-col min-h-screen">
 			<header>
 				<nav-bar id='nav-bar-component'></nav-bar>
@@ -200,7 +201,7 @@ export function cleantTournamentGlobalWs() {
 async function setupTournamentEventListeners(ctx: AppContext, tournament: Partial<TournamentData | null>) {
 	// reset button
 	const resetButton = document.getElementById('reset-tournament') as any;
-	resetButton.addEventListener('click', async (e: Event) => {
+	resetButton?.addEventListener('click', async (e: Event) => {
 		e.preventDefault();
 		try {
 			if (tournament && tournament.id) {

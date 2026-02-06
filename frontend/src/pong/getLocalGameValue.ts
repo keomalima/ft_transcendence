@@ -1,25 +1,29 @@
 function arenaHeight(): number
 {
 	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientHeight);
+	if (!gameArea) return 0;
+	return (gameArea.clientHeight);
 }
 
 function arenaWidth(): number
 {
 	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientWidth);
+	if (!gameArea) return 0;
+	return (gameArea.clientWidth);
 }
 
 function paddleHeight(): number
 {
 	const paddleLeft = document.getElementById('paddleLeft');
-	return (paddleLeft!.clientHeight);
+	if (!paddleLeft) return 0;
+	return (paddleLeft.clientHeight);
 }
 
 function paddleWidth(): number
 {
 	const paddleLeft = document.getElementById('paddleLeft');
-	return (paddleLeft!.clientWidth);
+	if (!paddleLeft) return 0;
+	return (paddleLeft.clientWidth);
 }
 
 
@@ -29,7 +33,8 @@ function bottomLimit(): number {
 
 function ballSize(): number {
 	const ball = document.getElementById('ball');
-	return (ball!.clientWidth);
+	if (!ball) return 0;
+	return (ball.clientWidth);
 }
 
 function ballSpeed(): number {

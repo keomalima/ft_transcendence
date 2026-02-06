@@ -70,7 +70,6 @@ export class FriendProfilePopUp extends HTMLElement {
 		if (profileCardComponent) {
 			profileCardComponent.ctx = this._ctx;
 			profileCardComponent.user = this._friend;
-			// console.log('passing context friend', this._friend);
 		}
 		const latestMatchComponent = document.getElementById('friend-latest-match-component') as any;
 		if (latestMatchComponent) {

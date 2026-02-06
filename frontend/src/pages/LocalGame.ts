@@ -106,7 +106,8 @@ function renderGameContent(gameId: string, currentGame: GameData, currentUser: U
 		return;
 	}
 	const content = document.getElementById('game-content');
-	content!.innerHTML = 
+	if (!content) return;
+	content.innerHTML = 
 	/*html*/`
 		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
 			<div class="text-center flex-shrink-0">
@@ -293,8 +294,10 @@ function runGame(game: LocalGameData, currentUser: UserState, ctx: AppContext) {
 			ball.style.top = `${game.ball.y}px`;
 		}
 		
-		leftScore.innerText = game.scoreL.toString();
-		rightScore.innerText = game.scoreR.toString();
+		if (leftScore)
+			leftScore.innerText = game.scoreL.toString();
+		if (rightScore)
+			rightScore.innerText = game.scoreR.toString();
 
 		requestAnimationFrame(gameLoop);
 	}

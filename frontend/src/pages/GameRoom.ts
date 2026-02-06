@@ -82,8 +82,9 @@ export function GameRoom(ctx: AppContext, params?: Record<string, string>): stri
 // ======== UPDATE CONTENT ============
 function renderGameRoomContent(gameData: GameData) {
 	const content = document.getElementById('game-room-content');
+	if (!content) return;
 	if (gameData.isCreator) {
-		content!.innerHTML = /*html*/`
+		content.innerHTML = /*html*/`
 			<div class="flex flex-col min-h-screen">
 				<header>
 					<nav-bar id='nav-bar-component'></nav-bar>
@@ -114,7 +115,7 @@ function renderGameRoomContent(gameData: GameData) {
 			</div>
 		`
 	} else {
-		content!.innerHTML = /*html*/`
+		content.innerHTML = /*html*/`
 			<div class="flex flex-col min-h-screen">
 				<header>
 					<nav-bar id='nav-bar-component'></nav-bar>
@@ -217,6 +218,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
 	generateBtn?.addEventListener('click', async (e) => {
 		const tokenText = document.getElementById('token-text') as HTMLParagraphElement;
+		if (!tokenText) return;
 		e.preventDefault();
 		try {
 			let result = null;
@@ -239,9 +241,10 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 
 		} catch (error) {
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
-			errorMsgGenerateToken.className = 'mt-2 text-red-500'
-			errorMsgGenerateToken.innerText = error as string;
-			// console.log(error);
+			if (errorMsgGenerateToken) {
+				errorMsgGenerateToken.className = 'mt-2 text-red-500'
+				errorMsgGenerateToken.innerText = error as string;
+			}
 		}
 	});
 
@@ -253,18 +256,20 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			copyBtn.innerText = 'Copied';
 			copyBtn.className = 'rounded-full bg-muted p-3 text-white font-normal focus-visible:outline-2 focus-visible:outline-offset-2';
 			const tokenText = document.querySelector('#token-text') as HTMLParagraphElement;
-			await navigator.clipboard.writeText(`${tokenText!.innerText}`);
+			if (!tokenText) return;
+			await navigator.clipboard.writeText(`${tokenText.innerText}`);
 		} catch (error) {
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
-			errorMsgGenerateToken.className = 'mt-2 text-red-500'
-			errorMsgGenerateToken.innerText = error as string;
-			// console.log(error);
+			if (errorMsgGenerateToken) {
+				errorMsgGenerateToken.className = 'mt-2 text-red-500'
+				errorMsgGenerateToken.innerText = error as string;
+			}
 		}
 	});
 
 	// **** START GAME ****
 	const playerListComponent = document.getElementById('player-list-component') as any;
-	playerListComponent.addEventListener('event-start-game', async (e: Event) => {
+	playerListComponent?.addEventListener('event-start-game', async (e: Event) => {
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 		const gameId = customEvent.detail;
@@ -275,9 +280,10 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 			router.navigateTo(`/game/${gameId}`);
 		} catch (error) {
 			const errorMsgStartGame = document.querySelector('#error-start-game') as HTMLParagraphElement;
-			errorMsgStartGame.className = 'mt-2 text-red-500'
-			errorMsgStartGame.innerText = error as string;
-			// console.log(error);
+			if (errorMsgStartGame) {
+				errorMsgStartGame.className = 'mt-2 text-red-500'
+				errorMsgStartGame.innerText = error as string;
+			}
 		}
 	})
 

@@ -66,8 +66,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		const leftScore = document.getElementById('left-score') as HTMLParagraphElement;
 		const rightScore = document.getElementById('right-score') as HTMLParagraphElement;
 		
-		if (!paddleLeft || !paddleRight || !ball) return;
-
+		if (!paddleLeft || !paddleRight || !ball || !leftPlayer || !rightPlayer || !leftScore || !rightScore) return;
 
 		paddleLeft.style.top = `${parseInt(data.left.paddleposition) * getGameHeight() / 100}px`;
 		paddleRight.style.top = `${parseInt(data.right.paddleposition) * getGameHeight() / 100}px`;
@@ -347,13 +346,15 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 function getGameHeight(): number
 {
 	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientHeight);
+	if(!gameArea) return 0;
+	return (gameArea.clientHeight);
 }
 
 function getGameWidth(): number
 {
 	const gameArea = document.getElementById("arena")
-	return (gameArea!.clientWidth);
+	if (!gameArea) return 0;
+	return (gameArea.clientWidth);
 }
 
 function hideAllOverlays(): void {

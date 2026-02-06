@@ -106,8 +106,6 @@ function passContext(ctx: AppContext) {
 
 // ======== EVENT LISTENER ============
 function setupGameEventListeners(ctx: AppContext) {
-
-
 	// **** CREATE GAME ****
 	const form = document.querySelector('form[id="game-settings"]') as HTMLFormElement;
 	form?.addEventListener('submit', async (e) => {
@@ -115,7 +113,8 @@ function setupGameEventListeners(ctx: AppContext) {
 		const selectedMode = (document.querySelector('input[name="playing_mode"]:checked') as HTMLInputElement)?.value;
 		const scoreToWin = (document.querySelector('input[name="score_to_win"]') as HTMLInputElement)?.value;
 		const errorMsgCreateGame = document.querySelector('#error-create-game') as HTMLParagraphElement;
-		errorMsgCreateGame.className = 'text-red-500'
+		if (errorMsgCreateGame)
+			errorMsgCreateGame.className = 'text-red-500'
 
 		if (!scoreToWin || parseInt(scoreToWin) < 3 || parseInt(scoreToWin) > 10) {
 			errorMsgCreateGame.innerText = "Score must be between 3 and 10.";
@@ -133,7 +132,6 @@ function setupGameEventListeners(ctx: AppContext) {
 				router.navigateTo(`/game-room/${result!.id}`);
 		} catch (error) {
 			errorMsgCreateGame.innerText = error as string;
-			// console.log(error);
 		}
 
 	})

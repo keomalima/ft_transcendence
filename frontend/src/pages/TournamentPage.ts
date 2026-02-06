@@ -32,7 +32,8 @@ export function TournamentPage(ctx: AppContext): string {
 
 function renderTournamentContent(currentUser: UserState, tournamentId: string | null, participant: Partial<TournamentParticipant> | null) {
 	const content = document.getElementById('tournament-content');
-	content!.innerHTML = /*html*/`
+	if (!content) return;
+	content.innerHTML = /*html*/`
 	<div class="flex flex-col min-h-screen">
 		<header>
 			<nav-bar id='nav-bar-component'></nav-bar>
@@ -193,9 +194,10 @@ function setupTournamentEventListeners(ctx: AppContext) {
 			router.navigateTo(`/tournament-room/${result.tournamentId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-tournament') as HTMLParagraphElement;
-			errorMsgJoinGame.className = 'mt-2 text-red-500'
-			errorMsgJoinGame.innerText = error as string;
-			// console.log(error);
+			if (errorMsgJoinGame) {
+				errorMsgJoinGame.className = 'mt-2 text-red-500'
+				errorMsgJoinGame.innerText = error as string;
+			}
 		}
 	})
 }

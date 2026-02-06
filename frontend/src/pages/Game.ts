@@ -109,7 +109,8 @@ function renderGameContent(gameId: string, currentGame: GameData, playersCount?:
 	// If we don't have server info, fall back to DB status (PENDING).
 	const showWaitingOverlay = typeof playersCount === 'number' ? (playersCount < 2) : (currentGame.status === 'PENDING');
 	const content = document.getElementById('game-content');
-	content!.innerHTML = 
+	if (!content) return;
+	content.innerHTML = 
 	/*html*/`
 		<main class="flex flex-col gap-2 md:gap-4 h-screen w-screen overflow-hidden place-items-center justify-center px-2 py-2 md:px-6">
 			<div class="text-center flex-shrink-0">

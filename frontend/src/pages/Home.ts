@@ -115,7 +115,8 @@ function setupHomeEventListeners(ctx: AppContext) {
 		} catch (error) {
 			// console.log(error);
 			const popUpLogin = document.getElementById('login-error');
-			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
+			if (popUpLogin)
+				popUpLogin.textContent = 'Incorrect login or password. Please try again.'
 		}
 	});
 
@@ -153,9 +154,9 @@ function setupHomeEventListeners(ctx: AppContext) {
 			await userService.loginUser(email, password, ctx);
 			router.navigateTo('/home');
 		} catch (error) {
-			// console.log(error);
 			const popUpLogin = document.getElementById('login-error');
-			popUpLogin!.textContent = 'Incorrect login or password. Please try again.'
+			if (popUpLogin)
+				popUpLogin.textContent = 'Incorrect login or password. Please try again.'
 		}
 	});
 

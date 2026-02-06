@@ -95,7 +95,7 @@ export class NavBar extends HTMLElement {
 
 		// Logout listener
 		const logoutBtn = document.getElementById('logout-btn') as HTMLElement;
-		logoutBtn.addEventListener('click', async (e) => {
+		logoutBtn?.addEventListener('click', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -134,7 +134,7 @@ export class NavBar extends HTMLElement {
 		});
 
 		const logoutBtn2 = document.getElementById('logout-btn-2') as HTMLElement;
-		logoutBtn2.addEventListener('click', async (e) => {
+		logoutBtn2?.addEventListener('click', async (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 

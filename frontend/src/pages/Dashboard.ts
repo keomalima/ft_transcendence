@@ -80,6 +80,7 @@ export function Dashboard(ctx: AppContext): string{
 // ======== UPDATE CONTENT ========
 function renderDashboardContent(currentUser: UserState, currentGame: {gameId: string, status: string, token: string | null, type: string, userId:string} | null, tournamentId: string | undefined) {
 	const content = document.getElementById('dashboard-content');
+	if (!content) return;
 
     const avatarRaw = currentUser.avatarUrl || '/uploads/avatars/default.jpg';
     const avatarSrc = /^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${API_BASE_URL}${avatarRaw}`;
@@ -97,7 +98,7 @@ function renderDashboardContent(currentUser: UserState, currentGame: {gameId: st
 			link = `/game/${currentGame.gameId}`;
 	}
 
-	content!.innerHTML = /*html*/`
+	content.innerHTML = /*html*/`
 
 		<header>
 			<nav-bar id='nav-bar-component'></nav-bar>
@@ -350,9 +351,10 @@ function setupDashboardEventListeners(ctx: AppContext) {
 			router.navigateTo(`/game-room/${result!.gameId}`);
 		} catch (error) {
 			const errorMsgJoinGame = document.querySelector('#error-join-game') as HTMLParagraphElement;
-			errorMsgJoinGame.className = 'mt-2 text-red-500'
-			errorMsgJoinGame.innerText = error as string;
-			// console.log(error);
+			if (errorMsgJoinGame) {
+				errorMsgJoinGame.className = 'mt-2 text-red-500'
+				errorMsgJoinGame.innerText = error as string;
+			}
 		}
 	})
 }

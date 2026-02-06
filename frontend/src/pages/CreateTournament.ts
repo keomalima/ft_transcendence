@@ -133,10 +133,10 @@ function setupTournamentEventListeners(ctx: AppContext) {
 			router.navigateTo(`/tournament-room/${result.id}`);
 		} catch (error) {
 			const errorMsgCreateGame = document.querySelector('#error-create-tournament') as HTMLParagraphElement;
-			errorMsgCreateGame.className = 'text-red-500'
-			errorMsgCreateGame.innerText = error as string;
-			// console.log(error);
+			if (errorMsgCreateGame) {
+				errorMsgCreateGame.className = 'text-red-500'
+				errorMsgCreateGame.innerText = error as string;
+			}
 		}
-
 	})
 }

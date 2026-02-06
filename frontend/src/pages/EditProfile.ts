@@ -174,6 +174,7 @@ function setupEditEventListeners(ctx: AppContext) {
 		selectedAvatarFile = file;
 
 		const errorMsg = document.getElementById('avatar-info-error') as HTMLParagraphElement;
+		if (!errorMsg) return;
 		try {
 			if (avatarLabel) {
 				avatarLabel.textContent = 'Loading ...';
@@ -215,7 +216,7 @@ function setupEditEventListeners(ctx: AppContext) {
 
 	// **** UPDATE USER DATA ****
 	const updatePersonnalInfo = document.getElementById('personnal-info-form') as HTMLFormElement;
-	updatePersonnalInfo.addEventListener('submit', async(e) => {
+	updatePersonnalInfo?.addEventListener('submit', async(e) => {
 		e.preventDefault();
 		e.stopPropagation();
 		const formData = new FormData(updatePersonnalInfo);
@@ -261,7 +262,8 @@ function setupEditEventListeners(ctx: AppContext) {
 	// **** CHANGE USER PASSWORD ****
 	const changePasswordForm = document.getElementById('change-password-form') as HTMLFormElement;
 	const changePwdMsg = document.getElementById('change-password-msg') as HTMLParagraphElement;
-	changePasswordForm.addEventListener('submit', async(e) => {
+	if (!changePwdMsg) return;
+	changePasswordForm?.addEventListener('submit', async(e) => {
 		e.preventDefault();
 		e.stopPropagation();
 		const formData = new FormData(changePasswordForm);
@@ -297,7 +299,7 @@ function setupEditEventListeners(ctx: AppContext) {
 
 	// **** DELETE USER ****
 	const deleteProfile = document.getElementById('delete') as HTMLElement;
-	deleteProfile.addEventListener('click', (e) => {
+	deleteProfile?.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -326,8 +328,8 @@ function setupEditEventListeners(ctx: AppContext) {
 				const user = await userService.deleteUser(ctx);
 				router.navigateTo('/');
 			} catch (error) {
-				// console.log(error);
-				errorMsg.innerText = error?.toString() || "Failed to delete account.";
+				if (errorMsg)
+					errorMsg.innerText = error?.toString() || "Failed to delete account.";
 			}
 			cancelBtn?.removeEventListener('click', handleCancel);
 			confirmBtn?.removeEventListener('click', handleConfirm);
