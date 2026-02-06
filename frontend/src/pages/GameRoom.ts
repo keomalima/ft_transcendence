@@ -216,22 +216,27 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	// **** GENERATE TOKEN ****
 	const generateBtn = document.querySelector('#generate-btn') as HTMLButtonElement;
 	generateBtn?.addEventListener('click', async (e) => {
+		const tokenText = document.getElementById('token-text') as HTMLParagraphElement;
 		e.preventDefault();
-		// // console.log('click, is generated = ', isGenerated);
 		try {
 			let result = null;
 			if (isGenerated == false) {
 				result = await gameService.generateToken(gameId, ctx);
 				isGenerated = true;
+				if (result) {
+					if (tokenText) {
+						tokenText.innerText = `${result.token}`;
+						tokenText.className = 'text-black';
+					}
+					generateBtn.innerText = 'Copied';
+					generateBtn.className = 'rounded-full bg-muted p-3 text-white font-normal focus-visible:outline-2 focus-visible:outline-offset-2';
+				}
 			}
-			if (result) {
-				const tokenText = document.getElementById('token-text') as HTMLParagraphElement;
-				tokenText.innerText = `${result.token}`;
-				tokenText.className = 'text-black';
-				generateBtn.innerText = 'Copied';
-				generateBtn.className = 'rounded-full bg-muted p-3 text-white font-normal focus-visible:outline-2 focus-visible:outline-offset-2';
-				await navigator.clipboard.writeText(`${result.token}`);
+			if (isGenerated) {
+				const tokenValue = tokenText.textContent;
+				await navigator.clipboard.writeText(`${tokenValue}`);
 			}
+
 		} catch (error) {
 			const errorMsgGenerateToken = document.querySelector('#error-generate-token') as HTMLParagraphElement;
 			errorMsgGenerateToken.className = 'mt-2 text-red-500'
@@ -243,6 +248,7 @@ async function setupGameRoomEventListeners(ctx: AppContext, gameId: string) {
 	// **** COPY TOKEN ****
 	const copyBtn = document.querySelector('#copy-btn') as HTMLButtonElement;
 	copyBtn?.addEventListener('click', async (e) => {
+		console.log('click copy');
 		e.preventDefault();
 		try {
 			copyBtn.innerText = 'Copied';
