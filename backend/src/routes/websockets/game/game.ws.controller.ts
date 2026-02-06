@@ -313,8 +313,8 @@ async function runGame(gameSession: GameSession, gameId: string){
 		if (gameSession.gameState.status === 'waiting') {
 			gameSession.gameState.status = 'playing';
 			gameWsNotification.notifyGameStarted(gameSession, gameId);
+		}
 			
-			// Only start game loop and initial ball service when game first starts
 			if (!gameSession.gameLoop) {
 				// console.log('🎮 Starting game loop...');
 				gameSession.gameLoop = setInterval(() => {
@@ -335,7 +335,6 @@ async function runGame(gameSession: GameSession, gameId: string){
 			}
 			await sleep(3000);
 			await ballAlgo.service(gameSession);
-		}
 	}
 }
 
