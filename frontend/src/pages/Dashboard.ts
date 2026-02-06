@@ -410,6 +410,9 @@ function showToast(message: string, type: 'block' | 'unblock' | 'request') {
 	if (type === 'block') bgColor = 'bg-red-500';
 	if (type === 'unblock') bgColor = 'bg-green-500';
 
+	if (!toast)
+		return;
+	
 	toast.textContent = message;
 
 	toast.className = `
