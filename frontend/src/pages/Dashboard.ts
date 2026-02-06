@@ -390,6 +390,19 @@ async function setupDashboardWS(currentUser: UserState, ctx: AppContext) {
 		},
 		(friendshipRequest) => {
 			friendListComponent.removeFriend(friendshipRequest.data.friendshipId);
+		},
+		(msg) => {
+			const maxLength = 30;
+			const content = msg.data.content || '';
+			
+			const truncated = content.length > maxLength 
+				? content.substring(0, maxLength) + '...' 
+				: content;
+			
+			showToast(
+				`💬 ${msg.data.userName}: ${truncated}`,
+				'request'
+			);
 		}
 	)
 }

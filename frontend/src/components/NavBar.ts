@@ -37,7 +37,7 @@ export class NavBar extends HTMLElement {
 					<a data-link href="/profile" class="${window.location.pathname === '/profile' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >profile</a>
 					<a data-link href="/tournament" class="${window.location.pathname === '/tournament' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}" >tournament</a>
 					<a data-link href="/live-chat" class="${window.location.pathname === '/live-chat' ? NAV_ELEM_SELECTED_CLASSES : NAV_ELEM_CLASSES}">live chat</a>
-					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">Log out</a>
+					<a id='logout-btn' href='/' class="${NAV_ELEM_CLASSES}">log out</a>
 				</div>
 			</nav>
 			<el-dialog>
@@ -62,7 +62,7 @@ export class NavBar extends HTMLElement {
 							<a data-link href="/live-chat" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">live chat</a>
 						</div>
 						<div class="py-6">
-							<a id='logout-btn-2' href='/'class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">Log out</a>
+							<a id='logout-btn-2' href='/'class="-mx-3 block rounded-lg px-3 py-2 text-base/7 text-black hover:bg-gray-50">log out</a>
 						</div>
 						</div>
 					</div>

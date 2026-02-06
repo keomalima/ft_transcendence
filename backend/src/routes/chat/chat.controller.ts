@@ -6,6 +6,7 @@ import { gameService } from '../game/game.service.js';
 import { tournamentService } from '../tournaments/tournament.service.js';
 import type { DeclineGameFromChatInput, JoinGameFromChatInput, SendMessageInput } from './chat.schema.js';
 import { WaintingRoomWsController } from '../websockets/gameroom/waitingroom.ws.controller.js';
+import { DashboardWsController } from '../websockets/profile/profile.ws.controller.js';
 
 // =====================
 // Declare user on FastifyRequest
@@ -15,8 +16,6 @@ declare module 'fastify' {
 		user?: User;
 	}
 }
-
-
 
 // =====================
 // Chat Handlers
@@ -118,6 +117,16 @@ async function sendMessageHandler(
 				sentAt: message.sentAt.toISOString(),
 				messageType: "TEXT",
 			});
+
+			DashboardWsController.notifyUser(
+				toUserId,                    
+				'chat-msg',
+				{   
+					userName: request.user?.displayName,
+					content, 
+					sentAt: message.sentAt.toISOString() 
+				}
+			);
 
 			return reply.code(200).send({status: "ok", messageId: message.id, sentAt: message.sentAt.toISOString(),});
 		}

@@ -7,7 +7,8 @@ export class DashboardConnection {
 		userId: string,
 		onNewFriendRequest: (friendRequest: any) => void,
 		onAcceptFriend: (friend: any) => void,
-		onDeleteFriend: (friend: any) => void
+		onDeleteFriend: (friend: any) => void,
+		newChatMsg: (msg: any) => void
 	){
 		const httpUrl = new URL(`/ws/dashboard/${userId}`, API_BASE_URL);
 		httpUrl.protocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -28,6 +29,9 @@ export class DashboardConnection {
 			}
 			if (data.type === 'friendship-delete') {
 				onDeleteFriend(data);
+			}
+			if (data.type === 'chat-msg') {
+				newChatMsg(data);
 			}
 		}
 		
