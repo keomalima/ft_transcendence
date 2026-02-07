@@ -223,10 +223,13 @@ function setupHomeEventListeners(ctx: AppContext) {
 			// Login after successful creation
 			await userService.loginUser(data.email, data.password, ctx);
 			router.navigateTo('/home');
-		} catch (error) {
-			// console.log(error);
-			if (displayError)
-				displayError.innerText = `${error}`;
+		} catch (error: any) {
+			if (displayError) {
+				if (error?.status === 413 || error?.message?.includes('413'))
+					displayError.innerText = 'Image is too large. Maximum file size is 10MB.';
+				else
+					displayError.innerText = `${error}`;
+			}
 		}
 	});
 }
