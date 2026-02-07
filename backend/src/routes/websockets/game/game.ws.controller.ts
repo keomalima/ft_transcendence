@@ -104,6 +104,7 @@ async function gameHandler(socket: WebSocket, request: FastifyRequest<{Params: {
 				gameSession.gameLoop = null;
 			}
 			gameWsNotification.notifyFinishingGame(gameSession, 'ABANDONED', message.looser);
+			cleanupGameSession(gameId, gameSession);
 		}
 	});
 
@@ -324,6 +325,7 @@ async function runGame(gameSession: GameSession, gameId: string){
 							clearInterval(gameSession.gameLoop!);
 							gameSession.gameLoop = null;
 						}
+						cleanupGameSession(gameId, gameSession);
 						return;
 					}
 					
@@ -341,6 +343,7 @@ async function runGame(gameSession: GameSession, gameId: string){
 // ======== CLEANUP GAME SESSION ============
 export function cleanupGameSession(gameId: string, gameSession: GameSession): void {
 	// console.log(`🧹 Cleaning up game session: ${gameId}`);
+	if (!gameSessions.has(gameId)) return;
 	
 	if (gameSession.gameLoop) {
 		clearInterval(gameSession.gameLoop);
