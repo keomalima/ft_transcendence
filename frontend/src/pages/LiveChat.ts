@@ -118,7 +118,7 @@ function passContext(ctx: AppContext) {
 	}
 }
 
-// ======== SET TOURNAMENT WS ========
+// ======== SET TOURNAMENT WS =======
 async function setupTournamentNotifAndWs(ctx: AppContext, currentUserId: string) {
 	const t = await getCurrentTournament();
 	livechatTournamentId = t?.tournamentId ?? null;
