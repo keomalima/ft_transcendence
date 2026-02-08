@@ -38,63 +38,6 @@ export async function userPublicRoutes(fastify: FastifyInstance){
 		},
 		handler: userController.loginGoogleHandler
 	})
-
-	// DELETE AFTER, ONLY FOR DEV
-	fastify.get('/', {
-		schema: { 
-			response : { 200: userSchemas.response.getUserDev },
-			tags: ['Dev'],
-			description: 'Get all users details ONLY FOR DEV',
-			summary: 'Get all users ONLY FOR DEV',
-			security: [{ cookieAuth: [] }]
-		}
-	}, 
-	userController.getUserHandlerDev)
-
-	// DEV ONLY: Clean all tables
-    fastify.delete('/clean', {
-        schema: {
-            tags: ['Dev'],
-            description: 'Delete all data in the database (DEV ONLY)',
-            summary: 'Clean database (DEV ONLY)'
-        }
-    }, async (req, reply) => {
-        const prisma = req.server.prisma
-        
-        try {
-            // Delete in correct order to respect foreign key constraints
-            // 1. Delete GamePlayers first (has FK to both Game and User)
-
-			await prisma.message.deleteMany();
-
-			await prisma.blockStatus.deleteMany();
-			
-            await prisma.gamePlayer.deleteMany();
-            
-            // 2. Delete Games (has FK to User)
-            await prisma.game.deleteMany();
-            
-            // 3. Delete Friendships (has FK to User)
-            await prisma.friendship.deleteMany();
-            
-            // 4. Delete Sessions (has FK to User)
-            await prisma.session.deleteMany();
-            
-            // 5. Finally delete Users
-            await prisma.user.deleteMany();
-            
-			// 6. Delete tournaments
-			await prisma.tournament.deleteMany();
-			
-            return reply.send({ message: "Database cleaned successfully" });
-        } catch (error: any) {
-            req.log.error('Error cleaning database:', error);
-            return reply.code(500).send({ 
-                message: "Failed to clean database",
-                error: error.message 
-            });
-        }
-    });
 }
 
 // =====================

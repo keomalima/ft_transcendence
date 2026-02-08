@@ -58,16 +58,6 @@ export const tournamentApi = {
 		}
 	},
 
-	resetTournament: async (tournamentId: string): Promise<TournamentData> => {
-		try {
-			const response = await httpCall.put<TournamentData>(`${BASE_URL}/${tournamentId}/reset`);
-			// console.log('🎮 resetTournament sucess ✅ ', response.data);
-			return response.data;
-		} catch (error: unknown) {
-			throw buildApiError('get tournament', error);
-		}
-	},
-
 	getCurrentTournament: async (): Promise<CurrentTournamentInfo> => {
 		try {
 			const response = await httpCall.get<CurrentTournamentInfo>(`${BASE_URL}/current`);

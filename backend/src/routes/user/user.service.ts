@@ -6,12 +6,6 @@ import { hashPassword, verifyPassword } from '../../plugins/hash.plugin.js';
 // User CRUD Operations
 // =====================
 
-// DELETE AFTERm ONLY FOR DEV
-
-async function getUsersDev(prisma: PrismaClient) {
-	return prisma.user.findMany();
-}
-
 async function findUserByEmail(prisma: PrismaClient, data: LoginInput) {
   return prisma.user.findUnique({
     where: {
@@ -195,6 +189,5 @@ export const userService = {
   
   // Authentication
   logoutUser,
-  validateToken,
-  getUsersDev
+  validateToken
 };

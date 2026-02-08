@@ -481,33 +481,6 @@ async function advanceTournamentHandler (request: FastifyRequest<{Params: {id: s
 	}
 }
 
-async function resetTournamentHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
-	try {	
-		const tournamentId = request.params.id;
-		const prisma = request.server.prisma;
-		const gamePlayers = await tournamentService.findAllGamePlayersByTournamentId(prisma, tournamentId);
-		if (gamePlayers) {
-			for (const game of gamePlayers) {
-				if (game.roundNumber != 1) {
-					for (const player of game.gameUsers)
-						await tournamentService.deleteGamePlayer(prisma, player.id);
-				} else {
-					for (const player of game.gameUsers)
-						await tournamentService.resetGamePlayer(prisma, player.id);
-				}
-				for (const participants of game.tournament!.participants)
-					await tournamentService.resetTournamentPlayer(prisma, participants.id);
-				await tournamentService.resetGame(prisma, game.id);
-			}
-			if (gamePlayers[0]?.tournament?.status != 'IN_PROGRESS')
-				await tournamentService.resetTournament(prisma, tournamentId);
-		}
-		reply.code(200).send({ message: "Tournament reset successfully"});
-	} catch (error: any) {
-		reply.code(500).send({ message: "Failed to reset the tournament "});		
-	}
-}
-
 async function claimVictoryHandler(request: FastifyRequest<{Params: {id: string}}>, reply: FastifyReply) {
     try {
         const userId = request.user!.id;
@@ -584,6 +557,5 @@ export const tournamentController = {
 	advanceTournamentHandler,
 	quitTournamentHandler,
 	getParticipantInfoHandler,
-	resetTournamentHandler,
 	claimVictoryHandler
 };

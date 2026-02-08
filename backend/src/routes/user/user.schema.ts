@@ -98,8 +98,6 @@ const getUserResponseSchema = z.object({
 	updatedAt: z.date(),
 });
 
-const getUserArraySchema = z.array(getUserResponseSchema);
-
 const editUserResponseSchema = z.object({
 	id: z.string(),
 	email: z.email(),
@@ -155,7 +153,6 @@ export const userSchemas = {
     getUser: getUserResponseSchema,
     editUser: editUserResponseSchema,
 	uploadtAvatar: uploadAvatarResponseSchema,
-	getUserDev: getUserArraySchema,
 	changeUserPassword: changeUserPasswordResponseSchema
   },
 };

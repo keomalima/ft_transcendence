@@ -188,16 +188,6 @@ async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
 	}
 }
 
-// DELETE AFTER, ONLY FOR DEV
-async function getUserHandlerDev(request: FastifyRequest, reply: FastifyReply) {
-	try {
-		const users = await userService.getUsersDev(request.server.prisma);
-		return users;
-	} catch (error: any) {
-		reply.code(500).send({ message: "Failed to fetch users"});
-	}
-}
-
 // =====================
 // User CRUD Handlers
 // =====================
@@ -429,7 +419,6 @@ export const userController = {
 	loginUserHandler,
 	logoutHandler,
 	protectedRouteHandler,
-	getUserHandlerDev,
 	updateLastSeen,
 	loginGoogleHandler,
 	
