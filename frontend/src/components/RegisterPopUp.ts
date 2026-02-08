@@ -56,9 +56,9 @@ export class RegisterPopUp extends HTMLElement {
 				<h1 class="mb-10 text-xl">Create a new account</h1>
 				<form id='create-new-account-form' class="md:col-span-2">
 					<div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:max-w-xl sm:grid-cols-6">
-						<div class="col-span-full flex items-center gap-x-8">
-							<img id="avatar-preview" src="/src/images/defaultProfile.webp" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full mb-4 shrink-0 object-cover" />
-							<div>
+						<div class="col-span-full flex flex-col sm:flex-row items-center gap-x-8 gap-y-4">
+							<img id="avatar-preview" src="/src/images/defaultProfile.webp" alt="default profile picture" class="w-32 h-32 bg-gray-300 rounded-full shrink-0 object-cover" />
+							<div class="flex flex-col items-center sm:items-start w-full sm:w-auto">
 								<input id="avatar-input" name="file" type="file" accept="image/webp, image/jpeg, image/png" class="sr-only">
 								<label for="avatar-input" class='${BUTTON_WHITE_CLASSES}'>Add avatar</label>
 								<p class="mt-5 text-xs/5 text-medium">JPG, GIF or PNG. 1MB max.</p>

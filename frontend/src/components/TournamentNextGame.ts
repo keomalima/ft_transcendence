@@ -67,12 +67,12 @@ export class TournamentNextGame extends HTMLElement {
 		}
 	
 		nextMatchCardContainer.innerHTML = '';
-		nextMatchCardContainer.className = 'flex flex-row gap-10 px-4 w-max mx-auto';
+		nextMatchCardContainer.className = 'flex flex-row gap-10 px-4 w-full justify-center mx-auto';
 
 		let card;
 
 		const column = document.createElement('div');
-		column.className = 'flex flex-col gap-8';
+		column.className = 'flex flex-col gap-8 w-full items-center';
 		const nextGame = this.findNextGame(currentUser);
 
 		if (this._tournamentData.winner !== null) {
@@ -106,7 +106,7 @@ export class TournamentNextGame extends HTMLElement {
 
 	private createLostCard(currentUser: UserState): HTMLElement {
 		const card = document.createElement('div');
-		card.className = 'flex w-[32rem] items-center justify-between rounded-xl border-2 border-red-300 bg-gradient-to-br from-red-50 to-orange-50 p-6 shadow-lg';
+		card.className = 'flex flex-col sm:flex-row w-full max-w-[32rem] items-center justify-between rounded-xl border-2 border-red-300 bg-gradient-to-br from-red-50 to-orange-50 p-6 shadow-lg gap-6 sm:gap-0';
 
 		// Left Side: Elimination Status
 		const infoContainer = document.createElement('div');
@@ -170,7 +170,7 @@ export class TournamentNextGame extends HTMLElement {
 
 	private createNextMatchCard(nextGame: TournamentGame, currentUser: UserState): HTMLElement {
 		const card = document.createElement('div');
-		card.className = `flex w-[32rem] items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-md`;
+		card.className = `flex flex-col sm:flex-row w-full max-w-[32rem] items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-md gap-6 sm:gap-0`;
 
 		// console.log(nextGame);
 		const player = nextGame.gameUsers.find(game => game.user.id === currentUser.id);
@@ -334,7 +334,7 @@ export class TournamentNextGame extends HTMLElement {
 
 	private createEmptyNextMatchCard(): HTMLElement {
 		const card = document.createElement('div');
-		card.className = `flex w-[32rem] items-center justify-between rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-6`;
+		card.className = `flex flex-col sm:flex-row w-full max-w-[32rem] items-center justify-between rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-6 gap-6 sm:gap-0`;
 
 		// Left Side: Placeholder Info
 		const infoContainer = document.createElement('div');
@@ -406,7 +406,7 @@ export class TournamentNextGame extends HTMLElement {
 		const isUserWinner = currentUser.id === this._tournamentData?.winner?.id ? true : false;
 
 		const card = document.createElement('div');
-		card.className = 'flex w-[32rem] items-center justify-between rounded-xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-100 to-green-200 p-6 shadow-lg';
+		card.className = 'flex flex-col sm:flex-row w-full max-w-[32rem] items-center justify-between rounded-xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-100 to-green-200 p-6 shadow-lg gap-6 sm:gap-0';
 
 		// Left Side: Victory Status
 		const infoContainer = document.createElement('div');

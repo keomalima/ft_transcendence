@@ -31,7 +31,7 @@ export class JoinGamePopUp extends HTMLElement {
 		
 		this.innerHTML = /*html*/`
 			<div>
-				<button onclick="this.closest('dialog').close()" class="outline-none float-right p-10">
+				<button onclick="this.closest('dialog').close()" class="outline-none float-right p-4 sm:p-10">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
 					</svg>
@@ -40,12 +40,12 @@ export class JoinGamePopUp extends HTMLElement {
 			<div class="px-6 py-12 sm:rounded-lg sm:px-12">
 				<h1 class="mb-10 text-xl">${title}</h1>
 				<form action="/" method="POST" id='join-form' class="md:col-span-2">
-					<div class='flex flex-1 flex-row gap-10'>
-						<div class='flex flex-1 flex-col'>
+					<div class='flex flex-1 flex-col sm:flex-row gap-6 sm:gap-10 sm:items-end'>
+						<div class='flex flex-1 flex-col w-full'>
 							<label class='text-sm text-medium' for="token-input">${label}</label>
 							<input id="token-input" type="text" name="token" autoComplete="token" class='${INPUT_CLASSES}'/>
 						</div>
-						<button type='submit' class='${BUTTON_BLACK_CLASSES}'>LET'S GO</button>
+						<button type='submit' class='${BUTTON_BLACK_CLASSES} self-center sm:self-auto'>LET'S GO</button>
 					</div>
 				</form>
 				<p id='error-join-game'></p>

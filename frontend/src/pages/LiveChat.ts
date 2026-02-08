@@ -67,10 +67,10 @@ function renderLiveChatContent(ctx: AppContext) {
 	content.innerHTML = /*html*/`
 		<nav-bar id="nav-bar-component"></nav-bar>
 
-		<div class="grid h-[90vh] gap-4 px-4 py-6 grid-rows-[auto_1fr_auto] lg:grid-cols-4 lg:grid-rows-1">
+		<div class="grid h-[calc(100vh-6rem)] gap-4 px-4 py-4 grid-cols-1 lg:grid-cols-4">
 			<!-- Left: Tournament Notif + Friends list -->
 
-			<div class="order-1 lg:order-1 lg:col-span-1 bg-white rounded-lg shadow p-4 h-[50vh] min-h-[300px] lg:h-auto overflow-y-auto">
+			<div id="left-panel" class="lg:col-span-1 bg-white rounded-lg shadow p-4 h-full overflow-y-auto">
 			
 			<!-- Tournament notif box (hidden by default) -->
 			<div id="tournament-notif" class="hidden mb-3 rounded-lg border border-gray-200 bg-yellow-50 p-3">
@@ -88,12 +88,12 @@ function renderLiveChatContent(ctx: AppContext) {
 
 			<!-- Right: Chat box (dynamic) -->
 			<div id="chat-right"
-				class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex flex-col h-[50vh] min-h-[300px] lg:h-auto overflow-hidden hidden">
+				class="lg:col-span-3 bg-white rounded-lg shadow flex flex-col h-full overflow-hidden hidden">
 			</div>
 
 			<!-- Right: Empty state (shown when no friend selected / no friends) -->
 			<div id="chat-empty"
-				class="order-2 lg:order-2 lg:col-span-3 bg-white rounded-lg shadow flex items-center justify-center h-[50vh] min-h-[300px] lg:h-auto">
+				class="lg:col-span-3 bg-white rounded-lg shadow flex items-center justify-center h-full hidden lg:flex">
 				<p class="text-gray-900 text-xl font-semibold italic text-center block">👈 Select a friend to start chatting!</p>
 			</div>
 
@@ -168,7 +168,12 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 		// No selection: show empty panel
 		chatRight.classList.add("hidden");
-		chatEmpty.classList.remove("hidden");
+		
+		// Mobile: Ensure left panel is visible
+		const leftPanel = document.getElementById('left-panel');
+		if (leftPanel) leftPanel.classList.remove('hidden', 'lg:block');
+
+		chatEmpty.classList.add("lg:flex"); // Ensure visible on desktop
 
 		const p = chatEmpty.querySelector("p");
 		if (p) {
@@ -206,6 +211,13 @@ function setupLiveChatEventListeners(ctx: AppContext) {
 
 		_selectedFriend = clickedFriend;
 		isFriendInGameOrTournament = false;
+
+		// Mobile: Hide friend list
+		const leftPanel = document.getElementById('left-panel');
+		if (leftPanel) {
+			leftPanel.classList.add('hidden');
+			leftPanel.classList.add('lg:block');
+		}
 
 		renderChatShell(clickedFriend);
 
@@ -398,7 +410,7 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 	const chatEmpty = document.getElementById('chat-empty');
 	if (!chatRight || !chatEmpty) return;
 
-	const isStale = () => version !== selectVersion || _selectedFriend?.id !== friend.id;
+	const isStale = () => version !== selectVersion || _selectedFriend?.id !== friend.id || !document.body.contains(chatRight);
 	if (isStale()) return;
 
 	const currentUserId = ctx.userStore.get()?.id;
@@ -448,10 +460,17 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 
 	chatRight.innerHTML = /*html*/`
 		<!-- Header -->
-		<div class="flex flex-col lg:flex-row justify-between items-center p-4 border-b gap-3 mb-20">
-			<div>
-				<p class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
-				<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
+		<div class="flex flex-col lg:flex-row justify-between items-center p-4 border-b gap-3 mb-4">
+			<div class="flex items-center gap-3 w-full lg:w-auto">
+				<button id="box-back-btn" class="lg:hidden text-gray-600 hover:text-black">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+					</svg>
+				</button>
+				<div>
+					<p class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
+					<p class="text-gray-500 text-sm">${friend.isOnline ? 'Online' : 'Offline'}</p>
+				</div>
 			</div>
 
 			<div class="flex flex-wrap justify-center lg:justify-end items-center gap-1 lg:gap-2">
@@ -528,6 +547,14 @@ async function renderChatBox(friend: any, ctx: AppContext, version: number) {
 			</div>
 		`}
 	`;
+
+	document.getElementById('box-back-btn')?.addEventListener('click', () => {
+		const leftPanel = document.getElementById('left-panel');
+		if (leftPanel) leftPanel.classList.remove('hidden', 'lg:block');
+		chatRight.classList.add('hidden');
+		chatEmpty.classList.add('lg:flex');
+		_selectedFriend = null;
+	});
 
 	
 	// If this friend has sent a pending invite, show Accept/Decline buttons in header
@@ -1153,13 +1180,21 @@ function renderChatShell(friend: any) {
 	if (!chatRight || !chatEmpty) return;
 
 	chatEmpty.classList.add("hidden");
+	chatEmpty.classList.remove("lg:flex");
 	chatRight.classList.remove("hidden");
 
 	chatRight.innerHTML = `
 		<div class="flex justify-between items-center p-4 border-b">
-			<div>
-				<p id="chat-friend-name" class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
-				<p id="chat-friend-status" class="text-gray-500 text-sm">${friend.isOnline ? "Online" : "Offline"}</p>
+			<div class="flex items-center gap-3">
+				<button id="shell-back-btn" class="lg:hidden text-gray-600 hover:text-black">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+					</svg>
+				</button>
+				<div>
+					<p id="chat-friend-name" class="font-bold text-lg">${escapeHtml(friend.displayName ?? "")}</p>
+					<p id="chat-friend-status" class="text-gray-500 text-sm">${friend.isOnline ? "Online" : "Offline"}</p>
+				</div>
 			</div>
 			<div class="text-sm text-gray-400">Loading…</div>
 		</div>
@@ -1168,6 +1203,14 @@ function renderChatShell(friend: any) {
 			<p class="text-gray-400 text-center mt-4">Loading messages…</p>
 		</div>
 	`;
+
+	document.getElementById('shell-back-btn')?.addEventListener('click', () => {
+		const leftPanel = document.getElementById('left-panel');
+		if (leftPanel) leftPanel.classList.remove('hidden', 'lg:block');
+		chatRight.classList.add('hidden');
+		chatEmpty.classList.add('lg:flex');
+		_selectedFriend = null;
+	});
 }
 
 async function verifyStillFriend(friendId: string, friendListComponent: any, ctx: AppContext, version: number) {
@@ -1180,7 +1223,12 @@ async function verifyStillFriend(friendId: string, friendListComponent: any, ctx
 			// friendship removed / friend deleted you
 			_selectedFriend = null;
 			document.getElementById("chat-right")?.classList.add("hidden");
-			document.getElementById("chat-empty")?.classList.remove("hidden");
+			
+			const chatEmpty = document.getElementById("chat-empty");
+			if (chatEmpty) chatEmpty.classList.add("lg:flex");
+
+			const leftPanel = document.getElementById('left-panel');
+			if (leftPanel) leftPanel.classList.remove('hidden', 'lg:block');
 
 			if (friendListComponent?.loadAndRender) {
 				friendListComponent.skipAutoSelect = true;
