@@ -22,9 +22,7 @@ export function clearAllIntervals() {
 // ======== EVENT LISTENER ============
 export function setupGameEventListeners(currentUser: UserState, currentGame: GameData, gameId: string, ctx: AppContext) {
 
-	// console.log(currentGame);
 	if (!currentGame || !currentGame.gameUsers || currentGame.gameUsers.length < 2) {
-		// console.log('❌ Missing current game');
 		return;
 	}
 
@@ -44,7 +42,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		e.preventDefault();
 		const customEvent = e as CustomEvent;
 
-		// console.log('You already are in this game, redirection to home');
 		if (currentGame.type === 'TOURNAMENT') {
 			router.navigateTo(`/tournament/${currentGame.tournamentId}`);
 		} else {
@@ -101,7 +98,6 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 		if (waitingOpponentOverlay) {waitingOpponentOverlay.classList.add('hidden')};
 
 		sharedGameState.gameConnection?.send({ type: 'quit', looser: looserId});
-		console.log('👑 claim victory');
 	});
 
 

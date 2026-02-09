@@ -19,7 +19,6 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	// secure if no user
 	if (!currentUser?.id)
 	{
-		// console.log('No active session when accessing game')
 		setTimeout(() => router.navigateTo('/'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
@@ -27,14 +26,12 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 	// secure if no params
 	if (!params || !params['id'])
 	{
-		// console.log('No game id is provided')
 		setTimeout(() => router.navigateTo('/home'), 0);
 		return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 	}
 
 	// Prevent double initialization for the same game
 	if (isInitializing && currentGameId === params['id']) {
-		// console.log('⏭️ Already initializing game', params['id']);
 		return '<div id="game-content"><p class="flex items-center justify-center h-screen">Loading Game ...</p></div>';
 	}
 
@@ -45,7 +42,6 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		const userGame = await gameService.getCurrentGame(ctx);
 		// secure if the user do not belong to the game
 		if (params['id'] !== userGame?.gameId) {
-			// console.log('User do not belong to this game')
 			setTimeout(() => router.navigateTo('/home'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
@@ -53,7 +49,6 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		let currentGame = await gameService.getGame(params['id'], ctx);
 		// secure if the ugame is not IN_PROGRESS
 		if (!currentGame || currentGame.status === 'ABANDONED' || currentGame.status === 'COMPLETED') {
-			// console.log('The game is not in progress');
 			setTimeout(() => router.navigateTo('/'), 0);
 			return '<div class="flex items-center justify-center h-screen"><p>Redirecting to home...</p></div>';
 		}
@@ -65,16 +60,12 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 		gameActionListener();
 		
 		// 3. Render the initial game
-			// 3. Render the initial game
 			renderGameContent(params['id'], currentGame!);
 		
-			// 4. Set all the event listeners
 			setupGameEventListeners(currentUser, currentGame!, params['id'], ctx);
 
-			// 5. Now start the websocket connection (don't block rendering) and keep the promise
 			const playersPromise = setGameSockets(params['id'], currentUser.id!, currentGame.scoreToWin!.toString());
 
-			// When the server reports players count, update the waiting overlay if needed
 			playersPromise.then((playersInfo) => {
 				const playersCount = (playersInfo && typeof (playersInfo as any).numberOfPlayers === 'number') ? (playersInfo as any).numberOfPlayers : 1;
 				const waitingOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement | null;
@@ -88,13 +79,10 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 					}
 				}
 			}).catch(() => {
-				// ignore — fallback behavior already in UI
 			});
 
-			// 6. Start game (show the start overlays)
 			startGame();
 
-		// Mark initialization as complete
 		isInitializing = false;
 	}, 0);
 
@@ -108,11 +96,9 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 // ======== UPDDATE CONTENT ============
 function renderGameContent(gameId: string, currentGame: GameData, playersCount?: number) {
 	if (!currentGame) {
-		// console.log('❌ Missing current game');
 		return;
 	}
-	// Show waiting overlay when server reports less than 2 connected players.
-	// If we don't have server info, fall back to DB status (PENDING).
+
 	const showWaitingOverlay = typeof playersCount === 'number' ? (playersCount < 2) : (currentGame.status === 'PENDING');
 	const content = document.getElementById('game-content');
 	if (!content) return;
