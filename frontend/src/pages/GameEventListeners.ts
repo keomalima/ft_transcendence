@@ -6,7 +6,7 @@ import { FinishGameDto } from "../api/gameApi.js";
 import { cleanGameWS } from "./Game.js";
 
 // Simple global interval registry so router can clear intervals on navigation
-function registerInterval(id: number) {
+export function registerInterval(id: number) {
 	(window as any).__gameIntervals = (window as any).__gameIntervals || [];
 	(window as any).__gameIntervals.push(id);
 }
@@ -89,6 +89,21 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			router.navigateTo(`/home`);
 		}
 	});
+
+
+	// **** CLAIM VICTORY ****
+	const clainVictoryBtn = document.getElementById('claim-victory-btn');
+	clainVictoryBtn?.addEventListener('click', (e) => {
+		e.preventDefault();
+		const looserId = currentGame.gameUsers?.find((player) => player.user?.id !== currentUser.id);
+
+		const waitingOpponentOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement | null;
+		if (waitingOpponentOverlay) {waitingOpponentOverlay.classList.add('hidden')};
+
+		sharedGameState.gameConnection?.send({ type: 'quit', looser: looserId});
+		console.log('👑 claim victory');
+	});
+
 
 	// **** GIVE UP GAME ****
 	const giveUpBtn = document.getElementById('give-up-btn');
@@ -191,7 +206,7 @@ export function setupGameEventListeners(currentUser: UserState, currentGame: Gam
 			return;
 
 		if (isWinner === true)
-			winner.innerText = `Your opponent gave up`;
+			winner.innerText = `You win!`;
 		else
 			winner.innerText = `Game over`;
 		wonGameOverlay.classList.remove('hidden');

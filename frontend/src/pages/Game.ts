@@ -4,11 +4,12 @@ import { GameConnection } from "../websocket/GameConnection.js";
 import { BUTTON_CREAM_CLASSES, BUTTON_WHITE_CLASSES } from "../styles/tailwindStyles.js";
 import { gameService } from "../services/GameService.js";
 import { sharedGameState, setGameConnection } from "../pong/sharedGameState.js";
-import { setupGameEventListeners } from "./GameEventListeners.js";
+import { registerInterval, setupGameEventListeners } from "./GameEventListeners.js";
 
 // Guard to prevent double initialization
 let isInitializing = false;
 let currentGameId: string | null = null;
+let claimVictoryInterval: number | null = null;
 
 export function Game(ctx: AppContext, params?: Record<string, string>): string {
 
@@ -78,8 +79,13 @@ export function Game(ctx: AppContext, params?: Record<string, string>): string {
 				const playersCount = (playersInfo && typeof (playersInfo as any).numberOfPlayers === 'number') ? (playersInfo as any).numberOfPlayers : 1;
 				const waitingOverlay = document.querySelector('#waiting-opponent-overlay') as HTMLDivElement | null;
 				if (waitingOverlay) {
-					if (playersCount >= 2) waitingOverlay.classList.add('hidden');
-					else waitingOverlay.classList.remove('hidden');
+					if (playersCount >= 2) {
+						waitingOverlay.classList.add('hidden');
+						stopClaimVictoryCountdown();
+					} else {
+						waitingOverlay.classList.remove('hidden');
+						initializeClaimVictoryCountdown(normalizeStartedAt(currentGame?.startedAt));
+					}
 				}
 			}).catch(() => {
 				// ignore — fallback behavior already in UI
@@ -137,7 +143,7 @@ function renderGameContent(gameId: string, currentGame: GameData, playersCount?:
 			</div>
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
-					<!-- <button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button> -->
+					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button>
 					<button id='give-up-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>give up</button>
 				</div>
 			</div>
@@ -200,7 +206,11 @@ function renderGameContent(gameId: string, currentGame: GameData, playersCount?:
 			<div id="waiting-opponent-overlay" class="${showWaitingOverlay ? '' : 'hidden'} fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 				<div class='flex flex-col gap-5'>
 					<p class="text-3xl font-[Calistoga] font-bold text-white">Waiting for your opponent ...</p>
-					<button id='go-back-btn' type='click' class='px-3.5 py-2.5 rounded-full bg-white outline outline-1 outline-black hover:font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'>go back</button>
+					<p id='claim-victoty-timer' class='text-3xl text-white text-center'></p>
+					<div class="flex gap-3 justify-between">
+						<button id='go-back-btn' type='click' class='flex-1 px-3.5 py-2.5 rounded-full bg-white outline outline-1 outline-black hover:font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'>go back</button>
+						<button id='claim-victory-btn' type='click' class='hidden flex-1 px-3.5 py-2.5 rounded-full bg-white outline outline-1 outline-black hover:font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'>claim victory</button>
+					</div>
 				</div>
 			</div>
 
@@ -218,6 +228,7 @@ function renderGameContent(gameId: string, currentGame: GameData, playersCount?:
 
 		</main>
 	`;
+	initializeClaimVictoryCountdown(normalizeStartedAt(currentGame.startedAt));
 }
 
 // ======== CHECK IF USER IS AUTHORIZED ============
@@ -357,6 +368,54 @@ function gameActionListener() {
 	document.addEventListener('touchmove', handleTouchMove, { passive: false });
 	document.addEventListener('touchend', handleTouchEnd);
 	document.addEventListener('touchcancel', handleTouchEnd);
+}
+
+function initializeClaimVictoryCountdown(startedAt: number | null | undefined) {
+	stopClaimVictoryCountdown();
+	const countdownEl = document.getElementById('claim-victoty-timer') as HTMLParagraphElement | null;
+	const button = document.getElementById('claim-victory-btn') as HTMLButtonElement | null;
+	if (!countdownEl || !button) return;
+	if (!startedAt) {
+		countdownEl.textContent = '';
+		button.classList.add('hidden');
+		return;
+	}
+	const target = startedAt + 30000;
+	button.classList.add('hidden');
+	const update = () => {
+		const remainingMs = Math.max(0, target - Date.now());
+		const remainingSec = Math.ceil(remainingMs / 1000);
+		countdownEl.textContent = remainingSec.toString();
+		if (remainingMs <= 0) {
+			countdownEl.textContent = '0';
+			countdownEl.classList.add('hidden');
+			button.classList.remove('hidden');
+			stopClaimVictoryCountdown();
+		}
+	};
+	update();
+	if (target > Date.now()) {
+		claimVictoryInterval = window.setInterval(update, 1000);
+		registerInterval(claimVictoryInterval as number);
+	}
+}
+
+function stopClaimVictoryCountdown() {
+	if (claimVictoryInterval) {
+		clearInterval(claimVictoryInterval);
+		claimVictoryInterval = null;
+	}
+}
+
+function normalizeStartedAt(value: string | number | null | undefined): number | null {
+	if (value === undefined || value === null) return null;
+	if (typeof value === 'number') return value;
+	if (typeof value === 'string') {
+		const parsed = Date.parse(value);
+		return Number.isNaN(parsed) ? null : parsed;
+	}
+	const normalized = Number(value);
+	return Number.isNaN(normalized) ? null : normalized;
 }
 
 // ======== START ============
