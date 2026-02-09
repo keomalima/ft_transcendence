@@ -129,7 +129,7 @@ function renderGameContent(gameId: string, currentGame: GameData, playersCount?:
 			</div>
 			<div class="text-center flex-shrink-0">
 				<div class="flex items-center justify-center gap-x-2 md:gap-x-6">
-					<button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button>
+					<!-- <button id='pause-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>pause</button> -->
 					<button id='give-up-btn' type='click' class='${BUTTON_CREAM_CLASSES} text-xs md:text-sm lg:text-base px-2 py-1 md:px-3 md:py-2'>give up</button>
 				</div>
 			</div>
