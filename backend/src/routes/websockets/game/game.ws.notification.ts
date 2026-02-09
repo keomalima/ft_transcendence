@@ -127,12 +127,10 @@ async function notifyFinishingGame(gameSession: GameSession, gameStatus: 'WON' |
 
 	if (gameStatus === 'ABANDONED') {
 		if (gameSession.abandonedNotified) {
-			// console.log('⏭️ Game already abandoned, skipping notification');
 			return;
 		}
 		
 		gameSession.abandonedNotified = true;
-		// console.log('👎 Someone gave up the game!');
 
 		gameSession.players.forEach((player) => {
 			if (player.userId !== looserId) {
