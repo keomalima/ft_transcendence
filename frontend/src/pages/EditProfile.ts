@@ -15,9 +15,7 @@ import "../components/NavBar.js";
 export function EditProfile(ctx: AppContext) : string {
 	let currentUser = ctx.userStore.get();
 
-	if (!currentUser)
-		return '';
-	const uploadsUrl: string = 'http://localhost:3000';
+	if (!currentUser) return '';
 	void userService.getUserState(ctx);
 	currentUser = ctx?.userStore.get();
 	const avatarRaw = currentUser?.avatarUrl || '/uploads/avatars/default.jpg';

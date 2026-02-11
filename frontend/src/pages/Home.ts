@@ -6,6 +6,7 @@ import "../components/RegisterPopUp.js";
 import type { RegisterPopUp } from "../components/RegisterPopUp.js";
 import httpCall from "../api/httpClient.js";
 import { escapeHtml } from "./LiveChat.js";
+import { API_BASE_URL } from "../config.js";
 
 // Track the last attached "Get started" button element so we can reattach
 // listeners when the SPA recreates the DOM node during navigation.
@@ -109,7 +110,7 @@ function setupHomeEventListeners(ctx: AppContext) {
 	googleForm?.addEventListener('click', async (e) => {
 		e.preventDefault();
 		try {
-			window.location.href = 'http://localhost:3000/api/users/login/google';
+			window.location.href = `${API_BASE_URL}/api/users/login/google`;
 			// console.log('⭐ loginUser success! ✅');
 			router.navigateTo('/home');
 		} catch (error) {
